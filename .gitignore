@@ -1,0 +1,24 @@
+# Dependencies
+node_modules
+node_modules/
+
+# Build output
+dist
+dist/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Editor directories
+.vscode/*
+!.vscode/extensions.json
+.idea
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db

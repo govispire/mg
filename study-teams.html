@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Study Teams — EduPlatform</title>
+<style>
+:root {
+  --ink: #0a0a0f;
+  --muted: #6b6b8a;
+  --surface: #f4f3f8;
+  --surface-2: #eceaf4;
+  --white: #ffffff;
+  --accent: #5b4fff;
+  --gold: #f5a623;
+  --emerald: #00c896;
+  --rose: #ff4d6d;
+  --sky: #00b8d9;
+}
+
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family: system-ui, -apple-system, sans-serif;
+  background: var(--surface);
+  color: var(--ink);
+  line-height: 1.6;
+}
+
+.nav {
+  background: rgba(244,243,248,.85);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(0,0,0,.06);
+  padding: 1rem 2rem;
+}
+
+.page { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+
+.hero {
+  background: linear-gradient(135deg, #0a0a0f 0%, #1a1535 50%, #0d1a2e 100%);
+  border-radius: 24px;
+  padding: 3rem;
+  color: white;
+  margin-bottom: 2rem;
+}
+
+.hero h1 {
+  font-size: 2.5rem;
+  font-weight: 800;
+  margin-bottom: 1rem;
+}
+
+.btn {
+  padding: 0.75rem 1.5rem;
+  border-radius: 12px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: white;
+}
+
+.btn-primary:hover { transform: translateY(-2px); }
+
+.teams-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.team-card {
+  background: white;
+  border: 1px solid var(--surface-2);
+  border-radius: 20px;
+  overflow: hidden;
+  transition: all 0.3s;
+}
+
+.team-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 50px rgba(0,0,0,.15);
+}
+
+.tc-top {
+  background: linear-gradient(135deg, #1a0f4a 0%, #2d1b8a 100%);
+  padding: 1.5rem;
+  color: white;
+}
+
+.tc-body { padding: 1.5rem; }
+
+.tc-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.modal-bg {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(8px);
+  z-index: 1000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.modal-bg.open { display: flex; }
+
+.modal {
+  background: white;
+  border-radius: 24px;
+  width: 100%;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal-head {
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid var(--surface-2);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-body { padding: 2rem; }
+
+.modal-footer {
+  padding: 1.5rem 2rem;
+  border-top: 1px solid var(--surface-2);
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+}
+
+.form-group { margin-bottom: 1.5rem; }
+
+.form-label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.form-control {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 2px solid var(--surface-2);
+  border-radius: 12px;
+  font-family: inherit;
+  font-size: 0.9375rem;
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.toast {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  background: #1c1c2e;
+  color: white;
+  padding: 1rem 1.5rem;
+  border-radius: 12px;
+  display: none;
+  align-items: center;
+  gap: 0.75rem;
+  z-index: 9999;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+}
+
+.toast.visible { display: flex; }
+
+.detail-tab {
+  padding: 0.75rem 1.25rem;
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  font-weight: 600;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.detail-tab.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+.detail-content { display: none; }
+.detail-content.active { display: block; }
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th, td {
+  padding: 1rem;
+  text-align: left;
+  border-bottom: 1px solid var(--surface-2);
+}
+
+th {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <h2>📚 EduPlatform - Study Teams</h2>
+</nav>
+
+<div class="page">
+  <section class="hero">
+    <h1>Study Together, Succeed Together</h1>
+    <p>Build your dream study squad. Take mock tests as a team and track progress.</p>
+    <button class="btn btn-primary" onclick="openModal('createModal')">➕ Create New Team</button>
+  </section>
+
+  <div class="teams-grid">
+    <div class="team-card">
+      <div class="tc-top">
+        <h3>UPSC Warriors 2026</h3>
+        <p>Code: UW2026</p>
+      </div>
+      <div class="tc-body">
+        <p>👥 5 members • 🏆 Rank #12 • 🔥 15 day streak</p>
+        <p>Average Score: 76.5%</p>
+        <div class="tc-actions">
+          <button class="btn btn-primary" onclick="openModal('detailsModal')">View Details</button>
+          <button class="btn btn-primary" onclick="openModal('scheduleModal')">🧪 Test</button>
+          <button class="btn btn-primary" onclick="openModal('membersModal')">👥 Members</button>
+          <button class="btn btn-primary" onclick="openModal('resultsModal')">📊 Results</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="team-card">
+      <div class="tc-top" style="background: linear-gradient(135deg, #0f2a1e 0%, #0d5c3a 100%);">
+        <h3>Polity Masters</h3>
+        <p>Code: PM2024</p>
+      </div>
+      <div class="tc-body">
+        <p>👥 4 members • 🏆 Rank #45 • 🔥 7 day streak</p>
+        <p>Average Score: 68.2%</p>
+        <div class="tc-actions">
+          <button class="btn btn-primary" onclick="openModal('detailsModal')">View Details</button>
+          <button class="btn btn-primary" onclick="openModal('scheduleModal')">🧪 Test</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Create Team Modal -->
+<div class="modal-bg" id="createModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h2>Create New Team</h2>
+      <button onclick="closeModal('createModal')" style="border:none;background:none;font-size:1.5rem;cursor:pointer;">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Team Name *</label>
+        <input class="form-control" placeholder="e.g. UPSC Warriors 2026">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Max Members *</label>
+        <select class="form-control">
+          <option>5</option>
+          <option>8</option>
+          <option>10</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('createModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="createTeam()">Create Team</button>
+    </div>
+  </div>
+</div>
+
+<!-- Team Details Modal -->
+<div class="modal-bg" id="detailsModal">
+  <div class="modal" style="max-width: 900px;">
+    <div class="modal-head">
+      <h2>UPSC Warriors 2026</h2>
+      <button onclick="closeModal('detailsModal')" style="border:none;background:none;font-size:1.5rem;cursor:pointer;">×</button>
+    </div>
+    <div style="border-bottom: 2px solid var(--surface-2); display: flex;">
+      <button class="detail-tab active" onclick="switchTab('overview')">📊 Overview</button>
+      <button class="detail-tab" onclick="switchTab('tests')">📝 Past Tests</button>
+      <button class="detail-tab" onclick="switchTab('growth')">📈 Growth</button>
+    </div>
+    <div class="modal-body">
+      <div class="detail-content active" id="overview">
+        <h3>Team Statistics</h3>
+        <p>📊 Total Tests: 28 • Average: 76.5% • Rank: #12 • Streak: 🔥 15</p>
+        <h4 style="margin-top:2rem;">Recent Activity</h4>
+        <p>✅ Mock Test #15 Completed - 2 hours ago</p>
+        <p>👤 New member joined - Yesterday</p>
+        <p>🏆 Reached Top 20 Teams - 3 days ago</p>
+      </div>
+      <div class="detail-content" id="tests">
+        <h3>Past Test History</h3>
+        <div style="margin:1rem 0;padding:1rem;background:var(--surface);border-radius:12px;">
+          <strong>Mock Test #15 - General Studies</strong>
+          <p>Feb 12, 2026 • 100 Questions • Avg: 76.5%</p>
+          <button class="btn btn-primary" style="margin-top:0.5rem;" onclick="openModal('resultsModal')">View Results</button>
+        </div>
+        <div style="margin:1rem 0;padding:1rem;background:var(--surface);border-radius:12px;">
+          <strong>Mock Test #14 - CSAT Paper II</strong>
+          <p>Feb 10, 2026 • 80 Questions • Avg: 82.3%</p>
+          <button class="btn btn-primary" style="margin-top:0.5rem;">View Results</button>
+        </div>
+        <div style="margin:1rem 0;padding:1rem;background:var(--surface);border-radius:12px;">
+          <strong>Mock Test #13 - Ancient History</strong>
+          <p>Feb 8, 2026 • 60 Questions • Avg: 79.1%</p>
+          <button class="btn btn-primary" style="margin-top:0.5rem;">View Results</button>
+        </div>
+      </div>
+      <div class="detail-content" id="growth">
+        <h3>Performance Trend</h3>
+        <p>📈 +15% Score Improvement since team started</p>
+        <p>⚡ -8 minutes average time reduction</p>
+        <p>🎯 +8.5% Accuracy boost</p>
+        <h4 style="margin-top:2rem;">Subject-wise Performance</h4>
+        <p>History: 85% • Geography: 82% • Polity: 78%</p>
+        <p>Economics: 72% • Science & Tech: 68%</p>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('detailsModal')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Schedule Test Modal -->
+<div class="modal-bg" id="scheduleModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h2>Schedule Team Test</h2>
+      <button onclick="closeModal('scheduleModal')" style="border:none;background:none;font-size:1.5rem;cursor:pointer;">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Test Name *</label>
+        <input class="form-control" placeholder="e.g. Mock Test #16">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Test Type *</label>
+        <select class="form-control">
+          <option>Prelims Mock Test</option>
+          <option>Mains Mock Test</option>
+          <option>CSAT Practice</option>
+          <option>Subject-Specific</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Questions *</label>
+        <input type="number" class="form-control" value="100">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Duration (minutes) *</label>
+        <input type="number" class="form-control" value="120">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Schedule Date *</label>
+        <input type="date" class="form-control">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Schedule Time *</label>
+        <input type="time" class="form-control" value="18:00">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('scheduleModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="scheduleTest()">📅 Schedule Test</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Members Modal -->
+<div class="modal-bg" id="membersModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h2>Add Team Members</h2>
+      <button onclick="closeModal('membersModal')" style="border:none;background:none;font-size:1.5rem;cursor:pointer;">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Search Members</label>
+        <input class="form-control" placeholder="Search by name, email or ID...">
+      </div>
+      <div style="margin-top:1rem;">
+        <div style="padding:1rem;background:var(--surface);border-radius:12px;margin-bottom:0.5rem;cursor:pointer;" onclick="this.style.background='rgba(91,79,255,0.1)'">
+          <strong>Neha Gupta</strong> • ID: ST2945 • neha.g@email.com
+        </div>
+        <div style="padding:1rem;background:var(--surface);border-radius:12px;margin-bottom:0.5rem;cursor:pointer;" onclick="this.style.background='rgba(91,79,255,0.1)'">
+          <strong>Vikram Singh</strong> • ID: ST2876 • vikram.s@email.com
+        </div>
+        <div style="padding:1rem;background:var(--surface);border-radius:12px;cursor:pointer;" onclick="this.style.background='rgba(91,79,255,0.1)'">
+          <strong>Meera Reddy</strong> • ID: ST2923 • meera.r@email.com
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('membersModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="addMembers()">Add Members</button>
+    </div>
+  </div>
+</div>
+
+<!-- Test Results Modal -->
+<div class="modal-bg" id="resultsModal">
+  <div class="modal" style="max-width: 900px;">
+    <div class="modal-head">
+      <h2>📊 Test Results - Mock Test #15</h2>
+      <button onclick="closeModal('resultsModal')" style="border:none;background:none;font-size:1.5rem;cursor:pointer;">×</button>
+    </div>
+    <div class="modal-body">
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:2rem;">
+        <div style="text-align:center;padding:1rem;background:linear-gradient(135deg,#f5a623,#f7ca5c);border-radius:12px;color:white;">
+          <div style="font-size:0.75rem;">🏆 TOP SCORE</div>
+          <div style="font-size:2rem;font-weight:800;">89%</div>
+          <div style="font-size:0.875rem;">Priya S.</div>
+        </div>
+        <div style="text-align:center;padding:1rem;background:linear-gradient(135deg,#00c896,#00e5b0);border-radius:12px;color:white;">
+          <div style="font-size:0.75rem;">⚡ FASTEST</div>
+          <div style="font-size:2rem;font-weight:800;">42m</div>
+          <div style="font-size:0.875rem;">Amit K.</div>
+        </div>
+        <div style="text-align:center;padding:1rem;background:linear-gradient(135deg,#5b4fff,#9b59ff);border-radius:12px;color:white;">
+          <div style="font-size:0.75rem;">📈 AVG SCORE</div>
+          <div style="font-size:2rem;font-weight:800;">76.5%</div>
+          <div style="font-size:0.875rem;">Team Avg</div>
+        </div>
+        <div style="text-align:center;padding:1rem;background:linear-gradient(135deg,#ff4d6d,#ff8fa3);border-radius:12px;color:white;">
+          <div style="font-size:0.75rem;">👥 COMPLETED</div>
+          <div style="font-size:2rem;font-weight:800;">5/5</div>
+          <div style="font-size:0.875rem;">100%</div>
+        </div>
+      </div>
+
+      <h3>Individual Performance</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Rank</th>
+            <th>Student</th>
+            <th>Score</th>
+            <th>Correct</th>
+            <th>Wrong</th>
+            <th>Time</th>
+            <th>Accuracy</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>1</strong></td>
+            <td><strong>Priya Sharma</strong></td>
+            <td><strong style="color:var(--emerald);">89%</strong></td>
+            <td>89</td>
+            <td>8</td>
+            <td>58m 23s</td>
+            <td>91.8%</td>
+          </tr>
+          <tr>
+            <td><strong>2</strong></td>
+            <td><strong>Rahul Kumar</strong> <span style="background:var(--accent);color:white;padding:0.125rem 0.5rem;border-radius:99px;font-size:0.65rem;">You</span></td>
+            <td><strong style="color:var(--accent);">84%</strong></td>
+            <td>84</td>
+            <td>12</td>
+            <td>65m 12s</td>
+            <td>87.5%</td>
+          </tr>
+          <tr>
+            <td><strong>3</strong></td>
+            <td><strong>Sneha Das</strong></td>
+            <td><strong>76%</strong></td>
+            <td>76</td>
+            <td>18</td>
+            <td>72m 45s</td>
+            <td>80.9%</td>
+          </tr>
+          <tr>
+            <td><strong>4</strong></td>
+            <td><strong>Amit Kumar ⚡</strong></td>
+            <td><strong>72%</strong></td>
+            <td>72</td>
+            <td>22</td>
+            <td style="color:var(--emerald);"><strong>42m 18s ⚡</strong></td>
+            <td>76.6%</td>
+          </tr>
+          <tr>
+            <td><strong>5</strong></td>
+            <td><strong>Anjali Patel</strong></td>
+            <td><strong>62%</strong></td>
+            <td>62</td>
+            <td>28</td>
+            <td>88m 56s</td>
+            <td>68.9%</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('resultsModal')">Close</button>
+      <button class="btn btn-primary">📥 Download Report</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast">
+  <span id="toastIcon">✓</span>
+  <span id="toastMsg">Success!</span>
+</div>
+
+<script>
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+function switchTab(tabName) {
+  document.querySelectorAll('.detail-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.detail-content').forEach(c => c.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById(tabName).classList.add('active');
+}
+
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  document.getElementById('toastMsg').textContent = msg;
+  toast.classList.add('visible');
+  setTimeout(() => toast.classList.remove('visible'), 3000);
+}
+
+function createTeam() {
+  closeModal('createModal');
+  showToast('Team created successfully!');
+  setTimeout(() => openModal('membersModal'), 500);
+}
+
+function addMembers() {
+  closeModal('membersModal');
+  showToast('Members added successfully!');
+}
+
+function scheduleTest() {
+  closeModal('scheduleModal');
+  showToast('Test scheduled for tomorrow at 6:00 PM!');
+}
+
+// Close modal on background click
+document.querySelectorAll('.modal-bg').forEach(modal => {
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) {
+      modal.classList.remove('open');
+    }
+  });
+});
+
+// Close modal on ESC key
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    document.querySelectorAll('.modal-bg').forEach(m => m.classList.remove('open'));
+  }
+});
+</script>
+
+</body>
+</html>

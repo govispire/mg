@@ -1,0 +1,75 @@
+/* Teams Study - Ultimate Design Overhaul */
+
+/* --- Scrollbar --- */
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.scrollbar-track-transparent::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-thumb-white\/10::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.3);
+  border-radius: 10px;
+}
+
+.scrollbar-thumb-white\/10::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.5);
+}
+
+/* --- Animations --- */
+@keyframes float {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+
+  0%,
+  100% {
+    box-shadow: 0 0 15px hsl(var(--primary) / 0.2);
+  }
+
+  50% {
+    box-shadow: 0 0 25px hsl(var(--primary) / 0.5);
+  }
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 3s infinite;
+}
+
+/* --- Custom Gradients --- */
+.bg-gradient-ultimate {
+  background: linear-gradient(135deg, hsl(var(--primary)) 0%, #8b5cf6 50%, #d946ef 100%);
+}
+
+.text-gradient-ultimate {
+  background: linear-gradient(135deg, hsl(var(--primary)) 0%, #818cf8 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* --- Component Overrides --- */
+.teams-study-page input::placeholder {
+  color: hsl(var(--muted-foreground) / 0.7);
+}
+
+/* Remove default focus rings for cleaner custom ones */
+.teams-study-page button:focus {
+  outline: none;
+}
