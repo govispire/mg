@@ -95,6 +95,94 @@ interface ExamFormData {
 
 const defaultExamForm = (): ExamFormData => ({ id: '', name: '', logo: '', isPopular: false });
 
+// ─── LogoPicker ─────────────────────────────────────────────────────────────
+
+interface LogoPickerProps {
+    value: string;
+    onChange: (v: string) => void;
+    id: string;
+}
+
+const LogoPicker: React.FC<LogoPickerProps> = ({ value, onChange, id }) => {
+    const [mode, setMode] = React.useState<'url' | 'file'>(value.startsWith('data:') ? 'file' : 'url');
+    const fileRef = React.useRef<HTMLInputElement>(null);
+
+    const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => onChange(ev.target?.result as string);
+        reader.readAsDataURL(file);
+    };
+
+    return (
+        <div className="space-y-2">
+            <div className="flex gap-2">
+                <button
+                    type="button"
+                    onClick={() => setMode('url')}
+                    className={`text-xs px-3 py-1 rounded-md border transition-all ${mode === 'url' ? 'bg-primary text-white border-primary' : 'bg-white border-gray-200 text-gray-600'
+                        }`}
+                >🔗 URL</button>
+                <button
+                    type="button"
+                    onClick={() => { setMode('file'); setTimeout(() => fileRef.current?.click(), 50); }}
+                    className={`text-xs px-3 py-1 rounded-md border transition-all ${mode === 'file' ? 'bg-primary text-white border-primary' : 'bg-white border-gray-200 text-gray-600'
+                        }`}
+                >📁 Upload</button>
+                {value && (
+                    <button
+                        type="button"
+                        onClick={() => { onChange(''); if (fileRef.current) fileRef.current.value = ''; }}
+                        className="text-xs px-2 py-1 rounded-md border border-red-200 text-red-500 hover:bg-red-50 transition-all ml-auto"
+                    >✕ Clear</button>
+                )}
+            </div>
+
+            {mode === 'url' ? (
+                <Input
+                    id={id}
+                    value={value.startsWith('data:') ? '' : value}
+                    onChange={(e) => onChange(e.target.value)}
+                    placeholder="https://example.com/logo.png"
+                />
+            ) : (
+                <div
+                    className="flex items-center justify-center border-2 border-dashed rounded-lg p-3 cursor-pointer hover:border-primary transition-colors bg-gray-50"
+                    onClick={() => fileRef.current?.click()}
+                >
+                    <input
+                        ref={fileRef}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleFile}
+                    />
+                    {value.startsWith('data:') ? (
+                        <span className="text-xs text-green-600 font-medium">✓ Image uploaded — click to change</span>
+                    ) : (
+                        <span className="text-xs text-muted-foreground">Click to select an image from your device</span>
+                    )}
+                </div>
+            )}
+
+            {value && (
+                <div className="flex items-center gap-3 p-2 bg-gray-50 rounded-lg border">
+                    <img
+                        src={value}
+                        alt="preview"
+                        className="h-12 w-12 object-contain rounded border bg-white flex-shrink-0"
+                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                    />
+                    <span className="text-xs text-muted-foreground truncate">
+                        {value.startsWith('data:') ? 'Local image (stored as base64)' : value}
+                    </span>
+                </div>
+            )}
+        </div>
+    );
+};
+
 // ─── COLOR_OPTIONS ────────────────────────────────────────────────────────────
 
 const COLOR_OPTIONS = [
@@ -118,7 +206,7 @@ const TestCatalogManager: React.FC = () => {
         catalog, loading,
         addCategory, updateCategory, deleteCategory, toggleCategoryVisibility,
         addSection, updateSection, deleteSection,
-        addExam, removeExam,
+        addExam, updateExam, removeExam,
         resetToDefaults,
     } = useExamCatalog();
 
@@ -140,6 +228,7 @@ const TestCatalogManager: React.FC = () => {
     const [examForm, setExamForm] = useState<ExamFormData>(defaultExamForm());
     const [activeCatForExam, setActiveCatForExam] = useState<string | null>(null);
     const [activeSectionForExam, setActiveSectionForExam] = useState<string | null>(null);
+    const [editingExamId, setEditingExamId] = useState<string | null>(null);
 
     // ── Delete confirmation ───────────────────────────────────────────────────
     const [deleteTarget, setDeleteTarget] = useState<{
@@ -237,15 +326,33 @@ const TestCatalogManager: React.FC = () => {
     const openAddExam = (catId: string, sectionId: string) => {
         setActiveCatForExam(catId);
         setActiveSectionForExam(sectionId);
+        setEditingExamId(null);
         setExamForm(defaultExamForm());
+        setExamDialogOpen(true);
+    };
+
+    const openEditExam = (catId: string, sectionId: string, exam: CatalogExam) => {
+        setActiveCatForExam(catId);
+        setActiveSectionForExam(sectionId);
+        setEditingExamId(exam.id);
+        setExamForm({ id: exam.id, name: exam.name, logo: exam.logo, isPopular: exam.isPopular });
         setExamDialogOpen(true);
     };
 
     const handleSaveExam = () => {
         if (!examForm.name.trim() || !activeCatForExam || !activeSectionForExam) return;
-        const id = examForm.id.trim() || examForm.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-        addExam(activeCatForExam, activeSectionForExam, { ...examForm, id });
-        toast({ title: 'Exam added', description: examForm.name });
+        if (editingExamId) {
+            updateExam(activeCatForExam, activeSectionForExam, editingExamId, {
+                name: examForm.name,
+                logo: examForm.logo,
+                isPopular: examForm.isPopular,
+            });
+            toast({ title: 'Exam updated', description: examForm.name });
+        } else {
+            const id = examForm.id.trim() || examForm.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+            addExam(activeCatForExam, activeSectionForExam, { ...examForm, id });
+            toast({ title: 'Exam added', description: examForm.name });
+        }
         setExamDialogOpen(false);
     };
 
@@ -511,6 +618,14 @@ const TestCatalogManager: React.FC = () => {
                                                                                     <p className="text-[10px] text-primary opacity-0 group-hover:opacity-100 transition-opacity">Manage Tests →</p>
                                                                                 </div>
                                                                             </button>
+                                                                            {/* Edit button */}
+                                                                            <button
+                                                                                className="shrink-0 text-gray-400 hover:text-primary transition-colors p-0.5"
+                                                                                onClick={() => openEditExam(cat.id, section.id, exam)}
+                                                                                title="Edit exam"
+                                                                            >
+                                                                                <Pencil className="h-3.5 w-3.5" />
+                                                                            </button>
                                                                             {/* Delete button */}
                                                                             <button
                                                                                 className="shrink-0 text-gray-300 hover:text-destructive transition-colors p-0.5"
@@ -597,19 +712,12 @@ const TestCatalogManager: React.FC = () => {
                             </div>
 
                             <div className="col-span-2 space-y-1.5">
-                                <Label htmlFor={`${uid}-cat-logo`}>Logo URL</Label>
-                                <div className="flex gap-2">
-                                    <Input
-                                        id={`${uid}-cat-logo`}
-                                        value={catForm.logo}
-                                        onChange={(e) => setCatForm((f) => ({ ...f, logo: e.target.value }))}
-                                        placeholder="https://…"
-                                        className="flex-1"
-                                    />
-                                    {catForm.logo && (
-                                        <img src={catForm.logo} alt="preview" className="h-9 w-9 object-contain border rounded" />
-                                    )}
-                                </div>
+                                <Label>Logo (URL or local image)</Label>
+                                <LogoPicker
+                                    id={`${uid}-cat-logo`}
+                                    value={catForm.logo}
+                                    onChange={(v) => setCatForm((f) => ({ ...f, logo: v }))}
+                                />
                             </div>
 
                             <div className="space-y-1.5">
@@ -730,9 +838,9 @@ const TestCatalogManager: React.FC = () => {
 
             {/* ── Exam Dialog ───────────────────────────────────────────────────────── */}
             <Dialog open={examDialogOpen} onOpenChange={setExamDialogOpen}>
-                <DialogContent className="sm:max-w-md">
+                <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
-                        <DialogTitle>Add Exam</DialogTitle>
+                        <DialogTitle>{editingExamId ? 'Edit Exam' : 'Add Exam'}</DialogTitle>
                     </DialogHeader>
 
                     <div className="space-y-4 py-2">
@@ -746,30 +854,28 @@ const TestCatalogManager: React.FC = () => {
                                 autoFocus
                             />
                         </div>
+
+                        {!editingExamId && (
+                            <div className="space-y-1.5">
+                                <Label htmlFor={`${uid}-exam-id`}>Exam ID (auto if blank)</Label>
+                                <Input
+                                    id={`${uid}-exam-id`}
+                                    value={examForm.id}
+                                    onChange={(e) => setExamForm((f) => ({ ...f, id: e.target.value }))}
+                                    placeholder="e.g. sbi-po"
+                                />
+                            </div>
+                        )}
+
                         <div className="space-y-1.5">
-                            <Label htmlFor={`${uid}-exam-id`}>Exam ID (auto if blank)</Label>
-                            <Input
-                                id={`${uid}-exam-id`}
-                                value={examForm.id}
-                                onChange={(e) => setExamForm((f) => ({ ...f, id: e.target.value }))}
-                                placeholder="e.g. sbi-po"
+                            <Label>Logo (URL or local image)</Label>
+                            <LogoPicker
+                                id={`${uid}-exam-logo`}
+                                value={examForm.logo}
+                                onChange={(v) => setExamForm((f) => ({ ...f, logo: v }))}
                             />
                         </div>
-                        <div className="space-y-1.5">
-                            <Label htmlFor={`${uid}-exam-logo`}>Logo URL</Label>
-                            <div className="flex gap-2">
-                                <Input
-                                    id={`${uid}-exam-logo`}
-                                    value={examForm.logo}
-                                    onChange={(e) => setExamForm((f) => ({ ...f, logo: e.target.value }))}
-                                    placeholder="https://…"
-                                    className="flex-1"
-                                />
-                                {examForm.logo && (
-                                    <img src={examForm.logo} alt="logo" className="h-9 w-9 object-contain border rounded" />
-                                )}
-                            </div>
-                        </div>
+
                         <div className="flex items-center gap-3">
                             <Switch
                                 id={`${uid}-exam-popular`}
@@ -782,7 +888,7 @@ const TestCatalogManager: React.FC = () => {
 
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setExamDialogOpen(false)}>Cancel</Button>
-                        <Button onClick={handleSaveExam}>Add Exam</Button>
+                        <Button onClick={handleSaveExam}>{editingExamId ? 'Save Changes' : 'Add Exam'}</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>

@@ -1,12 +1,13 @@
 /**
  * useExamCatalog
  * localStorage-backed store with real-time BroadcastChannel sync.
- * SuperAdmin writes → student view re-renders instantly (same tab or other tabs).
+ * Every write immediately broadcasts to all consumers (superadmin + student)
+ * so both sides update without a page refresh.
  */
 import { useState, useEffect, useCallback } from 'react';
 import { examCategories, getExamsByCategory, type Exam } from '@/data/examData';
 
-// ─── Types ───────────────────────────────────────────────────────────────────
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 export type TestDifficulty = 'easy' | 'medium' | 'hard';
 
@@ -77,12 +78,16 @@ export const DEFAULT_SLOT_TEMPLATES: Omit<TestTypeSlot, 'tests'>[] = [
 export const makeDefaultSlots = (): TestTypeSlot[] =>
     DEFAULT_SLOT_TEMPLATES.map(t => ({ ...t, tests: [] }));
 
-// ─── Storage / channel ────────────────────────────────────────────────────────
+// ─── Constants ────────────────────────────────────────────────────────────────
 
 const STORAGE_KEY = 'superadmin_exam_catalog';
 const CHANNEL_NAME = 'exam_catalog_sync';
 
-// ─── Migration: add missing testSlots to every exam ──────────────────────────
+/** Bump this whenever the seed data changes to force all users to re-seed */
+const SEED_VERSION = '2';
+const SEED_VER_KEY = 'superadmin_catalog_seed_ver';
+
+// ─── Migration: ensure every exam has all 10 slots ───────────────────────────
 
 const migrate = (raw: CatalogCategory[]): { data: CatalogCategory[]; changed: boolean } => {
     let changed = false;
@@ -91,18 +96,16 @@ const migrate = (raw: CatalogCategory[]): { data: CatalogCategory[]; changed: bo
         sections: cat.sections.map(sec => ({
             ...sec,
             exams: sec.exams.map(exam => {
-                if (!exam.testSlots || exam.testSlots.length === 0) {
-                    changed = true;
-                    return { ...exam, testSlots: makeDefaultSlots() };
-                }
-                // Ensure all 10 slots exist (some may have been added later)
-                const existing = new Set(exam.testSlots.map(s => s.key));
+                const existing = new Set((exam.testSlots ?? []).map(s => s.key));
                 const missing = DEFAULT_SLOT_TEMPLATES.filter(t => !existing.has(t.key));
-                if (missing.length > 0) {
+                if (!exam.testSlots || exam.testSlots.length === 0 || missing.length > 0) {
                     changed = true;
                     return {
                         ...exam,
-                        testSlots: [...exam.testSlots, ...missing.map(t => ({ ...t, tests: [] }))],
+                        testSlots: [
+                            ...(exam.testSlots ?? []),
+                            ...missing.map(t => ({ ...t, tests: [] })),
+                        ],
                     };
                 }
                 return exam;
@@ -111,6 +114,55 @@ const migrate = (raw: CatalogCategory[]): { data: CatalogCategory[]; changed: bo
     }));
     return { data, changed };
 };
+
+// ─── Sample tests (mirrors student useExamProgress data) ─────────────────────
+
+const DIFFICULTIES: TestDifficulty[] = ['easy', 'medium', 'hard'];
+
+const generateSampleTests = (
+    type: 'prelims' | 'mains' | 'speed' | 'live',
+    subType: 'full' | 'sectional' | 'speed' | 'pyq' | null,
+    count: number,
+): CatalogTestItem[] => {
+    const labelBase = (() => {
+        if (type === 'live') return 'Live Test';
+        if (subType === 'full') return `${type.charAt(0).toUpperCase() + type.slice(1)} Full Test`;
+        if (subType === 'sectional') return `${type.charAt(0).toUpperCase() + type.slice(1)} Sectional`;
+        if (subType === 'speed') return `Speed Test`;
+        if (subType === 'pyq') return `PYQ ${type.charAt(0).toUpperCase() + type.slice(1)}`;
+        return `${type.charAt(0).toUpperCase() + type.slice(1)} Test`;
+    })();
+
+    const maxScore = type === 'speed' || subType === 'speed' ? 50 :
+        type === 'mains' || subType === 'full' ? 200 : 100;
+    const duration = type === 'live' ? 180 :
+        type === 'mains' ? 180 : subType === 'speed' || type === 'speed' ? 15 : 60;
+
+    return Array.from({ length: count }, (_, i) => ({
+        id: `${type}_${subType ?? 'main'}_${i + 1}`,
+        name: `${labelBase} ${i + 1}`,
+        maxScore,
+        totalQuestions: maxScore === 200 ? 155 : maxScore === 50 ? 20 : 100,
+        durationMinutes: duration,
+        difficulty: DIFFICULTIES[i % 3],
+        isVisible: true,
+        createdAt: new Date(Date.now() - (count - i) * 24 * 60 * 60 * 1000).toISOString(),
+    }));
+};
+
+/** Build test slots pre-populated with 20 sample tests each */
+const makeSampleSlots = (): TestTypeSlot[] => [
+    { key: 'prelims_full', tab: 'prelims', subTab: 'full', label: 'Prelims – Full Test', tests: generateSampleTests('prelims', 'full', 20) },
+    { key: 'prelims_sectional', tab: 'prelims', subTab: 'sectional', label: 'Prelims – Sectional Test', tests: generateSampleTests('prelims', 'sectional', 20) },
+    { key: 'prelims_speed', tab: 'prelims', subTab: 'speed', label: 'Prelims – Speed Test', tests: generateSampleTests('prelims', 'speed', 20) },
+    { key: 'prelims_pyq', tab: 'prelims', subTab: 'pyq', label: 'Prelims – PYQ Test', tests: generateSampleTests('prelims', 'pyq', 20) },
+    { key: 'mains_full', tab: 'mains', subTab: 'full', label: 'Mains – Full Test', tests: generateSampleTests('mains', 'full', 20) },
+    { key: 'mains_sectional', tab: 'mains', subTab: 'sectional', label: 'Mains – Sectional Test', tests: generateSampleTests('mains', 'sectional', 20) },
+    { key: 'mains_speed', tab: 'mains', subTab: 'speed', label: 'Mains – Speed Test', tests: generateSampleTests('mains', 'speed', 20) },
+    { key: 'mains_pyq', tab: 'mains', subTab: 'pyq', label: 'Mains – PYQ Test', tests: generateSampleTests('mains', 'pyq', 20) },
+    { key: 'speed', tab: 'speed', subTab: null, label: 'Speed Test', tests: generateSampleTests('speed', null, 20) },
+    { key: 'live', tab: 'live', subTab: null, label: 'Live Test', tests: generateSampleTests('live', null, 20) },
+];
 
 // ─── Seed from static examData ────────────────────────────────────────────────
 
@@ -128,7 +180,7 @@ const seedFromStatic = (): CatalogCategory[] =>
                     name: e.name,
                     logo: e.logo,
                     isPopular: e.isPopular,
-                    testSlots: makeDefaultSlots(),
+                    testSlots: makeSampleSlots(),
                 })),
             }],
             createdAt: new Date().toISOString(),
@@ -142,73 +194,69 @@ export const useExamCatalog = () => {
     const [catalog, setCatalog] = useState<CatalogCategory[]>([]);
     const [loading, setLoading] = useState(true);
 
-    // ── Initial load + force-migration ─────────────────────────────────────────
+    // ── Load + force-migrate existing data ─────────────────────────────────────
     useEffect(() => {
-        const load = () => {
-            try {
-                const raw = localStorage.getItem(STORAGE_KEY);
-                if (raw) {
-                    const { data, changed } = migrate(JSON.parse(raw));
-                    if (changed) {
-                        // Write migrated data back so existing exams get testSlots immediately
-                        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-                    }
-                    setCatalog(data);
-                } else {
-                    const seeded = seedFromStatic();
-                    localStorage.setItem(STORAGE_KEY, JSON.stringify(seeded));
-                    setCatalog(seeded);
-                }
-            } catch {
-                const seeded = seedFromStatic();
-                setCatalog(seeded);
-            } finally {
-                setLoading(false);
-            }
-        };
+        try {
+            const storedVer = localStorage.getItem(SEED_VER_KEY);
+            const raw = localStorage.getItem(STORAGE_KEY);
 
-        load();
+            // Force re-seed when SEED_VERSION bumped OR first run
+            if (!raw || storedVer !== SEED_VERSION) {
+                const seeded = seedFromStatic();
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(seeded));
+                localStorage.setItem(SEED_VER_KEY, SEED_VERSION);
+                setCatalog(seeded);
+            } else {
+                const { data, changed } = migrate(JSON.parse(raw));
+                if (changed) {
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+                }
+                setCatalog(data);
+            }
+        } catch {
+            setCatalog(seedFromStatic());
+        } finally {
+            setLoading(false);
+        }
     }, []);
 
-    // ── Real-time sync via BroadcastChannel ─────────────────────────────────────
+    // ── Real-time sync listener ─────────────────────────────────────────────────
     useEffect(() => {
-        // BroadcastChannel syncs across tabs in the same origin
+        // Cross-tab: BroadcastChannel
         let channel: BroadcastChannel | null = null;
         try {
             channel = new BroadcastChannel(CHANNEL_NAME);
-            channel.onmessage = (event) => {
-                if (event.data?.type === 'catalog_updated' && event.data?.catalog) {
-                    setCatalog(event.data.catalog);
+            channel.onmessage = (evt: MessageEvent) => {
+                if (evt.data?.type === 'catalog_updated') {
+                    setCatalog(evt.data.catalog as CatalogCategory[]);
                 }
             };
-        } catch { /* BroadcastChannel not supported */ }
+        } catch { /* BroadcastChannel not available */ }
 
-        // Also listen for the custom same-tab event
-        const handleSameTab = (e: Event) => {
-            const ce = e as CustomEvent<CatalogCategory[]>;
-            if (ce.detail) setCatalog(ce.detail);
+        // Same-tab: CustomEvent
+        const onSameTab = (e: Event) => {
+            const detail = (e as CustomEvent<CatalogCategory[]>).detail;
+            if (detail) setCatalog(detail);
         };
-        window.addEventListener('catalog_updated', handleSameTab);
+        window.addEventListener('catalog_updated', onSameTab);
 
         return () => {
             channel?.close();
-            window.removeEventListener('catalog_updated', handleSameTab);
+            window.removeEventListener('catalog_updated', onSameTab);
         };
     }, []);
 
-    // ── Persist + broadcast ────────────────────────────────────────────────────
-    const persist = useCallback((next: CatalogCategory[]) => {
-        setCatalog(next);
+    // ── Broadcast helper ────────────────────────────────────────────────────────
+    // Called AFTER setCatalog so `next` is the freshly computed value.
+    const broadcast = useCallback((next: CatalogCategory[]) => {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-
-        // Broadcast to all other tabs
+        // Cross-tab
         try {
             const ch = new BroadcastChannel(CHANNEL_NAME);
             ch.postMessage({ type: 'catalog_updated', catalog: next });
             ch.close();
         } catch { /* not supported */ }
-
-        // Dispatch custom event for same-tab listeners (e.g., StudentTests on the same tab)
+        // Same-tab
         window.dispatchEvent(new CustomEvent('catalog_updated', { detail: next }));
     }, []);
 
@@ -216,70 +264,48 @@ export const useExamCatalog = () => {
 
     const addCategory = useCallback((cat: Omit<CatalogCategory, 'createdAt' | 'updatedAt' | 'sections'>) => {
         const now = new Date().toISOString();
-        persist(prev => {
-            const next = [...prev, { ...cat, sections: [], createdAt: now, updatedAt: now }];
-            return next;
-        } as unknown as CatalogCategory[]);
-    }, [persist]);
-
-    const addCategory2 = useCallback((cat: Omit<CatalogCategory, 'createdAt' | 'updatedAt' | 'sections'>) => {
         setCatalog(prev => {
-            const now = new Date().toISOString();
             const next = [...prev, { ...cat, sections: [], createdAt: now, updatedAt: now }];
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-            try {
-                const ch = new BroadcastChannel(CHANNEL_NAME);
-                ch.postMessage({ type: 'catalog_updated', catalog: next });
-                ch.close();
-            } catch { /* */ }
-            window.dispatchEvent(new CustomEvent('catalog_updated', { detail: next }));
+            broadcast(next);
             return next;
         });
-    }, []);
+    }, [broadcast]);
 
     const updateCategory = useCallback((id: string, updates: Partial<Omit<CatalogCategory, 'id' | 'sections' | 'createdAt'>>) => {
         setCatalog(prev => {
             const next = prev.map(c => c.id === id ? { ...c, ...updates, updatedAt: new Date().toISOString() } : c);
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-            try { const ch = new BroadcastChannel(CHANNEL_NAME); ch.postMessage({ type: 'catalog_updated', catalog: next }); ch.close(); } catch { /* */ }
-            window.dispatchEvent(new CustomEvent('catalog_updated', { detail: next }));
+            broadcast(next);
             return next;
         });
-    }, []);
+    }, [broadcast]);
 
     const deleteCategory = useCallback((id: string) => {
         setCatalog(prev => {
             const next = prev.filter(c => c.id !== id);
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-            try { const ch = new BroadcastChannel(CHANNEL_NAME); ch.postMessage({ type: 'catalog_updated', catalog: next }); ch.close(); } catch { /* */ }
-            window.dispatchEvent(new CustomEvent('catalog_updated', { detail: next }));
+            broadcast(next);
             return next;
         });
-    }, []);
+    }, [broadcast]);
 
     const toggleCategoryVisibility = useCallback((id: string) => {
         setCatalog(prev => {
-            const next = prev.map(c => c.id === id ? { ...c, isVisible: !c.isVisible, updatedAt: new Date().toISOString() } : c);
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-            try { const ch = new BroadcastChannel(CHANNEL_NAME); ch.postMessage({ type: 'catalog_updated', catalog: next }); ch.close(); } catch { /* */ }
-            window.dispatchEvent(new CustomEvent('catalog_updated', { detail: next }));
+            const next = prev.map(c =>
+                c.id === id ? { ...c, isVisible: !c.isVisible, updatedAt: new Date().toISOString() } : c,
+            );
+            broadcast(next);
             return next;
         });
-    }, []);
+    }, [broadcast]);
 
     // ── Section CRUD ───────────────────────────────────────────────────────────
 
-    const broadcast = useCallback((next: CatalogCategory[]) => {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-        try { const ch = new BroadcastChannel(CHANNEL_NAME); ch.postMessage({ type: 'catalog_updated', catalog: next }); ch.close(); } catch { /* */ }
-        window.dispatchEvent(new CustomEvent('catalog_updated', { detail: next }));
-    }, []);
-
     const addSection = useCallback((categoryId: string, section: Omit<CatalogSection, 'exams'>) => {
         setCatalog(prev => {
-            const next = prev.map(c => c.id === categoryId
-                ? { ...c, sections: [...c.sections, { ...section, exams: [] }], updatedAt: new Date().toISOString() }
-                : c);
+            const next = prev.map(c =>
+                c.id === categoryId
+                    ? { ...c, sections: [...c.sections, { ...section, exams: [] }], updatedAt: new Date().toISOString() }
+                    : c,
+            );
             broadcast(next);
             return next;
         });
@@ -287,9 +313,11 @@ export const useExamCatalog = () => {
 
     const updateSection = useCallback((categoryId: string, sectionId: string, updates: Partial<Omit<CatalogSection, 'exams'>>) => {
         setCatalog(prev => {
-            const next = prev.map(c => c.id === categoryId
-                ? { ...c, sections: c.sections.map(s => s.id === sectionId ? { ...s, ...updates } : s), updatedAt: new Date().toISOString() }
-                : c);
+            const next = prev.map(c =>
+                c.id === categoryId
+                    ? { ...c, sections: c.sections.map(s => s.id === sectionId ? { ...s, ...updates } : s), updatedAt: new Date().toISOString() }
+                    : c,
+            );
             broadcast(next);
             return next;
         });
@@ -297,9 +325,11 @@ export const useExamCatalog = () => {
 
     const deleteSection = useCallback((categoryId: string, sectionId: string) => {
         setCatalog(prev => {
-            const next = prev.map(c => c.id === categoryId
-                ? { ...c, sections: c.sections.filter(s => s.id !== sectionId), updatedAt: new Date().toISOString() }
-                : c);
+            const next = prev.map(c =>
+                c.id === categoryId
+                    ? { ...c, sections: c.sections.filter(s => s.id !== sectionId), updatedAt: new Date().toISOString() }
+                    : c,
+            );
             broadcast(next);
             return next;
         });
@@ -310,9 +340,17 @@ export const useExamCatalog = () => {
     const addExam = useCallback((categoryId: string, sectionId: string, exam: Omit<CatalogExam, 'testSlots'>) => {
         const full: CatalogExam = { ...exam, testSlots: makeDefaultSlots() };
         setCatalog(prev => {
-            const next = prev.map(c => c.id === categoryId
-                ? { ...c, sections: c.sections.map(s => s.id === sectionId ? { ...s, exams: [...s.exams, full] } : s), updatedAt: new Date().toISOString() }
-                : c);
+            const next = prev.map(c =>
+                c.id === categoryId
+                    ? {
+                        ...c,
+                        sections: c.sections.map(s =>
+                            s.id === sectionId ? { ...s, exams: [...s.exams, full] } : s,
+                        ),
+                        updatedAt: new Date().toISOString(),
+                    }
+                    : c,
+            );
             broadcast(next);
             return next;
         });
@@ -320,9 +358,19 @@ export const useExamCatalog = () => {
 
     const updateExam = useCallback((categoryId: string, sectionId: string, examId: string, updates: Partial<Omit<CatalogExam, 'testSlots'>>) => {
         setCatalog(prev => {
-            const next = prev.map(c => c.id === categoryId
-                ? { ...c, sections: c.sections.map(s => s.id === sectionId ? { ...s, exams: s.exams.map(e => e.id === examId ? { ...e, ...updates } : e) } : s), updatedAt: new Date().toISOString() }
-                : c);
+            const next = prev.map(c =>
+                c.id === categoryId
+                    ? {
+                        ...c,
+                        sections: c.sections.map(s =>
+                            s.id === sectionId
+                                ? { ...s, exams: s.exams.map(e => e.id === examId ? { ...e, ...updates } : e) }
+                                : s,
+                        ),
+                        updatedAt: new Date().toISOString(),
+                    }
+                    : c,
+            );
             broadcast(next);
             return next;
         });
@@ -330,9 +378,19 @@ export const useExamCatalog = () => {
 
     const removeExam = useCallback((categoryId: string, sectionId: string, examId: string) => {
         setCatalog(prev => {
-            const next = prev.map(c => c.id === categoryId
-                ? { ...c, sections: c.sections.map(s => s.id === sectionId ? { ...s, exams: s.exams.filter(e => e.id !== examId) } : s), updatedAt: new Date().toISOString() }
-                : c);
+            const next = prev.map(c =>
+                c.id === categoryId
+                    ? {
+                        ...c,
+                        sections: c.sections.map(s =>
+                            s.id === sectionId
+                                ? { ...s, exams: s.exams.filter(e => e.id !== examId) }
+                                : s,
+                        ),
+                        updatedAt: new Date().toISOString(),
+                    }
+                    : c,
+            );
             broadcast(next);
             return next;
         });
@@ -340,50 +398,98 @@ export const useExamCatalog = () => {
 
     // ── Test CRUD ──────────────────────────────────────────────────────────────
 
-    const addTest = useCallback((categoryId: string, sectionId: string, examId: string, slotKey: string, test: Omit<CatalogTestItem, 'createdAt'>) => {
+    const addTest = useCallback((
+        categoryId: string, sectionId: string, examId: string,
+        slotKey: string, test: Omit<CatalogTestItem, 'createdAt'>,
+    ) => {
         const now = new Date().toISOString();
         setCatalog(prev => {
-            const next = prev.map(c => c.id === categoryId
-                ? {
+            const next = prev.map(c =>
+                c.id !== categoryId ? c : {
                     ...c,
-                    sections: c.sections.map(s => s.id === sectionId
-                        ? { ...s, exams: s.exams.map(e => e.id === examId ? { ...e, testSlots: e.testSlots.map(slot => slot.key === slotKey ? { ...slot, tests: [...slot.tests, { ...test, createdAt: now }] } : slot) } : e) }
-                        : s),
+                    sections: c.sections.map(s =>
+                        s.id !== sectionId ? s : {
+                            ...s,
+                            exams: s.exams.map(e =>
+                                e.id !== examId ? e : {
+                                    ...e,
+                                    testSlots: e.testSlots.map(slot =>
+                                        slot.key !== slotKey ? slot : {
+                                            ...slot,
+                                            tests: [...slot.tests, { ...test, createdAt: now }],
+                                        },
+                                    ),
+                                },
+                            ),
+                        },
+                    ),
                     updatedAt: now,
-                }
-                : c);
+                },
+            );
             broadcast(next);
             return next;
         });
     }, [broadcast]);
 
-    const updateTest = useCallback((categoryId: string, sectionId: string, examId: string, slotKey: string, testId: string, updates: Partial<CatalogTestItem>) => {
+    const updateTest = useCallback((
+        categoryId: string, sectionId: string, examId: string,
+        slotKey: string, testId: string, updates: Partial<CatalogTestItem>,
+    ) => {
         setCatalog(prev => {
-            const next = prev.map(c => c.id === categoryId
-                ? {
+            const next = prev.map(c =>
+                c.id !== categoryId ? c : {
                     ...c,
-                    sections: c.sections.map(s => s.id === sectionId
-                        ? { ...s, exams: s.exams.map(e => e.id === examId ? { ...e, testSlots: e.testSlots.map(slot => slot.key === slotKey ? { ...slot, tests: slot.tests.map(t => t.id === testId ? { ...t, ...updates } : t) } : slot) } : e) }
-                        : s),
+                    sections: c.sections.map(s =>
+                        s.id !== sectionId ? s : {
+                            ...s,
+                            exams: s.exams.map(e =>
+                                e.id !== examId ? e : {
+                                    ...e,
+                                    testSlots: e.testSlots.map(slot =>
+                                        slot.key !== slotKey ? slot : {
+                                            ...slot,
+                                            tests: slot.tests.map(t => t.id !== testId ? t : { ...t, ...updates }),
+                                        },
+                                    ),
+                                },
+                            ),
+                        },
+                    ),
                     updatedAt: new Date().toISOString(),
-                }
-                : c);
+                },
+            );
             broadcast(next);
             return next;
         });
     }, [broadcast]);
 
-    const deleteTest = useCallback((categoryId: string, sectionId: string, examId: string, slotKey: string, testId: string) => {
+    const deleteTest = useCallback((
+        categoryId: string, sectionId: string, examId: string,
+        slotKey: string, testId: string,
+    ) => {
         setCatalog(prev => {
-            const next = prev.map(c => c.id === categoryId
-                ? {
+            const next = prev.map(c =>
+                c.id !== categoryId ? c : {
                     ...c,
-                    sections: c.sections.map(s => s.id === sectionId
-                        ? { ...s, exams: s.exams.map(e => e.id === examId ? { ...e, testSlots: e.testSlots.map(slot => slot.key === slotKey ? { ...slot, tests: slot.tests.filter(t => t.id !== testId) } : slot) } : e) }
-                        : s),
+                    sections: c.sections.map(s =>
+                        s.id !== sectionId ? s : {
+                            ...s,
+                            exams: s.exams.map(e =>
+                                e.id !== examId ? e : {
+                                    ...e,
+                                    testSlots: e.testSlots.map(slot =>
+                                        slot.key !== slotKey ? slot : {
+                                            ...slot,
+                                            tests: slot.tests.filter(t => t.id !== testId),
+                                        },
+                                    ),
+                                },
+                            ),
+                        },
+                    ),
                     updatedAt: new Date().toISOString(),
-                }
-                : c);
+                },
+            );
             broadcast(next);
             return next;
         });
@@ -395,16 +501,16 @@ export const useExamCatalog = () => {
         broadcast(seeded);
     }, [broadcast]);
 
-    const findExam = useCallback((categoryId: string, sectionId: string, examId: string): CatalogExam | undefined => {
-        return catalog
+    const findExam = useCallback((categoryId: string, sectionId: string, examId: string): CatalogExam | undefined =>
+        catalog
             .find(c => c.id === categoryId)
             ?.sections.find(s => s.id === sectionId)
-            ?.exams.find(e => e.id === examId);
-    }, [catalog]);
+            ?.exams.find(e => e.id === examId),
+        [catalog]);
 
     return {
         catalog, loading,
-        addCategory: addCategory2, updateCategory, deleteCategory, toggleCategoryVisibility,
+        addCategory, updateCategory, deleteCategory, toggleCategoryVisibility,
         addSection, updateSection, deleteSection,
         addExam, updateExam, removeExam,
         addTest, updateTest, deleteTest,

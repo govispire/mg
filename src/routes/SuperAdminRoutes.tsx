@@ -12,6 +12,7 @@ import AIBlogCreator from '@/pages/superadmin/AIBlogCreator';
 import BlogManager from '@/pages/superadmin/BlogManager';
 import TestCatalogManager from '@/pages/superadmin/TestCatalogManager';
 import SuperAdminExamManager from '@/pages/superadmin/SuperAdminExamManager';
+import QuestionManager from '@/pages/superadmin/QuestionManager';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import NotFound from '@/pages/NotFound';
 
@@ -30,6 +31,7 @@ const SuperAdminRoutes = () => {
           <Route path="/manage-blogs" element={<BlogManager />} />
           <Route path="/test-catalog" element={<TestCatalogManager />} />
           <Route path="/test-catalog/:categoryId/:sectionId/:examId" element={<SuperAdminExamManager />} />
+          <Route path="/test-catalog/:categoryId/:sectionId/:examId/:slotKey/:testId/questions" element={<QuestionManager />} />
           <Route path="*" element={<NotFound />} />
         </Route>
       </Route>

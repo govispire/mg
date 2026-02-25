@@ -19,7 +19,7 @@ import { useToast } from '@/hooks/use-toast';
 import {
     ArrowLeft, Plus, Pencil, Trash2, Eye, EyeOff,
     Clock, Target, BarChart2, Star, BookOpen, Zap, Radio, Trophy,
-    Grid3X3, List, CheckCircle, Play,
+    Grid3X3, List, CheckCircle, Play, Upload,
 } from 'lucide-react';
 import {
     useExamCatalog,
@@ -51,10 +51,11 @@ interface TestCardProps {
     onEdit: () => void;
     onDelete: () => void;
     onToggle: () => void;
+    onUploadQuestions: () => void;
     viewMode: 'grid' | 'list';
 }
 
-const TestCard: React.FC<TestCardProps> = ({ test, index, onEdit, onDelete, onToggle, viewMode }) => {
+const TestCard: React.FC<TestCardProps> = ({ test, index, onEdit, onDelete, onToggle, onUploadQuestions, viewMode }) => {
     if (viewMode === 'list') {
         return (
             <div className={cn(
@@ -75,6 +76,9 @@ const TestCard: React.FC<TestCardProps> = ({ test, index, onEdit, onDelete, onTo
                     </div>
                 </div>
                 <div className="flex gap-1 shrink-0">
+                    <Button variant="outline" size="sm" className="h-7 text-xs gap-1 text-primary border-primary/40" onClick={onUploadQuestions}>
+                        <Upload className="h-3 w-3" /> Questions
+                    </Button>
                     <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={onToggle}>
                         {test.isVisible ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
                     </Button>
@@ -153,13 +157,24 @@ const TestCard: React.FC<TestCardProps> = ({ test, index, onEdit, onDelete, onTo
                 <Progress value={0} className="h-1.5" />
             </div>
 
-            <Button
-                variant="outline"
-                size="sm"
-                className="w-full h-7 text-xs gap-1 text-primary border-primary/40 hover:bg-primary/5"
-            >
-                <Play className="h-3 w-3" /> Start Test (Preview)
-            </Button>
+            {/* Action buttons */}
+            <div className="flex gap-2">
+                <Button
+                    variant="default"
+                    size="sm"
+                    className="flex-1 h-8 text-xs gap-1"
+                    onClick={onUploadQuestions}
+                >
+                    <Upload className="h-3 w-3" /> Upload Questions
+                </Button>
+                <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 text-xs gap-1 text-primary border-primary/40 hover:bg-primary/5"
+                >
+                    <Play className="h-3 w-3" /> Preview
+                </Button>
+            </div>
         </div>
     );
 };
@@ -410,6 +425,7 @@ const SuperAdminExamManager: React.FC = () => {
                                 onEdit={() => openEditTest(slotK, test)}
                                 onDelete={() => handleDeleteTest(slotK, test.id, test.name)}
                                 onToggle={() => handleToggleTest(slotK, test)}
+                                onUploadQuestions={() => navigate(`/super-admin/test-catalog/${categoryId}/${sectionId}/${examId}/${slotK}/${test.id}/questions`)}
                             />
                         ))}
                     </div>
@@ -424,6 +440,7 @@ const SuperAdminExamManager: React.FC = () => {
                                 onEdit={() => openEditTest(slotK, test)}
                                 onDelete={() => handleDeleteTest(slotK, test.id, test.name)}
                                 onToggle={() => handleToggleTest(slotK, test)}
+                                onUploadQuestions={() => navigate(`/super-admin/test-catalog/${categoryId}/${sectionId}/${examId}/${slotK}/${test.id}/questions`)}
                             />
                         ))}
                     </div>
