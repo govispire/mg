@@ -5,17 +5,60 @@ import {
     QuestionState,
     QuestionStatus,
     ExamConfig,
-    ExamQuestion
 } from '@/types/exam';
 
+// ─────────────────────────────────────────────────────────────────────────────
+// COMPUTED STATUS — never store status directly; always derive it from flags.
+// This is the single source of truth for palette colours.
+// ─────────────────────────────────────────────────────────────────────────────
+export function getStatus(q: QuestionState): QuestionStatus {
+    if (!q.isVisited) return QuestionStatus.NOT_VISITED;
+    if (q.markedForReview && q.isSaved && q.selectedAnswer)
+        return QuestionStatus.ANSWERED_AND_MARKED;
+    if (q.markedForReview)
+        return QuestionStatus.MARKED_FOR_REVIEW;
+    if (q.isSaved && q.selectedAnswer)
+        return QuestionStatus.ANSWERED;
+    return QuestionStatus.NOT_ANSWERED;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Build a pristine question state for all questions in an exam config
+// ─────────────────────────────────────────────────────────────────────────────
+function buildFreshStates(examConfig: ExamConfig): Record<string, QuestionState> {
+    const states: Record<string, QuestionState> = {};
+    examConfig.sections.forEach(section => {
+        section.questions.forEach(q => {
+            states[q.id] = {
+                questionId: q.id,
+                // ← always start NOT_VISITED; isVisited/isSaved drive getStatus()
+                status: QuestionStatus.NOT_VISITED,
+                isVisited: false,
+                isSaved: false,
+                selectedAnswer: null,
+                markedForReview: false,
+                timeTaken: 0,
+            };
+        });
+    });
+    return states;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Hook
+// ─────────────────────────────────────────────────────────────────────────────
 export function useExamSession(examConfig: ExamConfig) {
+
+    // All question IDs expected by this config
+    const allQuestionIds = examConfig.sections.flatMap(s => s.questions.map(q => q.id));
+
     const [sessionState, setSessionState] = useLocalStorage<ExamSessionState>(
         `exam-session-${examConfig.id}`,
         {
             examId: examConfig.id,
             currentQuestionIndex: 0,
             currentSectionIndex: 0,
-            questionStates: {},
+            questionStates: buildFreshStates(examConfig),
             startTime: Date.now(),
             endTime: Date.now() + examConfig.totalDuration * 60 * 1000,
             remainingTime: examConfig.totalDuration * 60,
@@ -25,73 +68,93 @@ export function useExamSession(examConfig: ExamConfig) {
         }
     );
 
-    // Initialize question states if empty
+    // ── Stale-session detection (runs once per examId change) ──────────────
     useEffect(() => {
-        if (Object.keys(sessionState.questionStates).length === 0) {
-            const initialStates: Record<string, QuestionState> = {};
-            examConfig.sections.forEach(section => {
-                section.questions.forEach(question => {
-                    initialStates[question.id] = {
-                        questionId: question.id,
-                        status: QuestionStatus.NOT_VISITED,
-                        selectedAnswer: null,
-                        markedForReview: false,
-                        timeTaken: 0,
-                    };
-                });
-            });
-            setSessionState(prev => ({ ...prev, questionStates: initialStates }));
-        }
-    }, [examConfig, sessionState.questionStates, setSessionState]);
+        const storedIds = Object.keys(sessionState.questionStates ?? {});
+        const isStale =
+            sessionState.examId !== examConfig.id ||
+            storedIds.length !== allQuestionIds.length ||
+            allQuestionIds.some(id => !sessionState.questionStates[id]);
 
-    // Get all questions across all sections
+        if (isStale) {
+            setSessionState({
+                examId: examConfig.id,
+                currentQuestionIndex: 0,
+                currentSectionIndex: 0,
+                questionStates: buildFreshStates(examConfig),
+                startTime: Date.now(),
+                endTime: Date.now() + examConfig.totalDuration * 60 * 1000,
+                remainingTime: examConfig.totalDuration * 60,
+                language: 'English',
+                isSubmitted: false,
+                isPaused: false,
+            });
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [examConfig.id]);
+
+    // Computed helpers
     const allQuestions = examConfig.sections.flatMap(s => s.questions);
     const currentQuestion = allQuestions[sessionState.currentQuestionIndex];
     const currentSection = examConfig.sections[sessionState.currentSectionIndex];
 
-    // Navigation functions
+    // ── Single update helper — ensures atomic state update ─────────────────
+    // Always use this instead of multiple setSessionState calls.
+    const updateState = useCallback(
+        (updater: (prev: ExamSessionState) => ExamSessionState) => {
+            setSessionState(updater);
+        },
+        [setSessionState]
+    );
+
+    // ── Navigate to question ───────────────────────────────────────────────
+    // Sets isVisited=true on the destination question (first visit).
+    // Does NOT change current question's state.
     const navigateToQuestion = useCallback((index: number) => {
-        if (index >= 0 && index < allQuestions.length) {
-            // Mark current question as visited
-            const question = allQuestions[index];
-            setSessionState(prev => {
-                const currentState = prev.questionStates[question.id];
-                if (currentState.status === QuestionStatus.NOT_VISITED) {
-                    return {
-                        ...prev,
-                        currentQuestionIndex: index,
-                        questionStates: {
-                            ...prev.questionStates,
-                            [question.id]: {
-                                ...currentState,
-                                status: QuestionStatus.NOT_ANSWERED,
-                                visitedAt: Date.now(),
-                            },
-                        },
-                    };
-                }
-                return {
-                    ...prev,
-                    currentQuestionIndex: index,
-                };
-            });
+        if (index < 0 || index >= allQuestions.length) return;
+        const destQuestion = allQuestions[index];
+
+        // Determine which section this index belongs to
+        let sectionIndex = 0;
+        let count = 0;
+        for (let i = 0; i < examConfig.sections.length; i++) {
+            count += examConfig.sections[i].questions.length;
+            if (index < count) { sectionIndex = i; break; }
         }
-    }, [allQuestions, setSessionState]);
+
+        updateState(prev => {
+            const qs = prev.questionStates;
+            const dest = qs[destQuestion.id];
+            if (!dest) return prev;
+
+            const visitedDest: QuestionState = dest.isVisited
+                ? dest
+                : { ...dest, isVisited: true };
+            // Recompute status from flags
+            const updatedDest: QuestionState = {
+                ...visitedDest,
+                status: getStatus(visitedDest),
+            };
+
+            return {
+                ...prev,
+                currentQuestionIndex: index,
+                currentSectionIndex: sectionIndex,
+                questionStates: dest.isVisited
+                    ? { ...qs }      // no change if already visited
+                    : { ...qs, [destQuestion.id]: updatedDest },
+            };
+        });
+    }, [allQuestions, examConfig.sections, updateState]);
 
     const navigateToSection = useCallback((sectionIndex: number) => {
-        if (sectionIndex >= 0 && sectionIndex < examConfig.sections.length) {
-            // Find first question of that section
-            let questionIndex = 0;
-            for (let i = 0; i < sectionIndex; i++) {
-                questionIndex += examConfig.sections[i].questions.length;
-            }
-            setSessionState(prev => ({
-                ...prev,
-                currentSectionIndex: sectionIndex,
-            }));
-            navigateToQuestion(questionIndex);
+        if (sectionIndex < 0 || sectionIndex >= examConfig.sections.length) return;
+        let startIdx = 0;
+        for (let i = 0; i < sectionIndex; i++) {
+            startIdx += examConfig.sections[i].questions.length;
         }
-    }, [examConfig.sections, navigateToQuestion, setSessionState]);
+        navigateToQuestion(startIdx);
+    }, [examConfig.sections, navigateToQuestion]);
 
     const goToNext = useCallback(() => {
         navigateToQuestion(sessionState.currentQuestionIndex + 1);
@@ -101,164 +164,188 @@ export function useExamSession(examConfig: ExamConfig) {
         navigateToQuestion(sessionState.currentQuestionIndex - 1);
     }, [sessionState.currentQuestionIndex, navigateToQuestion]);
 
-    // Answer functions
+    // ── Save answer — marks isSaved=true, recomputes status ────────────────
     const saveAnswer = useCallback((questionId: string, answer: string | string[]) => {
-        setSessionState(prev => {
-            const currentState = prev.questionStates[questionId];
-            return {
-                ...prev,
-                questionStates: {
-                    ...prev.questionStates,
-                    [questionId]: {
-                        ...currentState,
-                        selectedAnswer: answer,
-                        status: currentState.markedForReview
-                            ? QuestionStatus.ANSWERED_AND_MARKED
-                            : QuestionStatus.ANSWERED,
-                    },
-                },
+        updateState(prev => {
+            const qs = prev.questionStates;
+            const q = qs[questionId];
+            if (!q) return prev;
+            const updated: QuestionState = {
+                ...q,
+                isVisited: true,
+                isSaved: true,
+                selectedAnswer: answer,
+                markedForReview: q.markedForReview,
             };
+            updated.status = getStatus(updated);
+            return { ...prev, questionStates: { ...qs, [questionId]: updated } };
         });
-    }, [setSessionState]);
+    }, [updateState]);
 
-    const markForReview = useCallback((questionId: string) => {
-        setSessionState(prev => {
-            const currentState = prev.questionStates[questionId];
-            const isMarked = !currentState.markedForReview;
-            let newStatus = currentState.status;
+    // ── Save answer & navigate in ONE atomic update ─────────────────────────
+    // This is the key: we do BOTH the save AND the navigate in a single
+    // setSessionState call so there's no race condition between two batched calls.
+    const saveAndNavigate = useCallback((
+        questionId: string,
+        answer: string | string[] | null,
+        markForReviewFlag: boolean,
+        nextIndex: number
+    ) => {
+        updateState(prev => {
+            const qs = { ...prev.questionStates };
 
-            if (isMarked) {
-                newStatus = currentState.selectedAnswer
-                    ? QuestionStatus.ANSWERED_AND_MARKED
-                    : QuestionStatus.MARKED_FOR_REVIEW;
-            } else {
-                newStatus = currentState.selectedAnswer
-                    ? QuestionStatus.ANSWERED
-                    : QuestionStatus.NOT_ANSWERED;
+            // 1. Update current question state
+            const currentQ = qs[questionId];
+            if (currentQ) {
+                const updated: QuestionState = {
+                    ...currentQ,
+                    isVisited: true,
+                    isSaved: answer !== null,
+                    selectedAnswer: answer,
+                    markedForReview: markForReviewFlag,
+                };
+                updated.status = getStatus(updated);
+                qs[questionId] = updated;
+            }
+
+            // 2. Mark destination question as visited (if valid and not visited)
+            let newSectionIndex = prev.currentSectionIndex;
+            if (nextIndex >= 0 && nextIndex < allQuestions.length) {
+                const destQ = allQuestions[nextIndex];
+                const dest = qs[destQ.id];
+                if (dest && !dest.isVisited) {
+                    const visitedDest: QuestionState = { ...dest, isVisited: true };
+                    visitedDest.status = getStatus(visitedDest);
+                    qs[destQ.id] = visitedDest;
+                }
+                // Compute new section index
+                let count = 0;
+                for (let i = 0; i < examConfig.sections.length; i++) {
+                    count += examConfig.sections[i].questions.length;
+                    if (nextIndex < count) { newSectionIndex = i; break; }
+                }
             }
 
             return {
                 ...prev,
-                questionStates: {
-                    ...prev.questionStates,
-                    [questionId]: {
-                        ...currentState,
-                        markedForReview: isMarked,
-                        status: newStatus,
-                    },
-                },
+                currentQuestionIndex: nextIndex >= 0 && nextIndex < allQuestions.length
+                    ? nextIndex
+                    : prev.currentQuestionIndex,
+                currentSectionIndex: newSectionIndex,
+                questionStates: qs,
             };
         });
-    }, [setSessionState]);
+    }, [allQuestions, examConfig.sections, updateState]);
 
+    // ── Clear response ─────────────────────────────────────────────────────
     const clearResponse = useCallback((questionId: string) => {
-        setSessionState(prev => {
-            const currentState = prev.questionStates[questionId];
-            return {
-                ...prev,
-                questionStates: {
-                    ...prev.questionStates,
-                    [questionId]: {
-                        ...currentState,
-                        selectedAnswer: null,
-                        status: currentState.markedForReview
-                            ? QuestionStatus.MARKED_FOR_REVIEW
-                            : QuestionStatus.NOT_ANSWERED,
-                    },
-                },
+        updateState(prev => {
+            const qs = prev.questionStates;
+            const q = qs[questionId];
+            if (!q) return prev;
+            const updated: QuestionState = {
+                ...q,
+                isVisited: true,
+                isSaved: false,
+                selectedAnswer: null,
             };
+            updated.status = getStatus(updated);
+            return { ...prev, questionStates: { ...qs, [questionId]: updated } };
         });
-    }, [setSessionState]);
+    }, [updateState]);
 
-    const saveAndNext = useCallback(() => {
-        if (currentQuestion && sessionState.questionStates[currentQuestion.id]?.selectedAnswer) {
-            goToNext();
-        }
-    }, [currentQuestion, sessionState.questionStates, goToNext]);
+    // ── Mark for review ───────────────────────────────────────────────────
+    const markForReview = useCallback((questionId: string) => {
+        updateState(prev => {
+            const qs = prev.questionStates;
+            const q = qs[questionId];
+            if (!q) return prev;
+            const updated: QuestionState = {
+                ...q,
+                isVisited: true,
+                markedForReview: !q.markedForReview,
+            };
+            updated.status = getStatus(updated);
+            return { ...prev, questionStates: { ...qs, [questionId]: updated } };
+        });
+    }, [updateState]);
 
-    const markAndNext = useCallback(() => {
-        if (currentQuestion) {
-            markForReview(currentQuestion.id);
-            goToNext();
-        }
-    }, [currentQuestion, markForReview, goToNext]);
+    // ── Mark & navigate atomically ─────────────────────────────────────────
+    const markAndNavigate = useCallback((
+        questionId: string,
+        answer: string | string[] | null,
+        nextIndex: number
+    ) => {
+        saveAndNavigate(questionId, answer, true, nextIndex);
+    }, [saveAndNavigate]);
 
-    // Submit exam
-    const submitExam = useCallback(() => {
-        setSessionState(prev => ({
-            ...prev,
-            isSubmitted: true,
-            endTime: Date.now(),
-        }));
-    }, [setSessionState]);
-
-    // Change language
-    const setLanguage = useCallback((lang: 'English' | 'Hindi') => {
-        setSessionState(prev => ({ ...prev, language: lang }));
-    }, [setSessionState]);
-
-    // Get statistics
+    // ── Palette stats ──────────────────────────────────────────────────────
     const getStats = useCallback(() => {
         const states = Object.values(sessionState.questionStates);
         return {
+            answered: states.filter(q => getStatus(q) === QuestionStatus.ANSWERED).length,
+            notAnswered: states.filter(q => getStatus(q) === QuestionStatus.NOT_ANSWERED).length,
+            notVisited: states.filter(q => getStatus(q) === QuestionStatus.NOT_VISITED).length,
+            markedForReview: states.filter(q => getStatus(q) === QuestionStatus.MARKED_FOR_REVIEW).length,
+            answeredAndMarked: states.filter(q => getStatus(q) === QuestionStatus.ANSWERED_AND_MARKED).length,
             total: states.length,
-            answered: states.filter(s => s.status === QuestionStatus.ANSWERED || s.status === QuestionStatus.ANSWERED_AND_MARKED).length,
-            notAnswered: states.filter(s => s.status === QuestionStatus.NOT_ANSWERED).length,
-            notVisited: states.filter(s => s.status === QuestionStatus.NOT_VISITED).length,
-            markedForReview: states.filter(s => s.markedForReview).length,
         };
     }, [sessionState.questionStates]);
 
-    // Reset session
-    const resetSession = useCallback(() => {
-        const initialStates: Record<string, QuestionState> = {};
-        examConfig.sections.forEach(section => {
-            section.questions.forEach(question => {
-                initialStates[question.id] = {
-                    questionId: question.id,
-                    status: QuestionStatus.NOT_VISITED,
-                    selectedAnswer: null,
-                    markedForReview: false,
-                    timeTaken: 0,
-                };
-            });
-        });
+    // ── Pause / Resume ────────────────────────────────────────────────────
+    const pauseExam = useCallback((remainingSeconds: number) => {
+        updateState(prev => ({ ...prev, isPaused: true, remainingTime: remainingSeconds }));
+    }, [updateState]);
 
-        setSessionState({
-            examId: examConfig.id,
-            currentQuestionIndex: 0,
-            currentSectionIndex: 0,
-            questionStates: initialStates,
-            startTime: Date.now(),
-            endTime: Date.now() + examConfig.totalDuration * 60 * 1000,
-            remainingTime: examConfig.totalDuration * 60,
-            language: 'English',
-            isSubmitted: false,
-            isPaused: false,
+    const resumeExam = useCallback(() => {
+        updateState(prev => ({ ...prev, isPaused: false }));
+    }, [updateState]);
+
+    // ── Submit ────────────────────────────────────────────────────────────
+    const submitExam = useCallback(() => {
+        const responses: Record<string, string | string[] | null> = {};
+        Object.entries(sessionState.questionStates).forEach(([qId, qs]) => {
+            responses[qId] = qs.selectedAnswer;
         });
-    }, [examConfig, setSessionState]);
+        return responses;
+    }, [sessionState.questionStates]);
+
+    // ── Language ──────────────────────────────────────────────────────────
+    const setLanguage = useCallback((lang: 'English' | 'Hindi') => {
+        updateState(prev => ({ ...prev, language: lang }));
+    }, [updateState]);
+
+    // ── Palette question states (re-computes status via getStatus) ─────────
+    const questionStatesWithComputedStatus = useCallback(() => {
+        const out: Record<string, QuestionState> = {};
+        for (const [id, qs] of Object.entries(sessionState.questionStates)) {
+            out[id] = { ...qs, status: getStatus(qs) };
+        }
+        return out;
+    }, [sessionState.questionStates]);
 
     return {
-        sessionState,
+        sessionState: {
+            ...sessionState,
+            // Always expose computed statuses for palette rendering
+            questionStates: questionStatesWithComputedStatus(),
+        },
         currentQuestion,
         currentSection,
         allQuestions,
-        // Navigation
         navigateToQuestion,
         navigateToSection,
         goToNext,
         goToPrevious,
-        // Answer actions
         saveAnswer,
+        saveAndNavigate,          // ← atomic save+navigate (USE THIS in ExamInterface)
+        markAndNavigate,          // ← atomic mark+navigate
         markForReview,
         clearResponse,
-        saveAndNext,
-        markAndNext,
-        // Exam actions
+        pauseExam,
+        resumeExam,
         submitExam,
         setLanguage,
-        resetSession,
-        // Stats
         getStats,
     };
 }

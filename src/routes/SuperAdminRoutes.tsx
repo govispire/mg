@@ -13,6 +13,9 @@ import BlogManager from '@/pages/superadmin/BlogManager';
 import TestCatalogManager from '@/pages/superadmin/TestCatalogManager';
 import SuperAdminExamManager from '@/pages/superadmin/SuperAdminExamManager';
 import QuestionManager from '@/pages/superadmin/QuestionManager';
+import EmployeeApprovalQueue from '@/pages/superadmin/EmployeeApprovalQueue';
+import EmployeeManager from '@/pages/superadmin/EmployeeManager';
+import SuperAdminVocabulary from '@/pages/superadmin/SuperAdminVocabulary';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import NotFound from '@/pages/NotFound';
 
@@ -32,6 +35,10 @@ const SuperAdminRoutes = () => {
           <Route path="/test-catalog" element={<TestCatalogManager />} />
           <Route path="/test-catalog/:categoryId/:sectionId/:examId" element={<SuperAdminExamManager />} />
           <Route path="/test-catalog/:categoryId/:sectionId/:examId/:slotKey/:testId/questions" element={<QuestionManager />} />
+          {/* ── New Phase 2 & 3 Routes ── */}
+          <Route path="/approval-queue" element={<EmployeeApprovalQueue />} />
+          <Route path="/employee-manager" element={<EmployeeManager />} />
+          <Route path="/vocabulary" element={<SuperAdminVocabulary />} />
           <Route path="*" element={<NotFound />} />
         </Route>
       </Route>

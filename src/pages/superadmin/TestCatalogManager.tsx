@@ -237,6 +237,20 @@ const TestCatalogManager: React.FC = () => {
         onConfirm: () => void;
     } | null>(null);
 
+    // ── Hide confirmation ─────────────────────────────────────────────────────
+    const [hideTarget, setHideTarget] = useState<{
+        label: string;
+        isCurrentlyVisible: boolean;
+        onConfirm: () => void;
+    } | null>(null);
+
+    // ── Edit confirmation ─────────────────────────────────────────────────────
+    const [editConfirmTarget, setEditConfirmTarget] = useState<{
+        label: string;
+        type: 'category' | 'section' | 'exam';
+        onConfirm: () => void;
+    } | null>(null);
+
     // ── Reset confirmation ────────────────────────────────────────────────────
     const [resetDialogOpen, setResetDialogOpen] = useState(false);
 
@@ -281,10 +295,10 @@ const TestCatalogManager: React.FC = () => {
 
         if (editingCatId) {
             updateCategory(editingCatId, { ...catForm });
-            toast({ title: 'Category updated', description: catForm.name });
+            toast({ title: '✅ Category updated', description: catForm.name });
         } else {
             addCategory({ ...catForm, id });
-            toast({ title: 'Category created', description: catForm.name });
+            toast({ title: '✅ Category created!', description: `"${catForm.name}" has been added to the catalog.` });
         }
         setCatDialogOpen(false);
     };
@@ -483,8 +497,15 @@ const TestCatalogManager: React.FC = () => {
                                             <Button
                                                 variant="ghost"
                                                 size="sm"
-                                                className="h-8 w-8 p-0 text-muted-foreground hover:text-primary"
-                                                onClick={() => toggleCategoryVisibility(cat.id)}
+                                                className="h-8 w-8 p-0 text-muted-foreground hover:text-amber-600"
+                                                onClick={() => setHideTarget({
+                                                    label: cat.name,
+                                                    isCurrentlyVisible: cat.isVisible,
+                                                    onConfirm: () => {
+                                                        toggleCategoryVisibility(cat.id);
+                                                        toast({ title: cat.isVisible ? `"${cat.name}" hidden from students` : `"${cat.name}" shown to students` });
+                                                    },
+                                                })}
                                                 title={cat.isVisible ? 'Hide from students' : 'Show to students'}
                                             >
                                                 {cat.isVisible ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
@@ -493,7 +514,11 @@ const TestCatalogManager: React.FC = () => {
                                                 variant="ghost"
                                                 size="sm"
                                                 className="h-8 w-8 p-0 text-muted-foreground hover:text-primary"
-                                                onClick={() => openEditCategory(cat)}
+                                                onClick={() => setEditConfirmTarget({
+                                                    label: cat.name,
+                                                    type: 'category',
+                                                    onConfirm: () => openEditCategory(cat),
+                                                })}
                                                 title="Edit category"
                                             >
                                                 <Pencil className="h-4 w-4" />
@@ -897,7 +922,7 @@ const TestCatalogManager: React.FC = () => {
             <AlertDialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Delete {deleteTarget?.type}?</AlertDialogTitle>
+                        <AlertDialogTitle>🗑️ Delete {deleteTarget?.type}?</AlertDialogTitle>
                         <AlertDialogDescription>
                             This will permanently delete <strong>{deleteTarget?.label}</strong>
                             {deleteTarget?.type === 'category' ? ' and all its sections and exams' : ''}.
@@ -914,7 +939,60 @@ const TestCatalogManager: React.FC = () => {
                                 toast({ title: `${deleteTarget?.type} deleted`, variant: 'destructive' });
                             }}
                         >
-                            Delete
+                            Yes, Delete
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            {/* ── Hide/Show Confirmation ─────────────────────────────────────────────── */}
+            <AlertDialog open={!!hideTarget} onOpenChange={(o) => !o && setHideTarget(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>
+                            {hideTarget?.isCurrentlyVisible ? '🙈 Hide from students?' : '👁️ Show to students?'}
+                        </AlertDialogTitle>
+                        <AlertDialogDescription>
+                            {hideTarget?.isCurrentlyVisible
+                                ? <>Are you sure you want to <strong>hide</strong> <strong>"{hideTarget?.label}"</strong> from students? They will no longer see this category until you show it again.</>
+                                : <>Are you sure you want to <strong>show</strong> <strong>"{hideTarget?.label}"</strong> to students? It will become visible in the student portal.</>
+                            }
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                            className={hideTarget?.isCurrentlyVisible ? 'bg-amber-600 hover:bg-amber-700 text-white' : ''}
+                            onClick={() => {
+                                hideTarget?.onConfirm();
+                                setHideTarget(null);
+                            }}
+                        >
+                            {hideTarget?.isCurrentlyVisible ? 'Yes, Hide' : 'Yes, Show'}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            {/* ── Edit Confirmation ──────────────────────────────────────────────────── */}
+            <AlertDialog open={!!editConfirmTarget} onOpenChange={(o) => !o && setEditConfirmTarget(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>✏️ Edit {editConfirmTarget?.type}?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            You are about to edit <strong>"{editConfirmTarget?.label}"</strong>.
+                            Any changes you make will be saved and reflected immediately in the student portal.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={() => {
+                                editConfirmTarget?.onConfirm();
+                                setEditConfirmTarget(null);
+                            }}
+                        >
+                            Yes, Edit
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>

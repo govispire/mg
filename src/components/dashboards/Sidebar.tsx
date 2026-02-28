@@ -149,7 +149,7 @@ const SidebarItem: React.FC<SidebarItemProps> = ({ icon, label, to, active, coll
 };
 
 interface SidebarProps {
-  role: 'student' | 'admin' | 'instructor' | 'employee' | 'super-admin' | 'owner' | 'mentor';
+  role: 'student' | 'instructor' | 'employee' | 'super-admin' | 'owner' | 'mentor';
   basePath: string;
   collapsed: boolean;
 }
@@ -203,6 +203,7 @@ const Sidebar: React.FC<SidebarProps> = ({ role, basePath, collapsed }) => {
           { icon: <Bell size={18} />, label: 'Exam Notifications', to: `${basePath}/exam-notifications` },
           { icon: <Heart size={18} />, label: 'Exam Tracker', to: `${basePath}/self-care` },
           { icon: <FileText size={18} />, label: 'PDF Courses', to: `${basePath}/pdf-courses` },
+          { icon: <BookOpen size={18} />, label: 'Vocabulary', to: `${basePath}/vocabulary`, highlight: true },
         ];
       case 'mentor':
         return [
@@ -224,16 +225,7 @@ const Sidebar: React.FC<SidebarProps> = ({ role, basePath, collapsed }) => {
           { icon: <Upload size={18} />, label: 'Upload Study Materials', to: `${basePath}/upload-materials` },
           { icon: <Eye size={18} />, label: 'Preview Tests', to: `${basePath}/preview-tests` },
           { icon: <CheckCircle size={18} />, label: 'Approvals', to: `${basePath}/approvals` },
-        ];
-      case 'admin':
-        return [
-          { icon: <LayoutDashboard size={18} />, label: 'Dashboard', to: `${basePath}/dashboard` },
-          { icon: <CalendarDays size={18} />, label: 'Calendar', to: `${basePath}/calendar` },
-          { icon: <Users size={18} />, label: 'Manage Employees', to: `${basePath}/manage-employees` },
-          { icon: <Users size={18} />, label: 'Manage Students', to: `${basePath}/manage-students` },
-          { icon: <FileCheck size={18} />, label: 'Create/Edit Tests', to: `${basePath}/edit-tests` },
-          { icon: <Upload size={18} />, label: 'Upload Courses & PDFs', to: `${basePath}/upload-courses` },
-          { icon: <Bell size={18} />, label: 'Push Notifications', to: `${basePath}/notifications` },
+          { icon: <BookOpen size={18} />, label: 'Vocabulary', to: `${basePath}/vocabulary` },
         ];
       case 'super-admin':
         return [
@@ -246,13 +238,14 @@ const Sidebar: React.FC<SidebarProps> = ({ role, basePath, collapsed }) => {
           { icon: <Sparkles size={18} />, label: 'Create AI Blog', to: `${basePath}/create-blog`, highlight: true },
           { icon: <FileEdit size={18} />, label: 'Manage Blogs', to: `${basePath}/manage-blogs` },
           { icon: <GraduationCap size={18} />, label: 'Test Catalog', to: `${basePath}/test-catalog`, highlight: true },
+          { icon: <BookOpen size={18} />, label: 'Vocabulary', to: `${basePath}/vocabulary` },
         ];
       case 'owner':
         return [
           { icon: <LayoutDashboard size={18} />, label: 'Dashboard', to: `${basePath}/dashboard` },
           { icon: <Users size={18} />, label: 'Manage Users', to: `${basePath}/manage-users` },
+          { icon: <BarChart2 size={18} />, label: 'Platform Analytics', to: `${basePath}/analytics`, highlight: true },
           { icon: <FileText size={18} />, label: 'Content Management', to: `${basePath}/content-management` },
-          { icon: <PieChart size={18} />, label: 'Business Analytics', to: `${basePath}/business-analytics` },
           { icon: <CalendarDays size={18} />, label: 'Calendar', to: `${basePath}/calendar` },
           { icon: <Bell size={18} />, label: 'Notifications', to: `${basePath}/notifications` },
           { icon: <CreditCard size={18} />, label: 'Payments & Plans', to: `${basePath}/payments-plans` },

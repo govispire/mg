@@ -10,6 +10,9 @@ import UploadQuestions from '@/pages/employee/UploadQuestions';
 import UploadMaterials from '@/pages/employee/UploadMaterials';
 import PreviewTests from '@/pages/employee/PreviewTests';
 import Approvals from '@/pages/employee/Approvals';
+import CreateBlog from '@/pages/employee/CreateBlog';
+import CreateCurrentAffairs from '@/pages/employee/CreateCurrentAffairs';
+import EmployeeVocabulary from '@/pages/employee/EmployeeVocabulary';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import NotFound from '@/pages/NotFound';
 
@@ -26,6 +29,10 @@ const EmployeeRoutes = () => {
           <Route path="/upload-materials" element={<UploadMaterials />} />
           <Route path="/preview-tests" element={<PreviewTests />} />
           <Route path="/approvals" element={<Approvals />} />
+          {/* ── New Phase 3 Routes ── */}
+          <Route path="/create-blog" element={<CreateBlog />} />
+          <Route path="/create-current-affairs" element={<CreateCurrentAffairs />} />
+          <Route path="/vocabulary" element={<EmployeeVocabulary />} />
           <Route path="*" element={<NotFound />} />
         </Route>
       </Route>

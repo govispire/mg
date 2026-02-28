@@ -620,8 +620,40 @@ export const sampleQuestions: Record<string, QuizQuestion[]> = {
   ]
 };
 
-export const getQuestionsForQuiz = (subject: string, count: number = 15): QuizQuestion[] => {
+
+// Deterministic hash for seeded shuffle (same seed = same order always)
+function seededRandom(seed: string, index: number): number {
+  let h = 0;
+  const str = seed + String(index);
+  for (let i = 0; i < str.length; i++) {
+    h = Math.imul(31, h) + str.charCodeAt(i) | 0;
+  }
+  return ((h >>> 0) / 0xFFFFFFFF);
+}
+
+/**
+ * Returns questions for a quiz.
+ * Pass `seed` (e.g. quizId) to get a STABLE shuffle — same seed always
+ * returns same question order across renders. Without seed → random.
+ */
+export const getQuestionsForQuiz = (
+  subject: string,
+  count: number = 15,
+  seed?: string
+): QuizQuestion[] => {
   const subjectQuestions = sampleQuestions[subject] || sampleQuestions['Quantitative Aptitude'];
-  const shuffled = [...subjectQuestions].sort(() => Math.random() - 0.5);
-  return shuffled.slice(0, Math.min(count, shuffled.length));
+  const arr = [...subjectQuestions];
+
+  if (seed) {
+    // Deterministic Fisher-Yates using seeded random
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(seededRandom(seed, i) * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+  } else {
+    arr.sort(() => Math.random() - 0.5);
+  }
+
+  return arr.slice(0, Math.min(count, arr.length));
 };
+

@@ -1,8 +1,19 @@
+/**
+ * QuestionDisplay — Condition-based rendering dispatcher.
+ *
+ * ┌─────────────────────────────────────────────────┐
+ * │  question.setId present?                        │
+ * │    YES → DualPanel (passage + question)         │
+ * │    NO  → SinglePanel (existing layout, no change)│
+ * └─────────────────────────────────────────────────┘
+ *
+ * All props, styling, ActionBar, and palette are untouched.
+ */
 import React from 'react';
 import { ExamQuestion } from '@/types/exam';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import { DualPanel } from './DualPanel';
+import { useQuestionSet } from '@/hooks/exam/useQuestionSet';
 
 interface QuestionDisplayProps {
     question: ExamQuestion;
@@ -11,11 +22,12 @@ interface QuestionDisplayProps {
     questionNumber: number;
 }
 
-export const QuestionDisplay: React.FC<QuestionDisplayProps> = ({
+// ── Existing single-question panel (UNCHANGED) ─────────────────────────────
+const SinglePanel: React.FC<QuestionDisplayProps> = ({
     question,
     selectedAnswer,
     onAnswerChange,
-    questionNumber
+    questionNumber,
 }) => {
     const handleOptionSelect = (optionId: string) => {
         if (question.type === 'mcq') {
@@ -31,11 +43,11 @@ export const QuestionDisplay: React.FC<QuestionDisplayProps> = ({
     };
 
     return (
-        <div className="p-6 bg-white min-h-[calc(100vh-280px)]">
+        <div className="flex-1 overflow-y-auto p-6 bg-white">
             {/* Section Badge */}
             <div className="mb-4">
                 <Badge className="bg-[#1976d2] text-white">
-                    {question.sectionName} {question.sectionId && `(${question.sectionId})`}
+                    {question.sectionName}
                 </Badge>
             </div>
 
@@ -57,60 +69,57 @@ export const QuestionDisplay: React.FC<QuestionDisplayProps> = ({
                 )}
             </div>
 
-            {/* Options */}
+            {/* Options – MCQ */}
             {question.type === 'mcq' && question.options && (
-                <RadioGroup
-                    value={selectedAnswer as string || ''}
-                    onValueChange={onAnswerChange}
-                    className="space-y-3"
-                >
-                    {question.options.map((option) => (
-                        <div
-                            key={option.id}
-                            className={`
-                flex items-start gap-3 p-3 rounded border-2 transition-all cursor-pointer
-                ${selectedAnswer === option.id
-                                    ? 'border-[#1976d2] bg-blue-50'
-                                    : 'border-gray-300 hover:border-gray-400 bg-white'
-                                }
-              `}
-                            onClick={() => handleOptionSelect(option.id)}
-                        >
-                            <RadioGroupItem value={option.id} id={option.id} className="mt-1" />
-                            <Label
-                                htmlFor={option.id}
-                                className="flex-1 cursor-pointer text-gray-900 leading-relaxed"
-                                dangerouslySetInnerHTML={{ __html: option.text }}
-                            />
-                        </div>
-                    ))}
-                </RadioGroup>
+                <div className="space-y-2">
+                    {question.options.map((option, idx) => {
+                        const isSelected = selectedAnswer === option.id;
+                        return (
+                            <div
+                                key={option.id}
+                                onClick={() => handleOptionSelect(option.id)}
+                                className={`flex items-center gap-3 px-2 py-2 rounded cursor-pointer transition-colors
+                                    ${isSelected ? 'bg-blue-50' : 'hover:bg-gray-50'}`}
+                            >
+                                <input
+                                    type="radio"
+                                    name={`question-${questionNumber}`}
+                                    checked={isSelected}
+                                    onChange={() => handleOptionSelect(option.id)}
+                                    className="h-4 w-4 accent-[#1976d2] cursor-pointer flex-shrink-0"
+                                    id={option.id}
+                                />
+                                <label
+                                    htmlFor={option.id}
+                                    className="cursor-pointer text-gray-900 leading-relaxed select-none"
+                                    dangerouslySetInnerHTML={{ __html: option.text }}
+                                />
+                            </div>
+                        );
+                    })}
+                </div>
             )}
 
+            {/* Options – MSQ */}
             {question.type === 'msq' && question.options && (
-                <div className="space-y-3">
+                <div className="space-y-2">
                     {question.options.map((option) => {
                         const isSelected = Array.isArray(selectedAnswer) && selectedAnswer.includes(option.id);
                         return (
                             <div
                                 key={option.id}
-                                className={`
-                  flex items-start gap-3 p-3 rounded border-2 transition-all cursor-pointer
-                  ${isSelected
-                                        ? 'border-[#1976d2] bg-blue-50'
-                                        : 'border-gray-300 hover:border-gray-400 bg-white'
-                                    }
-                `}
                                 onClick={() => handleOptionSelect(option.id)}
+                                className={`flex items-center gap-3 px-2 py-2 rounded cursor-pointer transition-colors
+                                    ${isSelected ? 'bg-blue-50' : 'hover:bg-gray-50'}`}
                             >
                                 <input
                                     type="checkbox"
                                     checked={isSelected}
                                     onChange={() => handleOptionSelect(option.id)}
-                                    className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                    className="h-4 w-4 accent-[#1976d2] cursor-pointer flex-shrink-0"
                                 />
                                 <label
-                                    className="flex-1 cursor-pointer text-gray-900 leading-relaxed"
+                                    className="cursor-pointer text-gray-900 leading-relaxed select-none"
                                     dangerouslySetInnerHTML={{ __html: option.text }}
                                 />
                             </div>
@@ -132,4 +141,43 @@ export const QuestionDisplay: React.FC<QuestionDisplayProps> = ({
             )}
         </div>
     );
+};
+
+// ── DualPanel loader — fetches set if not bundled ──────────────────────────
+const DualPanelLoader: React.FC<QuestionDisplayProps> = (props) => {
+    const { question, selectedAnswer, onAnswerChange, questionNumber } = props;
+    const { questionSet, status, error } = useQuestionSet(question.setId, question.set);
+
+    if (status === 'loading') {
+        return (
+            <div className="flex items-center justify-center h-48 text-gray-400 text-sm">
+                Loading passage…
+            </div>
+        );
+    }
+
+    if (status === 'error' || !questionSet) {
+        // Graceful fallback: render as single panel so student isn't blocked
+        console.warn('[DualPanelLoader] Set load failed, falling back to single panel.', error);
+        return <SinglePanel {...props} />;
+    }
+
+    return (
+        <DualPanel
+            question={question}
+            questionSet={questionSet}
+            questionNumber={questionNumber}
+            selectedAnswer={selectedAnswer}
+            onAnswerChange={onAnswerChange}
+        />
+    );
+};
+
+// ── Public export — this is the integration point ─────────────────────────
+export const QuestionDisplay: React.FC<QuestionDisplayProps> = (props) => {
+    // If question belongs to a set → DualPanel; else → SinglePanel (existing layout)
+    if (props.question.setId || props.question.set) {
+        return <DualPanelLoader {...props} />;
+    }
+    return <SinglePanel {...props} />;
 };

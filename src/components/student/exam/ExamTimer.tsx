@@ -4,22 +4,29 @@ import { Clock } from 'lucide-react';
 
 interface ExamTimerProps {
     totalDurationInSeconds: number;
+    /** Seconds to start from when resuming (undefined = start from total) */
+    initialRemainingSeconds?: number;
     onTimeUp: () => void;
     onWarning?: (remainingSeconds: number) => void;
     isPaused?: boolean;
+    onTick?: (remaining: number) => void;
 }
 
 export const ExamTimer: React.FC<ExamTimerProps> = ({
     totalDurationInSeconds,
+    initialRemainingSeconds,
     onTimeUp,
     onWarning,
-    isPaused = false
+    isPaused = false,
+    onTick,
 }) => {
-    const { formattedTime, timerColor, remainingSeconds } = useExamTimer({
+    const { formattedTime, timerColor } = useExamTimer({
         totalDurationInSeconds,
+        initialRemainingSeconds,
         onTimeUp,
         onWarning,
-        isPaused
+        isPaused,
+        onTick,
     });
 
     return (

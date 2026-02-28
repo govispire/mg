@@ -61,15 +61,6 @@ const demoAccounts = [
     color: 'bg-purple-500'
   },
   {
-    role: 'admin',
-    email: 'admin@example.com',
-    password: 'password123',
-    name: 'General Admin',
-    description: 'Manage users, content, and system settings',
-    icon: Shield,
-    color: 'bg-orange-500'
-  },
-  {
     role: 'super-admin',
     email: 'superadmin@example.com',
     password: 'password123',
@@ -393,7 +384,6 @@ const AuthModal = ({ activeTab, setActiveTab, selectedExam, onClose, onRegistrat
                   <SelectItem value="student" className="text-base py-3">Student</SelectItem>
                   <SelectItem value="mentor" className="text-base py-3">Mentor</SelectItem>
                   <SelectItem value="employee" className="text-base py-3">Employee</SelectItem>
-                  <SelectItem value="admin" className="text-base py-3">Admin</SelectItem>
                   <SelectItem value="super-admin" className="text-base py-3">Super Admin</SelectItem>
                   <SelectItem value="owner" className="text-base py-3">Owner</SelectItem>
                 </SelectContent>

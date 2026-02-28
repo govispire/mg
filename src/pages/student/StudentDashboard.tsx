@@ -39,6 +39,7 @@ import { ExamStatusSummary } from '@/components/student/dashboard/ExamStatusSumm
 import { StatsOverview } from '@/components/student/dashboard/StatsOverview';
 import { PerformanceGraph } from '@/components/student/dashboard/PerformanceGraph';
 import { NextAction } from '@/components/student/dashboard/NextAction';
+import WordOfTheDayCard from '@/components/student/VocabularyWidget';
 
 interface UserProfile {
   username: string;
@@ -915,6 +916,9 @@ const StudentDashboard = () => {
               </Button>
             )}
           </Card>
+
+          {/* Word of the Day */}
+          <WordOfTheDayCard />
 
           {/* Your Presence */}
           <Card className="p-4 bg-card">

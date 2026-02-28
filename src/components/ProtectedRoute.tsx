@@ -21,8 +21,6 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ allowedRoles }) => {
         return <Navigate to="/student/dashboard" replace />;
       case 'employee':
         return <Navigate to="/employee/dashboard" replace />;
-      case 'admin':
-        return <Navigate to="/admin/dashboard" replace />;
       case 'super-admin':
         return <Navigate to="/super-admin/dashboard" replace />;
       case 'owner':

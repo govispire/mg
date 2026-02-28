@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/ui/use-toast';
 import { EmployeeCategory } from '@/shared/types/employee';
 
-export type UserRole = 'student' | 'employee' | 'admin' | 'super-admin' | 'owner' | 'mentor' | null;
+export type UserRole = 'student' | 'employee' | 'super-admin' | 'owner' | 'mentor' | null;
 
 interface User {
   id: string;
@@ -49,15 +49,6 @@ const DEMO_USERS = [
     role: 'employee' as UserRole,
     examCategory: 'railway',
     state: 'delhi',
-  },
-  {
-    id: '3',
-    name: 'Admin User',
-    email: 'admin@example.com',
-    password: 'password123',
-    role: 'admin' as UserRole,
-    examCategory: 'ssc',
-    state: 'karnataka',
   },
   {
     id: '4',
@@ -147,79 +138,6 @@ const DEMO_USERS = [
     examCategory: 'technical',
     state: 'telangana',
   },
-  // Category-specific admin accounts
-  {
-    id: '13',
-    name: 'Banking Admin',
-    email: 'admin-banking@example.com',
-    password: 'password123',
-    role: 'admin' as UserRole,
-    examCategory: 'banking',
-    state: 'mumbai',
-  },
-  {
-    id: '14',
-    name: 'SSC Admin',
-    email: 'admin-ssc@example.com',
-    password: 'password123',
-    role: 'admin' as UserRole,
-    examCategory: 'ssc',
-    state: 'delhi',
-  },
-  {
-    id: '15',
-    name: 'Railway Admin',
-    email: 'admin-railway@example.com',
-    password: 'password123',
-    role: 'admin' as UserRole,
-    examCategory: 'railway',
-    state: 'kolkata',
-  },
-  {
-    id: '16',
-    name: 'UPSC Admin',
-    email: 'admin-upsc@example.com',
-    password: 'password123',
-    role: 'admin' as UserRole,
-    examCategory: 'upsc',
-    state: 'delhi',
-  },
-  {
-    id: '17',
-    name: 'TNPSC Admin',
-    email: 'admin-tnpsc@example.com',
-    password: 'password123',
-    role: 'admin' as UserRole,
-    examCategory: 'state-psc',
-    state: 'tamil-nadu',
-  },
-  {
-    id: '18',
-    name: 'Defence Admin',
-    email: 'admin-defence@example.com',
-    password: 'password123',
-    role: 'admin' as UserRole,
-    examCategory: 'defence',
-    state: 'delhi',
-  },
-  {
-    id: '19',
-    name: 'Judicial Admin',
-    email: 'admin-judicial@example.com',
-    password: 'password123',
-    role: 'admin' as UserRole,
-    examCategory: 'judicial',
-    state: 'delhi',
-  },
-  {
-    id: '20',
-    name: 'Regulatory Admin',
-    email: 'admin-regulatory@example.com',
-    password: 'password123',
-    role: 'admin' as UserRole,
-    examCategory: 'regulatory',
-    state: 'mumbai',
-  },
 ];
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -268,9 +186,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           break;
         case 'employee':
           navigate('/employee/dashboard');
-          break;
-        case 'admin':
-          navigate('/admin/dashboard');
           break;
         case 'super-admin':
           navigate('/super-admin/dashboard');

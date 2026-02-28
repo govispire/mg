@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { ExamInstructions } from '@/components/student/exam/ExamInstructions';
 import { ExamInterface } from '@/components/student/exam/ExamInterface';
@@ -67,40 +67,40 @@ const ExamWindow = () => {
         }
     }, [mode, quizId]);
 
-    // Get questions
-    const questions = getQuestionsForQuiz(subject, questionCount);
-
-    // Convert to exam format
-    const examConfig: ExamConfig = {
-        id: quizId,
-        title: quizTitle,
-        totalDuration: duration,
-        languages: ['English'],
-        instructions: [],
-        sections: [
-            {
-                id: 'main-section',
-                name: subject,
-                questionsCount: questions.length,
-                questions: questions.map((q, index) => ({
-                    id: q.id,
-                    sectionId: 'main-section',
-                    sectionName: subject,
-                    questionNumber: index + 1,
-                    type: 'mcq' as const,
-                    question: q.text,
-                    options: q.options.map((opt, i) => ({
-                        id: `opt-${index}-${i}`,
-                        text: opt
+    // Memoize — DO NOT rebuild on every render or question IDs change
+    const examConfig: ExamConfig = useMemo(() => {
+        const questions = getQuestionsForQuiz(subject, questionCount, quizId);
+        return {
+            id: quizId,
+            title: quizTitle,
+            totalDuration: duration,
+            languages: ['English'],
+            instructions: [],
+            sections: [
+                {
+                    id: 'main-section',
+                    name: subject,
+                    questionsCount: questions.length,
+                    questions: questions.map((q, index) => ({
+                        id: q.id,                          // stable: uses q.id not index
+                        sectionId: 'main-section',
+                        sectionName: subject,
+                        questionNumber: index + 1,
+                        type: 'mcq' as const,
+                        question: q.text,
+                        options: q.options.map((opt, i) => ({
+                            id: `${q.id}-opt-${i}`,       // stable: based on q.id
+                            text: opt
+                        })),
+                        correctAnswer: `${q.id}-opt-${q.correctAnswer}`,
+                        marks: 1,
+                        negativeMarks: 0.25,
+                        explanation: q.explanation,
                     })),
-                    correctAnswer: `opt-${index}-${q.correctAnswer}`,
-                    marks: 1,
-                    negativeMarks: 0.25,
-                    explanation: q.explanation,
-                })),
-            }
-        ]
-    };
+                }
+            ]
+        };
+    }, [quizId, subject, questionCount, quizTitle, duration]);
 
     const handleSubmit = (responses: Record<string, string | string[] | null>) => {
         const timeTaken = Math.floor((Date.now() - startTime) / 1000);
@@ -116,32 +116,25 @@ const ExamWindow = () => {
         let incorrectCount = 0;
         let notAttempted = 0;
 
-        questions.forEach((q, index) => {
-            const examQuestion = examConfig.sections[0].questions[index];
+        const sectionQuestions = examConfig.sections[0].questions;
+        sectionQuestions.forEach((examQuestion) => {
             const selected = responses[examQuestion.id];
-
-            let selectedIndex: number | null = null;
-            if (selected && typeof selected === 'string') {
-                const parts = selected.split('-');
-                selectedIndex = parseInt(parts[2]);
-            }
-
-            if (selectedIndex === null) {
+            if (selected === null || selected === undefined) {
                 notAttempted++;
-            } else if (selectedIndex === q.correctAnswer) {
+            } else if (selected === examQuestion.correctAnswer) {
                 correctCount++;
             } else {
                 incorrectCount++;
             }
         });
 
-        const score = Math.round((correctCount / questions.length) * 100);
+        const score = Math.round((correctCount / sectionQuestions.length) * 100);
 
         // Store result in localStorage for parent window to retrieve
         const result = {
             quizId,
             score,
-            totalQuestions: questions.length,
+            totalQuestions: sectionQuestions.length,
             correctAnswers: correctCount,
             wrongAnswers: incorrectCount,
             unanswered: notAttempted,
@@ -175,8 +168,28 @@ const ExamWindow = () => {
     };
 
     const handleCloseAnalysis = () => {
-        // Navigate back to the page where quiz was started
-        window.location.href = returnUrl;
+        // Primary: just close this popup window.
+        // The parent tab is already on the daily-quizzes page and will
+        // pick up completion data via its window 'focus' event listener.
+        window.close();
+
+        // Fallback for when window was opened as a tab (not a popup):
+        // If window.close() had no effect (window still open), navigate the opener.
+        setTimeout(() => {
+            if (!window.closed) {
+                const destination = returnUrl || sessionStorage.getItem('examReturnUrl') || '/student/daily-quizzes';
+                sessionStorage.removeItem('examReturnUrl');
+                try {
+                    if (window.opener && !window.opener.closed) {
+                        window.opener.location.href = destination;
+                        window.close();
+                        return;
+                    }
+                } catch (_) { }
+                // Last resort – navigate this popup to the returnUrl
+                window.location.href = destination;
+            }
+        }, 300);
     };
 
     const handleViewSolutions = () => {

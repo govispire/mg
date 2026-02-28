@@ -238,54 +238,60 @@ const StudentTests = () => {
               {/* Exams Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
                 {section.exams.length > 0 ? (
-                  section.exams.map((exam) => (
-                    <Card
-                      key={exam.id}
-                      className="p-6 hover:shadow-lg transition-shadow cursor-pointer"
-                      onClick={() => navigate(`/student/tests/${categoryId}/${exam.id}`)}
-                    >
-                      <div className="space-y-4">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <img
-                              src={exam.logo}
-                              alt={exam.name}
-                              className="w-10 h-10 object-contain"
-                            />
-                            <div>
-                              <h3 className="font-semibold">{exam.name}</h3>
-                              {exam.isPopular && (
-                                <Badge variant="secondary" className="mt-1">Popular</Badge>
-                              )}
+                  section.exams.map((exam) => {
+                    const totalTests = 'testSlots' in exam
+                      ? (exam as { testSlots: { tests: unknown[] }[] }).testSlots.reduce((sum, slot) => sum + slot.tests.length, 0)
+                      : 200;
+                    return (
+                      <Card
+                        key={exam.id}
+                        className="p-6 hover:shadow-lg transition-shadow cursor-pointer"
+                        onClick={() => navigate(`/student/tests/${categoryId}/${exam.id}`)}
+                      >
+                        <div className="space-y-4">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <img
+                                src={exam.logo}
+                                alt={exam.name}
+                                className="w-10 h-10 object-contain"
+                                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                              />
+                              <div>
+                                <h3 className="font-semibold">{exam.name}</h3>
+                                {exam.isPopular && (
+                                  <Badge variant="secondary" className="mt-1">Popular</Badge>
+                                )}
+                              </div>
                             </div>
                           </div>
-                        </div>
 
-                        <div className="space-y-2">
-                          <div className="flex justify-between text-sm">
-                            <span className="text-gray-600">Progress</span>
-                            <span className="font-medium">35%</span>
+                          <div className="space-y-2">
+                            <div className="flex justify-between text-sm">
+                              <span className="text-gray-600">Progress</span>
+                              <span className="font-medium">0%</span>
+                            </div>
+                            <Progress value={0} className="h-2" />
                           </div>
-                          <Progress value={35} className="h-2" />
-                        </div>
 
-                        <div className="grid grid-cols-2 gap-4 text-sm">
-                          <div className="text-center">
-                            <div className="font-bold text-blue-600">120</div>
-                            <div className="text-gray-500">Tests</div>
+                          <div className="grid grid-cols-2 gap-4 text-sm">
+                            <div className="text-center">
+                              <div className="font-bold text-blue-600">{totalTests}</div>
+                              <div className="text-gray-500">Tests</div>
+                            </div>
+                            <div className="text-center">
+                              <div className="font-bold text-green-600">0</div>
+                              <div className="text-gray-500">Completed</div>
+                            </div>
                           </div>
-                          <div className="text-center">
-                            <div className="font-bold text-green-600">42</div>
-                            <div className="text-gray-500">Completed</div>
-                          </div>
-                        </div>
 
-                        <Button className="w-full">
-                          View Tests
-                        </Button>
-                      </div>
-                    </Card>
-                  ))
+                          <Button className="w-full">
+                            View Tests
+                          </Button>
+                        </div>
+                      </Card>
+                    );
+                  })
                 ) : (
                   <div className="col-span-full text-center py-12">
                     <BookOpen className="h-16 w-16 text-gray-400 mx-auto mb-4" />

@@ -27,6 +27,17 @@ const TYPE_COLORS: Record<QuizType, string> = {
     'full-mains': 'bg-red-500',
 };
 
+// Dynamic shadow colors that match each card header
+const TYPE_SHADOWS: Record<QuizType, string> = {
+    'daily': '0 4px 14px rgba(59,130,246,0.45)',
+    'rapid-fire': '0 4px 14px rgba(249,115,22,0.45)',
+    'speed-challenge': '0 4px 14px rgba(168,85,247,0.45)',
+    'mini-test': '0 4px 14px rgba(34,197,94,0.45)',
+    'sectional': '0 4px 14px rgba(236,72,153,0.45)',
+    'full-prelims': '0 4px 14px rgba(99,102,241,0.45)',
+    'full-mains': '0 4px 14px rgba(239,68,68,0.45)',
+};
+
 const QuizCard: React.FC<QuizCardProps> = ({ quiz, onStart, todayStr }) => {
     const [showLeaderboard, setShowLeaderboard] = useState(false);
 
@@ -85,28 +96,37 @@ const QuizCard: React.FC<QuizCardProps> = ({ quiz, onStart, todayStr }) => {
                             </div>
 
                             {/* Start Button */}
-                            <Button
-                                onClick={() => onStart(quiz)}
+                            <button
+                                onClick={() => !isDisabled && onStart(quiz)}
                                 disabled={isDisabled}
-                                className="w-full h-9 text-xs font-semibold"
+                                style={{
+                                    backgroundColor: 'hsl(0deg 0% 100%)',
+                                    border: '1px solid #e9e9e9',
+                                    boxShadow: isDisabled ? 'none' : TYPE_SHADOWS[quiz.type],
+                                }}
+                                className={`w-full h-9 rounded-md text-xs font-semibold flex items-center justify-center gap-1.5 transition-all duration-200
+                                    ${isDisabled
+                                        ? 'cursor-not-allowed opacity-60 text-gray-400'
+                                        : 'text-gray-900 hover:brightness-95 cursor-pointer'
+                                    }`}
                             >
                                 {isLocked ? (
                                     <>
-                                        <Lock className="h-3.5 w-3.5 mr-1.5" />
+                                        <Lock className="h-3.5 w-3.5" />
                                         Locked
                                     </>
                                 ) : isFuture ? (
                                     <>
-                                        <CalendarIcon className="h-3.5 w-3.5 mr-1.5" />
+                                        <CalendarIcon className="h-3.5 w-3.5" />
                                         Coming Soon
                                     </>
                                 ) : (
                                     <>
-                                        <Play className="h-3.5 w-3.5 mr-1.5 fill-current" />
-                                        Start Quiz
+                                        <Play className="h-3.5 w-3.5" style={{ fill: '#111827', color: '#111827' }} />
+                                        <span style={{ color: '#111827' }}>Start Quiz</span>
                                     </>
                                 )}
-                            </Button>
+                            </button>
                         </>
                     ) : (
                         // AFTER ATTENDING - Completed State

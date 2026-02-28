@@ -41,11 +41,13 @@ export interface ExamConfig {
 
 export interface QuestionState {
     questionId: string;
-    status: QuestionStatus;
+    status: QuestionStatus;       // computed by getStatus()
+    isVisited: boolean;           // true once candidate opens the question
+    isSaved: boolean;             // true once Save & Next clicked with answer
     selectedAnswer: string | string[] | null;
     markedForReview: boolean;
-    timeTaken: number; // seconds spent on this question
-    visitedAt?: number; // timestamp
+    timeTaken: number;
+    visitedAt?: number;
 }
 
 export interface ExamSessionState {

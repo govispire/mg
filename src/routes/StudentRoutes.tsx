@@ -33,6 +33,7 @@ import ProtectedRoute from '@/components/ProtectedRoute';
 import NotFound from '@/pages/NotFound';
 import ExamWindow from '@/pages/student/ExamWindow';
 import AllExams from '@/pages/student/AllExams';
+import StudentVocabulary from '@/pages/student/StudentVocabulary';
 
 import TestWindow from '@/pages/student/TestWindow';
 
@@ -76,6 +77,7 @@ const StudentRoutes = () => {
           <Route path="/pdf-courses" element={<PDFCourses />} />
           <Route path="/doubt-forum" element={<DoubtForum />} />
           <Route path="/faq" element={<FAQ />} />
+          <Route path="/vocabulary" element={<StudentVocabulary />} />
           <Route path="*" element={<NotFound />} />
         </Route>
 

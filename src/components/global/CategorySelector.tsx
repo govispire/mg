@@ -1,11 +1,12 @@
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Check, Plus, Settings, Filter, BookOpen, Package } from 'lucide-react';
 import { useExamCategoryContext } from '@/app/providers';
+import { useExamCatalog } from '@/hooks/useExamCatalog';
 
 type FilterType = 'all' | 'regular' | 'combo';
 
@@ -269,12 +270,33 @@ const comboCategories: ComboCategory[] = [
   }
 ];
 
-const allCategories: ExamCategory[] = [...regularCategories, ...comboCategories];
+const staticAllCategories: ExamCategory[] = [...regularCategories, ...comboCategories];
 
 export const CategorySelector: React.FC = () => {
   const { selectedCategories, toggleCategory, setSelectedCategories } = useExamCategoryContext();
+  const { catalog } = useExamCatalog();
   const [isOpen, setIsOpen] = useState(false);
   const [filter, setFilter] = useState<FilterType>('all');
+
+  // Merge catalog categories (superadmin-managed) with hardcoded list,
+  // so newly created categories appear instantly in the selector.
+  const allCategories = useMemo<ExamCategory[]>(() => {
+    const staticIds = new Set(staticAllCategories.map(c => c.id));
+    const catalogExtras: ExamCategory[] = catalog
+      .filter(c => c.isVisible && !staticIds.has(c.id))
+      .map(c => ({
+        id: c.id,
+        name: c.name,
+        description: c.description,
+        logo: c.logo,
+        studentsEnrolled: c.studentsEnrolled,
+        examsAvailable: c.examsAvailable,
+        mentorsAvailable: 0,
+        isCombo: false,
+        isPopular: c.isPopular,
+      } as RegularCategory));
+    return [...staticAllCategories, ...catalogExtras];
+  }, [catalog]);
 
   const filteredCategories = allCategories.filter(category => {
     if (filter === 'regular') return !category.isCombo;
@@ -359,7 +381,7 @@ export const CategorySelector: React.FC = () => {
               className="flex items-center gap-2 justify-center text-xs sm:text-sm h-8 sm:h-9"
             >
               <BookOpen className="h-3 w-3 sm:h-4 sm:w-4" />
-              <span className="whitespace-nowrap">Regular ({regularCategories.length})</span>
+              <span className="whitespace-nowrap">Regular ({allCategories.filter(c => !c.isCombo).length})</span>
             </Button>
             <Button
               variant={filter === 'combo' ? 'default' : 'outline'}
@@ -368,7 +390,7 @@ export const CategorySelector: React.FC = () => {
               className="flex items-center gap-2 justify-center text-xs sm:text-sm h-8 sm:h-9"
             >
               <Package className="h-3 w-3 sm:h-4 sm:w-4" />
-              <span className="whitespace-nowrap">Combo ({comboCategories.length})</span>
+              <span className="whitespace-nowrap">Combo ({allCategories.filter(c => c.isCombo).length})</span>
             </Button>
           </div>
 
@@ -378,8 +400,8 @@ export const CategorySelector: React.FC = () => {
               <Card
                 key={category.id}
                 className={`cursor-pointer transition-all duration-200 hover:shadow-md touch-manipulation ${selectedCategories.includes(category.id)
-                    ? 'ring-2 ring-blue-500 bg-blue-50'
-                    : 'hover:bg-gray-50'
+                  ? 'ring-2 ring-blue-500 bg-blue-50'
+                  : 'hover:bg-gray-50'
                   }`}
                 onClick={() => toggleCategory(category.id)}
               >
@@ -409,8 +431,8 @@ export const CategorySelector: React.FC = () => {
                     </div>
                     <div
                       className={`rounded-full p-1 flex-shrink-0 border-2 transition-colors duration-200 ${selectedCategories.includes(category.id)
-                          ? 'bg-blue-500 border-blue-500 text-white'
-                          : 'bg-white border-gray-300 text-gray-400 hover:border-blue-400 hover:text-blue-400'
+                        ? 'bg-blue-500 border-blue-500 text-white'
+                        : 'bg-white border-gray-300 text-gray-400 hover:border-blue-400 hover:text-blue-400'
                         }`}
                     >
                       {selectedCategories.includes(category.id)

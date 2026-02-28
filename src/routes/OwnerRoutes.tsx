@@ -10,6 +10,7 @@ import OwnerBusinessAnalytics from '@/pages/owner/OwnerBusinessAnalytics';
 import OwnerNotifications from '@/pages/owner/OwnerNotifications';
 import OwnerPaymentsPlans from '@/pages/owner/OwnerPaymentsPlans';
 import OwnerSettings from '@/pages/owner/OwnerSettings';
+import OwnerAnalytics from '@/pages/owner/OwnerAnalytics';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import NotFound from '@/pages/NotFound';
 
@@ -26,6 +27,7 @@ const OwnerRoutes = () => {
           <Route path="/notifications" element={<OwnerNotifications />} />
           <Route path="/payments-plans" element={<OwnerPaymentsPlans />} />
           <Route path="/settings" element={<OwnerSettings />} />
+          <Route path="/analytics" element={<OwnerAnalytics />} />
           <Route path="*" element={<NotFound />} />
         </Route>
       </Route>

@@ -14,6 +14,7 @@ import { PreviousCutoffTab } from '@/components/student/exam/PreviousCutoffTab';
 import { DoubtsTab } from '@/components/student/exam/DoubtsTab';
 import { useExamProgress } from '@/hooks/useExamProgress';
 import { getExamsByCategory } from '@/data/examData';
+import { useExamCatalog } from '@/hooks/useExamCatalog';
 
 const ExamDetail = () => {
   const { category, examId } = useParams();
@@ -22,12 +23,20 @@ const ExamDetail = () => {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const { progressData, getTypeProgress, setProgressData, updateTestProgress } = useExamProgress(examId!);
 
-  // Get exam name from examData
+  const { catalog } = useExamCatalog();
+
+  // Get exam name — try catalog first (for superadmin-created exams), then static examData
   const examName = React.useMemo(() => {
+    for (const cat of catalog) {
+      for (const sec of cat.sections) {
+        const found = sec.exams.find(e => e.id === examId);
+        if (found) return found.name;
+      }
+    }
     const exams = getExamsByCategory(category!);
     const exam = exams.find(e => e.id === examId);
-    return exam?.name || examId?.replace('-', ' ').toUpperCase() || 'Exam';
-  }, [category, examId]);
+    return exam?.name || (examId ? examId.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : 'Exam');
+  }, [category, examId, catalog]);
 
   // Check for test completions on mount and update progress
   useEffect(() => {
@@ -108,12 +117,18 @@ const ExamDetail = () => {
     }
   }, [examName, progressData.examName, setProgressData]);
 
-  // Get exam logo
+  // Get exam logo — try catalog first, then static examData
   const examLogo = React.useMemo(() => {
+    for (const cat of catalog) {
+      for (const sec of cat.sections) {
+        const found = sec.exams.find(e => e.id === examId);
+        if (found) return found.logo;
+      }
+    }
     const exams = getExamsByCategory(category!);
     const exam = exams.find(e => e.id === examId);
     return exam?.logo || '📚';
-  }, [category, examId]);
+  }, [category, examId, catalog]);
 
   // Check if logo is a URL (contains http/https or starts with /)
   const isLogoUrl = React.useMemo(() => {

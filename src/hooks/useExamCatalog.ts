@@ -222,7 +222,8 @@ export const useExamCatalog = () => {
 
     // ── Real-time sync listener ─────────────────────────────────────────────────
     useEffect(() => {
-        // Cross-tab: BroadcastChannel
+        // Cross-tab only: BroadcastChannel
+        // The same tab already has up-to-date state via setCatalog — no same-tab event needed.
         let channel: BroadcastChannel | null = null;
         try {
             channel = new BroadcastChannel(CHANNEL_NAME);
@@ -233,31 +234,24 @@ export const useExamCatalog = () => {
             };
         } catch { /* BroadcastChannel not available */ }
 
-        // Same-tab: CustomEvent
-        const onSameTab = (e: Event) => {
-            const detail = (e as CustomEvent<CatalogCategory[]>).detail;
-            if (detail) setCatalog(detail);
-        };
-        window.addEventListener('catalog_updated', onSameTab);
-
         return () => {
             channel?.close();
-            window.removeEventListener('catalog_updated', onSameTab);
         };
     }, []);
 
     // ── Broadcast helper ────────────────────────────────────────────────────────
-    // Called AFTER setCatalog so `next` is the freshly computed value.
+    // Persists to localStorage and notifies OTHER tabs via BroadcastChannel.
+    // Must NOT be called inside a setCatalog() updater — use setTimeout(() => broadcast(next), 0).
+    // IMPORTANT: also stamps SEED_VER_KEY so the load logic won't re-seed this data.
     const broadcast = useCallback((next: CatalogCategory[]) => {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-        // Cross-tab
+        localStorage.setItem(SEED_VER_KEY, SEED_VERSION); // prevent re-seed on next load
+        // Cross-tab only
         try {
             const ch = new BroadcastChannel(CHANNEL_NAME);
             ch.postMessage({ type: 'catalog_updated', catalog: next });
             ch.close();
         } catch { /* not supported */ }
-        // Same-tab
-        window.dispatchEvent(new CustomEvent('catalog_updated', { detail: next }));
     }, []);
 
     // ── Category CRUD ──────────────────────────────────────────────────────────
@@ -266,7 +260,8 @@ export const useExamCatalog = () => {
         const now = new Date().toISOString();
         setCatalog(prev => {
             const next = [...prev, { ...cat, sections: [], createdAt: now, updatedAt: now }];
-            broadcast(next);
+            // Schedule broadcast AFTER the state update settles
+            setTimeout(() => broadcast(next), 0);
             return next;
         });
     }, [broadcast]);
@@ -274,7 +269,7 @@ export const useExamCatalog = () => {
     const updateCategory = useCallback((id: string, updates: Partial<Omit<CatalogCategory, 'id' | 'sections' | 'createdAt'>>) => {
         setCatalog(prev => {
             const next = prev.map(c => c.id === id ? { ...c, ...updates, updatedAt: new Date().toISOString() } : c);
-            broadcast(next);
+            setTimeout(() => broadcast(next), 0);
             return next;
         });
     }, [broadcast]);
@@ -282,7 +277,7 @@ export const useExamCatalog = () => {
     const deleteCategory = useCallback((id: string) => {
         setCatalog(prev => {
             const next = prev.filter(c => c.id !== id);
-            broadcast(next);
+            setTimeout(() => broadcast(next), 0);
             return next;
         });
     }, [broadcast]);
@@ -292,7 +287,7 @@ export const useExamCatalog = () => {
             const next = prev.map(c =>
                 c.id === id ? { ...c, isVisible: !c.isVisible, updatedAt: new Date().toISOString() } : c,
             );
-            broadcast(next);
+            setTimeout(() => broadcast(next), 0);
             return next;
         });
     }, [broadcast]);
@@ -306,7 +301,7 @@ export const useExamCatalog = () => {
                     ? { ...c, sections: [...c.sections, { ...section, exams: [] }], updatedAt: new Date().toISOString() }
                     : c,
             );
-            broadcast(next);
+            setTimeout(() => broadcast(next), 0);
             return next;
         });
     }, [broadcast]);
@@ -318,7 +313,7 @@ export const useExamCatalog = () => {
                     ? { ...c, sections: c.sections.map(s => s.id === sectionId ? { ...s, ...updates } : s), updatedAt: new Date().toISOString() }
                     : c,
             );
-            broadcast(next);
+            setTimeout(() => broadcast(next), 0);
             return next;
         });
     }, [broadcast]);
@@ -330,7 +325,7 @@ export const useExamCatalog = () => {
                     ? { ...c, sections: c.sections.filter(s => s.id !== sectionId), updatedAt: new Date().toISOString() }
                     : c,
             );
-            broadcast(next);
+            setTimeout(() => broadcast(next), 0);
             return next;
         });
     }, [broadcast]);
@@ -351,7 +346,7 @@ export const useExamCatalog = () => {
                     }
                     : c,
             );
-            broadcast(next);
+            setTimeout(() => broadcast(next), 0);
             return next;
         });
     }, [broadcast]);
@@ -371,7 +366,7 @@ export const useExamCatalog = () => {
                     }
                     : c,
             );
-            broadcast(next);
+            setTimeout(() => broadcast(next), 0);
             return next;
         });
     }, [broadcast]);
@@ -391,7 +386,7 @@ export const useExamCatalog = () => {
                     }
                     : c,
             );
-            broadcast(next);
+            setTimeout(() => broadcast(next), 0);
             return next;
         });
     }, [broadcast]);

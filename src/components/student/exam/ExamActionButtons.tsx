@@ -10,6 +10,7 @@ interface ExamActionButtonsProps {
     hasPrevious: boolean;
     isLastQuestion: boolean;
     hasAnswer: boolean;
+    hasUnsavedChange?: boolean;
 }
 
 export const ExamActionButtons: React.FC<ExamActionButtonsProps> = ({
@@ -20,36 +21,38 @@ export const ExamActionButtons: React.FC<ExamActionButtonsProps> = ({
     onSubmit,
     hasPrevious,
     isLastQuestion,
-    hasAnswer
+    hasAnswer,
+    hasUnsavedChange = false,
 }) => {
     return (
-        <div className="bg-[#4a4a4a] p-4 flex items-center justify-between border-t border-gray-600">
-            {/* Left Side Actions */}
+        <div className="bg-[#4a4a4a] px-4 py-3 flex items-center justify-between border-t border-gray-600">
+            {/* Left: Mark for Review & Clear */}
             <div className="flex items-center gap-3">
                 <Button
                     variant="outline"
                     onClick={onMarkAndNext}
-                    className="bg-white hover:bg-gray-100 text-gray-900 border-gray-300"
+                    className="bg-white hover:bg-gray-100 text-gray-900 border-gray-300 text-sm"
                 >
-                    Mark for Review & Next
+                    Mark for Review &amp; Next
                 </Button>
                 <Button
                     variant="outline"
                     onClick={onClearResponse}
-                    className="bg-white hover:bg-gray-100 text-gray-900 border-gray-300"
+                    className="bg-white hover:bg-gray-100 text-gray-900 border-gray-300 text-sm"
                     disabled={!hasAnswer}
                 >
                     Clear Response
                 </Button>
             </div>
 
-            {/* Right Side Actions */}
+            {/* Right: Previous + Save/Submit with keyboard hint */}
             <div className="flex items-center gap-3">
                 {hasPrevious && onPrevious && (
                     <Button
                         variant="outline"
                         onClick={onPrevious}
-                        className="bg-white hover:bg-gray-100 text-gray-900 border-gray-300"
+                        className="bg-white hover:bg-gray-100 text-gray-900 border-gray-300 text-sm"
+                        title="Go to previous question (answer not saved)"
                     >
                         Previous
                     </Button>
@@ -58,14 +61,19 @@ export const ExamActionButtons: React.FC<ExamActionButtonsProps> = ({
                 {!isLastQuestion ? (
                     <Button
                         onClick={onSaveAndNext}
-                        className="bg-[#5b9dd9] hover:bg-[#4a8cc8] text-white"
+                        className={`text-white text-sm transition-all ${hasUnsavedChange
+                                ? 'bg-[#1976d2] hover:bg-[#1565c0] ring-2 ring-yellow-400 ring-offset-1'
+                                : 'bg-[#5b9dd9] hover:bg-[#4a8cc8]'
+                            }`}
+                        title="Save answer and go to next question"
                     >
-                        Save & Next
+                        Save &amp; Next
                     </Button>
                 ) : (
                     <Button
                         onClick={onSubmit}
-                        className="bg-[#5b9dd9] hover:bg-[#4a8cc8] text-white"
+                        className="bg-[#d32f2f] hover:bg-[#b71c1c] text-white text-sm"
+                        title="Submit your exam"
                     >
                         Submit
                     </Button>

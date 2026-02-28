@@ -9,7 +9,7 @@ import ProfileButton from '@/components/student/ProfileButton';
 import Sidebar from './Sidebar';
 
 interface DashboardLayoutProps {
-  role: 'student' | 'admin' | 'instructor' | 'employee' | 'super-admin' | 'owner' | 'mentor';
+  role: 'student' | 'instructor' | 'employee' | 'super-admin' | 'owner' | 'mentor';
   basePath: string;
 }
 
@@ -26,8 +26,8 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ role, basePath }) => 
 
       {/* Overlay for mobile */}
       {sidebarOpen && (
-        <div 
-          className="fixed inset-0 z-40 bg-black bg-opacity-50 lg:hidden" 
+        <div
+          className="fixed inset-0 z-40 bg-black bg-opacity-50 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
@@ -46,7 +46,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ role, basePath }) => 
               >
                 {sidebarOpen ? <X className="h-4 w-4 sm:h-5 sm:w-5" /> : <Menu className="h-4 w-4 sm:h-5 sm:w-5" />}
               </Button>
-              
+
               <div className="flex items-center gap-2 sm:gap-4">
                 {/* Hide dashboard title on mobile, show only on larger screens */}
                 <h1 className="hidden lg:block text-xl font-semibold capitalize">{role} Dashboard</h1>
@@ -58,7 +58,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ role, basePath }) => 
               <Button variant="ghost" size="sm" className="h-8 w-8 sm:h-9 sm:w-9 p-0">
                 <Bell className="h-4 w-4 sm:h-5 sm:w-5" />
               </Button>
-              
+
               <ProfileButton showProfileCard={false} role={role} />
             </div>
           </div>

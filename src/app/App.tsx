@@ -5,7 +5,6 @@ import { StudentDataProvider } from '@/app/providers';
 import { ExamCategoryProvider } from '@/app/providers';
 import StudentRoutes from '@/routes/StudentRoutes';
 import MentorRoutes from '@/routes/MentorRoutes';
-import AdminRoutes from '@/routes/AdminRoutes';
 import EmployeeRoutes from '@/routes/EmployeeRoutes';
 import SuperAdminRoutes from '@/routes/SuperAdminRoutes';
 import OwnerRoutes from '@/routes/OwnerRoutes';
@@ -41,7 +40,6 @@ function App() {
                 <Route path="/exam-notifications" element={<ExamNotifications />} />
                 <Route path="/student/*" element={<StudentRoutes />} />
                 <Route path="/mentor/*" element={<MentorRoutes />} />
-                <Route path="/admin/*" element={<AdminRoutes />} />
                 <Route path="/employee/*" element={<EmployeeRoutes />} />
                 <Route path="/super-admin/*" element={<SuperAdminRoutes />} />
                 <Route path="/owner/*" element={<OwnerRoutes />} />

@@ -2,18 +2,26 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 
 interface UseExamTimerProps {
     totalDurationInSeconds: number;
+    /** Start from this many seconds instead of total (used when resuming a paused exam) */
+    initialRemainingSeconds?: number;
     onTimeUp: () => void;
     onWarning?: (remainingSeconds: number) => void;
     isPaused?: boolean;
+    /** Called every second with current remaining seconds so caller can persist it */
+    onTick?: (remaining: number) => void;
 }
 
 export function useExamTimer({
     totalDurationInSeconds,
+    initialRemainingSeconds,
     onTimeUp,
     onWarning,
-    isPaused = false
+    isPaused = false,
+    onTick,
 }: UseExamTimerProps) {
-    const [remainingSeconds, setRemainingSeconds] = useState(totalDurationInSeconds);
+    const [remainingSeconds, setRemainingSeconds] = useState(
+        initialRemainingSeconds !== undefined ? initialRemainingSeconds : totalDurationInSeconds
+    );
     const [hasWarned5Min, setHasWarned5Min] = useState(false);
     const [hasWarned2Min, setHasWarned2Min] = useState(false);
     const [hasWarned1Min, setHasWarned1Min] = useState(false);
@@ -32,7 +40,10 @@ export function useExamTimer({
             setRemainingSeconds(prev => {
                 const newValue = prev - 1;
 
-                // Trigger warnings
+                // Persist remaining time each tick
+                if (onTick) onTick(newValue);
+
+                // Warnings
                 if (onWarning) {
                     if (newValue === 300 && !hasWarned5Min) {
                         setHasWarned5Min(true);
@@ -46,12 +57,10 @@ export function useExamTimer({
                     }
                 }
 
-                // Time's up
                 if (newValue <= 0) {
                     onTimeUp();
                     return 0;
                 }
-
                 return newValue;
             });
         }, 1000);
@@ -61,13 +70,12 @@ export function useExamTimer({
                 clearInterval(intervalRef.current);
             }
         };
-    }, [isPaused, remainingSeconds, onTimeUp, onWarning, hasWarned5Min, hasWarned2Min, hasWarned1Min]);
+    }, [isPaused, remainingSeconds, onTimeUp, onWarning, onTick, hasWarned5Min, hasWarned2Min, hasWarned1Min]);
 
     const formatTime = useCallback((seconds: number) => {
         const hours = Math.floor(seconds / 3600);
         const minutes = Math.floor((seconds % 3600) / 60);
         const secs = seconds % 60;
-
         if (hours > 0) {
             return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
         }
@@ -75,9 +83,9 @@ export function useExamTimer({
     }, []);
 
     const getTimerColor = useCallback(() => {
-        if (remainingSeconds <= 120) return 'text-red-600'; // Red for <= 2 min
-        if (remainingSeconds <= 300) return 'text-yellow-600'; // Yellow for <= 5 min
-        return 'text-green-600'; // Green otherwise
+        if (remainingSeconds <= 120) return 'text-red-600';
+        if (remainingSeconds <= 300) return 'text-yellow-600';
+        return 'text-green-600';
     }, [remainingSeconds]);
 
     const resetTimer = useCallback(() => {

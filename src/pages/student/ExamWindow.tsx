@@ -175,8 +175,28 @@ const ExamWindow = () => {
     };
 
     const handleCloseAnalysis = () => {
-        // Navigate back to the page where quiz was started
-        window.location.href = returnUrl;
+        // Primary: just close this popup window.
+        // The parent tab is already on the daily-quizzes page and will
+        // pick up completion data via its window 'focus' event listener.
+        window.close();
+
+        // Fallback for when window was opened as a tab (not a popup):
+        // If window.close() had no effect (window still open), navigate the opener.
+        setTimeout(() => {
+            if (!window.closed) {
+                const destination = returnUrl || sessionStorage.getItem('examReturnUrl') || '/student/daily-quizzes';
+                sessionStorage.removeItem('examReturnUrl');
+                try {
+                    if (window.opener && !window.opener.closed) {
+                        window.opener.location.href = destination;
+                        window.close();
+                        return;
+                    }
+                } catch (_) { }
+                // Last resort – navigate this popup to the returnUrl
+                window.location.href = destination;
+            }
+        }, 300);
     };
 
     const handleViewSolutions = () => {

@@ -7,6 +7,16 @@ export enum QuestionStatus {
     ANSWERED_AND_MARKED = 4
 }
 
+export interface QuestionSet {
+    setId: string;
+    setType: 'reading_comprehension' | 'di_set' | 'puzzle_set' | 'caselet' | 'input_output' | 'generic';
+    title?: string;
+    /** HTML content rendered in the left panel (passage / table / chart description) */
+    sharedContent: string;
+    /** IDs of questions belonging to this set, in order */
+    questionIds: string[];
+}
+
 export interface ExamQuestion {
     id: string;
     sectionId: string;
@@ -20,6 +30,10 @@ export interface ExamQuestion {
     negativeMarks: number;
     explanation?: string;
     imageUrl?: string;
+    /** Optional — present only for set-based questions (DI / RC / Puzzle) */
+    setId?: string;
+    /** Inline set data (avoids extra fetch if bundled with question) */
+    set?: QuestionSet;
 }
 
 export interface ExamSection {
@@ -41,11 +55,13 @@ export interface ExamConfig {
 
 export interface QuestionState {
     questionId: string;
-    status: QuestionStatus;
+    status: QuestionStatus;       // computed by getStatus() — kept for backwards compat
+    isVisited: boolean;           // true once the candidate opens the question
+    isSaved: boolean;             // true once Save & Next was clicked with an answer
     selectedAnswer: string | string[] | null;
     markedForReview: boolean;
-    timeTaken: number; // seconds spent on this question
-    visitedAt?: number; // timestamp
+    timeTaken: number;            // seconds spent on this question
+    visitedAt?: number;           // timestamp
 }
 
 export interface ExamSessionState {
