@@ -11,9 +11,14 @@ const KEY_PREFIX = 'qbank_';
 
 export type QuestionType =
     | 'mcq'            // Single-correct MCQ
-    | 'multi'          // Multi-correct MCQ
+    | 'msq'            // Multi-select (checkboxes)
+    | 'numerical'      // Integer / decimal answer input
+    | 'multi'          // Multi-correct MCQ (admin internal label)
     | 'comprehension'  // Reading Comprehension (passage + sub-questions)
     | 'puzzle'         // Puzzle / Seating Arrangement (setup + sub-questions)
+    | 'di'             // Data Interpretation (chart image / SVG + sub-questions)
+    | 'caselet'        // Caselet DI (short paragraph + sub-questions)
+    | 'input_output'   // Input-Output / Word Transformation (rules + sub-questions)
     | 'fillblank'      // Fill in the blank
     | 'truefalse';     // True / False
 
@@ -22,7 +27,7 @@ export interface Option {
     text: string;
 }
 
-/** A sub-question used inside comprehension/puzzle */
+/** A sub-question used inside comprehension/puzzle/di/caselet/input_output */
 export interface SubQuestion {
     id: string;
     text: string;
@@ -34,13 +39,26 @@ export interface SubQuestion {
 // Discriminated union by type
 export interface MCQQuestion {
     id: string;
-    type: 'mcq';
+    type: 'mcq' | 'msq';
     text: string;
     options: Option[];
-    correctOption: string; // single option id
+    correctOption: string; // single for mcq, space-separated for msq
     explanation?: string;
     marks: number;
     negativeMark: number;
+    imageUrl?: string; // optional image with the question
+}
+
+export interface NumericalQuestion {
+    id: string;
+    type: 'numerical';
+    text: string;
+    correctAnswer: number | string; // exact numeric answer
+    tolerance?: number; // acceptable range ±
+    explanation?: string;
+    marks: number;
+    negativeMark: number;
+    imageUrl?: string;
 }
 
 export interface MultiQuestion {
@@ -57,7 +75,7 @@ export interface MultiQuestion {
 export interface ComprehensionQuestion {
     id: string;
     type: 'comprehension';
-    passage: string;  // left-panel passage text
+    passage: string;  // left-panel passage text (HTML or plain)
     subQuestions: SubQuestion[];
     marks: number;         // per sub-question
     negativeMark: number;
@@ -68,6 +86,41 @@ export interface PuzzleQuestion {
     type: 'puzzle';
     setup: string;    // the puzzle/arrangement description paragraph
     clues?: string;   // optional additional clues
+    subQuestions: SubQuestion[];
+    marks: number;
+    negativeMark: number;
+}
+
+/** Data Interpretation — shared content is an image/SVG/table */
+export interface DIQuestion {
+    id: string;
+    type: 'di';
+    title: string;           // "Study the following bar graph..."
+    sharedContent: string;   // HTML with SVG chart / <img> / <table>
+    imageUrl?: string;       // optional uploaded chart image URL
+    subQuestions: SubQuestion[];
+    marks: number;
+    negativeMark: number;
+}
+
+/** Caselet DI — short paragraph followed by sub-questions */
+export interface CaseletQuestion {
+    id: string;
+    type: 'caselet';
+    title: string;
+    passage: string;   // short paragraph
+    subQuestions: SubQuestion[];
+    marks: number;
+    negativeMark: number;
+}
+
+/** Input-Output / Word Transformation */
+export interface InputOutputQuestion {
+    id: string;
+    type: 'input_output';
+    title: string;
+    rules: string;   // transformation rules / step description
+    example?: string; // optional worked example
     subQuestions: SubQuestion[];
     marks: number;
     negativeMark: number;
@@ -96,9 +149,13 @@ export interface TrueFalseQuestion {
 
 export type Question =
     | MCQQuestion
+    | NumericalQuestion
     | MultiQuestion
     | ComprehensionQuestion
     | PuzzleQuestion
+    | DIQuestion
+    | CaseletQuestion
+    | InputOutputQuestion
     | FillBlankQuestion
     | TrueFalseQuestion;
 

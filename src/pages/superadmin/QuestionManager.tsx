@@ -19,13 +19,15 @@ import { useExamCatalog } from '@/hooks/useExamCatalog';
 import {
     useQuestionBank, newId, defaultOptions, defaultSubQuestion,
     type Question, type QuestionType, type Option, type SubQuestion,
-    type MCQQuestion, type MultiQuestion, type ComprehensionQuestion,
-    type PuzzleQuestion, type FillBlankQuestion, type TrueFalseQuestion,
+    type MCQQuestion, type NumericalQuestion, type MultiQuestion,
+    type ComprehensionQuestion, type PuzzleQuestion,
+    type DIQuestion, type CaseletQuestion, type InputOutputQuestion,
+    type FillBlankQuestion, type TrueFalseQuestion,
 } from '@/hooks/useQuestionBank';
 import {
     ArrowLeft, Plus, Trash2, Pencil, Upload, Download, FileText,
     BookOpen, AlignLeft, Puzzle, CheckSquare, ToggleLeft, ChevronDown, ChevronUp,
-    GripVertical, Eye, List, X, Check, AlertCircle,
+    GripVertical, Eye, List, X, Check, AlertCircle, Hash, BarChart2, Layers, ArrowRightLeft, Image,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -36,7 +38,19 @@ const QUESTION_TYPE_META: Record<QuestionType, { label: string; icon: React.Reac
         label: 'MCQ – Single Correct',
         icon: <CheckSquare className="h-4 w-4" />,
         color: 'bg-blue-100 text-blue-700 border-blue-200',
-        description: 'One correct answer from 4 options',
+        description: 'One correct answer from 4–5 options',
+    },
+    msq: {
+        label: 'MSQ – Multi Select',
+        icon: <List className="h-4 w-4" />,
+        color: 'bg-indigo-100 text-indigo-700 border-indigo-200',
+        description: 'One or more correct answers (checkboxes)',
+    },
+    numerical: {
+        label: 'Numerical / Integer',
+        icon: <Hash className="h-4 w-4" />,
+        color: 'bg-violet-100 text-violet-700 border-violet-200',
+        description: 'Type exact number as answer (no options)',
     },
     multi: {
         label: 'MCQ – Multi Correct',
@@ -48,13 +62,31 @@ const QUESTION_TYPE_META: Record<QuestionType, { label: string; icon: React.Reac
         label: 'Reading Comprehension',
         icon: <AlignLeft className="h-4 w-4" />,
         color: 'bg-green-100 text-green-700 border-green-200',
-        description: 'Passage on left, questions on right',
+        description: 'Passage on left, questions on right (DualPanel)',
     },
     puzzle: {
         label: 'Puzzle / Seating Arrangement',
         icon: <Puzzle className="h-4 w-4" />,
         color: 'bg-orange-100 text-orange-700 border-orange-200',
-        description: 'Setup paragraph + multiple sub-questions',
+        description: 'Setup + clues + multiple sub-questions (DualPanel)',
+    },
+    di: {
+        label: 'Data Interpretation (DI)',
+        icon: <BarChart2 className="h-4 w-4" />,
+        color: 'bg-sky-100 text-sky-700 border-sky-200',
+        description: 'Chart/table/image on left, questions on right (DualPanel)',
+    },
+    caselet: {
+        label: 'Caselet DI',
+        icon: <Layers className="h-4 w-4" />,
+        color: 'bg-emerald-100 text-emerald-700 border-emerald-200',
+        description: 'Short paragraph + calculation sub-questions (DualPanel)',
+    },
+    input_output: {
+        label: 'Input-Output / Word Shift',
+        icon: <ArrowRightLeft className="h-4 w-4" />,
+        color: 'bg-rose-100 text-rose-700 border-rose-200',
+        description: 'Transformation rules + sub-questions (DualPanel)',
     },
     fillblank: {
         label: 'Fill in the Blank',
@@ -74,11 +106,14 @@ const QUESTION_TYPE_META: Record<QuestionType, { label: string; icon: React.Reac
 
 const CSV_TEMPLATE = `type,question,optionA,optionB,optionC,optionD,optionE,correct,marks,negative_mark,explanation
 mcq,What is 2+2?,3,4,5,6,,b,1,0.25,Because 2+2=4
+msq,"Which of these are even numbers?",2,4,5,6,8,"a,b,d,e",1,0,2 4 6 8 are even
+numerical,"What is the square root of 144?",,,,,, 12,1,0,sqrt(144)=12
 multi,Which of these are prime numbers?,2,3,4,5,6,"a,b,d",1,0,2 3 and 5 are prime
 fillblank,"He ___ to school every day.",goes,going,gone,go,,a,1,0.25,
 truefalse,The Earth is flat.,,,,,, false,1,0.25,Earth is a sphere
 comprehension,PASSAGE: Once upon a time...|Q1: Who lived in the forest?,Deer,Fox,Lion,Bear,,c,1,0.25,The fox
-puzzle,SETUP: 6 people A-F sit in a row|CLUES: A sits next to B|Q1: Who sits in the middle?,A,B,C,D,,c,1,0.25,`;
+puzzle,SETUP: 6 people A-F sit in a row|CLUES: A sits next to B|Q1: Who sits in the middle?,A,B,C,D,,c,1,0.25,
+# DI caselet and input_output must be created via the Create tab (image/SVG content not supported in CSV)`;
 
 const downloadTemplate = () => {
     const blob = new Blob([CSV_TEMPLATE], { type: 'text/csv' });
@@ -257,7 +292,7 @@ const QuestionBuilder: React.FC<BuilderProps> = ({ initial, onSave, onCancel }) 
     const [marks, setMarks] = useState(initial?.marks ?? 1);
     const [neg, setNeg] = useState(initial?.negativeMark ?? 0.25);
 
-    // MCQ / fillblank state
+    // Simple types: MCQ / MSQ / fillblank
     const [text, setText] = useState(
         (initial as MCQQuestion | FillBlankQuestion | TrueFalseQuestion)?.text || ''
     );
@@ -277,9 +312,20 @@ const QuestionBuilder: React.FC<BuilderProps> = ({ initial, onSave, onCancel }) 
         (initial as MCQQuestion)?.explanation || ''
     );
 
+    // Numerical
+    const [numericalAnswer, setNumericalAnswer] = useState(
+        String((initial as NumericalQuestion)?.correctAnswer ?? '')
+    );
+    const [numericalTolerance, setNumericalTolerance] = useState(
+        String((initial as NumericalQuestion)?.tolerance ?? 0)
+    );
+    const [questionImageUrl, setQuestionImageUrl] = useState(
+        (initial as MCQQuestion | NumericalQuestion)?.imageUrl || ''
+    );
+
     // Comprehension state
     const [passage, setPassage] = useState(
-        (initial as ComprehensionQuestion)?.passage || ''
+        (initial as ComprehensionQuestion | CaseletQuestion)?.passage || ''
     );
 
     // Puzzle state
@@ -290,9 +336,23 @@ const QuestionBuilder: React.FC<BuilderProps> = ({ initial, onSave, onCancel }) 
         (initial as PuzzleQuestion)?.clues || ''
     );
 
-    // Sub-questions (comprehension + puzzle)
+    // DI state
+    const [diTitle, setDiTitle] = useState(
+        (initial as DIQuestion | CaseletQuestion | InputOutputQuestion)?.title || ''
+    );
+    const [diContent, setDiContent] = useState(
+        (initial as DIQuestion)?.sharedContent || ''
+    );
+    const [ioRules, setIoRules] = useState(
+        (initial as InputOutputQuestion)?.rules || ''
+    );
+    const [ioExample, setIoExample] = useState(
+        (initial as InputOutputQuestion)?.example || ''
+    );
+
+    // Sub-questions (comprehension + puzzle + di + caselet + input_output)
     const [subQs, setSubQs] = useState<SubQuestion[]>(
-        (initial as ComprehensionQuestion | PuzzleQuestion)?.subQuestions || [defaultSubQuestion()]
+        (initial as ComprehensionQuestion | PuzzleQuestion | DIQuestion | CaseletQuestion | InputOutputQuestion)?.subQuestions || [defaultSubQuestion()]
     );
 
     const updateSub = (idx: number, updated: SubQuestion) =>
@@ -301,23 +361,32 @@ const QuestionBuilder: React.FC<BuilderProps> = ({ initial, onSave, onCancel }) 
     const handleSave = () => {
         const base = { id: initial?.id || newId(), marks, negativeMark: neg };
         switch (type) {
-            case 'mcq': return onSave({ ...base, type, text, options, correctOption, explanation } as MCQQuestion);
+            case 'mcq': return onSave({ ...base, type, text, options, correctOption, explanation, imageUrl: questionImageUrl || undefined } as MCQQuestion);
+            case 'msq': return onSave({ ...base, type, text, options, correctOption: correctOptions.join(','), explanation, imageUrl: questionImageUrl || undefined } as MCQQuestion);
             case 'multi': return onSave({ ...base, type, text, options, correctOptions, explanation } as MultiQuestion);
             case 'fillblank': return onSave({ ...base, type, text, options, correctOption, explanation } as FillBlankQuestion);
             case 'truefalse': return onSave({ ...base, type, text, correct: tfCorrect, explanation } as TrueFalseQuestion);
+            case 'numerical': return onSave({ ...base, type, text, correctAnswer: isNaN(Number(numericalAnswer)) ? numericalAnswer : Number(numericalAnswer), tolerance: Number(numericalTolerance) || undefined, explanation, imageUrl: questionImageUrl || undefined } as NumericalQuestion);
             case 'comprehension': return onSave({ ...base, type, passage, subQuestions: subQs } as ComprehensionQuestion);
             case 'puzzle': return onSave({ ...base, type, setup, clues, subQuestions: subQs } as PuzzleQuestion);
+            case 'di': return onSave({ ...base, type, title: diTitle, sharedContent: diContent, subQuestions: subQs } as DIQuestion);
+            case 'caselet': return onSave({ ...base, type, title: diTitle, passage, subQuestions: subQs } as CaseletQuestion);
+            case 'input_output': return onSave({ ...base, type, title: diTitle, rules: ioRules, example: ioExample || undefined, subQuestions: subQs } as InputOutputQuestion);
         }
     };
 
-    const isComprehensionLike = type === 'comprehension' || type === 'puzzle';
+    const isSetBased = ['comprehension', 'puzzle', 'di', 'caselet', 'input_output'].includes(type);
+    const isSimple = ['mcq', 'msq', 'multi', 'fillblank', 'truefalse', 'numerical'].includes(type);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const isComprehensionLike = type === 'comprehension' || type === 'puzzle'; // kept for compatibility
 
     return (
         <div className="space-y-4">
             {/* Type selector */}
             <div className="space-y-2">
                 <Label className="text-xs font-semibold">Question Type</Label>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                <p className="text-[10px] text-muted-foreground">Types marked <span className="font-semibold text-sky-600">DualPanel</span> render a split left/right view in the exam.</p>
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
                     {(Object.entries(QUESTION_TYPE_META) as [QuestionType, typeof QUESTION_TYPE_META[QuestionType]][]).map(([key, meta]) => (
                         <button
                             key={key}
@@ -328,8 +397,11 @@ const QuestionBuilder: React.FC<BuilderProps> = ({ initial, onSave, onCancel }) 
                                 type === key ? 'border-primary bg-primary/5' : 'border-gray-200'
                             )}
                         >
-                            <span className={cn('p-1 rounded', meta.color)}>{meta.icon}</span>
-                            <span className="text-xs font-medium leading-tight">{meta.label}</span>
+                            <span className={cn('p-1 rounded shrink-0', meta.color)}>{meta.icon}</span>
+                            <div>
+                                <span className="text-xs font-medium leading-tight block">{meta.label}</span>
+                                <span className="text-[9px] text-muted-foreground leading-tight">{meta.description}</span>
+                            </div>
                         </button>
                     ))}
                 </div>
@@ -350,8 +422,174 @@ const QuestionBuilder: React.FC<BuilderProps> = ({ initial, onSave, onCancel }) 
             </div>
 
             <div className="border-t pt-4 space-y-4">
-                {/* ── Simple types (mcq, multi, fillblank, truefalse) ── */}
-                {!isComprehensionLike && (
+
+                {/* ── Numerical ── */}
+                {type === 'numerical' && (
+                    <div className="space-y-3">
+                        <div className="space-y-1.5">
+                            <Label className="text-xs font-semibold">Question Text</Label>
+                            <Textarea value={text} onChange={e => setText(e.target.value)}
+                                placeholder="e.g. What is the value of x if 3x + 5 = 20?"
+                                rows={3} className="text-sm" />
+                        </div>
+                        <div className="flex gap-3">
+                            <div className="flex-1 space-y-1">
+                                <Label className="text-xs">Correct Answer</Label>
+                                <Input value={numericalAnswer} onChange={e => setNumericalAnswer(e.target.value)}
+                                    placeholder="e.g. 5 or 3.14" className="h-8" />
+                            </div>
+                            <div className="flex-1 space-y-1">
+                                <Label className="text-xs">Tolerance ± (optional)</Label>
+                                <Input type="number" value={numericalTolerance} onChange={e => setNumericalTolerance(e.target.value)}
+                                    placeholder="0" className="h-8" />
+                            </div>
+                        </div>
+                        <div className="space-y-1">
+                            <Label className="text-xs">Question Image URL (optional)</Label>
+                            <Input value={questionImageUrl} onChange={e => setQuestionImageUrl(e.target.value)}
+                                placeholder="https://..." className="h-8" />
+                        </div>
+                        <div className="space-y-1">
+                            <Label className="text-xs">Explanation (optional)</Label>
+                            <Input value={explanation} onChange={e => setExplanation(e.target.value)}
+                                placeholder="Brief explanation of the correct answer" className="h-8" />
+                        </div>
+                    </div>
+                )}
+
+                {/* ── DI (Data Interpretation) ── */}
+                {type === 'di' && (
+                    <div className="space-y-4">
+                        <div className="space-y-1.5">
+                            <Label className="text-xs font-semibold flex items-center gap-1.5">
+                                <BarChart2 className="h-3.5 w-3.5 text-sky-600" /> Direction / Title
+                            </Label>
+                            <Input value={diTitle} onChange={e => setDiTitle(e.target.value)}
+                                placeholder="Study the following bar graph carefully and answer the questions."
+                                className="text-sm" />
+                        </div>
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                            <div className="space-y-1.5">
+                                <Label className="text-xs font-semibold">Shared Content (Left Panel)</Label>
+                                <p className="text-[10px] text-muted-foreground">Paste HTML with an SVG chart, &lt;table&gt;, or &lt;img&gt; tag. This appears on the left for all sub-questions.</p>
+                                <Textarea value={diContent} onChange={e => setDiContent(e.target.value)}
+                                    placeholder={`<p><strong>Sales Data 2024</strong></p>\n<svg viewBox="0 0 400 200">...</svg>\n<!-- OR --\n<table>...</table>\n<!-- OR -->`}
+                                    rows={10} className="text-xs font-mono resize-none" />
+                                <div className="flex gap-2 items-center">
+                                    <Image className="h-3.5 w-3.5 text-muted-foreground" />
+                                    <Input value={questionImageUrl} onChange={e => setQuestionImageUrl(e.target.value)}
+                                        placeholder="Or paste image URL (chart image)" className="h-7 text-xs" />
+                                </div>
+                                {questionImageUrl && (
+                                    <img src={questionImageUrl} alt="DI chart preview" className="mt-1 max-h-40 rounded border" />
+                                )}
+                            </div>
+                            <div className="space-y-3">
+                                <div className="flex items-center justify-between">
+                                    <Label className="text-xs font-semibold">Sub-Questions (Right Panel)</Label>
+                                    <Button type="button" variant="outline" size="sm" className="h-7 text-xs"
+                                        onClick={() => setSubQs(prev => [...prev, defaultSubQuestion()])}>
+                                        <Plus className="h-3 w-3 mr-1" /> Add Question
+                                    </Button>
+                                </div>
+                                <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
+                                    {subQs.map((sq, i) => (
+                                        <SubQuestionEditor key={sq.id} sub={sq} index={i}
+                                            onChange={u => updateSub(i, u)}
+                                            onDelete={() => setSubQs(prev => prev.filter((_, idx) => idx !== i))} />
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* ── Caselet DI ── */}
+                {type === 'caselet' && (
+                    <div className="space-y-4">
+                        <div className="space-y-1.5">
+                            <Label className="text-xs font-semibold">Direction / Title</Label>
+                            <Input value={diTitle} onChange={e => setDiTitle(e.target.value)}
+                                placeholder="Read the following caselet carefully and answer the questions."
+                                className="text-sm" />
+                        </div>
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                            <div className="space-y-1.5">
+                                <Label className="text-xs font-semibold flex items-center gap-1.5">
+                                    <Layers className="h-3.5 w-3.5 text-emerald-600" /> Caselet Paragraph (Left Panel)
+                                </Label>
+                                <Textarea value={passage} onChange={e => setPassage(e.target.value)}
+                                    placeholder="A company manufactures 3 products X, Y and Z. In 2023, the total production was 12,000 units..."
+                                    rows={10} className="text-sm resize-none" />
+                            </div>
+                            <div className="space-y-3">
+                                <div className="flex items-center justify-between">
+                                    <Label className="text-xs font-semibold">Sub-Questions (Right Panel)</Label>
+                                    <Button type="button" variant="outline" size="sm" className="h-7 text-xs"
+                                        onClick={() => setSubQs(prev => [...prev, defaultSubQuestion()])}>
+                                        <Plus className="h-3 w-3 mr-1" /> Add Question
+                                    </Button>
+                                </div>
+                                <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
+                                    {subQs.map((sq, i) => (
+                                        <SubQuestionEditor key={sq.id} sub={sq} index={i}
+                                            onChange={u => updateSub(i, u)}
+                                            onDelete={() => setSubQs(prev => prev.filter((_, idx) => idx !== i))} />
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* ── Input-Output / Word Shift ── */}
+                {type === 'input_output' && (
+                    <div className="space-y-4">
+                        <div className="space-y-1.5">
+                            <Label className="text-xs font-semibold">Direction / Title</Label>
+                            <Input value={diTitle} onChange={e => setDiTitle(e.target.value)}
+                                placeholder="A word arrangement machine follows a specific rule to rearrange words..."
+                                className="text-sm" />
+                        </div>
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                            <div className="space-y-3">
+                                <div className="space-y-1.5">
+                                    <Label className="text-xs font-semibold flex items-center gap-1.5">
+                                        <ArrowRightLeft className="h-3.5 w-3.5 text-rose-600" /> Rules / Steps (Left Panel)
+                                    </Label>
+                                    <Textarea value={ioRules} onChange={e => setIoRules(e.target.value)}
+                                        placeholder={`Step 1: Numbers are arranged from smallest to largest.\nStep 2: Words are rearranged in reverse alphabetical order.\n...`}
+                                        rows={6} className="text-sm resize-none" />
+                                </div>
+                                <div className="space-y-1.5">
+                                    <Label className="text-xs">Worked Example (optional)</Label>
+                                    <Textarea value={ioExample} onChange={e => setIoExample(e.target.value)}
+                                        placeholder="Input: 25 ball 16 mango 49 apple\nStep 1: apple 16 ball mango 25 49\nOutput: apple ball mango 16 25 49"
+                                        rows={4} className="text-xs resize-none" />
+                                </div>
+                            </div>
+                            <div className="space-y-3">
+                                <div className="flex items-center justify-between">
+                                    <Label className="text-xs font-semibold">Sub-Questions (Right Panel)</Label>
+                                    <Button type="button" variant="outline" size="sm" className="h-7 text-xs"
+                                        onClick={() => setSubQs(prev => [...prev, defaultSubQuestion()])}>
+                                        <Plus className="h-3 w-3 mr-1" /> Add Question
+                                    </Button>
+                                </div>
+                                <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
+                                    {subQs.map((sq, i) => (
+                                        <SubQuestionEditor key={sq.id} sub={sq} index={i}
+                                            onChange={u => updateSub(i, u)}
+                                            onDelete={() => setSubQs(prev => prev.filter((_, idx) => idx !== i))} />
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* ── Simple types (mcq, msq, multi, fillblank, truefalse) ── */}
+                {isSimple && type !== 'numerical' && (
                     <>
                         <div className="space-y-1.5">
                             <Label className="text-xs font-semibold">
@@ -364,6 +602,16 @@ const QuestionBuilder: React.FC<BuilderProps> = ({ initial, onSave, onCancel }) 
                                 rows={3}
                             />
                         </div>
+
+                        {/* Image URL for MCQ/MSQ */}
+                        {(type === 'mcq' || type === 'msq') && (
+                            <div className="space-y-1">
+                                <Label className="text-xs flex items-center gap-1"><Image className="h-3 w-3" /> Question Image URL (optional)</Label>
+                                <Input value={questionImageUrl} onChange={e => setQuestionImageUrl(e.target.value)}
+                                    placeholder="https://... (leave blank if no image)" className="h-8 text-xs" />
+                                {questionImageUrl && <img src={questionImageUrl} alt="preview" className="mt-1 max-h-32 rounded border" />}
+                            </div>
+                        )}
 
                         {type === 'truefalse' ? (
                             <div className="space-y-2">
@@ -389,16 +637,16 @@ const QuestionBuilder: React.FC<BuilderProps> = ({ initial, onSave, onCancel }) 
                                 <Label className="text-xs font-semibold">
                                     Options
                                     <span className="ml-2 text-[10px] text-muted-foreground font-normal">
-                                        (click circle to mark correct answer)
+                                        {type === 'msq' ? '(check all correct answers)' : '(click circle to mark correct answer)'}
                                     </span>
                                 </Label>
                                 <OptionEditor
                                     options={options}
-                                    correct={type === 'multi' ? correctOptions : correctOption}
-                                    multi={type === 'multi'}
+                                    correct={type === 'multi' || type === 'msq' ? correctOptions : correctOption}
+                                    multi={type === 'multi' || type === 'msq'}
                                     onChange={setOptions}
                                     onCorrectChange={(c) => {
-                                        if (type === 'multi') setCorrectOptions(c as string[]);
+                                        if (type === 'multi' || type === 'msq') setCorrectOptions(c as string[]);
                                         else setCorrectOption(c as string);
                                     }}
                                 />
@@ -525,9 +773,13 @@ const QuestionRow: React.FC<{
     const meta = QUESTION_TYPE_META[q.type];
 
     const preview = () => {
-        if (q.type === 'comprehension') return `[Passage] + ${q.subQuestions.length} sub-question(s)`;
+        if (q.type === 'comprehension') return `[RC Passage] + ${q.subQuestions.length} sub-question(s)`;
         if (q.type === 'puzzle') return `[Puzzle/SA] + ${q.subQuestions.length} sub-question(s)`;
+        if (q.type === 'di') return `[DI: ${q.title?.slice(0, 40) || 'Chart/Table'}] + ${q.subQuestions.length} sub-question(s)`;
+        if (q.type === 'caselet') return `[Caselet: ${q.title?.slice(0, 40) || 'Paragraph'}] + ${q.subQuestions.length} sub-question(s)`;
+        if (q.type === 'input_output') return `[I/O: ${q.title?.slice(0, 40) || 'Rules'}] + ${q.subQuestions.length} sub-question(s)`;
         if (q.type === 'truefalse') return q.text;
+        if (q.type === 'numerical') return `[Numerical] ${q.text} → Ans: ${q.correctAnswer}`;
         return (q as MCQQuestion).text;
     };
 
