@@ -218,7 +218,7 @@ const SuperAdminExamManager: React.FC = () => {
     const navigate = useNavigate();
     const uid = useId();
     const { toast } = useToast();
-    const { catalog, addTest, updateTest, deleteTest, updateTest: toggleTest } = useExamCatalog();
+    const { catalog, loading, addTest, updateTest, deleteTest, updateTest: toggleTest } = useExamCatalog();
 
     const [activeTab, setActiveTab] = useState('prelims');
     const [activeSubTab, setActiveSubTab] = useState('full');
@@ -237,6 +237,15 @@ const SuperAdminExamManager: React.FC = () => {
     const [activeSlotKey, setActiveSlotKey] = useState<string>('');
     const [testForm, setTestForm] = useState<Omit<CatalogTestItem, 'createdAt'>>(defaultTestForm());
     const [deleteTarget, setDeleteTarget] = useState<{ slotKey: string; testId: string; name: string } | null>(null);
+
+    // ── Loading guard (catalog is empty on first render) ─────────────────────
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center h-64">
+                <div className="animate-spin h-10 w-10 border-4 border-primary border-t-transparent rounded-full" />
+            </div>
+        );
+    }
 
     if (!exam || !category || !section) {
         return (
