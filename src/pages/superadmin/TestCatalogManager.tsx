@@ -199,8 +199,8 @@ const COLOR_OPTIONS = [
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 const TestCatalogManager: React.FC = () => {
-    const uid = useId();
     const navigate = useNavigate();
+    const uid = useId();
     const { toast } = useToast();
     const {
         catalog, loading,
@@ -362,12 +362,15 @@ const TestCatalogManager: React.FC = () => {
                 isPopular: examForm.isPopular,
             });
             toast({ title: 'Exam updated', description: examForm.name });
+            setExamDialogOpen(false);
         } else {
             const id = examForm.id.trim() || examForm.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
             addExam(activeCatForExam, activeSectionForExam, { ...examForm, id });
-            toast({ title: 'Exam added', description: examForm.name });
+            toast({ title: '✅ Exam created!', description: `"${examForm.name}" — loading exam manager…` });
+            setExamDialogOpen(false);
+            // Navigate immediately — localStorage was written synchronously
+            navigate(`/super-admin/test-catalog/${activeCatForExam}/${activeSectionForExam}/${id}`);
         }
-        setExamDialogOpen(false);
     };
 
     // ─── Derived stats ────────────────────────────────────────────────────────

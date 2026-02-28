@@ -243,10 +243,10 @@ export const useExamCatalog = () => {
     // Persists to localStorage and notifies OTHER tabs via BroadcastChannel.
     // Must NOT be called inside a setCatalog() updater — use setTimeout(() => broadcast(next), 0).
     // IMPORTANT: also stamps SEED_VER_KEY so the load logic won't re-seed this data.
-    const broadcast = useCallback((next: CatalogCategory[]) => {
+    // persist synchronously to localStorage + notify other tabs
+    const persist = useCallback((next: CatalogCategory[]) => {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-        localStorage.setItem(SEED_VER_KEY, SEED_VERSION); // prevent re-seed on next load
-        // Cross-tab only
+        localStorage.setItem(SEED_VER_KEY, SEED_VERSION);
         try {
             const ch = new BroadcastChannel(CHANNEL_NAME);
             ch.postMessage({ type: 'catalog_updated', catalog: next });
@@ -254,43 +254,45 @@ export const useExamCatalog = () => {
         } catch { /* not supported */ }
     }, []);
 
+    // Keep backward-compat alias (used elsewhere in file)
+    const broadcast = persist;
+
     // ── Category CRUD ──────────────────────────────────────────────────────────
 
     const addCategory = useCallback((cat: Omit<CatalogCategory, 'createdAt' | 'updatedAt' | 'sections'>) => {
         const now = new Date().toISOString();
         setCatalog(prev => {
             const next = [...prev, { ...cat, sections: [], createdAt: now, updatedAt: now }];
-            // Schedule broadcast AFTER the state update settles
-            setTimeout(() => broadcast(next), 0);
+            persist(next); // synchronous — must happen inside updater before any navigation
             return next;
         });
-    }, [broadcast]);
+    }, [persist]);
 
     const updateCategory = useCallback((id: string, updates: Partial<Omit<CatalogCategory, 'id' | 'sections' | 'createdAt'>>) => {
         setCatalog(prev => {
             const next = prev.map(c => c.id === id ? { ...c, ...updates, updatedAt: new Date().toISOString() } : c);
-            setTimeout(() => broadcast(next), 0);
+            persist(next);
             return next;
         });
-    }, [broadcast]);
+    }, [persist]);
 
     const deleteCategory = useCallback((id: string) => {
         setCatalog(prev => {
             const next = prev.filter(c => c.id !== id);
-            setTimeout(() => broadcast(next), 0);
+            persist(next);
             return next;
         });
-    }, [broadcast]);
+    }, [persist]);
 
     const toggleCategoryVisibility = useCallback((id: string) => {
         setCatalog(prev => {
             const next = prev.map(c =>
                 c.id === id ? { ...c, isVisible: !c.isVisible, updatedAt: new Date().toISOString() } : c,
             );
-            setTimeout(() => broadcast(next), 0);
+            persist(next);
             return next;
         });
-    }, [broadcast]);
+    }, [persist]);
 
     // ── Section CRUD ───────────────────────────────────────────────────────────
 
@@ -301,10 +303,10 @@ export const useExamCatalog = () => {
                     ? { ...c, sections: [...c.sections, { ...section, exams: [] }], updatedAt: new Date().toISOString() }
                     : c,
             );
-            setTimeout(() => broadcast(next), 0);
+            persist(next);
             return next;
         });
-    }, [broadcast]);
+    }, [persist]);
 
     const updateSection = useCallback((categoryId: string, sectionId: string, updates: Partial<Omit<CatalogSection, 'exams'>>) => {
         setCatalog(prev => {
@@ -313,10 +315,10 @@ export const useExamCatalog = () => {
                     ? { ...c, sections: c.sections.map(s => s.id === sectionId ? { ...s, ...updates } : s), updatedAt: new Date().toISOString() }
                     : c,
             );
-            setTimeout(() => broadcast(next), 0);
+            persist(next);
             return next;
         });
-    }, [broadcast]);
+    }, [persist]);
 
     const deleteSection = useCallback((categoryId: string, sectionId: string) => {
         setCatalog(prev => {
@@ -325,10 +327,10 @@ export const useExamCatalog = () => {
                     ? { ...c, sections: c.sections.filter(s => s.id !== sectionId), updatedAt: new Date().toISOString() }
                     : c,
             );
-            setTimeout(() => broadcast(next), 0);
+            persist(next);
             return next;
         });
-    }, [broadcast]);
+    }, [persist]);
 
     // ── Exam CRUD ──────────────────────────────────────────────────────────────
 
@@ -346,10 +348,11 @@ export const useExamCatalog = () => {
                     }
                     : c,
             );
-            setTimeout(() => broadcast(next), 0);
+            // CRITICAL: write synchronously so any immediate navigate() finds the exam in localStorage
+            persist(next);
             return next;
         });
-    }, [broadcast]);
+    }, [persist]);
 
     const updateExam = useCallback((categoryId: string, sectionId: string, examId: string, updates: Partial<Omit<CatalogExam, 'testSlots'>>) => {
         setCatalog(prev => {
@@ -366,10 +369,10 @@ export const useExamCatalog = () => {
                     }
                     : c,
             );
-            setTimeout(() => broadcast(next), 0);
+            persist(next);
             return next;
         });
-    }, [broadcast]);
+    }, [persist]);
 
     const removeExam = useCallback((categoryId: string, sectionId: string, examId: string) => {
         setCatalog(prev => {
@@ -386,10 +389,10 @@ export const useExamCatalog = () => {
                     }
                     : c,
             );
-            setTimeout(() => broadcast(next), 0);
+            persist(next);
             return next;
         });
-    }, [broadcast]);
+    }, [persist]);
 
     // ── Test CRUD ──────────────────────────────────────────────────────────────
 
