@@ -336,22 +336,35 @@ export const useExamCatalog = () => {
 
     const addExam = useCallback((categoryId: string, sectionId: string, exam: Omit<CatalogExam, 'testSlots'>) => {
         const full: CatalogExam = { ...exam, testSlots: makeDefaultSlots() };
-        setCatalog(prev => {
-            const next = prev.map(c =>
-                c.id === categoryId
-                    ? {
-                        ...c,
-                        sections: c.sections.map(s =>
-                            s.id === sectionId ? { ...s, exams: [...s.exams, full] } : s,
-                        ),
-                        updatedAt: new Date().toISOString(),
-                    }
-                    : c,
-            );
-            // CRITICAL: write synchronously so any immediate navigate() finds the exam in localStorage
-            persist(next);
-            return next;
-        });
+
+        // Read the CURRENT catalog directly from localStorage (not from React state,
+        // which may be stale in the new route component). This guarantees the write
+        // happens before any navigation, regardless of React 18 batching.
+        let current: CatalogCategory[] = [];
+        try {
+            const raw = localStorage.getItem(STORAGE_KEY);
+            current = raw ? JSON.parse(raw) : [];
+        } catch {
+            current = [];
+        }
+
+        const next = current.map(c =>
+            c.id === categoryId
+                ? {
+                    ...c,
+                    sections: c.sections.map(s =>
+                        s.id === sectionId ? { ...s, exams: [...s.exams, full] } : s,
+                    ),
+                    updatedAt: new Date().toISOString(),
+                }
+                : c,
+        );
+
+        // Write to localStorage FIRST — before any React state update or navigation
+        persist(next);
+
+        // Now update React state so the current page re-renders
+        setCatalog(next);
     }, [persist]);
 
     const updateExam = useCallback((categoryId: string, sectionId: string, examId: string, updates: Partial<Omit<CatalogExam, 'testSlots'>>) => {
