@@ -5,7 +5,19 @@
  * so both sides update without a page refresh.
  */
 import { useState, useEffect, useCallback } from 'react';
-import { examCategories, getExamsByCategory, type Exam } from '@/data/examData';
+import {
+    examCategories,
+    getExamsByCategory,
+    type Exam,
+    // All exam arrays
+    bankingExams, sscExams, railwayExams, upscExams, statePscExams,
+    judicialExams, jaibCaibExams, railwaysRrbExams, civilServicesExams,
+    regulatoryExams, ugcNetCtetExams, agricultureExams, mbaEntranceExams,
+    bankingExamsMain, jkLadakhExams, judiciaryExams, uttarPradeshExams,
+    upscEpfoExams, karnatakaExams, tamilNaduExams, biharExams,
+    // Logos
+    SBI_LOGO, IBPS_LOGO, SSC_LOGO, RAILWAY_LOGO, UPSC_LOGO, NIACL_LOGO,
+} from '@/data/examData';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -84,7 +96,7 @@ const STORAGE_KEY = 'superadmin_exam_catalog';
 const CHANNEL_NAME = 'exam_catalog_sync';
 
 /** Bump this whenever the seed data changes to force all users to re-seed */
-const SEED_VERSION = '2';
+const SEED_VERSION = '3';
 const SEED_VER_KEY = 'superadmin_catalog_seed_ver';
 
 // ─── Migration: ensure every exam has all 10 slots ───────────────────────────
@@ -166,27 +178,220 @@ const makeSampleSlots = (): TestTypeSlot[] => [
 
 // ─── Seed from static examData ────────────────────────────────────────────────
 
-const seedFromStatic = (): CatalogCategory[] =>
-    examCategories.map(cat => {
-        const staticExams: Exam[] = getExamsByCategory(cat.id);
-        return {
-            ...cat,
-            isVisible: true,
-            sections: [{
-                id: 'default',
+// Full per-category exam map so every category seeds correctly
+const CATEGORY_EXAM_MAP: Record<string, { sections: { id: string; name: string; exams: Exam[] }[] }> = {
+    // Banking & Insurance
+    'banking-insurance': {
+        sections: [
+            { id: 'popular', name: 'Popular Exams', exams: bankingExams.filter(e => e.isPopular) },
+            { id: 'all', name: 'All Banking Exams', exams: bankingExams },
+        ],
+    },
+    // SSC
+    'ssc': {
+        sections: [{ id: 'all', name: 'SSC Exams', exams: sscExams }],
+    },
+    // Railway
+    'railway': {
+        sections: [{ id: 'all', name: 'Railway Exams', exams: railwayExams }],
+    },
+    // UPSC
+    'upsc': {
+        sections: [{ id: 'all', name: 'UPSC Exams', exams: upscExams }],
+    },
+    // State PSC
+    'state-psc': {
+        sections: [
+            { id: 'popular', name: 'Popular State PSC', exams: statePscExams.filter(e => e.isPopular) },
+            { id: 'all', name: 'All State PSC', exams: statePscExams },
+        ],
+    },
+    // Judicial
+    'judicial': {
+        sections: [{ id: 'all', name: 'Judicial Services', exams: judicialExams }],
+    },
+    // Defence — using UPSC CDS/NDA
+    'defence': {
+        sections: [{
+            id: 'all', name: 'Defence Exams',
+            exams: [
+                { id: 'nda', name: 'NDA', logo: UPSC_LOGO, logoAlt: 'NDA', isPopular: true },
+                { id: 'cds', name: 'CDS', logo: UPSC_LOGO, logoAlt: 'CDS', isPopular: true },
+                { id: 'capf', name: 'CAPF AC', logo: UPSC_LOGO, logoAlt: 'CAPF', isPopular: false },
+                { id: 'afcat', name: 'AFCAT', logo: UPSC_LOGO, logoAlt: 'AFCAT', isPopular: false },
+                { id: 'territorial-army', name: 'Territorial Army', logo: UPSC_LOGO, logoAlt: 'TA', isPopular: false },
+            ],
+        }],
+    },
+    // Regulatory
+    'regulatory': {
+        sections: [{ id: 'all', name: 'Regulatory Exams', exams: regulatoryExams }],
+    },
+    // TNPSC
+    'tnpsc': {
+        sections: [{ id: 'all', name: 'TNPSC Exams', exams: tamilNaduExams }],
+    },
+    // Engineering — technical exams
+    'engineering': {
+        sections: [{
+            id: 'all', name: 'Engineering Exams',
+            exams: [
+                { id: 'gate', name: 'GATE', logo: IBPS_LOGO, logoAlt: 'GATE', isPopular: true },
+                { id: 'ese', name: 'UPSC ESE', logo: UPSC_LOGO, logoAlt: 'ESE', isPopular: true },
+                { id: 'isro', name: 'ISRO', logo: IBPS_LOGO, logoAlt: 'ISRO', isPopular: true },
+                { id: 'drdo-ceptam', name: 'DRDO CEPTAM', logo: IBPS_LOGO, logoAlt: 'DRDO', isPopular: false },
+                { id: 'barc', name: 'BARC', logo: IBPS_LOGO, logoAlt: 'BARC', isPopular: false },
+            ],
+        }],
+    },
+    // Others — misc
+    'others': {
+        sections: [{
+            id: 'all', name: 'Other Exams',
+            exams: [
+                { id: 'fci', name: 'FCI', logo: NIACL_LOGO, logoAlt: 'FCI', isPopular: true },
+                { id: 'ssc-je', name: 'SSC JE', logo: SSC_LOGO, logoAlt: 'SSC JE', isPopular: true },
+                { id: 'niacl-ao', name: 'NIACL AO', logo: NIACL_LOGO, logoAlt: 'NIACL AO', isPopular: false },
+            ],
+        }],
+    },
+    // JAIIB / CAIIB
+    'jaiib-caiib': {
+        sections: [{ id: 'all', name: 'JAIIB / CAIIB', exams: jaibCaibExams }],
+    },
+    // Railways RRB
+    'railways-rrb': {
+        sections: [{ id: 'all', name: 'Railways RRB', exams: railwaysRrbExams }],
+    },
+    // Civil Services
+    'civil-services': {
+        sections: [{ id: 'all', name: 'Civil Services', exams: civilServicesExams }],
+    },
+    // UGC NET & CTET
+    'ugc-net-ctet': {
+        sections: [{ id: 'all', name: 'UGC NET & CTET', exams: ugcNetCtetExams }],
+    },
+    // Agriculture
+    'agriculture-exams': {
+        sections: [{ id: 'all', name: 'Agriculture Exams', exams: agricultureExams }],
+    },
+    // MBA Entrance
+    'mba-entrance': {
+        sections: [{ id: 'all', name: 'MBA Entrance', exams: mbaEntranceExams }],
+    },
+    // J&K + Ladakh
+    'jk-ladakh-exams': {
+        sections: [{ id: 'all', name: 'J&K / Ladakh Exams', exams: jkLadakhExams }],
+    },
+    // Judiciary
+    'judiciary-exams': {
+        sections: [{ id: 'all', name: 'Judiciary Exams', exams: judiciaryExams }],
+    },
+    // Uttar Pradesh
+    'uttar-pradesh-exams': {
+        sections: [{ id: 'all', name: 'UP Exams', exams: uttarPradeshExams }],
+    },
+    // Banking (separate from banking-insurance)
+    'banking': {
+        sections: [
+            { id: 'popular', name: 'Popular', exams: bankingExamsMain.filter(e => e.isPopular) },
+            { id: 'all', name: 'All Banking', exams: bankingExamsMain },
+        ],
+    },
+    // UPSC EPFO
+    'upsc-epfo': {
+        sections: [{ id: 'all', name: 'EPFO Exams', exams: upscEpfoExams }],
+    },
+    // Karnataka
+    'karnataka-exams': {
+        sections: [{ id: 'all', name: 'Karnataka Exams', exams: karnatakaExams }],
+    },
+    // Tamil Nadu
+    'tamil-nadu-exams': {
+        sections: [{ id: 'all', name: 'Tamil Nadu Exams', exams: tamilNaduExams }],
+    },
+    // Bihar
+    'bihar-exams': {
+        sections: [{ id: 'all', name: 'Bihar Exams', exams: biharExams }],
+    },
+    // Combo categories
+    'banking-ssc-railway-combo': {
+        sections: [
+            { id: 'banking', name: 'Banking', exams: bankingExams },
+            { id: 'ssc', name: 'SSC', exams: sscExams },
+            { id: 'railway', name: 'Railway', exams: railwayExams },
+        ],
+    },
+    'ssc-railway-combo': {
+        sections: [
+            { id: 'ssc', name: 'SSC', exams: sscExams },
+            { id: 'railway', name: 'Railway', exams: railwayExams },
+        ],
+    },
+    'upsc-tnpsc-combo': {
+        sections: [
+            { id: 'upsc', name: 'UPSC', exams: upscExams },
+            { id: 'tnpsc', name: 'TNPSC', exams: tamilNaduExams },
+        ],
+    },
+    'ssc-railway-defence-combo': {
+        sections: [
+            { id: 'ssc', name: 'SSC', exams: sscExams },
+            { id: 'railway', name: 'Railway', exams: railwayExams },
+            {
+                id: 'defence', name: 'Defence',
+                exams: [
+                    { id: 'nda', name: 'NDA', logo: UPSC_LOGO, logoAlt: 'NDA', isPopular: true },
+                    { id: 'cds', name: 'CDS', logo: UPSC_LOGO, logoAlt: 'CDS', isPopular: true },
+                ],
+            },
+        ],
+    },
+};
+
+const seedFromStatic = (): CatalogCategory[] => {
+    const now = new Date().toISOString();
+    return examCategories.map(cat => {
+        const mapping = CATEGORY_EXAM_MAP[cat.id];
+
+        // Fallback: try getExamsByCategory for unmapped categories
+        const fallbackExams: Exam[] = !mapping ? getExamsByCategory(cat.id) : [];
+
+        const sections: CatalogSection[] = mapping
+            ? mapping.sections
+                .filter(s => s.exams.length > 0) // skip empty sections
+                .map(s => ({
+                    id: s.id,
+                    name: s.name,
+                    exams: s.exams.map(e => ({
+                        id: e.id,
+                        name: e.name,
+                        logo: e.logo,
+                        isPopular: e.isPopular,
+                        testSlots: makeDefaultSlots(), // empty slots — admin adds tests
+                    })),
+                }))
+            : [{
+                id: 'all',
                 name: 'All Exams',
-                exams: staticExams.map(e => ({
+                exams: fallbackExams.map(e => ({
                     id: e.id,
                     name: e.name,
                     logo: e.logo,
                     isPopular: e.isPopular,
-                    testSlots: makeSampleSlots(),
+                    testSlots: makeDefaultSlots(),
                 })),
-            }],
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
+            }];
+
+        return {
+            ...cat,
+            isVisible: true,
+            sections,
+            createdAt: now,
+            updatedAt: now,
         };
     });
+};
 
 // ─── Hook ─────────────────────────────────────────────────────────────────────
 
