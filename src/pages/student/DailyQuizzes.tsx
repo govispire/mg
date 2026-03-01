@@ -6,7 +6,8 @@ import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Zap, Flame, CheckCircle, Target, ArrowLeft,
-  ChevronLeft, ChevronRight, Calendar, Clock, Trophy, Users
+  ChevronLeft, ChevronRight, Calendar, Clock, Trophy, Users,
+  LayoutGrid, List, Play, Lock
 } from 'lucide-react';
 import { toast } from 'sonner';
 import launchExamWindow from '@/utils/launchExam';
@@ -36,6 +37,7 @@ import {
 const FreeQuizzes = () => {
   const [selectedType, setSelectedType] = useState<QuizType | 'all'>('all');
   const [leaderboardPeriod, setLeaderboardPeriod] = useState<LeaderboardPeriod>('daily');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
   const todayStr = new Date().toISOString().split('T')[0];
   const [selectedDate, setSelectedDate] = useState(todayStr);
@@ -248,40 +250,158 @@ const FreeQuizzes = () => {
                   >
                     <ChevronRight className="h-4 w-4" />
                   </Button>
+
+                  {/* View toggle */}
+                  <div className="flex gap-1 border rounded-lg p-1 ml-2">
+                    <Button
+                      variant={viewMode === 'grid' ? 'default' : 'ghost'}
+                      size="sm"
+                      className="h-7 w-7 p-0"
+                      onClick={() => setViewMode('grid')}
+                      title="Grid view"
+                    >
+                      <LayoutGrid className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button
+                      variant={viewMode === 'list' ? 'default' : 'ghost'}
+                      size="sm"
+                      className="h-7 w-7 p-0"
+                      onClick={() => setViewMode('list')}
+                      title="List view"
+                    >
+                      <List className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          {/* Quiz List */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
-            {filteredQuizzes.length > 0 ? (
-              filteredQuizzes.map((quiz) => (
-                <QuizCard
-                  key={quiz.id}
-                  quiz={quiz}
-                  onStart={handleStartQuiz}
-                  todayStr={todayStr}
-                />
-              ))
-            ) : (
-              <Card className="col-span-full">
-                <CardContent className="p-12 text-center">
-                  <Target className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
-                  <h3 className="font-semibold mb-2">No Quizzes Available</h3>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    No quizzes found for this date
-                    {selectedType !== 'all' && ` in ${selectedType.replace('-', ' ')} category`}.
-                  </p>
-                  {selectedDate !== todayStr && (
-                    <Button onClick={() => setSelectedDate(todayStr)}>
-                      Go to Today
-                    </Button>
-                  )}
-                </CardContent>
-              </Card>
-            )}
-          </div>
+          {/* Quiz Grid or List */}
+          {viewMode === 'grid' ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6">
+              {filteredQuizzes.length > 0 ? (
+                filteredQuizzes.map((quiz) => (
+                  <QuizCard
+                    key={quiz.id}
+                    quiz={quiz}
+                    onStart={handleStartQuiz}
+                    todayStr={todayStr}
+                  />
+                ))
+              ) : (
+                <Card className="col-span-full">
+                  <CardContent className="p-12 text-center">
+                    <Target className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
+                    <h3 className="font-semibold mb-2">No Quizzes Available</h3>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      No quizzes found for this date
+                      {selectedType !== 'all' && ` in ${selectedType.replace('-', ' ')} category`}.
+                    </p>
+                    {selectedDate !== todayStr && (
+                      <Button onClick={() => setSelectedDate(todayStr)}>Go to Today</Button>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          ) : (
+            /* ── List view ── */
+            <div className="space-y-2">
+              {filteredQuizzes.length > 0 ? (
+                filteredQuizzes.map((quiz) => {
+                  const isLocked = quiz.isLocked;
+                  const isFuture = quiz.scheduledDate > todayStr;
+                  const isDisabled = isLocked || isFuture;
+                  const typeColors: Record<string, string> = {
+                    'daily': 'bg-blue-500',
+                    'rapid-fire': 'bg-orange-500',
+                    'speed-challenge': 'bg-purple-500',
+                    'mini-test': 'bg-green-500',
+                    'sectional': 'bg-pink-500',
+                    'full-prelims': 'bg-indigo-500',
+                    'full-mains': 'bg-red-500',
+                  };
+                  const color = typeColors[quiz.type] || 'bg-gray-500';
+
+                  return (
+                    <div
+                      key={quiz.id}
+                      className={`flex items-center gap-3 bg-white dark:bg-gray-900 border rounded-xl px-4 py-3 hover:shadow-md transition-all ${isDisabled ? 'opacity-60' : ''
+                        }`}
+                    >
+                      {/* Type badge */}
+                      <span className={`shrink-0 text-[10px] font-bold text-white px-2 py-1 rounded-md uppercase tracking-wide ${color}`}>
+                        {quiz.type.replace('-', ' ')}
+                      </span>
+
+                      {/* Title + subject */}
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-sm truncate">{quiz.title}</p>
+                        {quiz.subject && (
+                          <p className="text-xs text-muted-foreground truncate">{quiz.subject}</p>
+                        )}
+                      </div>
+
+                      {/* Stats */}
+                      <div className="hidden sm:flex items-center gap-4 text-xs text-muted-foreground shrink-0">
+                        <span className="flex items-center gap-1">
+                          <Target className="h-3 w-3" />{quiz.questions} Qs
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Clock className="h-3 w-3" />{quiz.duration} min
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Users className="h-3 w-3" />{quiz.totalUsers || 0}
+                        </span>
+                      </div>
+
+                      {/* Score badge */}
+                      {quiz.completed && quiz.score !== undefined ? (
+                        <Badge className="bg-green-100 text-green-700 border-green-200 shrink-0 text-xs">
+                          Score: {quiz.score}%
+                        </Badge>
+                      ) : isFuture ? (
+                        <Badge variant="outline" className="text-xs shrink-0">
+                          Upcoming
+                        </Badge>
+                      ) : isLocked ? (
+                        <Badge variant="outline" className="text-xs shrink-0 text-gray-400">
+                          <Lock className="h-3 w-3 mr-1" />Locked
+                        </Badge>
+                      ) : null}
+
+                      {/* Action button */}
+                      <Button
+                        size="sm"
+                        variant={quiz.completed ? 'outline' : 'default'}
+                        disabled={isDisabled}
+                        onClick={() => handleStartQuiz(quiz)}
+                        className="shrink-0 h-8 text-xs gap-1"
+                      >
+                        <Play className="h-3 w-3" />
+                        {quiz.completed ? 'Retry' : 'Start'}
+                      </Button>
+                    </div>
+                  );
+                })
+              ) : (
+                <Card>
+                  <CardContent className="p-12 text-center">
+                    <Target className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
+                    <h3 className="font-semibold mb-2">No Quizzes Available</h3>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      No quizzes found for this date
+                      {selectedType !== 'all' && ` in ${selectedType.replace('-', ' ')} category`}.
+                    </p>
+                    {selectedDate !== todayStr && (
+                      <Button onClick={() => setSelectedDate(todayStr)}>Go to Today</Button>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Sidebar - Hidden to allow full width for grid */}
