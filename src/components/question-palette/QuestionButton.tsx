@@ -1,18 +1,13 @@
 /**
- * QuestionButton.tsx
- * Renders IBPS-standard question palette buttons using CSS clip-path shapes.
+ * QuestionButton.tsx — sprite-based question palette button
  *
- * Shapes:
- *   answered        → green downward-pentagon (house shape ▼)
- *   not-answered    → red downward-shield    (shield ▼)
- *   not-visited     → light-gray rounded square with border
- *   marked          → purple circle
- *   answered-marked → purple circle + small green badge
+ * Sprite: /images/questions-sprite.png (590 × 950 px)
  *
- * HOW TO ADJUST SHAPES:
- *   Edit the CSS clip-path values inside SHAPE_STYLES below.
- *   Pentagon: clip-path polygon defines the 5 corners.
- *   Shield:   clip-path polygon with deeper pointed bottom.
+ * ── HOW TO RE-MAP COORDINATES ─────────────────────────────────────
+ * Open /public/images/questions-sprite.png in an image editor.
+ * Find the top-left pixel (x, y) of each icon and its natural (w, h).
+ * Update spriteMap below. getBgStyle() auto-scales to any container size.
+ * ──────────────────────────────────────────────────────────────────
  */
 
 import React from 'react';
@@ -25,64 +20,81 @@ export type PaletteStatus =
     | 'marked'
     | 'answered-marked';
 
-// ── Per-status CSS shape config ──────────────────────────────────
-interface ShapeStyle {
-    background: string;
-    clipPath?: string;
-    borderRadius?: string;
-    border?: string;
-    textColor: string;
+interface SpriteEntry {
+    x: number;   // top-left pixel X in sprite
+    y: number;   // top-left pixel Y in sprite
+    w: number;   // icon width in sprite
+    h: number;   // icon height in sprite
+    textColor: '#ffffff' | '#374151';
 }
 
-const SHAPE_STYLES: Record<PaletteStatus, ShapeStyle> = {
-    // Green downward pentagon (house shape pointing down)
-    answered: {
-        background: 'linear-gradient(160deg, #5dce5d 0%, #3cb83c 100%)',
-        clipPath: 'polygon(0% 0%, 100% 0%, 100% 68%, 50% 100%, 0% 68%)',
+// Full sprite dimensions (px)
+const SPRITE_W = 590;
+const SPRITE_H = 950;
+
+export const spriteMap: Partial<Record<PaletteStatus, SpriteEntry>> = {
+    // Green downward-pentagon (house shape)
+    'answered': {
+        x: 4, y: 5, w: 50, h: 42,
         textColor: '#ffffff',
     },
-    // Red/orange shield pointing down
+    // Red upward-shield
     'not-answered': {
-        background: 'linear-gradient(160deg, #f05050 0%, #d63232 100%)',
-        clipPath: 'polygon(5% 0%, 95% 0%, 100% 10%, 100% 65%, 50% 100%, 0% 65%, 0% 10%)',
+        x: 57, y: 6, w: 49, h: 41,
         textColor: '#ffffff',
-    },
-    // Light gray rounded square — NO sprite, pure CSS
-    'not-visited': {
-        background: '#f3f4f6',
-        borderRadius: '6px',
-        border: '1.5px solid #9ca3af',
-        textColor: '#374151',
     },
     // Purple circle
-    marked: {
-        background: 'linear-gradient(135deg, #9966cc 0%, #7c3aed 100%)',
-        borderRadius: '50%',
+    'marked': {
+        x: 108, y: 1, w: 49, h: 49,
         textColor: '#ffffff',
     },
-    // Purple circle with green badge (handled separately)
+    // Purple circle + green badge (composite in sprite)
     'answered-marked': {
-        background: 'linear-gradient(135deg, #9966cc 0%, #7c3aed 100%)',
-        borderRadius: '50%',
+        x: 203, y: 48, w: 53, h: 50,
         textColor: '#ffffff',
     },
+    // NOT-VISITED intentionally omitted — rendered with CSS (see below)
 };
 
-// ── getBgStyle kept for backward-compat (no longer used for shapes) ──
-export function getBgStyle(_status: PaletteStatus, _containerSize = 52): React.CSSProperties {
-    return {}; // no-op — CSS shapes handle rendering now
+// ── CSS fallback for not-visited (no sprite needed) ─────────────
+//   Matches original IBPS design: light-gray bg, gray border, rounded
+export function getNotVisitedStyle(containerSize: number) {
+    return {
+        width: `${containerSize}px`,
+        height: `${containerSize}px`,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: '#e5e7eb',          // gray-200
+        border: '2px solid #9ca3af',   // gray-400
+        borderRadius: '6px',
+        fontSize: containerSize < 44 ? '10px' : '13px',
+        fontWeight: 700,
+        color: '#374151',              // gray-700
+        cursor: 'pointer',
+    } as React.CSSProperties;
 }
 
-// spriteMap exported so legend can reference it (textColor only needed now)
-export const spriteMap: Record<PaletteStatus, { textColor: string }> = {
-    'answered': { textColor: '#ffffff' },
-    'not-answered': { textColor: '#ffffff' },
-    'not-visited': { textColor: '#374151' },
-    'marked': { textColor: '#ffffff' },
-    'answered-marked': { textColor: '#ffffff' },
-};
+// ── Sprite background style helper ─────────────────────────────
+export function getBgStyle(
+    status: PaletteStatus,
+    containerSize = 52,
+): React.CSSProperties {
+    const m = spriteMap[status];
+    if (!m) return {};                 // not-visited handled separately
+    const scale = containerSize / Math.max(m.w, m.h);
+    return {
+        backgroundImage: `url('/images/questions-sprite.png')`,
+        backgroundPosition: `-${m.x * scale}px -${m.y * scale}px`,
+        backgroundSize: `${SPRITE_W * scale}px ${SPRITE_H * scale}px`,
+        backgroundRepeat: 'no-repeat',
+        display: 'block',
+        width: `${containerSize}px`,
+        height: `${containerSize}px`,
+    };
+}
 
-// ── QuestionButton ────────────────────────────────────────────────
+// ── QuestionButton ──────────────────────────────────────────────
 interface QuestionButtonProps {
     questionNumber: number;
     status: PaletteStatus;
@@ -95,95 +107,64 @@ export const QuestionButton: React.FC<QuestionButtonProps> = ({
     questionNumber,
     status,
     isCurrent = false,
-    size = 52,
+    size = 48,
     onClick,
 }) => {
-    const shape = SHAPE_STYLES[status] ?? SHAPE_STYLES['not-visited'];
-    const isAnsweredMarked = status === 'answered-marked';
+    const isNotVisited = status === 'not-visited';
+    const textColor = spriteMap[status]?.textColor ?? '#374151';
+    const fontSize = size < 44 ? '10px' : size < 50 ? '12px' : '13px';
+    const currentRing: React.CSSProperties = isCurrent
+        ? { outline: '2px solid #1d4ed8', outlineOffset: '2px', borderRadius: '4px' }
+        : {};
+
+    // ── NOT VISITED: pure CSS, no sprite ──────────────────────
+    if (isNotVisited) {
+        return (
+            <button
+                type="button"
+                onClick={onClick}
+                aria-label={`Question ${questionNumber} – not visited`}
+                aria-current={isCurrent ? 'true' : undefined}
+                style={{
+                    ...getNotVisitedStyle(size),
+                    ...currentRing,
+                }}
+            >
+                {questionNumber}
+            </button>
+        );
+    }
+
+    // ── SPRITE STATUSES ────────────────────────────────────────
+    const bgStyle = getBgStyle(status, size);
 
     return (
         <button
             type="button"
+            className={`q-btn${isCurrent ? ' is-current' : ''}`}
+            style={{ width: size, height: size, ...currentRing }}
             onClick={onClick}
             aria-label={`Question ${questionNumber} – ${status.replace(/-/g, ' ')}`}
             aria-current={isCurrent ? 'true' : undefined}
-            className={`q-btn status-${status}${isCurrent ? ' is-current' : ''}`}
-            style={{
-                width: size,
-                height: size,
-                position: 'relative',
-                border: 'none',
-                background: 'transparent',
-                cursor: 'pointer',
-                padding: 0,
-                outline: 'none',
-                // Current question glow
-                filter: isCurrent ? 'drop-shadow(0 0 5px rgba(29,78,216,0.8))' : undefined,
-            }}
         >
-            {/* Shape div */}
-            <div
+            {/* Sprite icon — absolutely positioned so it fills the button
+                without adding to normal flow, num overlay sits on top */}
+            <span
                 aria-hidden="true"
                 style={{
+                    ...bgStyle,
                     position: 'absolute',
-                    inset: 0,
-                    background: shape.background,
-                    clipPath: shape.clipPath,
-                    borderRadius: shape.borderRadius,
-                    border: shape.border,
-                    width: '100%',
-                    height: '100%',
+                    top: 0,
+                    left: 0,
                 }}
             />
-
-            {/* Question number overlay */}
+            {/* Number overlay */}
             <span
-                style={{
-                    position: 'absolute',
-                    inset: 0,
-                    display: 'grid',
-                    placeItems: 'center',
-                    fontWeight: 700,
-                    fontSize: size < 40 ? 10 : size < 48 ? 12 : 13,
-                    color: shape.textColor,
-                    lineHeight: 1,
-                    // Shift number slightly up for pentagon/shield (bottom is the point)
-                    paddingBottom: shape.clipPath ? '18%' : 0,
-                    pointerEvents: 'none',
-                    userSelect: 'none',
-                }}
+                className="num"
+                style={{ color: textColor, fontSize, position: 'relative', zIndex: 1 }}
             >
                 {questionNumber}
             </span>
-
-            {/* Answered-and-marked: small green badge at bottom-right */}
-            {isAnsweredMarked && (
-                <div
-                    aria-hidden="true"
-                    style={{
-                        position: 'absolute',
-                        bottom: 0,
-                        right: 0,
-                        width: Math.round(size * 0.35),
-                        height: Math.round(size * 0.35),
-                        background: '#22c55e',
-                        borderRadius: '50%',
-                        border: '2px solid white',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                    }}
-                >
-                    {/* Green checkmark */}
-                    <svg
-                        viewBox="0 0 10 8"
-                        fill="none"
-                        style={{ width: '55%', height: '55%' }}
-                    >
-                        <path d="M1 4l3 3 5-6" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                </div>
-            )}
         </button>
     );
 };
