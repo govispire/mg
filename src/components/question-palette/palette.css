@@ -1,0 +1,93 @@
+/**
+ * palette.css — Question Palette Sprite Sheet Styles
+ * Sprite: /images/questions-sprite.png (590 × 950 px)
+ *
+ * HOW TO RE-MAP if the sprite changes:
+ *   1. Open the new sprite in a browser / image editor.
+ *   2. Measure the top-left (x, y) of each status icon.
+ *   3. Update spriteMap in QuestionButton.tsx with the new values.
+ *   4. Update .q-icon width/height below if icon sizes changed.
+ *
+ * Current icon sizes (px):
+ *   answered:        50 × 42   → displayed as 52 × 46
+ *   not-answered:    49 × 41   → displayed as 52 × 46
+ *   marked:          49 × 49   → displayed as 52 × 52
+ *   not-visited:     44 × 43   → displayed as 52 × 52
+ *   answered-marked: 53 × 50   → displayed as 52 × 52
+ */
+
+/* ── Container ────────────────────────────────────────────────── */
+.palette {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    max-height: 420px;
+    overflow-y: auto;
+    padding: 4px;
+}
+
+/* ── Button wrapper ───────────────────────────────────────────── */
+.q-btn {
+    width: 52px;
+    height: 52px;
+    position: relative;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    padding: 0;
+    outline: none;
+}
+
+.q-btn:focus-visible {
+    outline: 2px solid #1d4ed8;
+    outline-offset: 2px;
+    border-radius: 4px;
+}
+
+.q-btn.is-current {
+    filter: drop-shadow(0 0 4px rgba(29, 78, 216, 0.9));
+}
+
+/* ── Sprite icon base ─────────────────────────────────────────── */
+.q-icon {
+    width: 52px;
+    height: 52px;
+    background-image: url('/images/questions-sprite.png');
+    background-repeat: no-repeat;
+    background-color: transparent;
+    display: block;
+    /* background-position is set via inline style per status */
+}
+
+/* ── Number overlay ───────────────────────────────────────────── */
+.q-btn .num {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    font-weight: 700;
+    font-size: 13px;
+    line-height: 1;
+    color: #ffffff;
+    /* Shift number down slightly for pentagon (answered) shape */
+    padding-bottom: 2px;
+    pointer-events: none;
+    user-select: none;
+}
+
+/* Not-Visited has dark text (gray background) */
+.q-btn.status-not-visited .num {
+    color: #374151;
+}
+
+/* ── Legend icon (smaller, 32px) ──────────────────────────────── */
+.q-icon-sm {
+    width: 32px;
+    height: 32px;
+    background-image: url('/images/questions-sprite.png');
+    background-repeat: no-repeat;
+    background-size: 369px 594px;
+    /* 590/1.6 × 950/1.6 */
+    display: inline-block;
+    flex-shrink: 0;
+}

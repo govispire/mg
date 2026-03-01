@@ -8,6 +8,9 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { QuestionButton, getBgStyle } from '../../question-palette/QuestionButton';
+import type { PaletteStatus } from '../../question-palette/QuestionButton';
+import '../../question-palette/palette.css';
 
 interface PaletteQuestion {
     id: string;
@@ -29,22 +32,37 @@ interface QuestionPaletteProps {
     onToggleCollapse?: () => void;
 }
 
-// IBPS Standard Colors
-const getStatusStyle = (status: QuestionStatus) => {
+/** Map the app's QuestionStatus enum to the sprite status key */
+function toSpriteStatus(status: QuestionStatus): PaletteStatus {
     switch (status) {
-        case QuestionStatus.NOT_VISITED:
-            return 'bg-white border-2 border-gray-400 text-gray-700';
-        case QuestionStatus.NOT_ANSWERED:
-            return 'bg-[#ee4444] text-white border-0';
-        case QuestionStatus.ANSWERED:
-            return 'bg-[#55cc55] text-white border-0';
-        case QuestionStatus.MARKED_FOR_REVIEW:
-            return 'bg-[#9966cc] text-white border-0';
-        case QuestionStatus.ANSWERED_AND_MARKED:
-            return 'bg-[#9966cc] text-white border-0 relative';
-        default:
-            return 'bg-white border-2 border-gray-400 text-gray-700';
+        case QuestionStatus.ANSWERED: return 'answered';
+        case QuestionStatus.NOT_ANSWERED: return 'not-answered';
+        case QuestionStatus.NOT_VISITED: return 'not-visited';
+        case QuestionStatus.MARKED_FOR_REVIEW: return 'marked';
+        case QuestionStatus.ANSWERED_AND_MARKED: return 'answered-marked';
+        default: return 'not-visited';
     }
+}
+
+/** Legend sprite icon at 30px for the legend row */
+const LegendIcon: React.FC<{ status: PaletteStatus; count: number }> = ({ status, count }) => {
+    const bgStyle = getBgStyle(status, 30);
+    const textColor = status === 'not-visited' ? '#374151' : '#ffffff';
+    return (
+        <div className="relative flex-shrink-0" style={{ width: 30, height: 30 }}>
+            <span style={bgStyle} aria-hidden="true" />
+            <span
+                style={{
+                    position: 'absolute', inset: 0,
+                    display: 'grid', placeItems: 'center',
+                    fontWeight: 700, fontSize: 10, color: textColor,
+                    lineHeight: 1,
+                }}
+            >
+                {count}
+            </span>
+        </div>
+    );
 };
 
 export const QuestionPalette: React.FC<QuestionPaletteProps> = ({
@@ -59,7 +77,6 @@ export const QuestionPalette: React.FC<QuestionPaletteProps> = ({
     isCollapsed = false,
     onToggleCollapse,
 }) => {
-    // ── Compute counts dynamically from live question states ──────────
     const counts = useMemo(() => ({
         answered: questions.filter(q => q.status === QuestionStatus.ANSWERED).length,
         notAnswered: questions.filter(q => q.status === QuestionStatus.NOT_ANSWERED).length,
@@ -68,47 +85,17 @@ export const QuestionPalette: React.FC<QuestionPaletteProps> = ({
         answeredAndMarked: questions.filter(q => q.status === QuestionStatus.ANSWERED_AND_MARKED).length,
     }), [questions]);
 
-    const legendItems = [
-        {
-            count: counts.answered,
-            label: 'Answered',
-            color: 'bg-[#55cc55] text-white',
-            hasGreenDot: false,
-            subtitle: undefined,
-        },
-        {
-            count: counts.notAnswered,
-            label: 'Not Answered',
-            color: 'bg-[#ee4444] text-white',
-            hasGreenDot: false,
-            subtitle: undefined,
-        },
-        {
-            count: counts.notVisited,
-            label: 'Not Visited',
-            color: 'bg-white border-2 border-gray-400 text-gray-700',
-            hasGreenDot: false,
-            subtitle: undefined,
-        },
-        {
-            count: counts.markedForReview,
-            label: 'Marked for Review',
-            color: 'bg-[#9966cc] text-white',
-            hasGreenDot: false,
-            subtitle: undefined,
-        },
-        {
-            count: counts.answeredAndMarked,
-            label: 'Answered & Marked for Review',
-            color: 'bg-[#9966cc] text-white',
-            hasGreenDot: true,
-            subtitle: '(will also be evaluated)',
-        },
+    const legendItems: { status: PaletteStatus; count: number; label: string; subtitle?: string }[] = [
+        { status: 'answered', count: counts.answered, label: 'Answered' },
+        { status: 'not-answered', count: counts.notAnswered, label: 'Not Answered' },
+        { status: 'not-visited', count: counts.notVisited, label: 'Not Visited' },
+        { status: 'marked', count: counts.markedForReview, label: 'Marked for Review' },
+        { status: 'answered-marked', count: counts.answeredAndMarked, label: 'Answered & Marked for Review', subtitle: '(will also be evaluated)' },
     ];
 
     return (
         <div className="relative flex h-full">
-            {/* ── IBPS-style left-edge collapse arrow tab ── */}
+            {/* ── Collapse tab ── */}
             {onToggleCollapse && (
                 <button
                     onClick={onToggleCollapse}
@@ -160,18 +147,11 @@ export const QuestionPalette: React.FC<QuestionPaletteProps> = ({
                         </Select>
                     </div>
 
-                    {/* ── Status Legend — FULLY DYNAMIC counts ── */}
+                    {/* ── Status Legend with sprite icons ── */}
                     <div className="px-3 py-2 bg-white border-b border-gray-200 space-y-2">
-                        {legendItems.map((item, idx) => (
-                            <div key={idx} className="flex items-center gap-2">
-                                <div className="relative flex-shrink-0">
-                                    <div className={`w-7 h-7 rounded-full flex items-center justify-center font-semibold text-xs ${item.color}`}>
-                                        {item.count}
-                                    </div>
-                                    {item.hasGreenDot && (
-                                        <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-[#55cc55] rounded-full border-2 border-white" />
-                                    )}
-                                </div>
+                        {legendItems.map((item) => (
+                            <div key={item.status} className="flex items-center gap-2">
+                                <LegendIcon status={item.status} count={item.count} />
                                 <div className="flex-1">
                                     <div className="text-[11px] text-gray-800 leading-tight font-medium">{item.label}</div>
                                     {item.subtitle && (
@@ -192,30 +172,20 @@ export const QuestionPalette: React.FC<QuestionPaletteProps> = ({
                         <div className="text-xs font-semibold text-gray-900">Choose a Question</div>
                     </div>
 
-                    {/* Question Number Grid */}
+                    {/* ── Question Number Grid — sprite buttons ── */}
                     <div className="flex-1 overflow-y-auto p-3 bg-white">
-                        <div className="grid grid-cols-4 gap-2.5">
-                            {questions.map((question, index) => {
-                                const isAnsweredAndMarked = question.status === QuestionStatus.ANSWERED_AND_MARKED;
-                                return (
-                                    <button
-                                        key={question.id}
+                        <div className="grid grid-cols-4 gap-2">
+                            {questions.map((question, index) => (
+                                <div key={question.id} className="flex items-center justify-center">
+                                    <QuestionButton
+                                        questionNumber={question.questionNumber}
+                                        status={toSpriteStatus(question.status)}
+                                        isCurrent={index === currentQuestionIndex}
+                                        size={48}
                                         onClick={() => onQuestionSelect(index)}
-                                        className={`
-                                            relative h-9 w-9 rounded-full flex items-center justify-center
-                                            font-bold text-sm transition-all
-                                            ${getStatusStyle(question.status)}
-                                            ${index === currentQuestionIndex ? 'ring-2 ring-offset-2 ring-blue-600' : ''}
-                                            hover:scale-110 active:scale-95 cursor-pointer
-                                        `}
-                                    >
-                                        {question.questionNumber}
-                                        {isAnsweredAndMarked && (
-                                            <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-[#55cc55] rounded-full border-2 border-white" />
-                                        )}
-                                    </button>
-                                );
-                            })}
+                                    />
+                                </div>
+                            ))}
                         </div>
                     </div>
                 </div>
