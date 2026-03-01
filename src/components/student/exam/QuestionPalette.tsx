@@ -169,19 +169,24 @@ export const QuestionPalette: React.FC<QuestionPaletteProps> = ({
                         </Select>
                     </div>
 
-                    {/* ── Status Legend with sprite icons ── */}
-                    <div className="px-3 py-2 bg-white border-b border-gray-200 space-y-2">
-                        {legendItems.map((item) => (
-                            <div key={item.status} className="flex items-center gap-2">
-                                <LegendIcon status={item.status} count={item.count} />
-                                <div className="flex-1">
-                                    <div className="text-[11px] text-gray-800 leading-tight font-medium">{item.label}</div>
-                                    {item.subtitle && (
-                                        <div className="text-[10px] text-gray-500 leading-tight">{item.subtitle}</div>
-                                    )}
+                    {/* ── Status Legend — 2-column IBPS grid ── */}
+                    <div className="px-3 py-2 bg-white border-b border-gray-200">
+                        <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">
+                            {legendItems.map((item, i) => (
+                                <div
+                                    key={item.status}
+                                    className={`flex items-center gap-1.5 min-w-0${i === 4 ? ' col-span-2' : ''}`}
+                                >
+                                    <LegendIcon status={item.status} count={item.count} />
+                                    <div className="min-w-0">
+                                        <div className="text-[10px] text-gray-800 leading-tight font-medium truncate">{item.label}</div>
+                                        {item.subtitle && (
+                                            <div className="text-[9px] text-gray-500 leading-tight">{item.subtitle}</div>
+                                        )}
+                                    </div>
                                 </div>
-                            </div>
-                        ))}
+                            ))}
+                        </div>
                     </div>
 
                     {/* Section Header */}
