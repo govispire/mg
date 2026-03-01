@@ -51,10 +51,6 @@ const SinglePanel: React.FC<QuestionDisplayProps> = ({
                 </Badge>
             </div>
 
-            {/* Question Type */}
-            <div className="text-sm text-gray-600 mb-2">
-                Question Type: Multiple Choice Question
-            </div>
 
             {/* Question Header Bar */}
             <div className="bg-[#5b9dd9] text-white px-4 py-2 rounded-t mb-4">
@@ -78,8 +74,7 @@ const SinglePanel: React.FC<QuestionDisplayProps> = ({
                             <div
                                 key={option.id}
                                 onClick={() => handleOptionSelect(option.id)}
-                                className={`flex items-center gap-3 px-2 py-2 rounded cursor-pointer transition-colors
-                                    ${isSelected ? 'bg-blue-50' : 'hover:bg-gray-50'}`}
+                                className={`flex items-center gap-3 px-2 py-2 rounded cursor-pointer transition-colors hover:bg-gray-50`}
                             >
                                 <input
                                     type="radio"
@@ -109,8 +104,7 @@ const SinglePanel: React.FC<QuestionDisplayProps> = ({
                             <div
                                 key={option.id}
                                 onClick={() => handleOptionSelect(option.id)}
-                                className={`flex items-center gap-3 px-2 py-2 rounded cursor-pointer transition-colors
-                                    ${isSelected ? 'bg-blue-50' : 'hover:bg-gray-50'}`}
+                                className={`flex items-center gap-3 px-2 py-2 rounded cursor-pointer transition-colors hover:bg-gray-50`}
                             >
                                 <input
                                     type="checkbox"
