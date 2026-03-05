@@ -13,6 +13,7 @@ import BlogManager from '@/pages/superadmin/BlogManager';
 import TestCatalogManager from '@/pages/superadmin/TestCatalogManager';
 import SuperAdminExamManager from '@/pages/superadmin/SuperAdminExamManager';
 import QuestionManager from '@/pages/superadmin/QuestionManager';
+import TestBuilderPage from '@/pages/superadmin/TestBuilderPage';
 import EmployeeApprovalQueue from '@/pages/superadmin/EmployeeApprovalQueue';
 import EmployeeManager from '@/pages/superadmin/EmployeeManager';
 import SuperAdminVocabulary from '@/pages/superadmin/SuperAdminVocabulary';
@@ -34,7 +35,7 @@ const SuperAdminRoutes = () => {
           <Route path="/manage-blogs" element={<BlogManager />} />
           <Route path="/test-catalog" element={<TestCatalogManager />} />
           <Route path="/test-catalog/:categoryId/:sectionId/:examId" element={<SuperAdminExamManager />} />
-          <Route path="/test-catalog/:categoryId/:sectionId/:examId/:slotKey/:testId/questions" element={<QuestionManager />} />
+          <Route path="/test-catalog/:categoryId/:sectionId/:examId/:slotKey/:testId/questions" element={<TestBuilderPage />} />
           {/* ── New Phase 2 & 3 Routes ── */}
           <Route path="/approval-queue" element={<EmployeeApprovalQueue />} />
           <Route path="/employee-manager" element={<EmployeeManager />} />

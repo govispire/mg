@@ -113,9 +113,7 @@ export const QuestionButton: React.FC<QuestionButtonProps> = ({
     const isNotVisited = status === 'not-visited';
     const textColor = spriteMap[status]?.textColor ?? '#374151';
     const fontSize = size < 44 ? '10px' : size < 50 ? '12px' : '13px';
-    const currentRing: React.CSSProperties = isCurrent
-        ? { outline: '2px solid #1d4ed8', outlineOffset: '2px', borderRadius: '4px' }
-        : {};
+    const currentRing: React.CSSProperties = {};
 
     // ── NOT VISITED: pure CSS, no sprite ──────────────────────
     if (isNotVisited) {

@@ -30,6 +30,10 @@ export interface ExamQuestion {
     negativeMarks: number;
     explanation?: string;
     imageUrl?: string;
+    /** Topic/sub-topic tag (e.g. "Syllogism", "Data Interpretation") */
+    topic?: string;
+    /** Difficulty level set by superadmin */
+    difficulty?: 'Easy' | 'Medium' | 'Hard';
     /** Optional — present only for set-based questions (DI / RC / Puzzle) */
     setId?: string;
     /** Inline set data (avoids extra fetch if bundled with question) */
@@ -51,6 +55,11 @@ export interface ExamConfig {
     sections: ExamSection[];
     instructions: string[];
     languages: ('English' | 'Hindi')[];
+    /**
+     * When true (default): sections are locked sequentially — student must submit
+     * before switching. When false: student can freely tab between sections.
+     */
+    sectionLockEnabled?: boolean;
 }
 
 export interface QuestionState {
@@ -71,7 +80,11 @@ export interface ExamSessionState {
     questionStates: Record<string, QuestionState>;
     startTime: number;
     endTime: number;
-    remainingTime: number; // seconds
+    remainingTime: number; // seconds (total exam — kept for compatibility)
+    /** Per-section remaining seconds, keyed by section id */
+    sectionRemainingTime: Record<string, number>;
+    /** Section IDs that have been submitted/locked — cannot be re-entered */
+    submittedSections: string[];
     language: 'English' | 'Hindi';
     isSubmitted: boolean;
     isPaused: boolean;

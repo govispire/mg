@@ -1,13 +1,16 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { ExamConfig } from '@/types/exam';
 import { useExamSession } from '@/hooks/exam/useExamSession';
-import { ExamTimer } from './ExamTimer';
+
+import { SectionTimer } from './SectionTimer';
 import { QuestionPalette } from './QuestionPalette';
 import { QuestionDisplay } from './QuestionDisplay';
 import { SectionNavigator } from './SectionNavigator';
 import { ExamActionButtons } from './ExamActionButtons';
+import { SectionSummaryModal } from './SectionSummaryModal';
 import { Button } from '@/components/ui/button';
-import { Info, Pause, Play, WifiOff, Wifi, CheckCircle2 } from 'lucide-react';
+import { Info, Pause, Play, WifiOff, Wifi, CheckCircle2, Maximize2, Minimize2 } from 'lucide-react';
+import { toast } from 'sonner';
 import {
     Dialog,
     DialogContent,
@@ -24,6 +27,20 @@ interface ExamInterfaceProps {
     userAvatar?: string;
 }
 
+// ── Helper: format seconds to mm:ss ───────────────────────────────────────
+function fmtTime(s: number) {
+    const m = Math.floor(s / 60);
+    const sec = s % 60;
+    return `${m}:${sec.toString().padStart(2, '0')}`;
+}
+
+// ── Per-section duration: use explicit duration, else split total evenly ──
+function getSectionDurationSec(examConfig: ExamConfig, sectionIdx: number): number {
+    const section = examConfig.sections[sectionIdx];
+    if (section?.duration) return section.duration * 60;
+    return Math.floor((examConfig.totalDuration / examConfig.sections.length) * 60);
+}
+
 export const ExamInterface: React.FC<ExamInterfaceProps> = ({
     examConfig,
     onSubmit,
@@ -37,33 +54,71 @@ export const ExamInterface: React.FC<ExamInterfaceProps> = ({
         allQuestions,
         navigateToQuestion,
         navigateToSection,
-        goToNext,
         goToPrevious,
-        saveAndNavigate,      // ← atomic: save + navigate in one setState
-        markAndNavigate,      // ← atomic: mark + save + navigate in one setState
-        markForReview,
-        clearResponse,
+        saveAndNavigate,
+        markAndNavigate,
         pauseExam,
         resumeExam,
         submitExam,
+        submitSection,
+        tickSectionTime,
         setLanguage,
         getStats,
     } = useExamSession(examConfig);
 
     const [isPaletteCollapsed, setIsPaletteCollapsed] = useState(false);
-    const [showSubmitDialog, setShowSubmitDialog] = useState(false);
+    const [isFullscreen, setIsFullscreen] = useState(false);
+    const [fontSize, setFontSize] = useState(100);
+    const [showPauseConfirm, setShowPauseConfirm] = useState(false);
+    const incFont = useCallback(() => setFontSize(f => Math.min(140, f + 10)), []);
+    const decFont = useCallback(() => setFontSize(f => Math.max(80, f - 10)), []);
+
+    const toggleFullscreen = useCallback(() => {
+        if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen().catch(() => { });
+            setIsFullscreen(true);
+        } else {
+            document.exitFullscreen().catch(() => { });
+            setIsFullscreen(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        const onFsChange = () => setIsFullscreen(!!document.fullscreenElement);
+        document.addEventListener('fullscreenchange', onFsChange);
+        return () => document.removeEventListener('fullscreenchange', onFsChange);
+    }, []);
+
+    // ── LOCAL answer state ─────────────────────────────────────────────
+    const [localAnswer, setLocalAnswer] = useState<string | string[] | null>(null);
+    const [hasUnsavedChange, setHasUnsavedChange] = useState(false);
+    const [savedFlash, setSavedFlash] = useState(false);
+
+    // ── Section Summary Modal ──────────────────────────────────────────
+    const [showSectionSummary, setShowSectionSummary] = useState(false);
+    const [pendingSectionIndex, setPendingSectionIndex] = useState<number | null>(null);
+
+    // ── Misc dialogs ───────────────────────────────────────────────────
     const [showWarningDialog, setShowWarningDialog] = useState(false);
     const [warningMessage, setWarningMessage] = useState('');
     const [isOnline, setIsOnline] = useState(navigator.onLine);
     const [showOfflineBanner, setShowOfflineBanner] = useState(false);
 
-    // ── LOCAL answer state (not persisted until Save & Next) ──────────
-    // This keeps the radio selection separate from the saved palette state.
-    const [localAnswer, setLocalAnswer] = useState<string | string[] | null>(null);
-    const [hasUnsavedChange, setHasUnsavedChange] = useState(false);
-    const [savedFlash, setSavedFlash] = useState(false);   // "Saved ✓" flash
+    // ── Submit guards ──────────────────────────────────────────────────
+    const sectionSubmitLockRef = useRef(false);
+    const lastModalAtRef = useRef(0);
 
-    // Sync local answer when question changes (load saved answer into local display)
+    // ── Refs ───────────────────────────────────────────────────────────
+    const remainingSecondsRef = useRef<number>(
+        sessionState.remainingTime ?? examConfig.totalDuration * 60
+    );
+
+    const currentSectionId = currentSection?.id ?? '';
+    const currentSectionIdx = sessionState.currentSectionIndex;
+    const isLastSection = currentSectionIdx === examConfig.sections.length - 1;
+    const isSectionLocked = sessionState.submittedSections.includes(currentSectionId);
+
+    // ── Sync local answer on question change ───────────────────────────
     useEffect(() => {
         const saved = currentQuestion
             ? sessionState.questionStates[currentQuestion.id]?.selectedAnswer ?? null
@@ -72,75 +127,76 @@ export const ExamInterface: React.FC<ExamInterfaceProps> = ({
         setHasUnsavedChange(false);
     }, [currentQuestion?.id]);
 
-    // Track remaining seconds for pause/save
-    const remainingSecondsRef = useRef<number>(
-        sessionState.remainingTime ?? examConfig.totalDuration * 60
-    );
-
-    // ── Network Online / Offline ──────────────────────────────────────
+    // ── Network events ─────────────────────────────────────────────────
     useEffect(() => {
-        const handleOffline = () => {
-            setIsOnline(false);
-            setShowOfflineBanner(true);
-            pauseExam(remainingSecondsRef.current);
-        };
-        const handleOnline = () => {
-            setIsOnline(true);
-            setShowOfflineBanner(true);
-            setTimeout(() => setShowOfflineBanner(false), 3000);
-        };
-        window.addEventListener('offline', handleOffline);
-        window.addEventListener('online', handleOnline);
-        return () => {
-            window.removeEventListener('offline', handleOffline);
-            window.removeEventListener('online', handleOnline);
-        };
+        const off = () => { setIsOnline(false); setShowOfflineBanner(true); pauseExam(remainingSecondsRef.current); };
+        const on = () => { setIsOnline(true); setShowOfflineBanner(true); setTimeout(() => setShowOfflineBanner(false), 3000); };
+        window.addEventListener('offline', off);
+        window.addEventListener('online', on);
+        return () => { window.removeEventListener('offline', off); window.removeEventListener('online', on); };
     }, [pauseExam]);
 
-    // ── Auto-save on hide/close ───────────────────────────────────────
+    // ── Visibility / beforeunload ──────────────────────────────────────
     useEffect(() => {
-        const handleVisibilityChange = () => {
-            if (document.hidden && !sessionState.isPaused) {
-                pauseExam(remainingSecondsRef.current);
-            }
-        };
-        const handleBeforeUnload = () => {
-            pauseExam(remainingSecondsRef.current);
-        };
-        document.addEventListener('visibilitychange', handleVisibilityChange);
-        window.addEventListener('beforeunload', handleBeforeUnload);
-        return () => {
-            document.removeEventListener('visibilitychange', handleVisibilityChange);
-            window.removeEventListener('beforeunload', handleBeforeUnload);
-        };
+        const vis = () => { if (document.hidden && !sessionState.isPaused) pauseExam(remainingSecondsRef.current); };
+        const bef = () => pauseExam(remainingSecondsRef.current);
+        document.addEventListener('visibilitychange', vis);
+        window.addEventListener('beforeunload', bef);
+        return () => { document.removeEventListener('visibilitychange', vis); window.removeEventListener('beforeunload', bef); };
     }, [sessionState.isPaused, pauseExam]);
 
-    // ── Keyboard shortcut: Ctrl+Enter = Save & Next ───────────────────
+    // ── Ctrl+Enter shortcut ────────────────────────────────────────────
     useEffect(() => {
-        const handleKeyDown = (e: KeyboardEvent) => {
-            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-                e.preventDefault();
-                handleSaveAndNext();
-            }
+        const kd = (e: KeyboardEvent) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); handleSaveAndNext(); }
         };
-        window.addEventListener('keydown', handleKeyDown);
-        return () => window.removeEventListener('keydown', handleKeyDown);
+        window.addEventListener('keydown', kd);
+        return () => window.removeEventListener('keydown', kd);
     }, [localAnswer, currentQuestion]);
 
-    // ── Timer ─────────────────────────────────────────────────────────
+    // ─────────────────────────────────────────────────────────────────
+    // PER-SECTION TIMER — handled via <SectionTimer key={sectionId} />
+    // ─────────────────────────────────────────────────────────────────
+    const sectionDurationSec = getSectionDurationSec(examConfig, currentSectionIdx);
+    const storedSectionRemaining = sessionState.sectionRemainingTime[currentSectionId];
+    const initialSectionRemaining = storedSectionRemaining !== undefined
+        ? storedSectionRemaining
+        : sectionDurationSec;
+
+    const handleSectionTick = useCallback((remaining: number) => {
+        tickSectionTime(currentSectionId, remaining);
+    }, [currentSectionId, tickSectionTime]);
+
+    /** Called when THIS section's timer expires — silent auto-submit */
+    const handleSectionTimeUp = useCallback(() => {
+        if (sectionSubmitLockRef.current) return;
+        sectionSubmitLockRef.current = true;
+
+        submitSection(currentSectionId);
+
+        const nextIdx = currentSectionIdx + 1;
+        if (nextIdx < examConfig.sections.length) {
+            // Navigate to next section silently
+            navigateToSection(nextIdx);
+            toast.info(`"${currentSection?.name}" submitted — moving to next section.`, { duration: 4000 });
+        } else {
+            // Last section — end the exam
+            toast.info('Time up! Submitting your test…', { duration: 3000 });
+            handleFinalSubmit();
+        }
+
+        setTimeout(() => { sectionSubmitLockRef.current = false; }, 1000);
+    }, [currentSectionId, currentSectionIdx, examConfig.sections.length, submitSection, navigateToSection, currentSection?.name]);
+
+    // ── Total exam timer (for the header display) ──────────────────────
     const handleTick = useCallback((remaining: number) => {
         remainingSecondsRef.current = remaining;
     }, []);
 
-    const handleTimeUp = () => {
-        // Auto-submit with whatever is saved in sessionState
-        submitExam();
-        const responses: Record<string, string | string[] | null> = {};
-        Object.values(sessionState.questionStates).forEach(state => {
-            responses[state.questionId] = state.selectedAnswer;
-        });
-        onSubmit(responses);
-    };
+    const handleTimeUp = useCallback(() => {
+        // Total exam time up — auto-submit everything
+        handleFinalSubmit();
+    }, []);
 
     const handleWarning = (remainingSeconds: number) => {
         const minutes = Math.floor(remainingSeconds / 60);
@@ -148,127 +204,206 @@ export const ExamInterface: React.FC<ExamInterfaceProps> = ({
         setShowWarningDialog(true);
     };
 
-    // ── Pause / Resume ────────────────────────────────────────────────
+    // ── Pause / Resume ─────────────────────────────────────────────────
     const handlePause = () => pauseExam(remainingSecondsRef.current);
     const handleResume = () => resumeExam();
 
-    // ── LOCAL answer change (no palette update yet) ───────────────────
+    // ── Answer change ──────────────────────────────────────────────────
     const handleAnswerChange = (answer: string | string[]) => {
         setLocalAnswer(answer);
-        // Check if this differs from the persisted saved answer
         const saved = currentQuestion
             ? sessionState.questionStates[currentQuestion.id]?.selectedAnswer
             : null;
         setHasUnsavedChange(JSON.stringify(answer) !== JSON.stringify(saved));
     };
 
-    // ── CLEAR RESPONSE ────────────────────────────────────────────────
-    // Per spec: Only clears local display. Does NOT update palette.
     const handleClearResponse = () => {
         setLocalAnswer(null);
         setHasUnsavedChange(true);
     };
 
-    // ── SAVE & NEXT (core action) — ATOMIC ───────────────────────────
-    // saveAndNavigate does save + navigate in ONE setSessionState call.
-    // This eliminates the race condition from two batched updates.
+    //  SAVE & NEXT (clamped within current section) 
+    // Section boundaries
+    const sectionStartIndex = examConfig.sections
+        .slice(0, currentSectionIdx)
+        .reduce((acc, s) => acc + s.questions.length, 0);
+    const sectionEndIndex = sectionStartIndex + (currentSection?.questions.length ?? 0) - 1;
+
     const handleSaveAndNext = useCallback(() => {
-        if (!currentQuestion) return;
-        const nextIndex = sessionState.currentQuestionIndex + 1;
+        if (!currentQuestion || isSectionLocked) return;
+        // Do NOT jump past the last question of this section
+        const nextIndex = Math.min(sessionState.currentQuestionIndex + 1, sectionEndIndex);
         const answer = (localAnswer !== null && localAnswer !== '') ? localAnswer : null;
-
-        saveAndNavigate(
-            currentQuestion.id,
-            answer,
-            false,        // mark for review = false
-            nextIndex     // navigate to next
-        );
-
+        saveAndNavigate(currentQuestion.id, answer, false, nextIndex);
         setSavedFlash(true);
         setTimeout(() => setSavedFlash(false), 1200);
         setHasUnsavedChange(false);
-    }, [currentQuestion, localAnswer, saveAndNavigate, sessionState.currentQuestionIndex]);
+    }, [currentQuestion, localAnswer, saveAndNavigate, sessionState.currentQuestionIndex, isSectionLocked, sectionEndIndex]);
 
-    // ── MARK FOR REVIEW & NEXT — ATOMIC ──────────────────────────────
+    //  MARK & NEXT (clamped within current section) 
     const handleMarkAndNext = () => {
-        if (!currentQuestion) return;
-        const nextIndex = sessionState.currentQuestionIndex + 1;
+        if (!currentQuestion || isSectionLocked) return;
+        const nextIndex = Math.min(sessionState.currentQuestionIndex + 1, sectionEndIndex);
         const answer = (localAnswer !== null && localAnswer !== '') ? localAnswer : null;
-
-        markAndNavigate(
-            currentQuestion.id,
-            answer,
-            nextIndex
-        );
+        markAndNavigate(currentQuestion.id, answer, nextIndex);
         setHasUnsavedChange(false);
     };
 
-    // ── PREVIOUS (no save) ────────────────────────────────────────────
     const handlePrevious = () => {
-        // Per spec: Previous does NOT save current answer
-        goToPrevious();
+        if (isSectionLocked) return;
+        // Do NOT jump into the previous section
+        const prevIndex = Math.max(sessionState.currentQuestionIndex - 1, sectionStartIndex);
+        navigateToQuestion(prevIndex);
     };
 
-    // ── SUBMIT ────────────────────────────────────────────────────────
-    const handleSubmitClick = () => {
-        const stats = getStats();
-        if (stats.notAnswered > 0 || stats.notVisited > 0) {
-            setShowSubmitDialog(true);
-        } else {
-            handleFinalSubmit();
-        }
-    };
-
-    const handleFinalSubmit = () => {
+    // ── FINAL EXAM SUBMIT ──────────────────────────────────────────────
+    const handleFinalSubmit = useCallback(() => {
         submitExam();
         const responses: Record<string, string | string[] | null> = {};
         Object.values(sessionState.questionStates).forEach(state => {
             responses[state.questionId] = state.selectedAnswer;
         });
         onSubmit(responses);
+    }, [submitExam, sessionState.questionStates, onSubmit]);
+
+    // ─────────────────────────────────────────────────────────────────
+    // SECTION SUBMIT FLOW
+    // ─────────────────────────────────────────────────────────────────
+
+    /** Compute stats for the summary modal */
+    const getSectionStats = useCallback((sIdx: number) => {
+        const section = examConfig.sections[sIdx];
+        if (!section) return { total: 0, answered: 0, notAnswered: 0, marked: 0, notVisited: 0 };
+        let answered = 0, notAnswered = 0, marked = 0, notVisited = 0;
+        section.questions.forEach(q => {
+            const qs = sessionState.questionStates[q.id];
+            if (!qs || !qs.isVisited) { notVisited++; return; }
+            if (qs.isSaved && qs.selectedAnswer) { answered++; }
+            else { notAnswered++; }
+            if (qs.markedForReview) { marked++; }
+        });
+        return { total: section.questions.length, answered, notAnswered, marked, notVisited };
+    }, [examConfig.sections, sessionState.questionStates]);
+
+    /** Open modal — always (no debounce for explicit Submit Section click) */
+    const handleSubmitSectionClick = useCallback(() => {
+        if (sectionSubmitLockRef.current) return;
+        setPendingSectionIndex(currentSectionIdx);
+        setShowSectionSummary(true);
+    }, [currentSectionIdx]);
+
+    /**
+     * Section tab click — behaviour depends on sectionLockEnabled:
+     *   true (default):  show confirm modal before leaving the section.
+     *   false:           navigate freely between sections with no modal.
+     */
+    const sectionLockEnabled = examConfig.sectionLockEnabled !== false; // default true
+
+    const handleSectionTabClick = useCallback((targetIdx: number) => {
+        const targetSectionId = examConfig.sections[targetIdx]?.id;
+
+        // Always block re-entry into already-submitted sections
+        if (targetSectionId && sessionState.submittedSections.includes(targetSectionId)) {
+            toast.warning('This section has already been submitted and cannot be re-opened.');
+            return;
+        }
+
+        // Same section tab clicked — open submit modal (in both modes)
+        if (targetIdx === currentSectionIdx) {
+            handleSubmitSectionClick();
+            return;
+        }
+
+        if (!sectionLockEnabled) {
+            // FREE MODE: just navigate, no confirmation needed
+            navigateToSection(targetIdx);
+            return;
+        }
+
+        // LOCKED MODE: debounce rapid clicks, show confirm modal
+        const now = Date.now();
+        if (now - lastModalAtRef.current < 1500) {
+            navigateToSection(targetIdx);
+            return;
+        }
+        lastModalAtRef.current = now;
+        setPendingSectionIndex(targetIdx);
+        setShowSectionSummary(true);
+    }, [currentSectionIdx, sessionState.submittedSections, examConfig.sections, sectionLockEnabled, navigateToSection, handleSubmitSectionClick]);
+
+    /** Student confirms submit in the modal */
+    const handleSectionSubmitConfirm = useCallback(() => {
+        if (sectionSubmitLockRef.current) return;
+        sectionSubmitLockRef.current = true;
+
+        setShowSectionSummary(false);
+
+        // Lock the current section
+        submitSection(currentSectionId);
+
+        if (pendingSectionIndex !== null && pendingSectionIndex !== currentSectionIdx) {
+            // Going to a different (next) section
+            const targetId = examConfig.sections[pendingSectionIndex]?.id;
+            if (!targetId || !sessionState.submittedSections.includes(targetId)) {
+                navigateToSection(pendingSectionIndex);
+            }
+        } else {
+            // Advance to next unsubmitted section
+            const nextUnsubmitted = examConfig.sections.findIndex(
+                (s, i) => i > currentSectionIdx && !sessionState.submittedSections.includes(s.id) && s.id !== currentSectionId
+            );
+            if (nextUnsubmitted !== -1) {
+                navigateToSection(nextUnsubmitted);
+            } else {
+                // All sections done — end exam
+                toast.success('All sections submitted! Finishing test…', { duration: 2000 });
+                setTimeout(() => handleFinalSubmit(), 1500);
+            }
+        }
+
+        setPendingSectionIndex(null);
+        setTimeout(() => { sectionSubmitLockRef.current = false; }, 500);
+    }, [
+        currentSectionId, currentSectionIdx, pendingSectionIndex,
+        submitSection, navigateToSection, examConfig.sections,
+        sessionState.submittedSections, handleFinalSubmit,
+    ]);
+
+    const handleSectionSummaryCancel = () => {
+        setShowSectionSummary(false);
+        setPendingSectionIndex(null);
     };
 
-    // ── Section stats ─────────────────────────────────────────────────
+    // ── Section stats for navigator badges ────────────────────────────
     const sectionStats: Record<string, { answered: number; total: number }> = {};
     examConfig.sections.forEach(section => {
-        const sectionQs = section.questions
-            .map(q => sessionState.questionStates[q.id])
-            .filter(Boolean);
-        const answered = sectionQs.filter(q => q.status === 2 || q.status === 4).length;
+        const qs = section.questions.map(q => sessionState.questionStates[q.id]).filter(Boolean);
+        const answered = qs.filter(q => q.status === 2 || q.status === 4).length;
         sectionStats[section.id] = { answered, total: section.questions.length };
     });
 
-    // ── Section-scoped palette (ONLY current section's questions) ────────
+    // ── Section-scoped palette data ────────────────────────────────────
     const currentSectionStart = examConfig.sections
-        .slice(0, sessionState.currentSectionIndex)
+        .slice(0, currentSectionIdx)
         .reduce((acc, s) => acc + s.questions.length, 0);
 
     const currentSectionQuestions = (currentSection?.questions ?? []).map((q, localIdx) => ({
         id: q.id,
-        questionNumber: localIdx + 1,           // ← section-local: 1, 2, 3…
+        questionNumber: localIdx + 1,
         sectionId: q.sectionId,
         status: sessionState.questionStates[q.id]?.status ?? 0,
         globalIndex: currentSectionStart + localIdx,
     }));
 
-    // Section-local index for palette highlight
-    const paletteCurrentIndex = Math.max(
-        0,
-        sessionState.currentQuestionIndex - currentSectionStart
-    );
-
-    // Section-local question number shown in "Question No. X" header
+    const paletteCurrentIndex = Math.max(0, sessionState.currentQuestionIndex - currentSectionStart);
     const sectionLocalQuestionNumber = sessionState.currentQuestionIndex - currentSectionStart + 1;
-
-    const currentQuestionState = currentQuestion
-        ? sessionState.questionStates[currentQuestion.id]
-        : null;
-
     const isPaused = sessionState.isPaused;
-
-    // ── Computed flags ────────────────────────────────────────────────
-    const isLastQuestion = sessionState.currentQuestionIndex === allQuestions.length - 1;
     const hasPrevious = sessionState.currentQuestionIndex > 0;
+
+    // Modal data
+    const modalSectionIdx = pendingSectionIndex ?? currentSectionIdx;
+    const modalSectionName = examConfig.sections[modalSectionIdx]?.name ?? '';
+    const modalStats = getSectionStats(modalSectionIdx);
 
     return (
         <div className="h-screen flex flex-col bg-white">
@@ -278,19 +413,18 @@ export const ExamInterface: React.FC<ExamInterfaceProps> = ({
                 <div className={`px-4 py-1.5 text-sm font-medium flex items-center gap-2 justify-center
                     ${isOnline ? 'bg-green-600 text-white' : 'bg-red-600 text-white'}`}>
                     {isOnline
-                        ? <><Wifi className="h-4 w-4" /> Connection restored — your progress was saved. You can resume.</>
-                        : <><WifiOff className="h-4 w-4" /> Network lost — exam paused &amp; progress auto-saved.</>
+                        ? <><Wifi className="h-4 w-4" />Connection restored — your progress was saved.</>
+                        : <><WifiOff className="h-4 w-4" />Network lost — exam paused &amp; progress auto-saved.</>
                     }
                 </div>
             )}
 
-            {/* ── Warning Dialog ── */}
+            {/* ── Time Warning Dialog ── */}
             <Dialog open={showWarningDialog} onOpenChange={setShowWarningDialog}>
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2">
-                            <Info className="h-5 w-5 text-yellow-600" />
-                            Time Warning
+                            <Info className="h-5 w-5 text-yellow-600" /> Time Warning
                         </DialogTitle>
                         <DialogDescription>{warningMessage}</DialogDescription>
                     </DialogHeader>
@@ -300,91 +434,133 @@ export const ExamInterface: React.FC<ExamInterfaceProps> = ({
                 </DialogContent>
             </Dialog>
 
-            {/* ── Submit Confirmation Dialog ── */}
-            <Dialog open={showSubmitDialog} onOpenChange={setShowSubmitDialog}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Confirm Submission</DialogTitle>
-                        <DialogDescription asChild>
-                            <div className="space-y-2 text-sm text-gray-700">
-                                <div>You still have unanswered questions:</div>
-                                <ul className="list-disc list-inside ml-2 space-y-1">
-                                    <li><span className="font-semibold text-green-700">{getStats().answered}</span> answered</li>
-                                    <li><span className="font-semibold text-red-600">{getStats().notAnswered}</span> not answered</li>
-                                    <li><span className="font-semibold text-gray-500">{getStats().notVisited}</span> not visited</li>
-                                    <li><span className="font-semibold text-purple-700">{getStats().markedForReview}</span> marked for review</li>
-                                </ul>
-                                <p className="pt-2 font-medium">Are you sure you want to submit?</p>
-                            </div>
-                        </DialogDescription>
-                    </DialogHeader>
-                    <DialogFooter className="gap-2">
-                        <Button variant="outline" onClick={() => setShowSubmitDialog(false)}>Go Back</Button>
-                        <Button onClick={handleFinalSubmit} className="bg-[#5b9dd9] hover:bg-[#4a8cc8]">Yes, Submit</Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+            {/* ── Section Summary Modal (full-screen overlay) ── */}
+            <SectionSummaryModal
+                open={showSectionSummary}
+                sectionName={modalSectionName}
+                stats={modalStats}
+                onConfirm={handleSectionSubmitConfirm}
+                onCancel={handleSectionSummaryCancel}
+            />
 
             {/* ── Header ── */}
-            <div className="bg-[#4a4a4a] text-white px-6 py-3 flex items-center justify-between border-b border-gray-600">
-                <div>
-                    <h1 className="text-xl font-bold">{examConfig.title}</h1>
-                    <div className="text-xs text-gray-300">{currentSection?.name}</div>
+            <div className="bg-[#4a4a4a] text-white px-4 py-2.5 flex items-center border-b border-gray-600 relative">
+                {/* Left — Logo */}
+                <div className="flex items-center gap-2 w-1/4">
+                    <div className="w-8 h-8 rounded bg-[#1976d2] flex items-center justify-center font-bold text-white text-sm flex-shrink-0">
+                        P
+                    </div>
+                    <span className="text-xs text-gray-300 font-semibold hidden sm:block">PrepSmart</span>
                 </div>
-                <div className="flex items-center gap-3">
-                    {/* Saved flash indicator */}
+
+                {/* Centre — Exam title + section name */}
+                <div className="flex-1 text-center">
+                    <h1 className="text-base font-bold leading-tight">{examConfig.title}</h1>
+                    <div className="text-[10px] text-gray-400">{currentSection?.name}</div>
+                </div>
+
+                {/* Right — Fullscreen only */}
+                <div className="w-1/4 flex justify-end items-center gap-2">
+                    {/* Saved flash */}
                     {savedFlash && (
-                        <div className="flex items-center gap-1.5 text-green-300 text-sm font-medium animate-pulse">
-                            <CheckCircle2 className="h-4 w-4" />
-                            Saved ✓
+                        <div className="flex items-center gap-1.5 text-green-300 text-xs font-medium animate-pulse">
+                            <CheckCircle2 className="h-3.5 w-3.5" /> Saved
                         </div>
                     )}
-                    {/* Unsaved change dot */}
                     {hasUnsavedChange && !savedFlash && (
-                        <div className="flex items-center gap-1.5 text-yellow-300 text-xs">
-                            <span className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse" />
-                            Unsaved change
-                        </div>
+                        <span className="w-1.5 h-1.5 rounded-full bg-yellow-400 animate-pulse" />
                     )}
+                    {/* Hidden timer — drives tick & time-up */}
+                    <span className="hidden">
+                        <SectionTimer
+                            key={currentSectionId}
+                            totalSeconds={sectionDurationSec}
+                            initialRemainingSeconds={initialSectionRemaining}
+                            isPaused={isPaused}
+                            onTimeUp={handleSectionTimeUp}
+                            onTick={handleSectionTick}
+                            isLocked={isSectionLocked}
+                        />
+                    </span>
 
-                    <ExamTimer
-                        totalDurationInSeconds={examConfig.totalDuration * 60}
-                        initialRemainingSeconds={sessionState.remainingTime}
-                        onTimeUp={handleTimeUp}
-                        onWarning={handleWarning}
-                        isPaused={isPaused}
-                        onTick={handleTick}
-                    />
+                    <div className="flex items-center border border-gray-500 rounded overflow-hidden">
+                        <button
+                            onClick={decFont}
+                            disabled={fontSize <= 80}
+                            title="Decrease font size"
+                            className="px-2 py-1 text-white bg-gray-600 hover:bg-gray-500 disabled:opacity-40 text-sm font-bold leading-none"
+                        >A⁻</button>
+                        <span className="px-1.5 text-xs text-gray-300 bg-gray-700 select-none">{fontSize}%</span>
+                        <button
+                            onClick={incFont}
+                            disabled={fontSize >= 140}
+                            title="Increase font size"
+                            className="px-2 py-1 text-white bg-gray-600 hover:bg-gray-500 disabled:opacity-40 text-sm font-bold leading-none"
+                        >A⁺</button>
+                    </div>
 
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={isPaused ? handleResume : handlePause}
-                        className={`text-white hover:bg-gray-700 border gap-2 ${isPaused
-                            ? 'border-green-400 bg-green-700/30 hover:bg-green-700/50'
-                            : 'border-yellow-400 bg-yellow-700/20 hover:bg-yellow-700/40'
-                            }`}
-                    >
-                        {isPaused
-                            ? <><Play className="h-4 w-4" /> Resume</>
-                            : <><Pause className="h-4 w-4" /> Pause</>
-                        }
-                    </Button>
-
-                    <Button variant="ghost" size="sm" className="text-white hover:bg-gray-700">
-                        <Info className="h-4 w-4 mr-2" />
-                        Instructions
+                    <Button variant="ghost" size="sm" className="text-white hover:bg-gray-700 p-1.5" onClick={toggleFullscreen} title={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}>
+                        {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
                     </Button>
                 </div>
             </div>
 
-            {/* ── Section Navigator ── */}
             <SectionNavigator
                 sections={examConfig.sections}
-                currentSectionIndex={sessionState.currentSectionIndex}
-                onSectionChange={navigateToSection}
+                currentSectionIndex={currentSectionIdx}
+                onSectionChange={handleSectionTabClick}
                 sectionStats={sectionStats}
+                submittedSections={sessionState.submittedSections}
             />
+
+            {/* ── Section info row: Sections label + Time Left + Pause ── */}
+            <div className="bg-gray-100 border-b border-gray-300 px-4 py-1.5 flex items-center justify-between text-sm">
+                <span className="text-gray-600 font-medium">Sections</span>
+                <div className="flex items-center gap-3">
+                    <span className="text-gray-700 font-semibold">
+                        Time Left :&nbsp;{fmtTime(sessionState.sectionRemainingTime[currentSectionId] ?? initialSectionRemaining)}
+                    </span>
+                    <Button
+                        variant="ghost" size="sm"
+                        onClick={isPaused ? handleResume : () => setShowPauseConfirm(true)}
+                        className={`h-7 text-xs px-2 border gap-1.5 ${isPaused
+                            ? 'border-green-500 text-green-700 bg-green-50 hover:bg-green-100'
+                            : 'border-yellow-500 text-yellow-700 bg-yellow-50 hover:bg-yellow-100'
+                            }`}
+                    >
+                        {isPaused ? <><Play className="h-3 w-3" />Resume</> : <><Pause className="h-3 w-3" />Pause</>}
+                    </Button>
+                </div>
+            </div>
+
+            {/* ── Pause Confirmation Dialog ── */}
+            {showPauseConfirm && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+                    <div className="bg-white rounded-xl shadow-2xl p-8 max-w-sm w-full mx-4 text-center">
+                        <div className="w-14 h-14 rounded-full bg-yellow-100 flex items-center justify-center mx-auto mb-4">
+                            <Pause className="h-7 w-7 text-yellow-600" />
+                        </div>
+                        <h2 className="text-lg font-bold text-gray-900 mb-2">Pause the Exam?</h2>
+                        <p className="text-sm text-gray-600 mb-1">The timer will stop while the exam is paused.</p>
+                        <p className="text-sm text-red-500 font-medium mb-6">⚠ Do not pause unless necessary — it may affect your score.</p>
+                        <div className="flex gap-3">
+                            <Button
+                                variant="outline"
+                                className="flex-1"
+                                onClick={() => setShowPauseConfirm(false)}
+                            >
+                                Cancel
+                            </Button>
+                            <Button
+                                className="flex-1 bg-yellow-500 hover:bg-yellow-600 text-white"
+                                onClick={() => { setShowPauseConfirm(false); handlePause(); }}
+                            >
+                                Yes, Pause
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* ── PAUSED OVERLAY ── */}
             {isPaused && (
@@ -399,11 +575,7 @@ export const ExamInterface: React.FC<ExamInterfaceProps> = ({
                             Resume from <strong>Question No. {sectionLocalQuestionNumber}</strong>,{' '}
                             Section: <strong>{currentSection?.name}</strong>
                         </p>
-                        <Button
-                            onClick={handleResume}
-                            size="lg"
-                            className="w-full bg-[#2196f3] hover:bg-[#1976d2] text-white gap-2 text-base"
-                        >
+                        <Button onClick={handleResume} size="lg" className="w-full bg-[#2196f3] hover:bg-[#1976d2] text-white gap-2 text-base">
                             <Play className="h-5 w-5" /> Resume Exam
                         </Button>
                         {!isOnline && (
@@ -418,24 +590,38 @@ export const ExamInterface: React.FC<ExamInterfaceProps> = ({
             {/* ── Main Content ── */}
             {!isPaused && (
                 <div className="flex flex-1 overflow-hidden relative">
-                    {/* Question Area */}
                     <div className="flex-1 flex flex-col overflow-hidden">
-                        {currentQuestion && (
-                            <QuestionDisplay
-                                question={currentQuestion}
-                                /* Use LOCAL answer for display — not the saved state */
-                                selectedAnswer={localAnswer}
-                                onAnswerChange={handleAnswerChange}
-                                questionNumber={sectionLocalQuestionNumber}
-                            />
+                        {isSectionLocked ? (
+                            <div className="flex-1 flex items-center justify-center">
+                                <div className="text-center space-y-3">
+                                    <div className="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center mx-auto">
+                                        <CheckCircle2 className="w-8 h-8 text-gray-500" />
+                                    </div>
+                                    <p className="text-lg font-semibold text-gray-600">Section Submitted</p>
+                                    <p className="text-sm text-gray-500">This section has been locked and cannot be re-opened.</p>
+                                </div>
+                            </div>
+                        ) : (
+                            currentQuestion && (
+                                <div style={{ zoom: fontSize / 100 }} className="flex-1 flex flex-col overflow-hidden">
+                                    <QuestionDisplay
+                                        question={currentQuestion}
+                                        selectedAnswer={localAnswer}
+                                        onAnswerChange={handleAnswerChange}
+                                        questionNumber={sectionLocalQuestionNumber}
+                                        language={sessionState.language}
+                                        onLanguageChange={setLanguage}
+                                    />
+                                </div>
+                            )
                         )}
                     </div>
 
-                    {/* Question Palette — section-scoped */}
                     <QuestionPalette
                         questions={currentSectionQuestions}
                         currentQuestionIndex={paletteCurrentIndex}
                         onQuestionSelect={(localIdx) => {
+                            if (isSectionLocked) return;
                             const item = currentSectionQuestions[localIdx];
                             if (item) navigateToQuestion(item.globalIndex);
                         }}
@@ -450,18 +636,19 @@ export const ExamInterface: React.FC<ExamInterfaceProps> = ({
                 </div>
             )}
 
-            {/* ── Action Buttons — shows keyboard hint ── */}
+            {/* ── Action Buttons ── */}
             {!isPaused && (
                 <ExamActionButtons
                     onMarkAndNext={handleMarkAndNext}
                     onClearResponse={handleClearResponse}
                     onSaveAndNext={handleSaveAndNext}
                     onPrevious={hasPrevious ? handlePrevious : undefined}
-                    onSubmit={handleSubmitClick}
+                    onSubmitSection={handleSubmitSectionClick}
                     hasPrevious={hasPrevious}
-                    isLastQuestion={isLastQuestion}
+                    isLastSection={isLastSection}
                     hasAnswer={localAnswer !== null && localAnswer !== ''}
                     hasUnsavedChange={hasUnsavedChange}
+                    sectionLocked={isSectionLocked}
                 />
             )}
         </div>

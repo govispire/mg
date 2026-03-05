@@ -7,7 +7,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Grid, List, Clock, Users, Target, CheckCircle, RotateCcw, BarChart3, Play, Pause, BookOpen, Bookmark } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { TestAnalysisModal } from './TestAnalysisModal';
-import { generateMockAnalysisData } from '@/data/testAnalysisData';
+import { generateAnalysisFromExam } from '@/utils/examAnalysis';
+import { generateTestExam } from '@/utils/generateTestExam';
 import { useBookmarkedTests } from '@/hooks/useBookmarkedTests';
 import { toast } from '@/hooks/use-toast';
 
@@ -284,16 +285,32 @@ const EnhancedTestTypeGrid: React.FC<EnhancedTestTypeGridProps> = ({ tests, test
       )}
 
       {/* Test Analysis Modal */}
-      {selectedTestForAnalysis && (
-        <TestAnalysisModal
-          isOpen={showAnalysisModal}
-          onClose={() => {
-            setShowAnalysisModal(false);
-            setSelectedTestForAnalysis(null);
-          }}
-          analysisData={generateMockAnalysisData(selectedTestForAnalysis.id, selectedTestForAnalysis.title)}
-        />
-      )}
+      {selectedTestForAnalysis && (() => {
+        // Build real analysis from the actual exam config + stored responses
+        const examConfig = generateTestExam(
+          selectedTestForAnalysis.category,
+          selectedTestForAnalysis.id,
+          selectedTestForAnalysis.id
+        );
+        // Try to load stored responses for this test
+        let storedResponses: Record<string, string | string[] | null> = {};
+        try {
+          const raw = localStorage.getItem(`exam-responses-${selectedTestForAnalysis.id}`);
+          if (raw) storedResponses = JSON.parse(raw);
+        } catch { /* ignore */ }
+        const computedAnalysis = generateAnalysisFromExam(examConfig, storedResponses);
+        return (
+          <TestAnalysisModal
+            isOpen={showAnalysisModal}
+            onClose={() => {
+              setShowAnalysisModal(false);
+              setSelectedTestForAnalysis(null);
+            }}
+            analysisData={computedAnalysis}
+          />
+        );
+      })()
+      }
     </div>
   );
 };

@@ -20,6 +20,34 @@ export interface TestAnalysisData {
   weakAreas: AreaAnalysis[];
   speedAnalysis: SpeedData[];
   comparisonData: ComparisonData;
+  /** Per-section topic breakdown for Strong/Weak analysis tab */
+  sectionTopicBreakdown: SectionTopicBreakdown[];
+}
+
+export interface SectionTopicBreakdown {
+  sectionId: string;
+  sectionName: string;
+  topics: TopicBreakdown[];
+}
+
+/** Computed topic-level stats from actual student responses */
+export interface TopicBreakdown {
+  topic: string;
+  /** Global question numbers belonging to this topic */
+  questionNumbers: number[];
+  /** Status of each question: correct | wrong | unattempted */
+  questionStatuses: ('correct' | 'wrong' | 'unattempted')[];
+  correct: number;
+  wrong: number;
+  unattempted: number;
+  totalAttempted: number;
+  accuracy: number;          // % of attempted that are correct
+  score: number;             // marks earned (with negative)
+  maxScore: number;
+  /** Strength classification */
+  strength: 'Excellent' | 'Good' | 'Average' | 'Poor';
+  levels: string;            // e.g. "Easy, Moderate"
+  avgTimeSeconds: number;    // avg seconds per answered question
 }
 
 export interface SectionData {
@@ -35,6 +63,7 @@ export interface SectionData {
   percentile: number;
   accuracy: number;
   timeSpent: number;
+  cutOff?: number;
 }
 
 export interface TopicData {
@@ -267,7 +296,8 @@ export const mockTestAnalysis: TestAnalysisData = {
         color: "orange"
       }
     ]
-  }
+  },
+  sectionTopicBreakdown: [],
 };
 
 export const generateMockAnalysisData = (testId: string, testName: string): TestAnalysisData => {
@@ -279,6 +309,6 @@ export const generateMockAnalysisData = (testId: string, testName: string): Test
   baseData.percentile = Math.floor(Math.random() * 30) + 70; // 70-100
   baseData.accuracy = Math.floor(Math.random() * 30) + 70; // 70-100
   baseData.passed = baseData.score >= 65;
-  
+
   return baseData;
 };

@@ -23,16 +23,13 @@
     flex-shrink: 0;
 }
 
+.q-btn:focus,
 .q-btn:focus-visible {
-    outline: 2px solid #1d4ed8;
-    outline-offset: 2px;
-    border-radius: 4px;
+    outline: none;
+    box-shadow: none;
 }
 
-/* Glow ring when current */
-.q-btn.is-current {
-    filter: drop-shadow(0 0 5px rgba(29, 78, 216, 0.85));
-}
+/* Current question: shape color alone indicates active, no extra highlight */
 
 /* ── Number overlay ───────────────────────────────────────────── */
 .q-btn .num {

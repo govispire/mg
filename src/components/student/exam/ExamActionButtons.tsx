@@ -6,11 +6,12 @@ interface ExamActionButtonsProps {
     onClearResponse: () => void;
     onSaveAndNext: () => void;
     onPrevious?: () => void;
-    onSubmit?: () => void;
+    onSubmitSection: () => void;
     hasPrevious: boolean;
-    isLastQuestion: boolean;
+    isLastSection: boolean;
     hasAnswer: boolean;
     hasUnsavedChange?: boolean;
+    sectionLocked?: boolean;
 }
 
 export const ExamActionButtons: React.FC<ExamActionButtonsProps> = ({
@@ -18,66 +19,71 @@ export const ExamActionButtons: React.FC<ExamActionButtonsProps> = ({
     onClearResponse,
     onSaveAndNext,
     onPrevious,
-    onSubmit,
+    onSubmitSection,
     hasPrevious,
-    isLastQuestion,
+    isLastSection,
     hasAnswer,
     hasUnsavedChange = false,
+    sectionLocked = false,
 }) => {
     return (
-        <div className="bg-[#4a4a4a] px-4 py-3 flex items-center justify-between border-t border-gray-600">
-            {/* Left: Mark for Review & Clear */}
-            <div className="flex items-center gap-3">
+        <div className="bg-[#f5f5f5] border-t border-gray-300 px-4 py-3 flex items-center justify-between">
+            {/* ── Left group ── */}
+            <div className="flex items-center gap-2">
                 <Button
                     variant="outline"
                     onClick={onMarkAndNext}
-                    className="bg-white hover:bg-gray-100 text-gray-900 border-gray-300 text-sm"
+                    disabled={sectionLocked}
+                    className="bg-white hover:bg-gray-100 text-gray-900 border-gray-400 text-sm"
                 >
                     Mark for Review &amp; Next
                 </Button>
                 <Button
                     variant="outline"
                     onClick={onClearResponse}
-                    className="bg-white hover:bg-gray-100 text-gray-900 border-gray-300 text-sm"
-                    disabled={!hasAnswer}
+                    disabled={!hasAnswer || sectionLocked}
+                    className="bg-white hover:bg-gray-100 text-gray-900 border-gray-400 text-sm"
                 >
                     Clear Response
                 </Button>
             </div>
 
-            {/* Right: Previous + Save/Submit with keyboard hint */}
-            <div className="flex items-center gap-3">
+            {/* ── Right group ── */}
+            <div className="flex items-center gap-2">
                 {hasPrevious && onPrevious && (
                     <Button
                         variant="outline"
                         onClick={onPrevious}
-                        className="bg-white hover:bg-gray-100 text-gray-900 border-gray-300 text-sm"
-                        title="Go to previous question (answer not saved)"
+                        disabled={sectionLocked}
+                        className="bg-white hover:bg-gray-100 text-gray-800 border-gray-400 text-sm"
                     >
                         Previous
                     </Button>
                 )}
 
-                {!isLastQuestion ? (
-                    <Button
-                        onClick={onSaveAndNext}
-                        className={`text-white text-sm transition-all ${hasUnsavedChange
-                                ? 'bg-[#1976d2] hover:bg-[#1565c0] ring-2 ring-yellow-400 ring-offset-1'
-                                : 'bg-[#5b9dd9] hover:bg-[#4a8cc8]'
-                            }`}
-                        title="Save answer and go to next question"
-                    >
-                        Save &amp; Next
-                    </Button>
-                ) : (
-                    <Button
-                        onClick={onSubmit}
-                        className="bg-[#d32f2f] hover:bg-[#b71c1c] text-white text-sm"
-                        title="Submit your exam"
-                    >
-                        Submit
-                    </Button>
-                )}
+                <Button
+                    onClick={onSaveAndNext}
+                    disabled={sectionLocked}
+                    className={`text-white text-sm transition-all ${hasUnsavedChange
+                            ? 'bg-[#1976d2] hover:bg-[#1565c0] ring-2 ring-yellow-400 ring-offset-1'
+                            : 'bg-[#5b9dd9] hover:bg-[#4a8cc8]'
+                        }`}
+                    title="Save answer and go to next question (Ctrl+Enter)"
+                >
+                    Save &amp; Next
+                </Button>
+
+                {/* Submit Section / Submit Test — always far right */}
+                <Button
+                    onClick={onSubmitSection}
+                    className={`text-white text-sm font-semibold px-5 ${isLastSection
+                            ? 'bg-[#d32f2f] hover:bg-[#b71c1c]'
+                            : 'bg-[#e65100] hover:bg-[#bf360c]'
+                        }`}
+                    title={isLastSection ? 'Submit the entire test' : 'Submit this section and proceed to the next'}
+                >
+                    {isLastSection ? 'Submit' : 'Submit Section'}
+                </Button>
             </div>
         </div>
     );

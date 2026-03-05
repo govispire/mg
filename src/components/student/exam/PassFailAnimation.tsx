@@ -14,16 +14,16 @@ export const PassFailAnimation: React.FC<PassFailAnimationProps> = ({ passed }) 
   useEffect(() => {
     const passImage = new Image();
     const failImage = new Image();
-    
+
     passImage.src = "https://res.cloudinary.com/dsyxrhbwb/image/upload/e_background_removal/f_png/v1748018649/6163719773242901061_ranh4z.jpg";
     failImage.src = "https://res.cloudinary.com/dsyxrhbwb/image/upload/e_background_removal/f_png/v1748018450/6161467973429215658_jckxno.jpg";
-    
+
     const currentImage = passed ? passImage : failImage;
-    
+
     currentImage.onload = () => {
       setImageLoaded(true);
     };
-    
+
     // Start loading immediately
     if (currentImage.complete) {
       setImageLoaded(true);
@@ -50,7 +50,7 @@ export const PassFailAnimation: React.FC<PassFailAnimationProps> = ({ passed }) 
     }
   }, [passed, imageLoaded]);
 
-  const stampImage = passed 
+  const stampImage = passed
     ? "https://res.cloudinary.com/dsyxrhbwb/image/upload/e_background_removal/f_png/v1748018649/6163719773242901061_ranh4z.jpg"
     : "https://res.cloudinary.com/dsyxrhbwb/image/upload/e_background_removal/f_png/v1748018450/6161467973429215658_jckxno.jpg";
 
@@ -58,7 +58,7 @@ export const PassFailAnimation: React.FC<PassFailAnimationProps> = ({ passed }) 
     if (!imageLoaded) {
       return 'opacity-0 translate-y-0 scale-100 rotate-0';
     }
-    
+
     switch (animationPhase) {
       case 0:
         return 'opacity-0 translate-y-[-200px] scale-50 rotate-[-10deg]';
@@ -76,7 +76,7 @@ export const PassFailAnimation: React.FC<PassFailAnimationProps> = ({ passed }) 
   };
 
   return (
-    <div className="relative flex flex-col items-center justify-center py-8">
+    <div className="relative flex flex-col items-center justify-center py-2">
       {/* Confetti Effect */}
       {showConfetti && passed && (
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
@@ -90,7 +90,7 @@ export const PassFailAnimation: React.FC<PassFailAnimationProps> = ({ passed }) 
                 animationDuration: `${2 + Math.random() * 2}s`,
               }}
             >
-              <div 
+              <div
                 className="w-2 h-2 rounded"
                 style={{
                   backgroundColor: ['#ff6b6b', '#4ecdc4', '#45b7d1', '#f9ca24', '#6c5ce7', '#a55eea'][Math.floor(Math.random() * 6)]
@@ -103,18 +103,18 @@ export const PassFailAnimation: React.FC<PassFailAnimationProps> = ({ passed }) 
 
       {/* Loading placeholder */}
       {!imageLoaded && (
-        <div className="w-32 h-32 sm:w-40 sm:h-40 bg-gray-200 rounded-full animate-pulse flex items-center justify-center">
-          <div className="text-gray-400 text-sm">Loading...</div>
+        <div className="w-16 h-16 bg-gray-200 rounded-full animate-pulse flex items-center justify-center">
+          <div className="text-gray-400 text-xs">Loading...</div>
         </div>
       )}
 
       {/* Stamp Image */}
       {imageLoaded && (
         <div className={`transform ${getStampStyle()}`}>
-          <img 
-            src={stampImage} 
+          <img
+            src={stampImage}
             alt={passed ? "Pass Stamp" : "Fail Stamp"}
-            className="w-32 h-32 sm:w-40 sm:h-40 object-contain drop-shadow-lg"
+            className="w-20 h-20 sm:w-24 sm:h-24 object-contain drop-shadow-lg"
             loading="eager"
             decoding="async"
           />
@@ -123,30 +123,20 @@ export const PassFailAnimation: React.FC<PassFailAnimationProps> = ({ passed }) 
 
       {/* Congratulations Message */}
       {passed && animationPhase >= 3 && (
-        <div className="mt-6 text-center animate-slide-up">
-          <h2 className="text-2xl sm:text-3xl font-bold text-green-600 mb-2">
-            🎉 Congratulations! 🎉
+        <div className="mt-2 text-center animate-slide-up">
+          <h2 className="text-base sm:text-lg font-bold text-green-600 mb-0.5">
+            🎉 Congratulations!
           </h2>
-          <p className="text-gray-600 text-lg">
-            You have successfully passed the test!
-          </p>
-          <div className="mt-3 text-sm text-green-600 font-medium">
-            Keep up the excellent work!
-          </div>
+          <p className="text-gray-500 text-xs">You have successfully passed!</p>
         </div>
       )}
 
       {!passed && animationPhase >= 3 && (
-        <div className="mt-6 text-center animate-slide-up">
-          <h2 className="text-2xl sm:text-3xl font-bold text-red-600 mb-2">
+        <div className="mt-2 text-center animate-slide-up">
+          <h2 className="text-base sm:text-lg font-bold text-red-600 mb-0.5">
             Better Luck Next Time!
           </h2>
-          <p className="text-gray-600 text-lg">
-            Keep practicing to improve your score.
-          </p>
-          <div className="mt-3 text-sm text-blue-600 font-medium">
-            Every attempt makes you stronger!
-          </div>
+          <p className="text-gray-500 text-xs">Keep practicing to improve your score.</p>
         </div>
       )}
     </div>

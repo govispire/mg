@@ -155,20 +155,6 @@ export const QuestionPalette: React.FC<QuestionPaletteProps> = ({
                         <div className="font-semibold text-sm text-gray-900">{userName}</div>
                     </div>
 
-                    {/* Language Selector */}
-                    <div className="px-3 py-2 bg-white border-b border-gray-300">
-                        <label className="text-xs font-medium text-gray-700 mb-1.5 block">View in:</label>
-                        <Select value={language} onValueChange={(val) => onLanguageChange(val as 'English' | 'Hindi')}>
-                            <SelectTrigger className="w-full h-8 text-sm">
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="English">English</SelectItem>
-                                <SelectItem value="Hindi">Hindi</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
-
                     {/* ── Status Legend — 2-column IBPS grid ── */}
                     <div className="px-3 py-2 bg-white border-b border-gray-200">
                         <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">

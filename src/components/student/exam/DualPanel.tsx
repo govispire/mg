@@ -21,6 +21,8 @@ interface DualPanelProps {
     questionNumber: number;
     selectedAnswer: string | string[] | null;
     onAnswerChange: (answer: string | string[]) => void;
+    language?: string;
+    onLanguageChange?: (lang: string) => void;
 }
 
 // ── Sanitise HTML ──────────────────────────────────────────────────────────
@@ -91,6 +93,8 @@ export const DualPanel: React.FC<DualPanelProps> = ({
     questionNumber,
     selectedAnswer,
     onAnswerChange,
+    language = 'English',
+    onLanguageChange,
 }) => {
     const rightPanelRef = useRef<HTMLDivElement>(null);
 
@@ -138,19 +142,22 @@ export const DualPanel: React.FC<DualPanelProps> = ({
 
     return (
         <div className="dp-wrapper" onKeyDown={handleKeyDown} tabIndex={-1}>
-            {/* ── Top header strip (mirrors existing QuestionDisplay header) ── */}
+            {/* Blue View In bar — same as SinglePanel */}
+            <div className="bg-[#5b9dd9] text-white px-4 py-1.5 flex items-center justify-end gap-2 text-sm">
+                <span>View In :</span>
+                <select
+                    value={language}
+                    onChange={(e) => onLanguageChange?.(e.target.value)}
+                    className="bg-white text-gray-800 border border-gray-300 rounded px-2 py-0.5 text-sm cursor-pointer focus:outline-none"
+                >
+                    <option value="English">English</option>
+                    <option value="Hindi">Hindi</option>
+                </select>
+            </div>
+
+            {/* ── Top header strip ── */}
             <div className="dp-header">
-                <div className="flex items-center gap-3">
-                    <Badge className="bg-[#1976d2] text-white text-xs">
-                        {question.sectionName}
-                    </Badge>
-                    <span className="text-xs text-gray-500">
-                        {setTypeLabel[questionSet.setType] ?? 'Set'}
-                    </span>
-                </div>
-                <span className="text-xs text-gray-400 hidden sm:block">
-                    Question No. {questionNumber}
-                </span>
+                <span className="text-xs font-medium text-gray-700">Question No. {questionNumber}</span>
             </div>
 
             {/* ── Two-panel body ─────────────────────────────────────────── */}
@@ -179,10 +186,7 @@ export const DualPanel: React.FC<DualPanelProps> = ({
                     role="main"
                     aria-label="Question and options"
                 >
-                    {/* Question header bar (same blue bar as existing UI) */}
-                    <div className="bg-[#5b9dd9] text-white px-4 py-2 rounded mb-4 text-sm font-medium">
-                        Question No. {questionNumber}
-                    </div>
+
 
                     {/* Question text */}
                     <div

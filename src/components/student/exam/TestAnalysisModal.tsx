@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { BookOpen, FileText, TrendingUp, Award, Percent, CheckCircle, Download, Share2, RefreshCcw, X } from 'lucide-react';
+import { BookOpen, FileText, TrendingUp, Award, Percent, CheckCircle, X } from 'lucide-react';
 import { TestAnalysisData } from '@/data/testAnalysisData';
 import { PassFailAnimation } from './PassFailAnimation';
 import { OverallAnalysisTab } from './OverallAnalysisTab';
@@ -40,46 +40,18 @@ export const TestAnalysisModal: React.FC<TestAnalysisModalProps> = ({
   ];
 
   const statCards = [
-    {
-      title: "Score",
-      value: `${analysisData.score}/${analysisData.maxScore}`,
-      icon: TrendingUp,
-      gradient: "from-blue-50 to-blue-100",
-      border: "border-blue-200",
-      textColor: "text-blue-600"
-    },
-    {
-      title: "Rank",
-      value: `${analysisData.rank}/${analysisData.totalStudents}`,
-      icon: Award,
-      gradient: "from-purple-50 to-purple-100",
-      border: "border-purple-200",
-      textColor: "text-purple-600"
-    },
-    {
-      title: "Percentile",
-      value: `${analysisData.percentile}%`,
-      icon: Percent,
-      gradient: "from-amber-50 to-amber-100",
-      border: "border-amber-200",
-      textColor: "text-amber-600"
-    },
-    {
-      title: "Accuracy",
-      value: `${analysisData.accuracy}%`,
-      icon: CheckCircle,
-      gradient: "from-green-50 to-green-100",
-      border: "border-green-200",
-      textColor: "text-green-600"
-    }
+    { title: "Score", value: `${analysisData.score}/${analysisData.maxScore}`, icon: TrendingUp },
+    { title: "Rank", value: `${analysisData.rank}/${analysisData.totalStudents}`, icon: Award },
+    { title: "Percentile", value: `${analysisData.percentile}%`, icon: Percent },
+    { title: "Accuracy", value: `${analysisData.accuracy}%`, icon: CheckCircle },
   ];
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="w-[95vw] max-w-7xl h-[95vh] max-h-[95vh] overflow-y-auto p-0 animate-modal-enter">
-        <div className="bg-background py-3 px-3 sm:py-4 sm:px-4 lg:py-6 lg:px-6 h-full">
+        <div className="bg-background py-3 px-3 sm:py-4 sm:px-5 h-full">
           {/* Header Section */}
-          <DialogHeader className="mb-4 sm:mb-6">
+          <DialogHeader className="mb-2 sm:mb-3">
             <div className="flex flex-col gap-2 sm:gap-4">
               <div className="flex justify-between items-start">
                 <div className="flex-1 min-w-0 pr-2">
@@ -123,28 +95,28 @@ export const TestAnalysisModal: React.FC<TestAnalysisModalProps> = ({
           </DialogHeader>
 
           {/* Pass/Fail Animation */}
-          <div className="mb-4 sm:mb-6">
+          <div className="mb-2 sm:mb-3">
             <PassFailAnimation passed={analysisData.passed} />
           </div>
 
-          {/* Stats Cards - Improved Mobile Layout */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 lg:gap-4 mb-4 sm:mb-6">
+          {/* Stats Cards */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 mb-3">
             {statCards.map((stat, index) => (
               <Card
                 key={stat.title}
-                className={`p-2 sm:p-3 lg:p-4 bg-gradient-to-br ${stat.gradient} ${stat.border} border animate-slide-up test-card`}
+                className="p-2 sm:p-3 bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 animate-slide-up test-card"
                 style={{ animationDelay: `${index * 0.1}s` }}
               >
                 <div className="flex items-center justify-between gap-1">
                   <div className="min-w-0 flex-1">
-                    <div className="text-[10px] sm:text-xs font-medium text-gray-600 mb-0.5 sm:mb-1 truncate">
+                    <div className="text-[10px] sm:text-xs font-medium text-gray-500 mb-0.5 truncate">
                       {stat.title}
                     </div>
-                    <div className={`text-xs sm:text-sm lg:text-lg font-bold ${stat.textColor} truncate`}>
+                    <div className="text-xs sm:text-sm lg:text-base font-bold text-blue-700 truncate">
                       {stat.value}
                     </div>
                   </div>
-                  <stat.icon className={`h-3 w-3 sm:h-4 sm:w-4 lg:h-5 lg:w-5 ${stat.textColor} shrink-0`} />
+                  <stat.icon className="h-3 w-3 sm:h-4 sm:w-4 text-blue-400 shrink-0" />
                 </div>
               </Card>
             ))}
@@ -152,7 +124,7 @@ export const TestAnalysisModal: React.FC<TestAnalysisModalProps> = ({
 
           {/* Tab Navigation - Mobile Optimized */}
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <div className="mb-4 sm:mb-6">
+            <div className="mb-2 sm:mb-3">
               <TabsList className="grid w-full grid-cols-5 gap-0 sm:gap-0.5 bg-gray-100 p-0.5 sm:p-1 rounded-lg h-auto">
                 {tabs.map((tab) => (
                   <TabsTrigger
@@ -191,28 +163,7 @@ export const TestAnalysisModal: React.FC<TestAnalysisModalProps> = ({
             </div>
           </Tabs>
 
-          {/* Bottom Action Buttons - Mobile Optimized */}
-          <div className="sticky bottom-0 bg-background border-t border-gray-200 pt-2 sm:pt-3 mt-4 sm:mt-6">
-            <div className="flex flex-col sm:flex-row gap-2">
-              <div className="flex gap-1 sm:gap-2 overflow-x-auto scrollbar-hide pb-1 sm:pb-0">
-                <Button variant="outline" size="sm" className="test-action-button text-xs whitespace-nowrap flex-shrink-0">
-                  <Download className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-                  PDF
-                </Button>
-                <Button variant="outline" size="sm" className="test-action-button text-xs whitespace-nowrap flex-shrink-0">
-                  <Share2 className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-                  Share
-                </Button>
-                <Button size="sm" className="test-action-button bg-blue-600 hover:bg-blue-700 text-xs whitespace-nowrap flex-shrink-0">
-                  <RefreshCcw className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
-                  Retake
-                </Button>
-              </div>
-              <Button variant="ghost" onClick={onClose} className="test-action-button text-xs sm:ml-auto">
-                Close
-              </Button>
-            </div>
-          </div>
+
         </div>
       </DialogContent>
     </Dialog>

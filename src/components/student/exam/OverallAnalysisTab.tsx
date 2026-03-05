@@ -14,51 +14,54 @@ interface OverallAnalysisTabProps {
 
 export const OverallAnalysisTab: React.FC<OverallAnalysisTabProps> = ({ analysisData }) => {
   const isMobile = useIsMobile();
-  
+
   const quickInfoCards = [
     {
       title: "Total Attempted",
-      value: analysisData.sectionWiseData.reduce((sum, section) => sum + section.attempted, 0),
+      value: analysisData.sectionWiseData.reduce((sum, s) => sum + s.attempted, 0),
       icon: Target,
       color: "blue"
     },
     {
       title: "Correct",
-      value: analysisData.sectionWiseData.reduce((sum, section) => sum + section.correct, 0),
+      value: analysisData.sectionWiseData.reduce((sum, s) => sum + s.correct, 0),
       icon: CheckCircle,
       color: "green"
     },
     {
       title: "Wrong",
-      value: analysisData.sectionWiseData.reduce((sum, section) => sum + section.wrong, 0),
+      value: analysisData.sectionWiseData.reduce((sum, s) => sum + s.wrong, 0),
       icon: XCircle,
       color: "red"
     },
     {
       title: "Skipped",
-      value: analysisData.sectionWiseData.reduce((sum, section) => sum + section.skipped, 0),
+      value: analysisData.sectionWiseData.reduce((sum, s) => sum + s.skipped + s.unseen, 0),
       icon: Clock,
       color: "yellow"
     },
     {
-      title: "Average Score",
-      value: 45,
+      title: "Avg Score",
+      value: analysisData.comparisonData.averageScore,
       icon: Users,
       color: "purple"
     },
     {
       title: "Topper Score",
-      value: 90,
+      value: analysisData.comparisonData.topperScore,
       icon: Trophy,
       color: "orange"
     }
   ];
 
-  const performanceData = [
-    { section: 'Reasoning', yourScore: 28, topperScore: 33 },
-    { section: 'English', yourScore: 22, topperScore: 28 },
-    { section: 'Quantitative', yourScore: 20, topperScore: 32 }
-  ];
+  // Dynamic performance comparison data from real section scores
+  const totalMaxScore = analysisData.sectionWiseData.reduce((s, sec) => s + sec.maxScore, 0);
+  const performanceData = analysisData.sectionWiseData.map(sec => ({
+    section: sec.sectionName.length > 12 ? sec.sectionName.split(' ')[0] : sec.sectionName,
+    yourScore: sec.score,
+    topperScore: Math.round(sec.maxScore * 0.85), // estimated topper ~85% of max
+    maxScore: sec.maxScore,
+  }));
 
   const getColorClasses = (color: string) => {
     const colors = {
@@ -86,7 +89,7 @@ export const OverallAnalysisTab: React.FC<OverallAnalysisTabProps> = ({ analysis
                 <span className="text-xs font-medium text-blue-600">{section.percentile}%</span>
               </div>
             </div>
-            
+
             {/* Score and Accuracy Row */}
             <div className="flex justify-between items-center py-2 bg-gray-50 rounded px-3">
               <div className="text-center">
@@ -102,7 +105,7 @@ export const OverallAnalysisTab: React.FC<OverallAnalysisTabProps> = ({ analysis
                 <p className="font-bold text-sm">{section.timeSpent}m</p>
               </div>
             </div>
-            
+
             {/* Stats Grid */}
             <div className="grid grid-cols-3 gap-2 text-center">
               <div className="bg-green-50 rounded p-2">
@@ -118,7 +121,7 @@ export const OverallAnalysisTab: React.FC<OverallAnalysisTabProps> = ({ analysis
                 <p className="font-bold text-gray-700">{section.skipped}</p>
               </div>
             </div>
-            
+
             {/* Progress Bar */}
             <div className="space-y-1">
               <div className="flex justify-between items-center">
@@ -191,14 +194,14 @@ export const OverallAnalysisTab: React.FC<OverallAnalysisTabProps> = ({ analysis
       {/* Quick Info Cards - Enhanced Mobile Layout */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3 lg:gap-4">
         {quickInfoCards.map((card, index) => (
-          <Card 
+          <Card
             key={card.title}
             className={`p-2 sm:p-3 lg:p-4 bg-gradient-to-br ${getColorClasses(card.color)} border shadow-sm`}
           >
             <div className="flex items-center justify-between gap-1">
               <div className="min-w-0 flex-1">
                 <div className="text-[10px] sm:text-xs font-medium text-gray-600 mb-0.5 sm:mb-1 leading-tight">
-                  {isMobile && card.title.length > 10 ? 
+                  {isMobile && card.title.length > 10 ?
                     card.title.split(' ').slice(0, 2).join(' ') : card.title}
                 </div>
                 <div className={`text-xs sm:text-sm lg:text-lg font-bold truncate`}>
@@ -222,7 +225,7 @@ export const OverallAnalysisTab: React.FC<OverallAnalysisTabProps> = ({ analysis
         <h3 className="text-base sm:text-lg lg:text-xl font-semibold mb-3 sm:mb-4 lg:mb-6">Performance Comparison</h3>
         <div className="w-full">
           <ResponsiveContainer width="100%" height={isMobile ? 220 : 300}>
-            <LineChart 
+            <LineChart
               data={performanceData}
               margin={{
                 top: 15,
@@ -232,8 +235,8 @@ export const OverallAnalysisTab: React.FC<OverallAnalysisTabProps> = ({ analysis
               }}
             >
               <CartesianGrid strokeDasharray="3 3" stroke="#e0e7ff" />
-              <XAxis 
-                dataKey="section" 
+              <XAxis
+                dataKey="section"
                 fontSize={isMobile ? 10 : 12}
                 interval={0}
                 angle={isMobile ? -45 : 0}
@@ -241,13 +244,13 @@ export const OverallAnalysisTab: React.FC<OverallAnalysisTabProps> = ({ analysis
                 height={isMobile ? 70 : 50}
                 tick={{ fontSize: isMobile ? 10 : 12 }}
               />
-              <YAxis 
+              <YAxis
                 fontSize={isMobile ? 10 : 12}
                 width={isMobile ? 35 : 50}
                 tick={{ fontSize: isMobile ? 10 : 12 }}
               />
-              <Tooltip 
-                contentStyle={{ 
+              <Tooltip
+                contentStyle={{
                   fontSize: isMobile ? '11px' : '13px',
                   padding: isMobile ? '8px 10px' : '12px 16px',
                   borderRadius: '8px',
@@ -257,19 +260,19 @@ export const OverallAnalysisTab: React.FC<OverallAnalysisTabProps> = ({ analysis
                 }}
                 labelStyle={{ fontSize: isMobile ? '11px' : '13px', fontWeight: 'bold' }}
               />
-              <Line 
-                type="monotone" 
-                dataKey="yourScore" 
-                stroke="#3b82f6" 
+              <Line
+                type="monotone"
+                dataKey="yourScore"
+                stroke="#3b82f6"
                 strokeWidth={isMobile ? 2 : 3}
                 name="Your Score"
                 dot={{ r: isMobile ? 3 : 4, fill: '#3b82f6' }}
                 activeDot={{ r: isMobile ? 5 : 6, fill: '#1d4ed8' }}
               />
-              <Line 
-                type="monotone" 
-                dataKey="topperScore" 
-                stroke="#10b981" 
+              <Line
+                type="monotone"
+                dataKey="topperScore"
+                stroke="#10b981"
                 strokeWidth={isMobile ? 2 : 3}
                 name="Topper Score"
                 dot={{ r: isMobile ? 3 : 4, fill: '#10b981' }}
@@ -277,7 +280,7 @@ export const OverallAnalysisTab: React.FC<OverallAnalysisTabProps> = ({ analysis
               />
             </LineChart>
           </ResponsiveContainer>
-          
+
           {/* Mobile Legend */}
           {isMobile && (
             <div className="flex justify-center gap-4 mt-3 text-xs">
