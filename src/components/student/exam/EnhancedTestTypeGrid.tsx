@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Grid, List, Clock, Users, Target, CheckCircle, RotateCcw, BarChart3, Play, Pause, BookOpen, Bookmark } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { TestAnalysisModal } from './TestAnalysisModal';
+import { TestSolutions } from './TestSolutions';
 import { generateAnalysisFromExam } from '@/utils/examAnalysis';
 import { generateTestExam } from '@/utils/generateTestExam';
 import { useBookmarkedTests } from '@/hooks/useBookmarkedTests';
@@ -42,6 +43,8 @@ const EnhancedTestTypeGrid: React.FC<EnhancedTestTypeGridProps> = ({ tests, test
   const [selectedSubject, setSelectedSubject] = useState('all');
   const [showAnalysisModal, setShowAnalysisModal] = useState(false);
   const [selectedTestForAnalysis, setSelectedTestForAnalysis] = useState<TestItem | null>(null);
+  const [showSolutionsModal, setShowSolutionsModal] = useState(false);
+  const [selectedTestForSolutions, setSelectedTestForSolutions] = useState<TestItem | null>(null);
   const { isTestBookmarked, toggleBookmark } = useBookmarkedTests();
 
   const filteredTests = tests.filter(test =>
@@ -55,8 +58,8 @@ const EnhancedTestTypeGrid: React.FC<EnhancedTestTypeGridProps> = ({ tests, test
       setSelectedTestForAnalysis(test);
       setShowAnalysisModal(true);
     } else if (action === 'solution') {
-      console.log('Navigate to solution page for test:', test.id);
-      // Would navigate to solution page
+      setSelectedTestForSolutions(test);
+      setShowSolutionsModal(true);
     }
     // Other actions would typically navigate to respective pages
   };
@@ -283,6 +286,31 @@ const EnhancedTestTypeGrid: React.FC<EnhancedTestTypeGridProps> = ({ tests, test
           <p className="text-gray-600">No tests found for the selected subject.</p>
         </div>
       )}
+
+      {/* Test Solutions Modal */}
+      {selectedTestForSolutions && (() => {
+        const examConfig = generateTestExam(
+          selectedTestForSolutions.category,
+          selectedTestForSolutions.id,
+          selectedTestForSolutions.id
+        );
+        let storedResponses: Record<string, string | string[] | null> = {};
+        try {
+          const raw = localStorage.getItem(`exam-responses-${selectedTestForSolutions.id}`);
+          if (raw) storedResponses = JSON.parse(raw);
+        } catch { /* ignore */ }
+        return (
+          <TestSolutions
+            isOpen={showSolutionsModal}
+            onClose={() => {
+              setShowSolutionsModal(false);
+              setSelectedTestForSolutions(null);
+            }}
+            examConfig={examConfig}
+            responses={storedResponses}
+          />
+        );
+      })()}
 
       {/* Test Analysis Modal */}
       {selectedTestForAnalysis && (() => {

@@ -8,7 +8,9 @@ import { Clock, CheckCircle, Play, RotateCcw, Trophy, Star, Calendar, BarChart3,
 import { TestProgress } from '@/hooks/useExamProgress';
 import { Link, useParams } from 'react-router-dom';
 import { TestAnalysisModal } from './TestAnalysisModal';
+import { TestSolutions } from './TestSolutions';
 import { generateMockAnalysisData } from '@/data/testAnalysisData';
+import { generateTestExam } from '@/utils/generateTestExam';
 
 interface TestTypeGridProps {
   testType: string;
@@ -33,6 +35,8 @@ export const TestTypeGrid: React.FC<TestTypeGridProps> = ({
   const { category, examId } = useParams();
   const [showAnalysisModal, setShowAnalysisModal] = useState(false);
   const [selectedTestForAnalysis, setSelectedTestForAnalysis] = useState<TestProgress | null>(null);
+  const [showSolutionsModal, setShowSolutionsModal] = useState(false);
+  const [selectedTestForSolutions, setSelectedTestForSolutions] = useState<TestProgress | null>(null);
 
   const handleAnalysisClick = (test: TestProgress) => {
     setSelectedTestForAnalysis(test);
@@ -40,8 +44,8 @@ export const TestTypeGrid: React.FC<TestTypeGridProps> = ({
   };
 
   const handleSolutionClick = (test: TestProgress) => {
-    console.log('Solution clicked for test:', test.testId);
-    // Navigate to solution page - would be implemented based on routing structure
+    setSelectedTestForSolutions(test);
+    setShowSolutionsModal(true);
   };
 
   const getStatusIcon = (status: TestProgress['status']) => {
@@ -220,6 +224,24 @@ export const TestTypeGrid: React.FC<TestTypeGridProps> = ({
           ))}
         </div>
 
+        {/* Solutions Modal */}
+        {selectedTestForSolutions && (() => {
+          const examConfig = generateTestExam(category || '', examId || '', selectedTestForSolutions.testId);
+          let storedResponses: Record<string, string | string[] | null> = {};
+          try {
+            const raw = localStorage.getItem(`exam-responses-${selectedTestForSolutions.testId}`);
+            if (raw) storedResponses = JSON.parse(raw);
+          } catch { /* ignore */ }
+          return (
+            <TestSolutions
+              isOpen={showSolutionsModal}
+              onClose={() => { setShowSolutionsModal(false); setSelectedTestForSolutions(null); }}
+              examConfig={examConfig}
+              responses={storedResponses}
+            />
+          );
+        })()}
+
         {/* Analysis Modal */}
         {selectedTestForAnalysis && (
           <TestAnalysisModal
@@ -373,6 +395,24 @@ export const TestTypeGrid: React.FC<TestTypeGridProps> = ({
           </Card>
         ))}
       </div>
+
+      {/* Solutions Modal */}
+      {selectedTestForSolutions && (() => {
+        const examConfig = generateTestExam(category || '', examId || '', selectedTestForSolutions.testId);
+        let storedResponses: Record<string, string | string[] | null> = {};
+        try {
+          const raw = localStorage.getItem(`exam-responses-${selectedTestForSolutions.testId}`);
+          if (raw) storedResponses = JSON.parse(raw);
+        } catch { /* ignore */ }
+        return (
+          <TestSolutions
+            isOpen={showSolutionsModal}
+            onClose={() => { setShowSolutionsModal(false); setSelectedTestForSolutions(null); }}
+            examConfig={examConfig}
+            responses={storedResponses}
+          />
+        );
+      })()}
 
       {/* Analysis Modal */}
       {selectedTestForAnalysis && (

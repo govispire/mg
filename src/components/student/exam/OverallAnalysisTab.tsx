@@ -136,6 +136,16 @@ export const OverallAnalysisTab: React.FC<OverallAnalysisTabProps> = ({ analysis
     </div>
   );
 
+  // Computed overall totals
+  const totalAttempted = analysisData.sectionWiseData.reduce((s, sec) => s + sec.attempted, 0);
+  const totalCorrect = analysisData.sectionWiseData.reduce((s, sec) => s + sec.correct, 0);
+  const totalWrong = analysisData.sectionWiseData.reduce((s, sec) => s + sec.wrong, 0);
+  const totalSkipped = analysisData.sectionWiseData.reduce((s, sec) => s + sec.skipped, 0);
+  const totalScore = analysisData.sectionWiseData.reduce((s, sec) => s + sec.score, 0);
+  const sumMaxScore = analysisData.sectionWiseData.reduce((s, sec) => s + sec.maxScore, 0);
+  const totalTime = analysisData.sectionWiseData.reduce((s, sec) => s + sec.timeSpent, 0);
+  const overallAccuracy = totalAttempted > 0 ? Math.round((totalCorrect / totalAttempted) * 100) : 0;
+
   // Responsive Table Component
   const ResponsiveTable = () => (
     <div className="w-full">
@@ -146,42 +156,63 @@ export const OverallAnalysisTab: React.FC<OverallAnalysisTabProps> = ({ analysis
           <Table>
             <TableHeader className="bg-[#003366]">
               <TableRow>
-                <TableHead className="text-white text-sm px-3 py-2 min-w-[120px]">Section</TableHead>
-                <TableHead className="text-white text-sm px-3 py-2 min-w-[80px]">Attempted</TableHead>
-                <TableHead className="text-white text-sm px-3 py-2 min-w-[100px]">Correct/Wrong</TableHead>
-                <TableHead className="text-white text-sm px-3 py-2 min-w-[80px]">Skipped</TableHead>
-                <TableHead className="text-white text-sm px-3 py-2 min-w-[80px]">Score</TableHead>
-                <TableHead className="text-white text-sm px-3 py-2 min-w-[60px]">Rank</TableHead>
-                <TableHead className="text-white text-sm px-3 py-2 min-w-[80px]">Percentile</TableHead>
-                <TableHead className="text-white text-sm px-3 py-2 min-w-[100px]">Accuracy</TableHead>
-                <TableHead className="text-white text-sm px-3 py-2 min-w-[60px]">Time</TableHead>
+                <TableHead className="text-white text-base px-4 py-3 min-w-[160px]">Section</TableHead>
+                <TableHead className="text-white text-base px-4 py-3 min-w-[100px]">Attempted</TableHead>
+                <TableHead className="text-white text-base px-4 py-3 min-w-[130px]">Correct / Wrong</TableHead>
+                <TableHead className="text-white text-base px-4 py-3 min-w-[90px]">Skipped</TableHead>
+                <TableHead className="text-white text-base px-4 py-3 min-w-[100px]">Score</TableHead>
+                <TableHead className="text-white text-base px-4 py-3 min-w-[70px]">Rank</TableHead>
+                <TableHead className="text-white text-base px-4 py-3 min-w-[100px]">Percentile</TableHead>
+                <TableHead className="text-white text-base px-4 py-3 min-w-[130px]">Accuracy</TableHead>
+                <TableHead className="text-white text-base px-4 py-3 min-w-[80px]">Time</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {analysisData.sectionWiseData.map((section, index) => (
                 <TableRow key={section.sectionName} className={index % 2 === 0 ? "bg-white" : "bg-[#DCEBFA]"}>
-                  <TableCell className="font-medium text-sm px-3 py-2">
+                  <TableCell className="font-medium text-sm px-4 py-3">
                     {section.sectionName}
                   </TableCell>
-                  <TableCell className="text-sm px-3 py-2">{section.attempted}</TableCell>
-                  <TableCell className="text-sm px-3 py-2">
-                    <span className="text-green-600">{section.correct}</span>
-                    /
-                    <span className="text-red-600">{section.wrong}</span>
+                  <TableCell className="text-sm px-4 py-3">{section.attempted}</TableCell>
+                  <TableCell className="text-sm px-4 py-3">
+                    <span className="text-green-600 font-semibold">{section.correct}</span>
+                    <span className="text-gray-400 mx-1">/</span>
+                    <span className="text-red-600 font-semibold">{section.wrong}</span>
                   </TableCell>
-                  <TableCell className="text-sm px-3 py-2">{section.skipped}</TableCell>
-                  <TableCell className="text-sm px-3 py-2">{section.score}/{section.maxScore}</TableCell>
-                  <TableCell className="text-sm px-3 py-2">{section.rank}</TableCell>
-                  <TableCell className="text-sm px-3 py-2">{section.percentile}%</TableCell>
-                  <TableCell className="px-3 py-2">
+                  <TableCell className="text-sm px-4 py-3">{section.skipped}</TableCell>
+                  <TableCell className="text-sm px-4 py-3 font-medium">{section.score}/{section.maxScore}</TableCell>
+                  <TableCell className="text-sm px-4 py-3">{section.rank}</TableCell>
+                  <TableCell className="text-sm px-4 py-3">{section.percentile}%</TableCell>
+                  <TableCell className="px-4 py-3">
                     <div className="flex items-center gap-2">
-                      <Progress value={section.accuracy} className="w-16 h-2" />
-                      <span className="text-xs">{section.accuracy}%</span>
+                      <Progress value={section.accuracy} className="w-20 h-2.5" />
+                      <span className="text-sm font-medium">{section.accuracy}%</span>
                     </div>
                   </TableCell>
-                  <TableCell className="text-sm px-3 py-2">{section.timeSpent}m</TableCell>
+                  <TableCell className="text-sm px-4 py-3">{section.timeSpent}m</TableCell>
                 </TableRow>
               ))}
+              {/* Overall totals row */}
+              <TableRow className="bg-[#003366]/10 border-t-2 border-[#003366]">
+                <TableCell className="font-bold text-sm px-4 py-3 text-[#003366]">Overall</TableCell>
+                <TableCell className="text-sm px-4 py-3 font-bold text-[#003366]">{totalAttempted}</TableCell>
+                <TableCell className="text-sm px-4 py-3">
+                  <span className="text-green-600 font-bold">{totalCorrect}</span>
+                  <span className="text-gray-400 mx-1">/</span>
+                  <span className="text-red-600 font-bold">{totalWrong}</span>
+                </TableCell>
+                <TableCell className="text-sm px-4 py-3 font-bold text-[#003366]">{totalSkipped}</TableCell>
+                <TableCell className="text-sm px-4 py-3 font-bold text-[#003366]">{totalScore}/{sumMaxScore}</TableCell>
+                <TableCell className="text-sm px-4 py-3 font-bold text-[#003366]">{analysisData.rank}</TableCell>
+                <TableCell className="text-sm px-4 py-3 font-bold text-[#003366]">{analysisData.percentile}%</TableCell>
+                <TableCell className="px-4 py-3">
+                  <div className="flex items-center gap-2">
+                    <Progress value={overallAccuracy} className="w-20 h-2.5" />
+                    <span className="text-sm font-bold text-[#003366]">{overallAccuracy}%</span>
+                  </div>
+                </TableCell>
+                <TableCell className="text-sm px-4 py-3 font-bold text-[#003366]">{totalTime}m</TableCell>
+              </TableRow>
             </TableBody>
           </Table>
         </div>

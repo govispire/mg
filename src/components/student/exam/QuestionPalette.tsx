@@ -187,14 +187,14 @@ export const QuestionPalette: React.FC<QuestionPaletteProps> = ({
 
                     {/* ── Question Number Grid — sprite buttons ── */}
                     <div className="flex-1 overflow-y-auto p-3 bg-white">
-                        <div className="grid grid-cols-4 gap-2">
+                        <div className="grid grid-cols-4 gap-1.5">
                             {questions.map((question, index) => (
                                 <div key={question.id} className="flex items-center justify-center">
                                     <QuestionButton
                                         questionNumber={question.questionNumber}
                                         status={toSpriteStatus(question.status)}
                                         isCurrent={index === currentQuestionIndex}
-                                        size={48}
+                                        size={44}
                                         onClick={() => onQuestionSelect(index)}
                                     />
                                 </div>

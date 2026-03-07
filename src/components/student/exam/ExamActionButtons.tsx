@@ -27,9 +27,9 @@ export const ExamActionButtons: React.FC<ExamActionButtonsProps> = ({
     sectionLocked = false,
 }) => {
     return (
-        <div className="bg-[#f5f5f5] border-t border-gray-300 px-4 py-3 flex items-center justify-between">
-            {/* ── Left group ── */}
-            <div className="flex items-center gap-2">
+        <div className="bg-[#f5f5f5] border-t border-gray-300 flex items-center">
+            {/* ── Left group: Mark for Review & Clear Response ── */}
+            <div className="flex items-center gap-2 px-4 py-2.5 flex-1">
                 <Button
                     variant="outline"
                     onClick={onMarkAndNext}
@@ -48,37 +48,40 @@ export const ExamActionButtons: React.FC<ExamActionButtonsProps> = ({
                 </Button>
             </div>
 
-            {/* ── Right group ── */}
-            <div className="flex items-center gap-2">
-                {hasPrevious && onPrevious && (
-                    <Button
-                        variant="outline"
-                        onClick={onPrevious}
-                        disabled={sectionLocked}
-                        className="bg-white hover:bg-gray-100 text-gray-800 border-gray-400 text-sm"
-                    >
-                        Previous
-                    </Button>
-                )}
+            {/* ── Centre-right group: Previous + Save & Next ── */}
+            <div className="flex items-center gap-2 px-4 py-2.5">
+                <Button
+                    variant="outline"
+                    onClick={onPrevious}
+                    disabled={!hasPrevious || !onPrevious || sectionLocked}
+                    className="bg-white hover:bg-gray-100 text-gray-800 border-gray-400 text-sm"
+                >
+                    Previous
+                </Button>
 
                 <Button
                     onClick={onSaveAndNext}
                     disabled={sectionLocked}
                     className={`text-white text-sm transition-all ${hasUnsavedChange
-                            ? 'bg-[#1976d2] hover:bg-[#1565c0] ring-2 ring-yellow-400 ring-offset-1'
-                            : 'bg-[#5b9dd9] hover:bg-[#4a8cc8]'
+                        ? 'bg-[#1976d2] hover:bg-[#1565c0] ring-2 ring-yellow-400 ring-offset-1'
+                        : 'bg-[#5b9dd9] hover:bg-[#4a8cc8]'
                         }`}
                     title="Save answer and go to next question (Ctrl+Enter)"
                 >
                     Save &amp; Next
                 </Button>
+            </div>
 
-                {/* Submit Section / Submit Test — always far right */}
+            {/* ── Submit panel: fixed width matching the right palette ── */}
+            <div
+                className="flex items-center justify-center border-l border-gray-300 py-2.5"
+                style={{ width: 280 }}
+            >
                 <Button
                     onClick={onSubmitSection}
-                    className={`text-white text-sm font-semibold px-5 ${isLastSection
-                            ? 'bg-[#d32f2f] hover:bg-[#b71c1c]'
-                            : 'bg-[#e65100] hover:bg-[#bf360c]'
+                    className={`text-white text-sm font-semibold px-8 py-2 ${isLastSection
+                        ? 'bg-[#d32f2f] hover:bg-[#b71c1c]'
+                        : 'bg-[#e65100] hover:bg-[#bf360c]'
                         }`}
                     title={isLastSection ? 'Submit the entire test' : 'Submit this section and proceed to the next'}
                 >
