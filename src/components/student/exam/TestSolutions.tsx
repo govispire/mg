@@ -44,6 +44,71 @@ function getSimData(idx: number) {
     return { avgTime, yourTime, pctCorrect, difficulty };
 }
 
+const SAMPLE_EXPLANATIONS = [
+    // Reasoning — Seating / Puzzle
+    `<b>Step-by-step approach:</b><br/>
+    In circular arrangement problems, fix one person as the reference point (usually the first named person) and build the arrangement relative to them.<br/><br/>
+    <b>Key rule:</b> "To the left of A" in a circular arrangement means going clockwise from A's perspective when all members face the centre.<br/>
+    Working through the given clues one by one and eliminating contradictions yields the final seat positions. The correct answer follows directly from placing all constraints.`,
+
+    // Quantitative — Time & Work
+    `<b>Formula Used:</b> Distance = Speed × Time &nbsp;⟹&nbsp; Time = Distance ÷ Speed<br/><br/>
+    <b>Solution:</b><br/>
+    Time = 300 km ÷ 60 km/h = <b>5 hours</b><br/><br/>
+    <i>Tip:</i> Always check units — if speed is in km/h and distance in km, time comes out in hours directly. No conversion needed here.`,
+
+    // English — Error Spotting
+    `<b>Grammar Rule Applied:</b> Subject-Verb Agreement<br/><br/>
+    When a collective noun (team, committee, jury) is used as a unified body, it takes a <b>singular verb</b>. The error in Option (B) arises from treating a collective noun as plural.<br/><br/>
+    <i>Correct form:</i> "The committee <u>has</u> decided..." not "have decided."`,
+
+    // Reasoning — Coding-Decoding
+    `<b>Pattern Identified:</b> Each letter is shifted forward by +2 positions in the alphabet.<br/><br/>
+    F→H, R→T, I→K, E→G, N→P, D→F &nbsp;→ HUMJTK ✓<br/>
+    Applying the same +2 shift to CANDLE:<br/>
+    C→E, A→C, N→P, D→F, L→N, E→G &nbsp;→ <b>ECPFNG</b><br/><br/>
+    <i>Always verify the pattern on the example before applying it to the new word.</i>`,
+
+    // Quantitative — Percentage
+    `<b>Concept:</b> Percentage change<br/><br/>
+    If the original value is X and it increases by R%, the new value = X × (1 + R/100).<br/>
+    For successive percentage changes (say +a% then +b%), the combined effect = a + b + ab/100 %.<br/><br/>
+    Apply these formulas systematically rather than computing step-by-step to save time.`,
+
+    // General Awareness
+    `<b>Context:</b> Canada has the longest coastline in the world at approximately <b>202,080 km</b>, followed by Russia (~37,650 km) and Norway (~25,148 km).<br/><br/>
+    This fact is frequently tested in banking and SSC exams under Geography / Static GK. Remember the top-5 list: Canada, Russia, Norway, Indonesia, Greenland.`,
+
+    // Reasoning — Blood Relations
+    `<b>Approach:</b> Draw a family tree diagram before solving.<br/><br/>
+    Label each relationship given in the problem on the diagram. Indirect relationships (e.g., "mother's brother's son") become straightforward once the tree is drawn.<br/><br/>
+    <i>Common traps:</i> Words like "only" (only son/daughter) and gender-ambiguous names — always infer gender from the clue context.`,
+
+    // Quantitative — Simple Interest
+    `<b>Formula:</b> SI = (P × R × T) / 100<br/><br/>
+    Where P = Principal, R = Rate % per annum, T = Time in years.<br/>
+    For this question, substitute the given values and solve for the unknown variable.<br/><br/>
+    <b>Shortcut:</b> If SI doubles the principal, then R × T = 100. Use this to quickly identify the missing value when two of the three (P, R, T) are given.`,
+
+    // English — Reading Comprehension
+    `<b>Strategy for RC Questions:</b><br/>
+    1. Read the question <i>before</i> the passage to know what to look for.<br/>
+    2. Eliminate options that are too extreme ("always", "never") or not supported by the text.<br/>
+    3. The correct answer paraphrases the passage — it won't use the exact same words.<br/><br/>
+    The answer is directly stated in paragraph 2 of the passage.`,
+
+    // Reasoning — Syllogisms
+    `<b>Rules of Syllogism:</b><br/>
+    • "All A are B" + "All B are C" → "All A are C" ✓<br/>
+    • "Some A are B" + "All B are C" → "Some A are C" ✓<br/>
+    • Two particular premises (Some) → No definite conclusion<br/><br/>
+    Draw Venn diagrams for complex syllogisms and test each conclusion against <b>all possible</b> diagram arrangements, not just the most obvious one.`,
+];
+
+function getSampleExplanation(idx: number): string {
+    return SAMPLE_EXPLANATIONS[idx % SAMPLE_EXPLANATIONS.length];
+}
+
 function speedLabel(yourTime: number, avgTime: number) {
     const r = yourTime / avgTime;
     if (r < 0.7) return { text: '⚡ Superfast', cls: 'text-green-600 bg-green-50 border-green-200' };
@@ -93,25 +158,28 @@ const SolutionOptionList: React.FC<SolutionOptionListProps> = ({ question, stude
                     ? studentResponse.includes(opt.id)
                     : studentResponse === opt.id;
 
-                let cls = 'border-gray-200 bg-white';
+                let cls = 'bg-gray-50';
+                let borderAccent = 'border-l-2 border-l-transparent';
                 let icon = <Circle className="h-4 w-4 text-gray-300 flex-shrink-0 mt-0.5" />;
                 let tag = '';
                 let tagCls = '';
 
                 if (isCorrectAns) {
-                    cls = 'border-green-400 bg-green-50';
+                    cls = 'bg-green-50';
+                    borderAccent = 'border-l-4 border-l-green-400';
                     icon = <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0 mt-0.5" />;
                     tag = '✓ Correct Answer';
                     tagCls = 'text-green-700 font-semibold';
                 } else if (isStudentAns && !isCorrect) {
-                    cls = 'border-red-400 bg-red-50';
+                    cls = 'bg-red-50';
+                    borderAccent = 'border-l-4 border-l-red-400';
                     icon = <XCircle className="h-4 w-4 text-red-500 flex-shrink-0 mt-0.5" />;
                     tag = '✗ Your Answer';
                     tagCls = 'text-red-600 font-semibold';
                 }
 
                 return (
-                    <div key={opt.id} className={`flex items-start gap-3 px-3 py-2.5 rounded-lg border-2 transition-all ${cls}`}>
+                    <div key={opt.id} className={`flex items-start gap-3 px-3 py-2.5 rounded-lg transition-all ${cls} ${borderAccent}`}>
                         {icon}
                         <div className="flex-1 min-w-0">
                             <span
@@ -160,68 +228,66 @@ const AnalysisStrip: React.FC<AnalysisStripProps> = ({
 
     return (
         <div className="border-t border-gray-200 bg-[#f8faff]">
-            {/* ── Perf bar ── */}
-            <div className={`px-4 py-2.5 border-b flex flex-wrap items-center gap-4 ${status.bg}`}>
-                <span className={`flex items-center gap-1.5 text-xs font-bold ${status.textCls}`}>
-                    {status.icon} {status.text}
-                </span>
-                <Badge className={`text-[10px] px-2 border bg-white ${diffStyle(question.difficulty || sim.difficulty)}`}>
-                    {question.difficulty || sim.difficulty}
-                </Badge>
-                <span className="flex items-center gap-1 text-xs text-gray-500">
-                    <Clock className="h-3 w-3" /> Your: {sim.yourTime}s
-                </span>
-                <span className="flex items-center gap-1 text-xs text-gray-500">
-                    <Users className="h-3 w-3" /> Avg: {sim.avgTime}s
-                </span>
-                <span className={`text-xs font-bold ${marksEarned > 0 ? 'text-green-600' : marksEarned < 0 ? 'text-red-600' : 'text-gray-500'}`}>
-                    {marksEarned > 0 ? '+' : ''}{marksEarned} marks
-                </span>
-                <span className="flex items-center gap-1 text-xs text-gray-500">
-                    <Target className="h-3 w-3" /> {sim.pctCorrect}% students correct
-                </span>
-                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${speed.cls}`}>{speed.text}</span>
-            </div>
 
             {/* ── Solution explanation ── */}
-            <div className="px-4 py-3 border-b border-gray-100">
-                <div className="text-[10px] font-bold text-blue-600 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                    <BookOpen className="h-3.5 w-3.5" /> Solution
+            <div className="px-4 py-4 border-b border-gray-100 space-y-3">
+
+                {/* Section header */}
+                <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5 text-[11px] font-bold text-blue-700 uppercase tracking-wider bg-blue-50 border border-blue-200 rounded px-2.5 py-1">
+                        <BookOpen className="h-3.5 w-3.5" /> Solution
+                    </div>
                 </div>
 
                 {/* Correct answer pill */}
-                <div className="flex items-center gap-2 mb-3 p-2.5 rounded-lg bg-green-50 border border-green-200 text-sm font-semibold text-green-800">
-                    <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0" />
-                    Correct Answer: &nbsp;
-                    {question.options
-                        ? question.options.find(o =>
-                            Array.isArray(question.correctAnswer)
-                                ? question.correctAnswer.includes(o.id)
-                                : o.id === question.correctAnswer
-                        )?.text || String(question.correctAnswer)
-                        : String(question.correctAnswer)
-                    }
+                <div className="flex items-start gap-2.5 p-3 rounded-xl bg-green-50 border border-green-200">
+                    <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0 mt-0.5" />
+                    <div>
+                        <div className="text-[10px] font-bold text-green-600 uppercase tracking-wide mb-0.5">Correct Answer</div>
+                        <div className="text-sm font-semibold text-green-800 leading-snug"
+                            dangerouslySetInnerHTML={{
+                                __html: sanitizeHtml(
+                                    question.options
+                                        ? question.options.find(o =>
+                                            Array.isArray(question.correctAnswer)
+                                                ? question.correctAnswer.includes(o.id)
+                                                : o.id === question.correctAnswer
+                                        )?.text || String(question.correctAnswer)
+                                        : String(question.correctAnswer)
+                                )
+                            }}
+                        />
+                    </div>
                 </div>
 
-                {question.explanation ? (
-                    <p className="text-sm text-gray-700 leading-relaxed">{question.explanation}</p>
-                ) : (
-                    <p className="text-xs text-gray-400 italic">No explanation available.</p>
-                )}
+                {/* Explanation block */}
+                <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
+                    <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 border-b border-gray-200">
+                        <Brain className="h-3.5 w-3.5 text-indigo-500" />
+                        <span className="text-[11px] font-bold text-gray-700 uppercase tracking-wide">Explanation</span>
+                    </div>
+                    <div className="px-3 py-3">
+                        <p className="text-sm text-gray-700 leading-relaxed"
+                            dangerouslySetInnerHTML={{
+                                __html: sanitizeHtml(question.explanation || getSampleExplanation(questionIndex))
+                            }}
+                        />
+                    </div>
+                </div>
 
                 {/* Key points / shortcut row */}
-                <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div className="text-xs text-gray-600 bg-blue-50 border border-blue-100 rounded-lg p-2.5">
-                        <div className="font-semibold text-blue-700 mb-1">📌 Key Points</div>
-                        <ul className="space-y-0.5">
-                            <li>• Avg time: {sim.avgTime}s — aim to answer faster</li>
-                            <li>• Eliminate obviously wrong options first</li>
-                            <li>• {sim.pctCorrect}% students answered this correctly</li>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    <div className="text-xs text-gray-600 bg-blue-50 border border-blue-100 rounded-xl p-3">
+                        <div className="font-semibold text-blue-700 mb-1.5 flex items-center gap-1">📌 Key Points</div>
+                        <ul className="space-y-1">
+                            <li className="flex items-start gap-1.5"><span className="text-blue-400 mt-0.5">•</span>Avg time: <strong>{sim.avgTime}s</strong> — aim to be faster</li>
+                            <li className="flex items-start gap-1.5"><span className="text-blue-400 mt-0.5">•</span>Eliminate obviously wrong options first</li>
+                            <li className="flex items-start gap-1.5"><span className="text-blue-400 mt-0.5">•</span><strong>{sim.pctCorrect}%</strong> of students got this right</li>
                         </ul>
                     </div>
-                    <div className="text-xs text-gray-600 bg-yellow-50 border border-yellow-100 rounded-lg p-2.5">
-                        <div className="font-semibold text-yellow-700 mb-1 flex items-center gap-1"><Zap className="h-3 w-3" /> Shortcut</div>
-                        Focus on pattern recognition before full computation to answer within {sim.avgTime}s.
+                    <div className="text-xs text-gray-600 bg-amber-50 border border-amber-100 rounded-xl p-3">
+                        <div className="font-semibold text-amber-700 mb-1.5 flex items-center gap-1"><Zap className="h-3 w-3" /> Shortcut Tip</div>
+                        <p className="leading-relaxed">Focus on pattern recognition before full computation to answer within <strong>{sim.avgTime}s</strong>.</p>
                     </div>
                 </div>
             </div>
@@ -279,6 +345,15 @@ interface SingleSolutionPanelProps {
 
 const SingleSolutionPanel: React.FC<SingleSolutionPanelProps> = (props) => {
     const { question, questionNumber, studentResponse, isCorrect, hasResponse, questionIndex } = props;
+    const sim = getSimData(questionIndex);
+    const speed = speedLabel(sim.yourTime, sim.avgTime);
+    const marksEarned = !hasResponse ? 0 : isCorrect ? question.marks : -question.negativeMarks;
+    const status = !hasResponse
+        ? { text: 'Not Attempted', textCls: 'text-gray-600' }
+        : isCorrect
+            ? { text: 'Correct', textCls: 'text-green-700' }
+            : { text: 'Incorrect', textCls: 'text-red-700' };
+
     return (
         <div className="flex-1 flex flex-col overflow-hidden bg-white">
             {/* Blue view-in bar — matches ExamInterface */}
@@ -293,9 +368,24 @@ const SingleSolutionPanel: React.FC<SingleSolutionPanelProps> = (props) => {
             {/* Scrollable content */}
             <div className="flex-1 overflow-y-auto">
                 <div className="p-6">
-                    {/* Question number header — identical to SinglePanel */}
-                    <div className="mb-4 -mx-6 -mt-6 px-4 py-2 bg-[#f8f9fa] border-b border-gray-200 text-[0.8125rem] font-medium text-gray-700">
-                        Question No. {questionNumber}
+                    {/* Question number header with chip stats */}
+                    <div className="mb-4 -mx-6 -mt-6 px-4 py-2 bg-[#f8f9fa] border-b border-gray-200 flex flex-wrap items-center justify-between gap-y-1">
+                        <span className="text-[0.8125rem] font-medium text-gray-700">Question No. {questionNumber}</span>
+                        <div className="flex items-center gap-0 bg-white border border-gray-200 rounded-full px-3 py-1 text-[11px] text-gray-600 shadow-sm">
+                            <span className={`font-semibold ${status.textCls}`}>{status.text}</span>
+                            <span className="mx-2 text-gray-300">|</span>
+                            <span className={`font-medium ${diffStyle(question.difficulty || sim.difficulty).includes('yellow') ? 'text-yellow-700' : diffStyle(question.difficulty || sim.difficulty).includes('green') ? 'text-green-700' : 'text-red-700'}`}>{question.difficulty || sim.difficulty}</span>
+                            <span className="mx-2 text-gray-300">|</span>
+                            <span>Your {sim.yourTime}s</span>
+                            <span className="mx-2 text-gray-300">|</span>
+                            <span>Avg {sim.avgTime}s</span>
+                            <span className="mx-2 text-gray-300">|</span>
+                            <span className={`font-semibold ${marksEarned > 0 ? 'text-green-600' : marksEarned < 0 ? 'text-red-600' : 'text-gray-500'}`}>{marksEarned > 0 ? '+' : ''}{marksEarned} marks</span>
+                            <span className="mx-2 text-gray-300">|</span>
+                            <span>{sim.pctCorrect}% Correct</span>
+                            <span className="mx-2 text-gray-300">|</span>
+                            <span className={`font-semibold ${speed.cls.includes('green') ? 'text-green-600' : speed.cls.includes('blue') ? 'text-blue-600' : 'text-orange-600'}`}>{speed.text.replace('⚡ ', '').replace('✓ ', '').replace('🐢 ', '')}</span>
+                        </div>
                     </div>
 
                     {/* Question text */}
@@ -378,13 +468,37 @@ const DualSolutionPanelInner: React.FC<DualSolutionPanelProps> = (props) => {
                 </select>
             </div>
 
-            {/* Question No. header strip */}
-            <div className="bg-[#f8f9fa] border-b border-gray-200 px-4 py-2 text-[0.8125rem] font-medium text-gray-700 flex-shrink-0">
-                Question No. {questionNumber}
-                <span className="ml-3 text-xs text-blue-600 font-normal">
-                    [{setTypeLabel[questionSet.setType] || questionSet.setType}]
-                </span>
-            </div>
+            {/* Question No. header strip with chip stats */}
+            {(() => {
+                const sim2 = getSimData(questionIndex);
+                const speed2 = speedLabel(sim2.yourTime, sim2.avgTime);
+                const marksEarned2 = !hasResponse ? 0 : isCorrect ? question.marks : -question.negativeMarks;
+                const statusText2 = !hasResponse ? 'Not Attempted' : isCorrect ? 'Correct' : 'Incorrect';
+                const statusCls2 = !hasResponse ? 'text-gray-600' : isCorrect ? 'text-green-700' : 'text-red-700';
+                return (
+                    <div className="bg-[#f8f9fa] border-b border-gray-200 px-4 py-2 flex flex-wrap items-center justify-between gap-y-1 flex-shrink-0">
+                        <span className="text-[0.8125rem] font-medium text-gray-700">
+                            Question No. {questionNumber}
+                            <span className="ml-2 text-xs text-blue-600 font-normal">[{setTypeLabel[questionSet.setType] || questionSet.setType}]</span>
+                        </span>
+                        <div className="flex items-center bg-white border border-gray-200 rounded-full px-3 py-1 text-[11px] text-gray-600 shadow-sm">
+                            <span className={`font-semibold ${statusCls2}`}>{statusText2}</span>
+                            <span className="mx-2 text-gray-300">|</span>
+                            <span className={`font-medium ${diffStyle(question.difficulty || sim2.difficulty).includes('yellow') ? 'text-yellow-700' : diffStyle(question.difficulty || sim2.difficulty).includes('green') ? 'text-green-700' : 'text-red-700'}`}>{question.difficulty || sim2.difficulty}</span>
+                            <span className="mx-2 text-gray-300">|</span>
+                            <span>Your {sim2.yourTime}s</span>
+                            <span className="mx-2 text-gray-300">|</span>
+                            <span>Avg {sim2.avgTime}s</span>
+                            <span className="mx-2 text-gray-300">|</span>
+                            <span className={`font-semibold ${marksEarned2 > 0 ? 'text-green-600' : marksEarned2 < 0 ? 'text-red-600' : 'text-gray-500'}`}>{marksEarned2 > 0 ? '+' : ''}{marksEarned2} marks</span>
+                            <span className="mx-2 text-gray-300">|</span>
+                            <span>{sim2.pctCorrect}% Correct</span>
+                            <span className="mx-2 text-gray-300">|</span>
+                            <span className={`font-semibold ${speed2.cls.includes('green') ? 'text-green-600' : speed2.cls.includes('blue') ? 'text-blue-600' : 'text-orange-600'}`}>{speed2.text.replace('⚡ ', '').replace('✓ ', '').replace('🐢 ', '')}</span>
+                        </div>
+                    </div>
+                );
+            })()}
 
             {/* Dual-panel body — fills remaining height */}
             <div className="flex flex-1 overflow-hidden">
@@ -463,6 +577,7 @@ export const TestSolutions: React.FC<TestSolutionsProps> = ({
     const [currentSectionIndex, setCurrentSectionIndex] = useState(0);
     const [isPaletteCollapsed, setIsPaletteCollapsed] = useState(false);
     const [showSummary, setShowSummary] = useState(false);
+    const [paletteFilter, setPaletteFilter] = useState<'all' | 'correct' | 'incorrect' | 'not-attempted'>('all');
     const [bookmarked, setBookmarked] = useState<Set<string>>(new Set());
     const [mistakeNotebook, setMistakeNotebook] = useState<Set<string>>(new Set());
     const [reported, setReported] = useState<Set<string>>(new Set());
@@ -754,37 +869,76 @@ export const TestSolutions: React.FC<TestSolutionsProps> = ({
 
                         {!isPaletteCollapsed && (
                             <div className="w-[260px] bg-[#e3f2fd] border-l border-gray-300 flex flex-col h-full overflow-hidden">
-                                {/* Legend */}
+                                {/* Legend — uses real QuestionButton sprite elements */}
                                 <div className="px-3 py-2.5 bg-white border-b border-gray-200 flex-shrink-0">
                                     <div className="text-[10px] font-bold text-gray-500 uppercase tracking-wide mb-2">Legend</div>
-                                    <div className="flex flex-col gap-1.5">
-                                        {([
-                                            { status: 'answered' as PaletteStatus, label: 'Correct' },
-                                            { status: 'not-answered' as PaletteStatus, label: 'Incorrect' },
-                                            { status: 'not-visited' as PaletteStatus, label: 'Not Attempted' },
-                                        ]).map(({ status, label }) => {
-                                            const SIZE = 22;
-                                            return (
-                                                <div key={status} className="flex items-center gap-2">
-                                                    {status === 'not-visited'
-                                                        ? <div style={{ ...getNotVisitedStyle(SIZE), fontSize: 9, fontWeight: 700 }} className="flex-shrink-0" />
-                                                        : <div className="relative flex-shrink-0" style={{ width: SIZE, height: SIZE }}>
-                                                            <div aria-hidden style={{ ...getBgStyle(status, SIZE), display: 'block', position: 'absolute', top: 0, left: 0 }} />
-                                                        </div>
-                                                    }
-                                                    <span className="text-[10px] text-gray-700 font-medium">{label}</span>
+                                    <div className="flex flex-col gap-2">
+                                        {(() => {
+                                            const correctCount = paletteQuestions.filter(pq => pq.hasResp && pq.correct).length;
+                                            const incorrectCount = paletteQuestions.filter(pq => pq.hasResp && !pq.correct).length;
+                                            const notAttemptedCount = paletteQuestions.filter(pq => !pq.hasResp).length;
+                                            return [
+                                                { status: 'answered' as const, label: 'Correct', count: correctCount },
+                                                { status: 'not-answered' as const, label: 'Incorrect', count: incorrectCount },
+                                                { status: 'not-visited' as const, label: 'Not Attempted', count: notAttemptedCount },
+                                            ].map(({ status, label, count }) => (
+                                                <div key={label} className="flex items-center gap-2">
+                                                    <QuestionButton
+                                                        questionNumber={count}
+                                                        status={status}
+                                                        size={30}
+                                                        onClick={() => { }}
+                                                    />
+                                                    <span className="text-[11px] text-gray-700 font-medium">{label}</span>
                                                 </div>
-                                            );
-                                        })}
+                                            ));
+                                        })()}
+                                    </div>
+
+                                    {/* Filter buttons */}
+                                    <div className="mt-3 flex flex-wrap gap-1">
+                                        {([
+                                            { key: 'all', label: 'All' },
+                                            { key: 'correct', label: 'Correct' },
+                                            { key: 'incorrect', label: 'Incorrect' },
+                                            { key: 'not-attempted', label: 'Skipped' },
+                                        ] as const).map(({ key, label }) => (
+                                            <button
+                                                key={key}
+                                                onClick={() => setPaletteFilter(key)}
+                                                className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border transition-all ${paletteFilter === key
+                                                    ? key === 'all' ? 'bg-blue-600 text-white border-blue-600'
+                                                        : key === 'correct' ? 'bg-green-600 text-white border-green-600'
+                                                            : key === 'incorrect' ? 'bg-red-500 text-white border-red-500'
+                                                                : 'bg-gray-500 text-white border-gray-500'
+                                                    : 'bg-white text-gray-600 border-gray-300 hover:border-gray-400'
+                                                    }`}
+                                            >
+                                                {label}
+                                            </button>
+                                        ))}
                                     </div>
                                 </div>
 
-                                {/* Section-grouped question grid */}
+                                {/* Section-grouped question grid (filtered) */}
                                 <div className="flex-1 overflow-y-auto">
                                     {examConfig.sections.map((section) => {
                                         const sectionStartGlobal = examConfig.sections
                                             .slice(0, examConfig.sections.indexOf(section))
                                             .reduce((acc, s) => acc + s.questions.length, 0);
+
+                                        const filteredQuestions = section.questions
+                                            .map((q, localIdx) => ({ q, globalIdx: sectionStartGlobal + localIdx }))
+                                            .filter(({ globalIdx }) => {
+                                                const pq = paletteQuestions[globalIdx];
+                                                if (paletteFilter === 'all') return true;
+                                                if (paletteFilter === 'correct') return pq.hasResp && pq.correct;
+                                                if (paletteFilter === 'incorrect') return pq.hasResp && !pq.correct;
+                                                if (paletteFilter === 'not-attempted') return !pq.hasResp;
+                                                return true;
+                                            });
+
+                                        if (filteredQuestions.length === 0) return null;
 
                                         return (
                                             <div key={section.id}>
@@ -794,8 +948,7 @@ export const TestSolutions: React.FC<TestSolutionsProps> = ({
                                                 </div>
                                                 {/* Question grid */}
                                                 <div className="p-3 bg-white grid grid-cols-4 gap-2">
-                                                    {section.questions.map((q, localIdx) => {
-                                                        const globalIdx = sectionStartGlobal + localIdx;
+                                                    {filteredQuestions.map(({ q, globalIdx }) => {
                                                         const pq = paletteQuestions[globalIdx];
                                                         return (
                                                             <div key={q.id} className="flex items-center justify-center">

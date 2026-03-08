@@ -2,7 +2,6 @@
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BookOpen, FileText, TrendingUp, Award, Percent, CheckCircle, X } from 'lucide-react';
@@ -39,13 +38,6 @@ export const TestAnalysisModal: React.FC<TestAnalysisModalProps> = ({
     { value: "comparative", label: "Compare", icon: Percent }
   ];
 
-  const statCards = [
-    { title: "Score", value: `${analysisData.score}/${analysisData.maxScore}`, icon: TrendingUp },
-    { title: "Rank", value: `${analysisData.rank}/${analysisData.totalStudents}`, icon: Award },
-    { title: "Percentile", value: `${analysisData.percentile}%`, icon: Percent },
-    { title: "Accuracy", value: `${analysisData.accuracy}%`, icon: CheckCircle },
-  ];
-
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="w-[95vw] max-w-7xl h-[95vh] max-h-[95vh] overflow-y-auto p-0 animate-modal-enter">
@@ -75,7 +67,7 @@ export const TestAnalysisModal: React.FC<TestAnalysisModalProps> = ({
                 </Button>
               </div>
 
-              {/* Action Buttons - Mobile Optimized */}
+              {/* Action Buttons */}
               <div className="flex gap-1 sm:gap-2 overflow-x-auto scrollbar-hide pb-1">
                 <Button variant="outline" size="sm" className="test-action-button text-xs whitespace-nowrap flex-shrink-0">
                   <BookOpen className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
@@ -99,30 +91,7 @@ export const TestAnalysisModal: React.FC<TestAnalysisModalProps> = ({
             <PassFailAnimation passed={analysisData.passed} />
           </div>
 
-          {/* Stats Cards */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 mb-3">
-            {statCards.map((stat, index) => (
-              <Card
-                key={stat.title}
-                className="p-2 sm:p-3 bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 animate-slide-up test-card"
-                style={{ animationDelay: `${index * 0.1}s` }}
-              >
-                <div className="flex items-center justify-between gap-1">
-                  <div className="min-w-0 flex-1">
-                    <div className="text-[10px] sm:text-xs font-medium text-gray-500 mb-0.5 truncate">
-                      {stat.title}
-                    </div>
-                    <div className="text-xs sm:text-sm lg:text-base font-bold text-blue-700 truncate">
-                      {stat.value}
-                    </div>
-                  </div>
-                  <stat.icon className="h-3 w-3 sm:h-4 sm:w-4 text-blue-400 shrink-0" />
-                </div>
-              </Card>
-            ))}
-          </div>
-
-          {/* Tab Navigation - Mobile Optimized */}
+          {/* Tab Navigation */}
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <div className="mb-2 sm:mb-3">
               <TabsList className="grid w-full grid-cols-5 gap-0 sm:gap-0.5 bg-gray-100 p-0.5 sm:p-1 rounded-lg h-auto">
@@ -162,7 +131,6 @@ export const TestAnalysisModal: React.FC<TestAnalysisModalProps> = ({
               </TabsContent>
             </div>
           </Tabs>
-
 
         </div>
       </DialogContent>
