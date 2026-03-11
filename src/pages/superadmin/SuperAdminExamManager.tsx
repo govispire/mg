@@ -19,13 +19,14 @@ import { useToast } from '@/hooks/use-toast';
 import {
     ArrowLeft, Plus, Pencil, Trash2, Eye, EyeOff,
     Clock, Target, BarChart2, Star, BookOpen, Zap, Radio, Trophy,
-    Grid3X3, List, CheckCircle, Play, Upload,
+    Grid3X3, List, CheckCircle, Play, Upload, Tag, Check, X,
 } from 'lucide-react';
 import {
     useExamCatalog,
     DEFAULT_SLOT_TEMPLATES,
     type CatalogTestItem,
     type TestDifficulty,
+    type TestSubject,
 } from '@/hooks/useExamCatalog';
 import { cn } from '@/lib/utils';
 import { Progress } from '@/components/ui/progress';
@@ -218,11 +219,17 @@ const SuperAdminExamManager: React.FC = () => {
     const navigate = useNavigate();
     const uid = useId();
     const { toast } = useToast();
-    const { catalog, loading, addTest, updateTest, deleteTest, updateTest: toggleTest } = useExamCatalog();
+    const { catalog, loading, addTest, updateTest, deleteTest, updateTest: toggleTest, addSubject, updateSubject, deleteSubject } = useExamCatalog();
 
     const [activeTab, setActiveTab] = useState('prelims');
     const [activeSubTab, setActiveSubTab] = useState('full');
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+
+    // ── Subject management state ──────────────────────────────────────────────
+    const [editingSubjectId, setEditingSubjectId] = useState<string | null>(null);
+    const [editingSubjectName, setEditingSubjectName] = useState('');
+    const [newSubjectName, setNewSubjectName] = useState('');
+    const [showAddSubject, setShowAddSubject] = useState(false);
 
     // ── Find category / section / exam ────────────────────────────────────────
 
@@ -328,9 +335,110 @@ const SuperAdminExamManager: React.FC = () => {
         toast({ title: test.isVisible ? 'Test hidden from students' : 'Test visible to students' });
     };
 
+    // ── Subject panel helper ───────────────────────────────────────────────
+    const renderSubjectPanel = (slotK: string) => {
+        const slot = exam?.testSlots.find(s => s.key === slotK);
+        const subjects: TestSubject[] = slot?.subjects ?? [];
+        // Only show for sectional/speed-type slots
+        if (!slotK.includes('sectional') && !slotK.includes('speed')) return null;
+
+        const handleAddSubject = () => {
+            const name = newSubjectName.trim();
+            if (!name) return;
+            const id = name.toLowerCase().replace(/\s+/g, '_') + '_' + Date.now();
+            addSubject(categoryId!, sectionId!, examId!, slotK, { id, name });
+            toast({ title: 'Subject added', description: name });
+            setNewSubjectName('');
+            setShowAddSubject(false);
+        };
+
+        const handleRenameSubject = (subId: string) => {
+            const name = editingSubjectName.trim();
+            if (!name) return;
+            updateSubject(categoryId!, sectionId!, examId!, slotK, subId, name);
+            toast({ title: 'Subject renamed' });
+            setEditingSubjectId(null);
+            setEditingSubjectName('');
+        };
+
+        return (
+            <div className="border rounded-xl p-4 bg-blue-50/40 space-y-3 mb-4">
+                <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-semibold flex items-center gap-2">
+                        <Tag className="h-4 w-4 text-primary" />
+                        Subject Sections
+                        <span className="text-xs font-normal text-muted-foreground">— students see these as filter chips</span>
+                    </h3>
+                    <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 text-xs gap-1"
+                        onClick={() => { setShowAddSubject(true); setNewSubjectName(''); }}
+                    >
+                        <Plus className="h-3 w-3" /> Add Subject
+                    </Button>
+                </div>
+
+                {/* Existing subjects */}
+                <div className="flex flex-wrap gap-2">
+                    {subjects.length === 0 ? (
+                        <p className="text-xs text-muted-foreground italic">No subjects yet. Add one above.</p>
+                    ) : subjects.map(sub => (
+                        <div key={sub.id} className="flex items-center gap-1 bg-white border rounded-full px-3 py-1 group">
+                            {editingSubjectId === sub.id ? (
+                                <>
+                                    <Input
+                                        value={editingSubjectName}
+                                        onChange={e => setEditingSubjectName(e.target.value)}
+                                        onKeyDown={e => { if (e.key === 'Enter') handleRenameSubject(sub.id); if (e.key === 'Escape') setEditingSubjectId(null); }}
+                                        className="h-6 text-xs w-36 border-0 p-0 focus-visible:ring-0 bg-transparent"
+                                        autoFocus
+                                    />
+                                    <button onClick={() => handleRenameSubject(sub.id)} className="text-green-600 hover:text-green-700 ml-1"><Check className="h-3 w-3" /></button>
+                                    <button onClick={() => setEditingSubjectId(null)} className="text-gray-400 hover:text-gray-600"><X className="h-3 w-3" /></button>
+                                </>
+                            ) : (
+                                <>
+                                    <span className="text-xs font-medium">{sub.name}</span>
+                                    <button
+                                        onClick={() => { setEditingSubjectId(sub.id); setEditingSubjectName(sub.name); }}
+                                        className="text-gray-300 hover:text-primary ml-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                                        title="Rename"
+                                    ><Pencil className="h-3 w-3" /></button>
+                                    <button
+                                        onClick={() => { deleteSubject(categoryId!, sectionId!, examId!, slotK, sub.id); toast({ title: 'Subject removed' }); }}
+                                        className="text-gray-300 hover:text-destructive ml-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                                        title="Delete"
+                                    ><Trash2 className="h-3 w-3" /></button>
+                                </>
+                            )}
+                        </div>
+                    ))}
+                </div>
+
+                {/* Add new subject inline */}
+                {showAddSubject && (
+                    <div className="flex items-center gap-2">
+                        <Input
+                            value={newSubjectName}
+                            onChange={e => setNewSubjectName(e.target.value)}
+                            onKeyDown={e => { if (e.key === 'Enter') handleAddSubject(); if (e.key === 'Escape') setShowAddSubject(false); }}
+                            placeholder="e.g. General Awareness"
+                            className="h-8 text-xs flex-1 max-w-xs"
+                            autoFocus
+                        />
+                        <Button size="sm" className="h-8 text-xs" onClick={handleAddSubject} disabled={!newSubjectName.trim()}>Add</Button>
+                        <Button size="sm" variant="ghost" className="h-8 text-xs" onClick={() => setShowAddSubject(false)}>Cancel</Button>
+                    </div>
+                )}
+            </div>
+        );
+    };
+
     // ── Render sub-tabs for Prelims / Mains ───────────────────────────────────
 
     const renderSubTabContent = (tabValue: string) => {
+        const sk = slotKey(tabValue, activeSubTab);
         return (
             <div className="space-y-4">
                 {/* Sub-tab row */}
@@ -362,7 +470,8 @@ const SuperAdminExamManager: React.FC = () => {
                         </Button>
                     </div>
                 </div>
-                {renderSlotTests(slotKey(tabValue, activeSubTab))}
+                {renderSubjectPanel(sk)}
+                {renderSlotTests(sk)}
             </div>
         );
     };
@@ -382,6 +491,7 @@ const SuperAdminExamManager: React.FC = () => {
                     <Plus className="h-3.5 w-3.5" /> Add {emptyLabel}
                 </Button>
             </div>
+            {renderSubjectPanel(slotK)}
             {renderSlotTests(slotK)}
         </div>
     );

@@ -224,6 +224,7 @@ const ExamWindow = () => {
                 examConfig={examConfig}
                 onSubmit={handleSubmit}
                 userName="Student"
+                returnUrl={returnUrl}
             />
         );
     }

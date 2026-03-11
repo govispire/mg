@@ -9,7 +9,7 @@ import { SectionNavigator } from './SectionNavigator';
 import { ExamActionButtons } from './ExamActionButtons';
 import { SectionSummaryModal } from './SectionSummaryModal';
 import { Button } from '@/components/ui/button';
-import { Info, Pause, Play, WifiOff, Wifi, CheckCircle2, Maximize2, Minimize2 } from 'lucide-react';
+import { Info, Pause, Play, WifiOff, Wifi, CheckCircle2, Maximize2, Minimize2, ExternalLink } from 'lucide-react';
 import { toast } from 'sonner';
 import {
     Dialog,
@@ -25,6 +25,7 @@ interface ExamInterfaceProps {
     onSubmit: (responses: Record<string, string | string[] | null>) => void;
     userName?: string;
     userAvatar?: string;
+    returnUrl?: string; // URL of the listing page this exam was launched from
 }
 
 // ── Helper: format seconds to mm:ss ───────────────────────────────────────
@@ -45,7 +46,8 @@ export const ExamInterface: React.FC<ExamInterfaceProps> = ({
     examConfig,
     onSubmit,
     userName,
-    userAvatar
+    userAvatar,
+    returnUrl,
 }) => {
     const {
         sessionState,
@@ -517,18 +519,16 @@ export const ExamInterface: React.FC<ExamInterfaceProps> = ({
             <div className="bg-gray-100 border-b border-gray-300 px-4 py-1.5 flex items-center justify-between text-sm">
                 <span className="text-gray-600 font-medium">Sections</span>
                 <div className="flex items-center gap-3">
-                    <span className="text-gray-700 font-semibold">
+                    <span className="text-gray-700 font-semibold border border-gray-400 rounded px-2.5 py-0.5 bg-white text-sm">
                         Time Left :&nbsp;{fmtTime(sessionState.sectionRemainingTime[currentSectionId] ?? initialSectionRemaining)}
                     </span>
                     <Button
-                        variant="ghost" size="sm"
+                        variant="ghost" size="icon"
                         onClick={isPaused ? handleResume : () => setShowPauseConfirm(true)}
-                        className={`h-7 text-xs px-2 border gap-1.5 ${isPaused
-                            ? 'border-green-500 text-green-700 bg-green-50 hover:bg-green-100'
-                            : 'border-yellow-500 text-yellow-700 bg-yellow-50 hover:bg-yellow-100'
-                            }`}
+                        className="h-7 w-7 text-gray-600 hover:text-gray-900 hover:bg-transparent"
+                        title={isPaused ? 'Resume exam' : 'Pause exam'}
                     >
-                        {isPaused ? <><Play className="h-3 w-3" />Resume</> : <><Pause className="h-3 w-3" />Pause</>}
+                        {isPaused ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />}
                     </Button>
                 </div>
             </div>
@@ -575,9 +575,41 @@ export const ExamInterface: React.FC<ExamInterfaceProps> = ({
                             Resume from <strong>Question No. {sectionLocalQuestionNumber}</strong>,{' '}
                             Section: <strong>{currentSection?.name}</strong>
                         </p>
-                        <Button onClick={handleResume} size="lg" className="w-full bg-[#2196f3] hover:bg-[#1976d2] text-white gap-2 text-base">
+
+                        {/* Primary: Resume */}
+                        <Button
+                            onClick={handleResume}
+                            size="lg"
+                            className="w-full bg-[#2196f3] hover:bg-[#1976d2] text-white gap-2 text-base mb-3"
+                        >
                             <Play className="h-5 w-5" /> Resume Exam
                         </Button>
+
+                        {/* Secondary: Go to Test Page */}
+                        <Button
+                            variant="outline"
+                            size="lg"
+                            className="w-full gap-2 text-base border-gray-300 text-gray-700 hover:bg-gray-50"
+                            onClick={() => {
+                                // Navigate the parent window back to wherever this exam was launched from
+                                const destination = returnUrl || '/student/tests';
+                                try {
+                                    if (window.opener && !window.opener.closed) {
+                                        window.opener.postMessage(
+                                            { type: 'NAVIGATE_TO', path: destination },
+                                            window.location.origin
+                                        );
+                                        window.close();
+                                        return;
+                                    }
+                                } catch (_) {}
+                                // Fallback: navigate current tab
+                                window.location.href = window.location.origin + destination;
+                            }}
+                        >
+                            <ExternalLink className="h-5 w-5" /> Go to Test Page
+                        </Button>
+
                         {!isOnline && (
                             <p className="mt-4 text-sm text-red-600 flex items-center justify-center gap-1">
                                 <WifiOff className="h-4 w-4" /> No internet — reconnect before resuming.

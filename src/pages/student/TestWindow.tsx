@@ -160,6 +160,7 @@ const TestWindow = () => {
                 examConfig={examConfig}
                 onSubmit={handleSubmit}
                 userName="Student"
+                returnUrl={returnUrl}
             />
         );
     }

@@ -200,7 +200,7 @@ const Sidebar: React.FC<SidebarProps> = ({ role, basePath, collapsed }) => {
           { icon: <Gift size={18} />, label: 'Daily Free Quizzes', to: `${basePath}/daily-quizzes`, badge: 'TODAY', highlight: true, showStreak: true },
 
 
-          { icon: <Bell size={18} />, label: 'Exam Notifications', to: `${basePath}/exam-notifications` },
+          { icon: <Bell size={18} />, label: 'Exam Alerts', to: `${basePath}/exam-notifications` },
           { icon: <Heart size={18} />, label: 'Exam Tracker', to: `${basePath}/self-care` },
           { icon: <FileText size={18} />, label: 'PDF Courses', to: `${basePath}/pdf-courses` },
           { icon: <BookOpen size={18} />, label: 'Vocabulary', to: `${basePath}/vocabulary`, highlight: true },

@@ -372,7 +372,7 @@ const StudentDashboard = () => {
 
   return (
     <div className="h-screen overflow-y-auto bg-muted/30">
-      <div className="flex flex-col lg:flex-row gap-3 p-2 sm:p-3 max-w-full">
+      <div className="flex flex-col lg:flex-row gap-6 p-4 sm:p-6 max-w-full">
         {/* Main Content */}
         <div className="flex-1 min-w-0 space-y-4 w-full lg:w-auto">
           {/* Greeting Section */}
@@ -752,7 +752,7 @@ const StudentDashboard = () => {
         </div>
 
         {/* Right Sidebar - Desktop Only */}
-        <div className="hidden lg:block w-72 flex-shrink-0 space-y-4">
+        <div className="hidden lg:block w-72 flex-shrink-0 space-y-4 pt-[72px]">
           {/* Upcoming Live Tests */}
           <UpcomingLiveTests />
 

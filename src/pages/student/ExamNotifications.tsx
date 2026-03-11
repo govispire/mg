@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CategorySelector } from '@/components/global/CategorySelector';
 
-import { useCategoryFilteredExamNotifications } from '@/hooks/useCategoryFilteredContent';
+import { examNotifications as allExamNotifications, getExamNotificationStats } from '@/data/examNotificationData';
 import { toast } from '@/hooks/use-toast';
 import ExamApplicationDialog from '@/components/student/ExamApplicationDialog';
 import ExamCalendarView from '@/components/exam-notifications/ExamCalendarView';
@@ -28,7 +28,9 @@ import {
   Landmark,
   Shield,
   Users,
-  BookOpen
+  BookOpen,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 import type { ExamNotification } from '@/data/examNotificationData';
 
@@ -92,10 +94,13 @@ const getCategoryName = (categoryIds: string[]): string => {
 };
 
 const ExamNotifications = () => {
-  const { examNotifications, stats, hasFilters, selectedCategories } = useCategoryFilteredExamNotifications();
+  const examNotifications = allExamNotifications; // always show ALL exams, no category filter
+  const stats = getExamNotificationStats([]);     // stats across all exams
+  const hasFilters = true;                         // always show the list
   const [activeTab, setActiveTab] = useState('all');
   const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
   const [searchQuery, setSearchQuery] = useState('');
+  const [expandedId, setExpandedId] = useState<string | null>(null);
   const [dialogState, setDialogState] = useState<{
     isOpen: boolean;
     examName: string;
@@ -198,28 +203,7 @@ const ExamNotifications = () => {
 
   return (
     <div className="p-4 md:p-6 space-y-2 max-w-7xl mx-auto">
-      {/* Enhanced Header */}
-      <div className="relative py-4 bg-gradient-to-br from-primary/5 via-background to-accent/5 rounded-2xl overflow-hidden -mx-4 px-4 md:-mx-6 md:px-6">
-        {/* Background decoration */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-10 left-5 w-48 h-48 bg-primary/10 rounded-full blur-3xl" />
-          <div className="absolute bottom-5 right-5 w-64 h-64 bg-accent/10 rounded-full blur-3xl" />
-        </div>
 
-        <div className="relative">
-          <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between mb-6">
-            <div>
-              <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2">
-                Exam <span className="text-primary">Notifications</span> & Alerts
-              </h1>
-              <p className="text-muted-foreground max-w-2xl">
-                Stay updated with real-time exam dates, admit cards, results, and important deadlines for all major government and competitive exams.
-              </p>
-            </div>
-            <CategorySelector />
-          </div>
-        </div>
-      </div>
 
       {/* Filters Section */}
       <div className="flex flex-col md:flex-row gap-4 items-center justify-between py-2 border-y border-border/50">
@@ -313,127 +297,121 @@ const ExamNotifications = () => {
               isHot: exam.applyStatus === 'new'
             }))} />
           ) : (
-            <div className="grid gap-4">
-              {filteredNotifications.map((exam) => (
-                <Card
-                  key={exam.id}
-                  className="bg-card hover:shadow-lg transition-all duration-300 border-border/50 hover:border-primary/30 overflow-hidden"
-                >
-                  <CardContent className="p-0">
-                    <div className="flex flex-col lg:flex-row lg:items-center">
-                      {/* Left Section - Logo & Exam Info */}
-                      <div className="flex-1 p-4 md:p-6">
-                        <div className="flex items-start gap-4">
-                          <div className="flex-shrink-0 w-12 h-12 md:w-14 md:h-14 rounded-lg bg-muted/50 flex items-center justify-center overflow-hidden">
-                            <img
-                              src={getExamLogo(exam)}
-                              alt={exam.examName}
-                              className="w-10 h-10 md:w-12 md:h-12 object-contain"
-                              onError={(e) => {
-                                const target = e.target as HTMLImageElement;
-                                target.style.display = 'none';
-                              }}
-                            />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 flex-wrap mb-1">
-                              <h3 className="text-lg md:text-xl font-semibold text-foreground">{exam.examName}</h3>
-                              {exam.notificationStatus === 'new' && (
-                                <Badge className="bg-red-500 text-white text-xs">NEW</Badge>
-                              )}
-                              {exam.applyStatus === 'new' && (
-                                <Badge className="bg-orange-500 text-white text-xs">HOT</Badge>
-                              )}
-                            </div>
-                            <p className="text-sm text-muted-foreground flex items-center gap-1">
-                              {getCategoryIcon(exam.categoryIds)}
-                              {getCategoryName(exam.categoryIds)}
-                            </p>
-                            <div className="flex items-center gap-2 mt-2 flex-wrap">
-                              {getStatusBadge(exam)}
-                            </div>
-                          </div>
-                        </div>
+            /* ── Compact accordion list ── */
+            <div className="divide-y divide-border border border-border rounded-xl overflow-hidden bg-card">
+              {filteredNotifications.map((exam) => {
+                const isOpen = expandedId === exam.id;
+                return (
+                  <div key={exam.id}>
+                    {/* ── Collapsed row ── */}
+                    <div className="flex items-center gap-3 px-4 py-3 hover:bg-muted/40 transition-colors">
+                      {/* Logo */}
+                      <div className="w-8 h-8 rounded-md bg-muted/50 flex items-center justify-center shrink-0 overflow-hidden">
+                        <img
+                          src={getExamLogo(exam)}
+                          alt={exam.examName}
+                          className="w-7 h-7 object-contain"
+                          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                        />
                       </div>
 
-                      {/* Middle Section - Dates */}
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 px-4 md:px-6 py-3 bg-muted/30 border-y border-border/30 lg:border-y-0 lg:border-x">
-                        <div className="text-center p-2 md:p-3 rounded-lg bg-background/80">
-                          <Calendar className="h-4 w-4 mx-auto mb-1 text-emerald-500" />
-                          <div className="text-xs text-muted-foreground mb-1">Apply Start</div>
-                          <div className="text-xs md:text-sm font-medium text-foreground">{exam.applicationPeriod.startDate}</div>
+                      {/* Name + category + qualification + vacancies */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="text-sm font-semibold text-foreground truncate">{exam.examName}</span>
+                          {exam.notificationStatus === 'new' && <Badge className="bg-red-500 text-white text-[10px] px-1.5 py-0 h-4">NEW</Badge>}
+                          {exam.applyStatus === 'new' && <Badge className="bg-orange-500 text-white text-[10px] px-1.5 py-0 h-4">HOT</Badge>}
                         </div>
-                        <div className="text-center p-2 md:p-3 rounded-lg bg-background/80">
-                          <AlertCircle className="h-4 w-4 mx-auto mb-1 text-red-400" />
-                          <div className="text-xs text-muted-foreground mb-1">Apply End</div>
-                          <div className="text-xs md:text-sm font-medium text-foreground">{exam.applicationPeriod.endDate}</div>
-                        </div>
-                        <div className="text-center p-2 md:p-3 rounded-lg bg-background/80">
-                          <FileText className="h-4 w-4 mx-auto mb-1 text-blue-400" />
-                          <div className="text-xs text-muted-foreground mb-1">Exam Date</div>
-                          <div className="text-xs md:text-sm font-medium text-foreground">{exam.examDate}</div>
-                        </div>
-                        <div className="text-center p-2 md:p-3 rounded-lg bg-background/80">
-                          <CheckCircle className="h-4 w-4 mx-auto mb-1 text-amber-400" />
-                          <div className="text-xs text-muted-foreground mb-1">Admit Card</div>
-                          <div className="text-xs md:text-sm font-medium text-foreground">{exam.paymentLastDate}</div>
-                        </div>
+                        <p className="text-[11px] text-muted-foreground flex items-center gap-2">
+                          <span className="flex items-center gap-1">{getCategoryIcon(exam.categoryIds)}{getCategoryName(exam.categoryIds)}</span>
+                          <span className="text-gray-300">•</span>
+                          <span>{exam.qualification}</span>
+                          <span className="text-gray-300">•</span>
+                          <span className="font-medium text-gray-600">Posts: {exam.vacancies.toLocaleString()}</span>
+                        </p>
                       </div>
 
-                      {/* Right Section - Actions */}
-                      <div className="flex flex-col gap-2 p-4 md:p-6 md:min-w-[160px]">
+                      {/* Status badge */}
+                      <div className="hidden sm:block shrink-0">
+                        {getStatusBadge(exam)}
+                      </div>
+
+                      {/* Quick Apply/Result button */}
+                      {exam.resultStatus === 'declared' ? (
                         <Button
+                          size="sm"
                           variant="outline"
-                          size="sm"
-                          className="gap-2"
-                          onClick={() => handleExternalLink(exam, 'notification')}
-                        >
-                          <Bell className="h-4 w-4" />
-                          Set Reminder
-                        </Button>
+                          className="h-7 text-xs px-3 shrink-0 border-amber-400 text-amber-600 hover:bg-amber-50"
+                          onClick={(e) => { e.stopPropagation(); handleExternalLink(exam, 'result'); }}
+                        >Result</Button>
+                      ) : exam.applyStatus !== 'applied' ? (
                         <Button
                           size="sm"
-                          className="gap-2 bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-500/20 border-0"
-                          onClick={() => handleExternalLink(exam, 'notification')}
-                        >
-                          <Download className="h-4 w-4" />
-                          Notification
-                        </Button>
-                        {exam.admitCardStatus === 'released' && (
-                          <Button
-                            size="sm"
-                            className="gap-2 bg-violet-600 hover:bg-violet-700 text-white shadow-lg shadow-violet-500/25 border-0"
-                            onClick={() => handleExternalLink(exam, 'admitCard')}
-                          >
-                            <FileText className="h-4 w-4" />
-                            Download Admit Card
-                          </Button>
-                        )}
-                        {exam.applyStatus !== 'applied' && (
-                          <Button
-                            size="sm"
-                            className="gap-2 bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 text-white shadow-lg shadow-emerald-500/25 border-0"
-                            onClick={() => handleExternalLink(exam, 'apply')}
-                          >
-                            <ExternalLink className="h-4 w-4" />
-                            Apply Now
-                          </Button>
-                        )}
-                        {exam.resultStatus === 'declared' && (
-                          <Button
-                            size="sm"
-                            className="gap-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white shadow-lg shadow-amber-500/25 border-0"
-                            onClick={() => handleExternalLink(exam, 'result')}
-                          >
-                            <CheckCircle className="h-4 w-4" />
-                            View Result
-                          </Button>
-                        )}
-                      </div>
+                          variant="outline"
+                          className="h-7 text-xs px-3 shrink-0"
+                          onClick={(e) => { e.stopPropagation(); handleExternalLink(exam, 'apply'); }}
+                        >Apply</Button>
+                      ) : null}
+
+                      {/* Expand chevron */}
+                      <button
+                        onClick={() => setExpandedId(isOpen ? null : exam.id)}
+                        className="h-7 w-7 flex items-center justify-center rounded-md hover:bg-muted transition-colors shrink-0 text-muted-foreground"
+                        aria-label={isOpen ? 'Collapse' : 'Expand'}
+                      >
+                        {isOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                      </button>
                     </div>
-                  </CardContent>
-                </Card>
-              ))}
+
+                    {/* ── Expanded details panel ── */}
+                    {isOpen && (
+                      <div className="bg-muted/20 border-t border-border/50 px-4 py-3">
+                        {/* Dates row */}
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
+                          {[
+                            { icon: <Calendar className="h-3.5 w-3.5 text-emerald-500" />, label: 'Apply Start', value: exam.applicationPeriod.startDate },
+                            { icon: <AlertCircle className="h-3.5 w-3.5 text-red-400" />, label: 'Apply End', value: exam.applicationPeriod.endDate },
+                            { icon: <FileText className="h-3.5 w-3.5 text-blue-400" />, label: 'Exam Date', value: exam.examDate },
+                            { icon: <CheckCircle className="h-3.5 w-3.5 text-amber-400" />, label: 'Admit Card', value: exam.paymentLastDate },
+                          ].map(({ icon, label, value }) => (
+                            <div key={label} className="text-center bg-background rounded-lg py-2 px-1 border border-border/40">
+                              <div className="flex justify-center mb-0.5">{icon}</div>
+                              <div className="text-[10px] text-muted-foreground">{label}</div>
+                              <div className="text-xs font-semibold text-foreground">{value}</div>
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Action buttons */}
+                        <div className="flex flex-wrap gap-2">
+                          <Button size="sm" className="h-7 text-xs gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white"
+                            onClick={() => handleExternalLink(exam, 'notification')}>
+                            <Download className="h-3 w-3" /> Notification
+                          </Button>
+                          {exam.admitCardStatus === 'released' && (
+                            <Button size="sm" className="h-7 text-xs gap-1.5 bg-violet-600 hover:bg-violet-700 text-white"
+                              onClick={() => handleExternalLink(exam, 'admitCard')}>
+                              <FileText className="h-3 w-3" /> Admit Card
+                            </Button>
+                          )}
+                          {exam.applyStatus !== 'applied' && (
+                            <Button size="sm" className="h-7 text-xs gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white"
+                              onClick={() => handleExternalLink(exam, 'apply')}>
+                              <ExternalLink className="h-3 w-3" /> Apply Now
+                            </Button>
+                          )}
+                          {exam.resultStatus === 'declared' && (
+                            <Button size="sm" className="h-7 text-xs gap-1.5 bg-amber-500 hover:bg-amber-600 text-white"
+                              onClick={() => handleExternalLink(exam, 'result')}>
+                              <CheckCircle className="h-3 w-3" /> View Result
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           )}
         </TabsContent>

@@ -80,7 +80,7 @@ const menuItems = [
     icon: TrendingUp,
   },
   {
-    title: 'Exam Notifications',
+    title: 'Exam Alerts',
     url: '/student/exam-notifications',
     icon: Bell,
   },

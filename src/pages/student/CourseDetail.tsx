@@ -26,7 +26,7 @@ const CourseDetail = () => {
   const courseSubjects = course.subjects.map(subjectId => subjects[subjectId]).filter(Boolean);
   
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-6">
       <CourseNavigation 
         items={[
           { label: 'Courses', href: '/student/courses' },
@@ -36,77 +36,49 @@ const CourseDetail = () => {
         backHref="/student/courses"
       />
       
-      {/* Sticky Progress Dashboard */}
-      <div className="sticky top-0 z-10 bg-white shadow-md p-4 rounded-lg">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="text-center">
-            <div className="relative w-16 h-16 mx-auto mb-2">
-              <svg className="w-16 h-16 transform -rotate-90">
+      {/* Course Banner with Progress Stats */}
+      <div className="bg-gradient-to-r from-blue-600 to-purple-700 p-6 rounded-lg text-white">
+        <h1 className="text-2xl md:text-3xl font-bold mb-1">{course.title}</h1>
+        <p className="text-blue-100 mb-5">By {course.instructor}</p>
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 items-center">
+          {/* Progress */}
+          <div className="flex items-center gap-3">
+            <div className="relative w-14 h-14 shrink-0">
+              <svg className="w-14 h-14 transform -rotate-90">
+                <circle cx="28" cy="28" r="24" stroke="rgba(255,255,255,0.3)" strokeWidth="4" fill="transparent" />
                 <circle
-                  cx="32"
-                  cy="32"
-                  r="28"
-                  stroke="#e5e7eb"
-                  strokeWidth="4"
-                  fill="transparent"
-                />
-                <circle
-                  cx="32"
-                  cy="32"
-                  r="28"
-                  stroke="#3b82f6"
-                  strokeWidth="4"
-                  fill="transparent"
-                  strokeDasharray={`${2 * Math.PI * 28}`}
-                  strokeDashoffset={`${2 * Math.PI * 28 * (1 - (course.progress || 0) / 100)}`}
+                  cx="28" cy="28" r="24"
+                  stroke="white" strokeWidth="4" fill="transparent"
+                  strokeDasharray={`${2 * Math.PI * 24}`}
+                  strokeDashoffset={`${2 * Math.PI * 24 * (1 - (course.progress || 0) / 100)}`}
                   className="transition-all duration-300"
                 />
               </svg>
               <div className="absolute inset-0 flex items-center justify-center">
-                <span className="text-sm font-bold text-blue-600">{course.progress || 0}%</span>
+                <span className="text-xs font-bold text-white">{course.progress || 0}%</span>
               </div>
             </div>
-            <p className="text-xs text-gray-600">Progress</p>
+            <p className="text-sm text-blue-100">Progress</p>
           </div>
-          
+
+          {/* Chapters */}
           <div className="text-center">
-            <div className="text-2xl font-bold text-gray-800">{course.chaptersCount}</div>
-            <p className="text-xs text-gray-600">Chapters</p>
+            <div className="text-2xl font-bold">{course.chaptersCount}</div>
+            <p className="text-sm text-blue-100">Chapters</p>
           </div>
-          
+
+          {/* Avg Score */}
           <div className="text-center">
-            <div className="text-2xl font-bold text-gray-800">85%</div>
-            <p className="text-xs text-gray-600">Avg Score</p>
+            <div className="text-2xl font-bold">85%</div>
+            <p className="text-sm text-blue-100">Avg Score</p>
           </div>
-          
-          <div className="text-center">
-            <Button className="w-full bg-blue-600 hover:bg-blue-700">
+
+          {/* Resume */}
+          <div className="flex justify-center md:justify-end">
+            <Button className="bg-white text-blue-700 hover:bg-blue-50 font-semibold px-8">
               Resume
             </Button>
-          </div>
-        </div>
-      </div>
-      
-      {/* Course Overview */}
-      <div className="bg-gradient-to-r from-blue-600 to-purple-700 p-6 rounded-lg text-white">
-        <h1 className="text-2xl md:text-3xl font-bold mb-2">{course.title}</h1>
-        <p className="text-blue-100 mb-4">By {course.instructor}</p>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-          <div>
-            <div className="font-semibold">{course.videosCount}</div>
-            <div className="text-blue-200">Videos</div>
-          </div>
-          <div>
-            <div className="font-semibold">{course.testsCount}</div>
-            <div className="text-blue-200">Tests</div>
-          </div>
-          <div>
-            <div className="font-semibold">{course.duration}</div>
-            <div className="text-blue-200">Duration</div>
-          </div>
-          <div>
-            <div className="font-semibold">{course.studentsCount.toLocaleString()}</div>
-            <div className="text-blue-200">Students</div>
           </div>
         </div>
       </div>

@@ -16,7 +16,7 @@ export const StatsOverview: React.FC<StatsOverviewProps> = ({ journeyDays, userN
             label: 'Total Journey Days',
             value: Math.max(0, journeyDays),
             subtext: `Since start of prep`,
-            trend: '+1 day',
+
             trendUp: true,
             icon: Map,
             color: 'text-blue-600',
@@ -28,7 +28,7 @@ export const StatsOverview: React.FC<StatsOverviewProps> = ({ journeyDays, userN
             label: 'Total Study Hours',
             value: 195,
             subtext: '↑ 12 hrs more than last week',
-            trend: '+12 hrs',
+
             trendUp: true,
             icon: Hourglass,
             color: 'text-purple-600',
@@ -40,7 +40,7 @@ export const StatsOverview: React.FC<StatsOverviewProps> = ({ journeyDays, userN
             label: 'Active Days Streak',
             value: 67,
             subtext: 'Personal best: 72 days!',
-            trend: '+5 days',
+
             trendUp: true,
             icon: Flame,
             color: 'text-green-600',
@@ -52,7 +52,7 @@ export const StatsOverview: React.FC<StatsOverviewProps> = ({ journeyDays, userN
             label: 'Mock Tests Taken',
             value: 40,
             subtext: '2 tests pending review',
-            trend: '+3 tests',
+
             trendUp: true,
             icon: ClipboardCheck,
             color: 'text-orange-600',
@@ -77,10 +77,6 @@ export const StatsOverview: React.FC<StatsOverviewProps> = ({ journeyDays, userN
                                 <stat.icon className="h-5 w-5" />
                             </div>
                             <div className="flex items-center gap-2">
-                                <div className={`flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full ${stat.trendUp ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                                    {stat.trendUp ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
-                                    {stat.trend}
-                                </div>
                                 <div className="p-2 rounded-full bg-primary text-white shadow-md group-hover:scale-110 transition-transform duration-300">
                                     <ArrowUpRight className="h-5 w-5" />
                                 </div>

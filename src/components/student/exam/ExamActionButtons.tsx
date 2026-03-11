@@ -80,8 +80,8 @@ export const ExamActionButtons: React.FC<ExamActionButtonsProps> = ({
                 <Button
                     onClick={onSubmitSection}
                     className={`text-white text-sm font-semibold px-8 py-2 ${isLastSection
-                        ? 'bg-[#d32f2f] hover:bg-[#b71c1c]'
-                        : 'bg-[#e65100] hover:bg-[#bf360c]'
+                        ? 'bg-[#1976d2] hover:bg-[#1565c0]'
+                        : 'bg-[#1976d2] hover:bg-[#1565c0]'
                         }`}
                     title={isLastSection ? 'Submit the entire test' : 'Submit this section and proceed to the next'}
                 >

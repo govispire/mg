@@ -34,12 +34,18 @@ export interface CatalogTestItem {
     createdAt: string;
 }
 
+export interface TestSubject {
+    id: string;
+    name: string;
+}
+
 export interface TestTypeSlot {
     key: string;
     tab: 'prelims' | 'mains' | 'speed' | 'live';
     subTab: 'full' | 'sectional' | 'speed' | 'pyq' | null;
     label: string;
     tests: CatalogTestItem[];
+    subjects: TestSubject[]; // subject subsections (Reasoning, English, etc.)
 }
 
 export interface CatalogSection {
@@ -74,17 +80,30 @@ export interface CatalogCategory {
 
 // ─── Default slot templates ───────────────────────────────────────────────────
 
+// Default subjects for sectional and speed slots
+const DEFAULT_SECTIONAL_SUBJECTS: TestSubject[] = [
+    { id: 'reasoning', name: 'Reasoning Ability' },
+    { id: 'english', name: 'English Language' },
+    { id: 'quantitative', name: 'Quantitative Aptitude' },
+];
+
+const DEFAULT_SPEED_SUBJECTS: TestSubject[] = [
+    { id: 'reasoning', name: 'Reasoning Ability' },
+    { id: 'english', name: 'English Language' },
+    { id: 'quantitative', name: 'Quantitative Aptitude' },
+];
+
 export const DEFAULT_SLOT_TEMPLATES: Omit<TestTypeSlot, 'tests'>[] = [
-    { key: 'prelims_full', tab: 'prelims', subTab: 'full', label: 'Prelims – Full Test' },
-    { key: 'prelims_sectional', tab: 'prelims', subTab: 'sectional', label: 'Prelims – Sectional Test' },
-    { key: 'prelims_speed', tab: 'prelims', subTab: 'speed', label: 'Prelims – Speed Test' },
-    { key: 'prelims_pyq', tab: 'prelims', subTab: 'pyq', label: 'Prelims – PYQ Test' },
-    { key: 'mains_full', tab: 'mains', subTab: 'full', label: 'Mains – Full Test' },
-    { key: 'mains_sectional', tab: 'mains', subTab: 'sectional', label: 'Mains – Sectional Test' },
-    { key: 'mains_speed', tab: 'mains', subTab: 'speed', label: 'Mains – Speed Test' },
-    { key: 'mains_pyq', tab: 'mains', subTab: 'pyq', label: 'Mains – PYQ Test' },
-    { key: 'speed', tab: 'speed', subTab: null, label: 'Speed Test' },
-    { key: 'live', tab: 'live', subTab: null, label: 'Live Test' },
+    { key: 'prelims_full', tab: 'prelims', subTab: 'full', label: 'Prelims – Full Test', subjects: [] },
+    { key: 'prelims_sectional', tab: 'prelims', subTab: 'sectional', label: 'Prelims – Sectional Test', subjects: DEFAULT_SECTIONAL_SUBJECTS },
+    { key: 'prelims_speed', tab: 'prelims', subTab: 'speed', label: 'Prelims – Speed Test', subjects: DEFAULT_SPEED_SUBJECTS },
+    { key: 'prelims_pyq', tab: 'prelims', subTab: 'pyq', label: 'Prelims – PYQ Test', subjects: [] },
+    { key: 'mains_full', tab: 'mains', subTab: 'full', label: 'Mains – Full Test', subjects: [] },
+    { key: 'mains_sectional', tab: 'mains', subTab: 'sectional', label: 'Mains – Sectional Test', subjects: DEFAULT_SECTIONAL_SUBJECTS },
+    { key: 'mains_speed', tab: 'mains', subTab: 'speed', label: 'Mains – Speed Test', subjects: DEFAULT_SPEED_SUBJECTS },
+    { key: 'mains_pyq', tab: 'mains', subTab: 'pyq', label: 'Mains – PYQ Test', subjects: [] },
+    { key: 'speed', tab: 'speed', subTab: null, label: 'Speed Test', subjects: DEFAULT_SPEED_SUBJECTS },
+    { key: 'live', tab: 'live', subTab: null, label: 'Live Test', subjects: [] },
 ];
 
 export const makeDefaultSlots = (): TestTypeSlot[] =>
@@ -96,7 +115,7 @@ const STORAGE_KEY = 'superadmin_exam_catalog';
 const CHANNEL_NAME = 'exam_catalog_sync';
 
 /** Bump this whenever the seed data changes to force all users to re-seed */
-const SEED_VERSION = '3';
+const SEED_VERSION = '4';
 const SEED_VER_KEY = 'superadmin_catalog_seed_ver';
 
 // ─── Migration: ensure every exam has all 10 slots ───────────────────────────
@@ -110,15 +129,20 @@ const migrate = (raw: CatalogCategory[]): { data: CatalogCategory[]; changed: bo
             exams: sec.exams.map(exam => {
                 const existing = new Set((exam.testSlots ?? []).map(s => s.key));
                 const missing = DEFAULT_SLOT_TEMPLATES.filter(t => !existing.has(t.key));
-                if (!exam.testSlots || exam.testSlots.length === 0 || missing.length > 0) {
-                    changed = true;
-                    return {
-                        ...exam,
-                        testSlots: [
-                            ...(exam.testSlots ?? []),
-                            ...missing.map(t => ({ ...t, tests: [] })),
-                        ],
-                    };
+                const slots = [
+                    ...(exam.testSlots ?? []).map(slot => {
+                        // Ensure every slot has a subjects array
+                        if (!slot.subjects) {
+                            changed = true;
+                            const template = DEFAULT_SLOT_TEMPLATES.find(t => t.key === slot.key);
+                            return { ...slot, subjects: template?.subjects ?? [] };
+                        }
+                        return slot;
+                    }),
+                    ...missing.map(t => { changed = true; return { ...t, tests: [] }; }),
+                ];
+                if (!exam.testSlots || exam.testSlots.length === 0 || missing.length > 0 || changed) {
+                    return { ...exam, testSlots: slots };
                 }
                 return exam;
             }),
@@ -164,16 +188,16 @@ const generateSampleTests = (
 
 /** Build test slots pre-populated with 20 sample tests each */
 const makeSampleSlots = (): TestTypeSlot[] => [
-    { key: 'prelims_full', tab: 'prelims', subTab: 'full', label: 'Prelims – Full Test', tests: generateSampleTests('prelims', 'full', 20) },
-    { key: 'prelims_sectional', tab: 'prelims', subTab: 'sectional', label: 'Prelims – Sectional Test', tests: generateSampleTests('prelims', 'sectional', 20) },
-    { key: 'prelims_speed', tab: 'prelims', subTab: 'speed', label: 'Prelims – Speed Test', tests: generateSampleTests('prelims', 'speed', 20) },
-    { key: 'prelims_pyq', tab: 'prelims', subTab: 'pyq', label: 'Prelims – PYQ Test', tests: generateSampleTests('prelims', 'pyq', 20) },
-    { key: 'mains_full', tab: 'mains', subTab: 'full', label: 'Mains – Full Test', tests: generateSampleTests('mains', 'full', 20) },
-    { key: 'mains_sectional', tab: 'mains', subTab: 'sectional', label: 'Mains – Sectional Test', tests: generateSampleTests('mains', 'sectional', 20) },
-    { key: 'mains_speed', tab: 'mains', subTab: 'speed', label: 'Mains – Speed Test', tests: generateSampleTests('mains', 'speed', 20) },
-    { key: 'mains_pyq', tab: 'mains', subTab: 'pyq', label: 'Mains – PYQ Test', tests: generateSampleTests('mains', 'pyq', 20) },
-    { key: 'speed', tab: 'speed', subTab: null, label: 'Speed Test', tests: generateSampleTests('speed', null, 20) },
-    { key: 'live', tab: 'live', subTab: null, label: 'Live Test', tests: generateSampleTests('live', null, 20) },
+    { key: 'prelims_full', tab: 'prelims', subTab: 'full', label: 'Prelims – Full Test', tests: generateSampleTests('prelims', 'full', 20), subjects: [] },
+    { key: 'prelims_sectional', tab: 'prelims', subTab: 'sectional', label: 'Prelims – Sectional Test', tests: generateSampleTests('prelims', 'sectional', 20), subjects: DEFAULT_SECTIONAL_SUBJECTS },
+    { key: 'prelims_speed', tab: 'prelims', subTab: 'speed', label: 'Prelims – Speed Test', tests: generateSampleTests('prelims', 'speed', 20), subjects: DEFAULT_SPEED_SUBJECTS },
+    { key: 'prelims_pyq', tab: 'prelims', subTab: 'pyq', label: 'Prelims – PYQ Test', tests: generateSampleTests('prelims', 'pyq', 20), subjects: [] },
+    { key: 'mains_full', tab: 'mains', subTab: 'full', label: 'Mains – Full Test', tests: generateSampleTests('mains', 'full', 20), subjects: [] },
+    { key: 'mains_sectional', tab: 'mains', subTab: 'sectional', label: 'Mains – Sectional Test', tests: generateSampleTests('mains', 'sectional', 20), subjects: DEFAULT_SECTIONAL_SUBJECTS },
+    { key: 'mains_speed', tab: 'mains', subTab: 'speed', label: 'Mains – Speed Test', tests: generateSampleTests('mains', 'speed', 20), subjects: DEFAULT_SPEED_SUBJECTS },
+    { key: 'mains_pyq', tab: 'mains', subTab: 'pyq', label: 'Mains – PYQ Test', tests: generateSampleTests('mains', 'pyq', 20), subjects: [] },
+    { key: 'speed', tab: 'speed', subTab: null, label: 'Speed Test', tests: generateSampleTests('speed', null, 20), subjects: DEFAULT_SPEED_SUBJECTS },
+    { key: 'live', tab: 'live', subTab: null, label: 'Live Test', tests: generateSampleTests('live', null, 20), subjects: [] },
 ];
 
 // ─── Seed from static examData ────────────────────────────────────────────────
@@ -711,6 +735,106 @@ export const useExamCatalog = () => {
         });
     }, [broadcast]);
 
+    // ── Subject CRUD (within a test slot) ────────────────────────────────────
+
+    const addSubject = useCallback((
+        categoryId: string, sectionId: string, examId: string,
+        slotKey: string, subject: TestSubject,
+    ) => {
+        setCatalog(prev => {
+            const next = prev.map(c =>
+                c.id !== categoryId ? c : {
+                    ...c,
+                    sections: c.sections.map(s =>
+                        s.id !== sectionId ? s : {
+                            ...s,
+                            exams: s.exams.map(e =>
+                                e.id !== examId ? e : {
+                                    ...e,
+                                    testSlots: e.testSlots.map(slot =>
+                                        slot.key !== slotKey ? slot : {
+                                            ...slot,
+                                            subjects: [...(slot.subjects ?? []), subject],
+                                        },
+                                    ),
+                                },
+                            ),
+                        },
+                    ),
+                    updatedAt: new Date().toISOString(),
+                },
+            );
+            broadcast(next);
+            return next;
+        });
+    }, [broadcast]);
+
+    const updateSubject = useCallback((
+        categoryId: string, sectionId: string, examId: string,
+        slotKey: string, subjectId: string, name: string,
+    ) => {
+        setCatalog(prev => {
+            const next = prev.map(c =>
+                c.id !== categoryId ? c : {
+                    ...c,
+                    sections: c.sections.map(s =>
+                        s.id !== sectionId ? s : {
+                            ...s,
+                            exams: s.exams.map(e =>
+                                e.id !== examId ? e : {
+                                    ...e,
+                                    testSlots: e.testSlots.map(slot =>
+                                        slot.key !== slotKey ? slot : {
+                                            ...slot,
+                                            subjects: (slot.subjects ?? []).map(sub =>
+                                                sub.id === subjectId ? { ...sub, name } : sub,
+                                            ),
+                                        },
+                                    ),
+                                },
+                            ),
+                        },
+                    ),
+                    updatedAt: new Date().toISOString(),
+                },
+            );
+            broadcast(next);
+            return next;
+        });
+    }, [broadcast]);
+
+    const deleteSubject = useCallback((
+        categoryId: string, sectionId: string, examId: string,
+        slotKey: string, subjectId: string,
+    ) => {
+        setCatalog(prev => {
+            const next = prev.map(c =>
+                c.id !== categoryId ? c : {
+                    ...c,
+                    sections: c.sections.map(s =>
+                        s.id !== sectionId ? s : {
+                            ...s,
+                            exams: s.exams.map(e =>
+                                e.id !== examId ? e : {
+                                    ...e,
+                                    testSlots: e.testSlots.map(slot =>
+                                        slot.key !== slotKey ? slot : {
+                                            ...slot,
+                                            subjects: (slot.subjects ?? []).filter(sub => sub.id !== subjectId),
+                                        },
+                                    ),
+                                },
+                            ),
+                        },
+                    ),
+                    updatedAt: new Date().toISOString(),
+                },
+            );
+            broadcast(next);
+            return next;
+        });
+    }, [broadcast]);
+
     const resetToDefaults = useCallback(() => {
         const seeded = seedFromStatic();
         setCatalog(seeded);
@@ -730,6 +854,7 @@ export const useExamCatalog = () => {
         addSection, updateSection, deleteSection,
         addExam, updateExam, removeExam,
         addTest, updateTest, deleteTest,
+        addSubject, updateSubject, deleteSubject,
         resetToDefaults, findExam,
     };
 };

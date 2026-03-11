@@ -119,12 +119,10 @@ const UniversalCalendar: React.FC<UniversalCalendarProps> = ({ userRole, initial
     setSelectedDate(new Date());
   };
 
-  // Event handlers - Direct day click opens task creation
+  // Event handlers - Day click opens day detail dialog
   const handleDateSelect = (date: Date) => {
     setSelectedDate(date);
-    setSelectedDateForEvent(date);
-    setEditingEvent(null);
-    setEventDialogOpen(true);
+    setDayDetailOpen(true);
     if (isMobile) {
       setSidebarOpen(false);
     }
@@ -179,46 +177,7 @@ const UniversalCalendar: React.FC<UniversalCalendarProps> = ({ userRole, initial
     setSelectedDate(date);
   };
 
-  // Filter events based on role, status, priority, date range, and search query
-  const roleFilter: UserRole | 'all' = 'all'; // Example role filter
-  const statusFilter = 'all'; // Example status filter
-  const priorityFilter = 'all'; // Example priority filter
-  const dateRange = { start: new Date(), end: new Date() }; // Example date range
-  const searchQuery = ''; // Example search query
-  const filteredEvents = useMemo(() => {
-    let filtered = events;
-    
-    if (roleFilter !== 'all') {
-      filtered = filtered.filter(event => 
-        event.assignedTo === roleFilter || event.assignedBy === roleFilter
-      );
-    }
 
-    if (statusFilter !== 'all') {
-      filtered = filtered.filter(event => event.status === statusFilter);
-    }
-
-    if (priorityFilter !== 'all') {
-      filtered = filtered.filter(event => event.priority === priorityFilter);
-    }
-
-    if (dateRange.start && dateRange.end) {
-      filtered = filtered.filter(event => 
-        isSameDay(event.date, dateRange.start) || 
-        isSameDay(event.date, dateRange.end) || 
-        (event.date >= dateRange.start && event.date <= dateRange.end)
-      );
-    }
-
-    if (searchQuery.trim()) {
-      filtered = filtered.filter(event => 
-        event.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-        (event.description && event.description.toLowerCase().includes(searchQuery.toLowerCase()))
-      );
-    }
-
-    return filtered;
-  }, [events, roleFilter, statusFilter, priorityFilter, dateRange, searchQuery]);
 
   return (
     <div className="min-h-screen bg-gray-50 p-3 md:p-6">

@@ -14,7 +14,7 @@ import { PreviousCutoffTab } from '@/components/student/exam/PreviousCutoffTab';
 import { DoubtsTab } from '@/components/student/exam/DoubtsTab';
 import { useExamProgress } from '@/hooks/useExamProgress';
 import { getExamsByCategory } from '@/data/examData';
-import { useExamCatalog } from '@/hooks/useExamCatalog';
+import { useExamCatalog, type TestSubject } from '@/hooks/useExamCatalog';
 
 const ExamDetail = () => {
   const { category, examId } = useParams();
@@ -178,6 +178,33 @@ const ExamDetail = () => {
     return null;
   };
 
+  // Derive the active test slot's subjects from the catalog
+  const activeSlotSubjects = React.useMemo((): TestSubject[] => {
+    // Build the slot key the same way as DEFAULT_SLOT_TEMPLATES
+    let slotKey = '';
+    if (activeTab === 'speed') slotKey = 'speed';
+    else if (activeTab === 'live') slotKey = 'live';
+    else if (activeTab === 'prelims' || activeTab === 'mains') {
+      slotKey = activeSubTab === 'full' ? `${activeTab}_full`
+        : activeSubTab === 'sectional' ? `${activeTab}_sectional`
+          : activeSubTab === 'speed' ? `${activeTab}_speed`
+            : activeSubTab === 'pyq' ? `${activeTab}_pyq`
+              : `${activeTab}_full`;
+    }
+    if (!slotKey) return [];
+    // Find the current exam in the catalog
+    for (const cat of catalog) {
+      for (const sec of cat.sections) {
+        const found = sec.exams.find(e => e.id === examId);
+        if (found) {
+          const slot = found.testSlots?.find(s => s.key === slotKey);
+          return slot?.subjects ?? [];
+        }
+      }
+    }
+    return [];
+  }, [catalog, examId, activeTab, activeSubTab]);
+
   return (
     <div className="space-y-6">
       <div>
@@ -334,6 +361,7 @@ const ExamDetail = () => {
                     tests={progressData.testTypes[getCurrentTestType()! as keyof typeof progressData.testTypes]}
                     progress={getTypeProgress(getCurrentTestType()! as keyof typeof progressData.testTypes)}
                     viewMode={viewMode}
+                    subjects={activeSlotSubjects}
                   />
                 )}
               </TabsContent>

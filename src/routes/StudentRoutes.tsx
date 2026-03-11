@@ -1,6 +1,6 @@
 
-import React from 'react';
-import { Route, Routes } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { Route, Routes, useNavigate } from 'react-router-dom';
 import DashboardLayout from '@/components/dashboards/DashboardLayout';
 import StudentDashboard from '@/pages/student/StudentDashboard';
 import StudentCalendar from '@/pages/student/StudentCalendar';
@@ -38,6 +38,20 @@ import StudentVocabulary from '@/pages/student/StudentVocabulary';
 import TestWindow from '@/pages/student/TestWindow';
 
 const StudentRoutes = () => {
+  const navigate = useNavigate();
+
+  // Listen for navigation requests from exam popup windows (ExamInterface paused screen)
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return;
+      if (event.data?.type === 'NAVIGATE_TO' && typeof event.data.path === 'string') {
+        navigate(event.data.path);
+      }
+    };
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [navigate]);
+
   return (
     <Routes>
       {/* Exam windows - outside ProtectedRoute for new window compatibility */}
