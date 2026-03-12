@@ -31,91 +31,62 @@ const SelfCare = () => {
         <p className="text-sm text-muted-foreground">Track your real exam applications and progress</p>
       </div>
 
-      {/* Compact Progress Cards - Single Line */}
-      <div className="grid grid-cols-3 lg:grid-cols-6 gap-2">
-        <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 cursor-pointer hover:shadow-md transition-shadow" onClick={() => setActiveTab('exams')}>
-          <CardContent className="p-2.5">
-            <div className="flex items-center gap-2">
-              <div className="p-1.5 bg-blue-100 rounded-lg shrink-0">
-                <FileText className="h-4 w-4 text-blue-600" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-[10px] font-medium text-blue-600 truncate">Total Exams</p>
-                <h3 className="text-lg font-bold text-blue-700 leading-none">{examMetrics.totalApplied}</h3>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      {/* Stat Strip - single card with dividers matching reference design */}
+      <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+        <div className="grid grid-cols-3 lg:grid-cols-6 divide-x divide-gray-100">
 
-        <Card className="bg-gradient-to-br from-indigo-50 to-indigo-100 border-indigo-200 cursor-pointer hover:shadow-md transition-shadow">
-          <CardContent className="p-2.5">
-            <div className="flex items-center gap-2">
-              <div className="p-1.5 bg-indigo-100 rounded-lg shrink-0">
-                <CheckSquare className="h-4 w-4 text-indigo-600" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-[10px] font-medium text-indigo-600 truncate">Exams Cleared</p>
-                <h3 className="text-lg font-bold text-indigo-700 leading-none">{examMetrics.totalExamsCleared}</h3>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+          {/* Total Exams */}
+          <button
+            className="p-4 text-left hover:bg-gray-50 transition-colors focus:outline-none"
+            onClick={() => setActiveTab('exams')}
+          >
+            <p className="text-[10px] font-semibold tracking-widest text-gray-400 uppercase mb-2">Total Exams</p>
+            <h3 className="text-3xl font-bold text-gray-800 leading-none mb-1">{examMetrics.totalApplied}</h3>
+            <p className="text-[11px] text-gray-400">exams applied</p>
+            <p className="text-[11px] text-emerald-600 font-medium mt-1.5">↑ tracking progress</p>
+          </button>
 
-        <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200 cursor-pointer hover:shadow-md transition-shadow">
-          <CardContent className="p-2.5">
-            <div className="flex items-center gap-2">
-              <div className="p-1.5 bg-green-100 rounded-lg shrink-0">
-                <CheckSquare className="h-4 w-4 text-green-600" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-[10px] font-medium text-green-600 truncate">Prelims</p>
-                <h3 className="text-lg font-bold text-green-700 leading-none">{examMetrics.totalPrelimsCleared}</h3>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+          {/* Exams Cleared */}
+          <div className="p-4 hover:bg-gray-50 transition-colors">
+            <p className="text-[10px] font-semibold tracking-widest text-gray-400 uppercase mb-2">Cleared</p>
+            <h3 className="text-3xl font-bold text-gray-800 leading-none mb-1">{examMetrics.totalExamsCleared}</h3>
+            <p className="text-[11px] text-gray-400">exams cleared</p>
+            <p className="text-[11px] text-emerald-600 font-medium mt-1.5">↑ overall success</p>
+          </div>
 
-        <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200 cursor-pointer hover:shadow-md transition-shadow">
-          <CardContent className="p-2.5">
-            <div className="flex items-center gap-2">
-              <div className="p-1.5 bg-purple-100 rounded-lg shrink-0">
-                <FileText className="h-4 w-4 text-purple-600" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-[10px] font-medium text-purple-600 truncate">Mains</p>
-                <h3 className="text-lg font-bold text-purple-700 leading-none">{examMetrics.totalMainsCleared}</h3>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+          {/* Prelims */}
+          <div className="p-4 hover:bg-gray-50 transition-colors">
+            <p className="text-[10px] font-semibold tracking-widest text-gray-400 uppercase mb-2">Prelims</p>
+            <h3 className="text-3xl font-bold text-gray-800 leading-none mb-1">{examMetrics.totalPrelimsCleared}</h3>
+            <p className="text-[11px] text-gray-400">prelims cleared</p>
+            <p className="text-[11px] text-emerald-600 font-medium mt-1.5">↑ stage 1 done</p>
+          </div>
 
-        <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200 cursor-pointer hover:shadow-md transition-shadow">
-          <CardContent className="p-2.5">
-            <div className="flex items-center gap-2">
-              <div className="p-1.5 bg-orange-100 rounded-lg shrink-0">
-                <User className="h-4 w-4 text-orange-600" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-[10px] font-medium text-orange-600 truncate">Interviews</p>
-                <h3 className="text-lg font-bold text-orange-700 leading-none">{examMetrics.totalInterviewsAppeared}</h3>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+          {/* Mains */}
+          <div className="p-4 hover:bg-gray-50 transition-colors">
+            <p className="text-[10px] font-semibold tracking-widest text-gray-400 uppercase mb-2">Mains</p>
+            <h3 className="text-3xl font-bold text-gray-800 leading-none mb-1">{examMetrics.totalMainsCleared}</h3>
+            <p className="text-[11px] text-gray-400">mains cleared</p>
+            <p className="text-[11px] text-emerald-600 font-medium mt-1.5">↑ stage 2 done</p>
+          </div>
 
-        <Card className="bg-gradient-to-br from-pink-50 to-pink-100 border-pink-200 cursor-pointer hover:shadow-md transition-shadow">
-          <CardContent className="p-2.5">
-            <div className="flex items-center gap-2">
-              <div className="p-1.5 bg-pink-100 rounded-lg shrink-0">
-                <IndianRupee className="h-4 w-4 text-pink-600" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-[10px] font-medium text-pink-600 truncate">Total Spent</p>
-                <h3 className="text-lg font-bold text-pink-700 leading-none">₹{examMetrics.totalAmountSpent}</h3>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+          {/* Interviews */}
+          <div className="p-4 hover:bg-gray-50 transition-colors">
+            <p className="text-[10px] font-semibold tracking-widest text-gray-400 uppercase mb-2">Interviews</p>
+            <h3 className="text-3xl font-bold text-gray-800 leading-none mb-1">{examMetrics.totalInterviewsAppeared}</h3>
+            <p className="text-[11px] text-gray-400">interviews done</p>
+            <p className="text-[11px] text-emerald-600 font-medium mt-1.5">↑ final stage</p>
+          </div>
+
+          {/* Total Spent */}
+          <div className="p-4 hover:bg-gray-50 transition-colors">
+            <p className="text-[10px] font-semibold tracking-widest text-gray-400 uppercase mb-2">Total Spent</p>
+            <h3 className="text-3xl font-bold text-amber-600 leading-none mb-1">₹{examMetrics.totalAmountSpent}</h3>
+            <p className="text-[11px] text-gray-400">exam fees paid</p>
+            <p className="text-[11px] text-gray-400 mt-1.5">investment in future</p>
+          </div>
+
+        </div>
       </div>
 
       <Card>

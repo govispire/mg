@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import QuizLeaderboardSection from '@/components/student/quiz/QuizLeaderboardSection';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -177,6 +178,31 @@ const FreeQuizzes = () => {
 
       {/* Quiz Type Selector */}
       <QuizTypeSelector selectedType={selectedType} onTypeSelect={setSelectedType} stats={quizTypeStats} />
+
+      {/* Live Tests Banner Card */}
+      <Link to="/student/live-tests" className="block">
+        <div className="flex items-center gap-4 bg-gradient-to-r from-red-50 to-orange-50 dark:from-red-950/40 dark:to-orange-950/40 border border-orange-200 dark:border-orange-800 rounded-xl p-4 hover:shadow-md transition-all group">
+          <div className="shrink-0 w-10 h-10 rounded-xl bg-red-500 flex items-center justify-center shadow-md shadow-red-500/30">
+            <span className="relative flex h-3 w-3">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75" />
+              <span className="relative inline-flex rounded-full h-3 w-3 bg-white" />
+            </span>
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-0.5">
+              <span className="text-xs font-bold text-red-600 uppercase tracking-wide">Live Tests</span>
+              <span className="text-[10px] bg-red-500 text-white px-1.5 py-0.5 rounded font-bold">FREE</span>
+            </div>
+            <p className="text-sm font-semibold truncate group-hover:text-primary transition-colors">
+              Attempt All India Live Tests &amp; check your ranking
+            </p>
+            <p className="text-xs text-muted-foreground">9+ live tests available today</p>
+          </div>
+          <div className="shrink-0 text-sm font-semibold text-orange-600 group-hover:translate-x-1 transition-transform">
+            View All →
+          </div>
+        </div>
+      </Link>
 
       {/* Two-column layout: Quiz list LEFT | Calendar+Leaderboard RIGHT */}
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-5 items-start">

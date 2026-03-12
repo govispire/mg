@@ -707,41 +707,46 @@ const StudentDashboard = () => {
 
             {/* Free Test/Quiz - Mobile */}
             <Card className="p-4 bg-card">
-              <h3 className="font-semibold text-sm mb-3">Free Test/Quiz</h3>
-              <div className="space-y-2">
-                {freeTests.slice(0, 5).map((test, idx) => (
-                  <div key={idx} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                        <FileText className="h-5 w-5 text-primary" />
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-semibold text-sm">Free Test/Quiz</h3>
+                <span className="text-xs text-muted-foreground">{new Date(selectedDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+              </div>
+              <div className="space-y-1.5">
+                {freeTests.slice(0, 5).map((test, idx) => {
+                  const isCompleted = !!quizCompletions[test.id];
+                  return (
+                    <div key={idx} className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-muted/50 transition-colors">
+                      <div className="shrink-0 w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                        <FileText className="h-4 w-4 text-primary" />
                       </div>
-                      <div>
-                        <p className="font-medium text-sm">{test.title}</p>
-                        <p className="text-xs text-muted-foreground flex items-center gap-2">
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-sm truncate">{test.title}</p>
+                        <p className="text-xs text-muted-foreground flex items-center gap-1.5">
                           <span>{test.questions} Qs</span>
-                          <span className="flex items-center gap-1">
-                            <Clock className="h-3 w-3" />
-                            {test.duration} mins
-                          </span>
+                          <span>·</span>
+                          <Clock className="h-3 w-3 shrink-0" />
+                          <span>{test.duration} mins</span>
                         </p>
                       </div>
-                    </div>
-                    {quizCompletions[test.id] ? (
-                      <div className="flex items-center gap-1.5 text-green-600 font-bold text-xs bg-green-50 px-3 py-1.5 rounded-lg border border-green-100">
-                        <CheckCircle className="h-3.5 w-3.5" />
-                        Completed
+                      <div className="shrink-0">
+                        {isCompleted ? (
+                          <div className="flex items-center gap-1 text-primary font-semibold text-xs bg-primary/10 px-2.5 py-1.5 rounded-md">
+                            <CheckCircle className="h-3.5 w-3.5" />
+                            Done
+                          </div>
+                        ) : (
+                          <Button size="sm" className="h-8 px-3" onClick={() => handleStartTest(test)}>
+                            <Play className="h-3 w-3 mr-1" />
+                            Start
+                          </Button>
+                        )}
                       </div>
-                    ) : (
-                      <Button size="sm" className="h-8 gap-1" onClick={() => handleStartTest(test)}>
-                        <Play className="h-3 w-3" />
-                        Start
-                      </Button>
-                    )}
-                  </div>
-                ))}
+                    </div>
+                  );
+                })}
               </div>
               {allFreteTestsForDate.length > 5 && (
-                <Button variant="outline" className="w-full mt-3" asChild>
+                <Button variant="ghost" size="sm" className="w-full mt-2 text-xs" asChild>
                   <Link to="/student/daily-quizzes">View All Tests ({allFreteTestsForDate.length})</Link>
                 </Button>
               )}
@@ -875,43 +880,57 @@ const StudentDashboard = () => {
 
           {/* Free Test/Quiz */}
           <Card className="p-4 bg-card">
-            <h3 className="font-semibold text-sm mb-3">
-              Free Test/Quiz <span className="text-xs font-normal text-muted-foreground ml-2">({new Date(selectedDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })})</span>
-            </h3>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-semibold text-sm">
+                Free Test/Quiz
+              </h3>
+              <span className="text-xs text-muted-foreground">
+                {new Date(selectedDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+              </span>
+            </div>
             <div className="space-y-2">
-              {freeTests.slice(0, 5).map((test, idx) => (
-                <div key={idx} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                      <FileText className="h-5 w-5 text-primary" />
+              {freeTests.slice(0, 5).map((test, idx) => {
+                const isCompleted = !!quizCompletions[test.id];
+                return (
+                  <div key={idx} className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-muted/50 transition-colors">
+                    {/* Icon */}
+                    <div className="shrink-0 w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                      <FileText className="h-4 w-4 text-primary" />
                     </div>
-                    <div>
-                      <p className="font-medium text-sm">{test.title}</p>
-                      <p className="text-xs text-muted-foreground flex items-center gap-2">
+                    {/* Text — min-w-0 + flex-1 ensures it shrinks and truncates */}
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-xs leading-tight truncate">{test.title}</p>
+                      <p className="text-[11px] text-muted-foreground flex items-center gap-1.5 mt-0.5">
                         <span>{test.questions} Qs</span>
-                        <span className="flex items-center gap-1">
-                          <Clock className="h-3 w-3" />
-                          {test.duration} mins
-                        </span>
+                        <span>·</span>
+                        <Clock className="h-2.5 w-2.5 shrink-0" />
+                        <span>{test.duration} mins</span>
                       </p>
                     </div>
-                  </div>
-                  {quizCompletions[test.id] ? (
-                    <div className="flex items-center gap-1.5 text-green-600 font-bold text-xs bg-green-50 px-3 py-1.5 rounded-lg border border-green-100 shadow-sm">
-                      <CheckCircle className="h-3.5 w-3.5" />
-                      Completed
+                    {/* Action — shrink-0 keeps button from squishing */}
+                    <div className="shrink-0">
+                      {isCompleted ? (
+                        <div className="flex items-center gap-1 text-primary font-semibold text-[11px] bg-primary/10 px-2 py-1 rounded-md">
+                          <CheckCircle className="h-3 w-3" />
+                          Done
+                        </div>
+                      ) : (
+                        <Button
+                          size="sm"
+                          className="h-7 text-xs px-3"
+                          onClick={() => handleStartTest(test)}
+                        >
+                          <Play className="h-3 w-3 mr-1" />
+                          Start
+                        </Button>
+                      )}
                     </div>
-                  ) : (
-                    <Button size="sm" className="h-8 gap-1 shadow-md shadow-primary/20" onClick={() => handleStartTest(test)}>
-                      <Play className="h-3 w-3" />
-                      Start
-                    </Button>
-                  )}
-                </div>
-              ))}
+                  </div>
+                );
+              })}
             </div>
             {allFreteTestsForDate.length > 5 && (
-              <Button variant="outline" className="w-full mt-3" asChild>
+              <Button variant="ghost" size="sm" className="w-full mt-2 text-xs text-muted-foreground hover:text-foreground" asChild>
                 <Link to="/student/daily-quizzes">View All Tests ({allFreteTestsForDate.length})</Link>
               </Button>
             )}

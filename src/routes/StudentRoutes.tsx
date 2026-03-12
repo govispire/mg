@@ -36,6 +36,7 @@ import AllExams from '@/pages/student/AllExams';
 import StudentVocabulary from '@/pages/student/StudentVocabulary';
 
 import TestWindow from '@/pages/student/TestWindow';
+import LiveTests from '@/pages/student/LiveTests';
 
 const StudentRoutes = () => {
   const navigate = useNavigate();
@@ -86,6 +87,7 @@ const StudentRoutes = () => {
           <Route path="/current-affairs/topic/:topic" element={<TopicArticlesPage />} />
           <Route path="/current-affairs/date/:date" element={<DailyNewsPage />} />
           <Route path="/daily-quizzes" element={<DailyQuizzes />} />
+          <Route path="/live-tests" element={<LiveTests />} />
           <Route path="/exam-notifications" element={<ExamNotifications />} />
           <Route path="/self-care" element={<SelfCare />} />
           <Route path="/pdf-courses" element={<PDFCourses />} />
