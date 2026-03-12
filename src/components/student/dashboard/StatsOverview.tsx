@@ -1,6 +1,5 @@
 import React from 'react';
-import { Card } from '@/components/ui/card';
-import { ArrowUpRight, ArrowDownRight, TrendingUp, Clock, Calendar, CheckCircle, FileText, Map, Hourglass, Flame, ClipboardCheck } from 'lucide-react';
+import { Map, Hourglass, Flame, ClipboardCheck, ArrowUpRight } from 'lucide-react';
 
 interface StatsOverviewProps {
     journeyDays: number;
@@ -8,90 +7,77 @@ interface StatsOverviewProps {
     onCardClick: (type: 'journey' | 'hours' | 'active' | 'tests') => void;
 }
 
-export const StatsOverview: React.FC<StatsOverviewProps> = ({ journeyDays, userName, onCardClick }) => {
-    // Mock data for trends (in a real app, these would come from props/API)
+export const StatsOverview: React.FC<StatsOverviewProps> = ({ journeyDays, onCardClick }) => {
     const stats = [
         {
             id: 'journey',
             label: 'Total Journey Days',
             value: Math.max(0, journeyDays),
-            subtext: `Since start of prep`,
-
-            trendUp: true,
+            subtext: 'Since start of prep',
             icon: Map,
-            color: 'text-blue-600',
-            bg: 'bg-blue-50',
-            border: 'border-blue-100'
+            iconColor: 'text-blue-500',
         },
         {
             id: 'hours',
             label: 'Total Study Hours',
             value: 195,
-            subtext: '↑ 12 hrs more than last week',
-
-            trendUp: true,
+            subtext: '12 hrs more than last week',
             icon: Hourglass,
-            color: 'text-purple-600',
-            bg: 'bg-purple-50',
-            border: 'border-purple-100'
+            iconColor: 'text-violet-500',
         },
         {
             id: 'active',
             label: 'Active Days Streak',
             value: 67,
-            subtext: 'Personal best: 72 days!',
-
-            trendUp: true,
+            subtext: 'Personal best: 72 days',
             icon: Flame,
-            color: 'text-green-600',
-            bg: 'bg-green-50',
-            border: 'border-green-100'
+            iconColor: 'text-emerald-500',
         },
         {
             id: 'tests',
             label: 'Mock Tests Taken',
             value: 40,
             subtext: '2 tests pending review',
-
-            trendUp: true,
             icon: ClipboardCheck,
-            color: 'text-orange-600',
-            bg: 'bg-orange-50',
-            border: 'border-orange-100'
-        }
+            iconColor: 'text-orange-500',
+        },
     ];
 
     return (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
-            {stats.map((stat) => (
-                <Card
+        <div className="flex bg-white dark:bg-card border border-border/60 rounded-2xl overflow-hidden shadow-sm mb-6">
+            {stats.map((stat, index) => (
+                <button
                     key={stat.id}
-                    className={`p-4 cursor-pointer hover:shadow-lg transition-all duration-300 group relative overflow-hidden border ${stat.border}`}
                     onClick={() => onCardClick(stat.id as any)}
+                    className={`
+                        flex-1 flex flex-col gap-2 px-5 py-4 text-left
+                        hover:bg-muted/40 transition-colors duration-200 group
+                        ${index !== stats.length - 1 ? 'border-r border-border/60' : ''}
+                    `}
                 >
-                    <div className={`absolute top-0 right-0 w-24 h-24 ${stat.bg} rounded-bl-full -mr-8 -mt-8 opacity-50 group-hover:scale-110 transition-transform duration-500`} />
-
-                    <div className="relative z-10">
-                        <div className="flex items-start justify-between mb-3">
-                            <div className={`p-2 rounded-lg ${stat.bg} ${stat.color}`}>
-                                <stat.icon className="h-5 w-5" />
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <div className="p-2 rounded-full bg-primary text-white shadow-md group-hover:scale-110 transition-transform duration-300">
-                                    <ArrowUpRight className="h-5 w-5" />
-                                </div>
-                            </div>
+                    {/* Icon + label row */}
+                    <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                            <span className={`${stat.iconColor} opacity-80 group-hover:opacity-100 transition-opacity`}>
+                                <stat.icon className="h-4 w-4" />
+                            </span>
+                            <span className="text-xs font-medium text-muted-foreground truncate">{stat.label}</span>
                         </div>
-
-                        <div>
-                            <p className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">{stat.label}</p>
-                            <h3 className="text-3xl font-bold text-foreground mb-1 font-mono tracking-tight">{stat.value}</h3>
-                            <p className="text-xs text-slate-600 dark:text-slate-400 font-medium flex items-center gap-1">
-                                {stat.subtext}
-                            </p>
+                        <div className="p-1.5 rounded-full bg-primary text-white shadow-sm group-hover:scale-110 transition-transform duration-300 flex-shrink-0">
+                            <ArrowUpRight className="h-3.5 w-3.5" />
                         </div>
                     </div>
-                </Card>
+
+                    {/* Value */}
+                    <div className="text-2xl font-bold text-foreground tracking-tight leading-none">
+                        {stat.value}
+                    </div>
+
+                    {/* Subtext */}
+                    <div className="text-[11px] text-muted-foreground leading-tight">
+                        {stat.subtext}
+                    </div>
+                </button>
             ))}
         </div>
     );
