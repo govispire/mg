@@ -537,64 +537,124 @@ const SyllabusPage = () => {
         </CardContent>
       </Card>
 
-      {/* Tier/Stage Selector */}
-      {examConfig.tiers.length > 1 && (
-        <Tabs value={selectedTier} onValueChange={setSelectedTier}>
-          <TabsList className="bg-muted/30 p-1">
-            {examConfig.tiers.map((tier) => (
-              <TabsTrigger
-                key={tier.id}
-                value={tier.id}
-                className="data-[state=active]:bg-emerald-500 data-[state=active]:text-white"
-              >
-                {tier.name}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-        </Tabs>
-      )}
+      {/* Tier/Stage Visual Flow Navigation */}
+      {examConfig.tiers.length > 0 && (() => {
+        // Assign color per stage index
+        const stageColors = [
+          { ring: 'ring-sky-500', bg: 'bg-sky-500', light: 'bg-sky-50 dark:bg-sky-950', text: 'text-sky-700 dark:text-sky-300', badge: 'bg-sky-500/15 text-sky-600 border-sky-500/30', label: 'Prelims', icon: '📄' },
+          { ring: 'ring-violet-500', bg: 'bg-violet-500', light: 'bg-violet-50 dark:bg-violet-950', text: 'text-violet-700 dark:text-violet-300', badge: 'bg-violet-500/15 text-violet-600 border-violet-500/30', label: 'Mains', icon: '📝' },
+          { ring: 'ring-emerald-500', bg: 'bg-emerald-500', light: 'bg-emerald-50 dark:bg-emerald-950', text: 'text-emerald-700 dark:text-emerald-300', badge: 'bg-emerald-500/15 text-emerald-600 border-emerald-500/30', label: 'Interview', icon: '🎤' },
+          { ring: 'ring-amber-500', bg: 'bg-amber-500', light: 'bg-amber-50 dark:bg-amber-950', text: 'text-amber-700 dark:text-amber-300', badge: 'bg-amber-500/15 text-amber-600 border-amber-500/30', label: 'Stage 4', icon: '🏆' },
+        ];
+        return (
+          <div className="space-y-3">
+            {/* Stage flow */}
+            <div className="flex items-stretch gap-0 overflow-x-auto pb-1">
+              {examConfig.tiers.map((tier, idx) => {
+                const c = stageColors[idx] || stageColors[0];
+                const isActive = tier.id === selectedTier;
+                const tierTopics = tier.subjects.reduce((s, sub) => s + sub.topics.length, 0);
+                const tierMks = tier.totalMarks;
+                return (
+                  <React.Fragment key={tier.id}>
+                    <button
+                      onClick={() => setSelectedTier(tier.id)}
+                      className={`
+                        relative flex flex-col items-center gap-1.5 min-w-[130px] p-3.5 rounded-xl border-2 transition-all duration-200 text-left
+                        ${isActive
+                          ? `border-current ${c.ring} ring-2 ring-offset-2 ${c.light} shadow-md`
+                          : 'border-border/50 bg-card hover:border-border hover:shadow-sm'
+                        }
+                      `}
+                    >
+                      {/* Stage number bubble */}
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white ${isActive ? c.bg : 'bg-muted-foreground/20'}`}>
+                        {idx + 1}
+                      </div>
+                      {/* Stage emoji */}
+                      <span className="text-lg">{c.icon}</span>
+                      {/* Stage name */}
+                      <div className="text-center">
+                        <p className={`text-xs font-bold ${isActive ? c.text : 'text-muted-foreground'}`}>{c.label}</p>
+                        <p className={`text-[10px] font-semibold ${isActive ? 'text-foreground' : 'text-muted-foreground'} truncate max-w-[110px]`}>{tier.name}</p>
+                      </div>
+                      {/* Mini stats */}
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded-full border font-medium ${isActive ? c.badge : 'bg-muted/50 text-muted-foreground border-border/40'}`}>
+                          {tierMks} Marks
+                        </span>
+                      </div>
+                      <p className={`text-[10px] ${isActive ? c.text : 'text-muted-foreground'}`}>{tierTopics} topics</p>
+                      {/* Active underline */}
+                      {isActive && (
+                        <div className={`absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-1 rounded-t-full ${c.bg}`} />
+                      )}
+                    </button>
+                    {/* Arrow connector */}
+                    {idx < examConfig.tiers.length - 1 && (
+                      <div className="flex items-center px-1 shrink-0">
+                        <div className="flex flex-col items-center gap-0.5">
+                          <div className="w-6 h-0.5 bg-border" />
+                          <span className="text-muted-foreground/50 text-[10px]">→</span>
+                          <div className="w-6 h-0.5 bg-border" />
+                        </div>
+                      </div>
+                    )}
+                  </React.Fragment>
+                );
+              })}
+            </div>
 
-      {/* Tier Info */}
-      {currentTier && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <Card className="p-3">
-            <div className="flex items-center gap-2">
-              <Clock className="h-4 w-4 text-muted-foreground" />
-              <div>
-                <p className="text-xs text-muted-foreground">Duration</p>
-                <p className="font-medium text-sm">{currentTier.duration}</p>
-              </div>
-            </div>
-          </Card>
-          <Card className="p-3">
-            <div className="flex items-center gap-2">
-              <Target className="h-4 w-4 text-muted-foreground" />
-              <div>
-                <p className="text-xs text-muted-foreground">Total Marks</p>
-                <p className="font-medium text-sm">{currentTier.totalMarks}</p>
-              </div>
-            </div>
-          </Card>
-          <Card className="p-3">
-            <div className="flex items-center gap-2">
-              <X className="h-4 w-4 text-red-500" />
-              <div>
-                <p className="text-xs text-muted-foreground">Negative Marking</p>
-                <p className="font-medium text-sm truncate">{currentTier.negativeMarking}</p>
-              </div>
-            </div>
-          </Card>
-          <Card className="p-3">
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className={`h-4 w-4 ${currentTier.sectionalCutoff ? 'text-emerald-500' : 'text-muted-foreground'}`} />
-              <div>
-                <p className="text-xs text-muted-foreground">Sectional Cutoff</p>
-                <p className="font-medium text-sm">{currentTier.sectionalCutoff ? 'Yes' : 'No'}</p>
-              </div>
-            </div>
-          </Card>
-        </div>
-      )}
+            {/* Active tier info strip */}
+            {currentTier && (() => {
+              const idx = examConfig.tiers.findIndex(t => t.id === selectedTier);
+              const c = stageColors[idx] || stageColors[0];
+              return (
+                <div className={`flex flex-wrap items-center gap-3 px-4 py-3 rounded-xl border ${c.light} border-current/10`}>
+                  <div className="flex items-center gap-2">
+                    <Clock className={`h-4 w-4 ${c.text}`} />
+                    <div>
+                      <p className="text-[10px] text-muted-foreground">Duration</p>
+                      <p className={`text-xs font-bold ${c.text}`}>{currentTier.duration}</p>
+                    </div>
+                  </div>
+                  <div className="w-px h-8 bg-border/50" />
+                  <div className="flex items-center gap-2">
+                    <Target className={`h-4 w-4 ${c.text}`} />
+                    <div>
+                      <p className="text-[10px] text-muted-foreground">Total Marks</p>
+                      <p className={`text-xs font-bold ${c.text}`}>{currentTier.totalMarks}</p>
+                    </div>
+                  </div>
+                  <div className="w-px h-8 bg-border/50" />
+                  <div className="flex items-center gap-2">
+                    <X className="h-4 w-4 text-red-500" />
+                    <div>
+                      <p className="text-[10px] text-muted-foreground">Negative Marking</p>
+                      <p className="text-xs font-bold text-red-600 dark:text-red-400">{currentTier.negativeMarking}</p>
+                    </div>
+                  </div>
+                  <div className="w-px h-8 bg-border/50" />
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className={`h-4 w-4 ${currentTier.sectionalCutoff ? 'text-emerald-500' : 'text-muted-foreground'}`} />
+                    <div>
+                      <p className="text-[10px] text-muted-foreground">Sectional Cutoff</p>
+                      <p className={`text-xs font-bold ${currentTier.sectionalCutoff ? 'text-emerald-600' : 'text-muted-foreground'}`}>
+                        {currentTier.sectionalCutoff ? 'Yes ✓' : 'No'}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="ml-auto">
+                    <span className={`text-xs font-semibold px-3 py-1 rounded-full border ${c.badge}`}>
+                      {currentTier.subjects.length} Subjects · {currentTier.subjects.reduce((s, sub) => s + sub.topics.length, 0)} Topics
+                    </span>
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+        );
+      })()}
 
       {/* Recently Viewed */}
       {recentlyViewed.length > 0 && (

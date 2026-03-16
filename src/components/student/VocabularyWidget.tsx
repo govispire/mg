@@ -52,7 +52,7 @@ export default function WordOfTheDayCard() {
 
     if (!word) {
         return (
-            <div className="rounded-2xl overflow-hidden border border-emerald-200 bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-950/40 dark:to-teal-950/40 shadow-sm">
+            <div className="rounded-2xl overflow-hidden border border-emerald-200 bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-950/40 dark:to-teal-950/40 shadow-sm h-full flex flex-col">
                 {/* Header */}
                 <div className="flex items-center justify-between px-4 py-2.5 bg-white/60 dark:bg-white/5 border-b border-emerald-100 dark:border-emerald-900">
                     <div className="flex items-center gap-1.5">
@@ -115,7 +115,7 @@ export default function WordOfTheDayCard() {
     }
 
     return (
-        <div className="rounded-2xl overflow-hidden border border-border shadow-md bg-card">
+        <div className="rounded-2xl overflow-hidden border border-border shadow-md bg-card h-full flex flex-col">
             {/* ── Header bar ── */}
             <div className="flex items-center justify-between px-4 py-2.5 bg-muted/50 border-b border-border">
                 <div className="flex items-center gap-1.5">
@@ -173,7 +173,7 @@ export default function WordOfTheDayCard() {
             </div>
 
             {/* ── Content area ── */}
-            <div className="px-4 pt-4 pb-3 space-y-3 bg-card">
+            <div className="px-4 pt-4 pb-3 space-y-3 bg-card flex-1">
                 {/* Meaning */}
                 <div className="space-y-0.5">
                     <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Meaning</p>

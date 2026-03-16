@@ -297,20 +297,18 @@ const ExamNotifications = () => {
               isHot: exam.applyStatus === 'new'
             }))} />
           ) : (
-            /* ── Compact accordion list ── */
-            <div className="divide-y divide-border border border-border rounded-xl overflow-hidden bg-card">
+            <div className="divide-y divide-border/60 border-2 border-border/60 rounded-xl overflow-hidden bg-card shadow-sm">
               {filteredNotifications.map((exam) => {
                 const isOpen = expandedId === exam.id;
                 return (
                   <div key={exam.id}>
-                    {/* ── Collapsed row ── */}
-                    <div className="flex items-center gap-3 px-4 py-3 hover:bg-muted/40 transition-colors">
+                    <div className="flex items-center gap-4 px-4 py-4 hover:bg-muted/50 transition-colors">
                       {/* Logo */}
-                      <div className="w-8 h-8 rounded-md bg-muted/50 flex items-center justify-center shrink-0 overflow-hidden">
+                      <div className="w-10 h-10 rounded-lg bg-muted/50 flex items-center justify-center shrink-0 overflow-hidden border border-border/50">
                         <img
                           src={getExamLogo(exam)}
                           alt={exam.examName}
-                          className="w-7 h-7 object-contain"
+                          className="w-8 h-8 object-contain"
                           onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                         />
                       </div>
@@ -425,13 +423,13 @@ const ExamNotifications = () => {
             <p className="text-muted-foreground">Don't miss these important application deadlines</p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredNotifications
               .filter(e => e.applyStatus === 'apply' || e.applyStatus === 'new')
               .slice(0, 6)
               .map((exam) => (
-                <Card key={exam.id} className="bg-card border-red-500/30 hover:border-red-500/50 transition-colors">
-                  <CardContent className="p-4">
+                <Card key={exam.id} className="bg-card border-2 border-red-500/30 hover:border-red-500/60 hover:shadow-lg transition-all duration-200">
+                  <CardContent className="p-5">
                     <div className="flex items-center gap-3 mb-3">
                       <div className="w-10 h-10 rounded-lg bg-red-500/10 flex items-center justify-center">
                         <img

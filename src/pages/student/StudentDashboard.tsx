@@ -40,6 +40,8 @@ import { StatsOverview } from '@/components/student/dashboard/StatsOverview';
 import { PerformanceGraph } from '@/components/student/dashboard/PerformanceGraph';
 import { NextAction } from '@/components/student/dashboard/NextAction';
 import WordOfTheDayCard from '@/components/student/VocabularyWidget';
+import TargetExamCard from '@/components/student/dashboard/TargetExamCard';
+import RecentExamNotifications from '@/components/student/dashboard/RecentExamNotifications';
 
 interface UserProfile {
   username: string;
@@ -372,16 +374,29 @@ const StudentDashboard = () => {
 
   return (
     <div className="h-screen overflow-y-auto bg-muted/30">
-      <div className="flex flex-col lg:flex-row gap-6 p-4 sm:p-6 max-w-full">
-        {/* Main Content */}
-        <div className="flex-1 min-w-0 space-y-4 w-full lg:w-auto">
-          {/* Greeting Section */}
-          <div className="mb-5">
-            <h1 className="text-xl font-bold text-foreground flex items-center gap-2">
-              Hello, {userProfile?.username || user?.name || 'Student'} <span className="text-xl animate-wave">👋</span>
-            </h1>
-            <p className="text-sm text-muted-foreground">Let's learn something new today!</p>
+      <div className="p-4 sm:p-6 space-y-4 max-w-full">
+
+        {/* ── TOP ROW: Only these 2 cards, full width ── */}
+        <div className="flex flex-col lg:flex-row gap-4 items-stretch">
+          {/* Target Exam Card */}
+          <div className="flex-1 min-w-0">
+            <TargetExamCard
+              targetExam={targetExamName}
+              examCategory={examCategoryName}
+              userName={userProfile?.username || user?.name || 'Student'}
+              preparationStartDate={userProfile?.preparationStartDate || null}
+            />
           </div>
+          {/* Word of the Day — equal height */}
+          <div className="w-full lg:w-80 flex-shrink-0">
+            <WordOfTheDayCard />
+          </div>
+        </div>
+
+        {/* ── MAIN 2-COLUMN LAYOUT: Stats + Content | Sidebar ── */}
+        <div className="flex flex-col lg:flex-row gap-6">
+          {/* Main Content */}
+          <div className="flex-1 min-w-0 space-y-4 w-full lg:w-auto">
 
           {/* Stats Cards */}
           <StatsOverview
@@ -389,6 +404,7 @@ const StudentDashboard = () => {
             userName={userProfile?.username || user?.name || 'Student'}
             onCardClick={setStatDialogType}
           />
+
 
 
 
@@ -597,6 +613,9 @@ const StudentDashboard = () => {
           {/* Next Best Action */}
           <NextAction />
 
+          {/* Recent Exam Notifications */}
+          <RecentExamNotifications />
+
           {/* Mobile Right Sidebar Content */}
           <div className="lg:hidden space-y-4">
             {/* Your Presence - Mobile */}
@@ -757,9 +776,8 @@ const StudentDashboard = () => {
         </div>
 
         {/* Right Sidebar - Desktop Only */}
-        <div className="hidden lg:block w-72 flex-shrink-0 space-y-4 pt-[72px]">
-          {/* Upcoming Live Tests */}
-          <UpcomingLiveTests />
+        <div className="hidden lg:block w-72 flex-shrink-0 space-y-4">
+          {/* Percentile Speedometer — immediately below top card row */}
 
           {/* Percentile Speedometer */}
           <Card className="p-6 bg-card flex flex-col items-center relative overflow-hidden">
@@ -878,6 +896,9 @@ const StudentDashboard = () => {
             </div>
           </Card>
 
+          {/* Upcoming Live Tests — below Bank Exam Percentile */}
+          <UpcomingLiveTests />
+
           {/* Free Test/Quiz */}
           <Card className="p-4 bg-card">
             <div className="flex items-center justify-between mb-3">
@@ -936,8 +957,6 @@ const StudentDashboard = () => {
             )}
           </Card>
 
-          {/* Word of the Day */}
-          <WordOfTheDayCard />
 
           {/* Your Presence */}
           <Card className="p-4 bg-card">
@@ -1064,6 +1083,7 @@ const StudentDashboard = () => {
           preparationStartDate={userProfile?.preparationStartDate}
         />
       )}
+
       {/* Post-Signup Modals */}
       <CompulsoryFormModal
         open={showCompulsoryForm}
@@ -1080,6 +1100,7 @@ const StudentDashboard = () => {
         userInitial={(user?.name || 'S').charAt(0).toUpperCase()}
         userAvatar={userProfile?.avatar}
       />
+      </div>
     </div>
   );
 };
