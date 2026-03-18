@@ -44,16 +44,12 @@ export const StatsOverview: React.FC<StatsOverviewProps> = ({ journeyDays, onCar
     ];
 
     return (
-        <div className="flex bg-white dark:bg-card border border-border/60 rounded-2xl overflow-hidden shadow-sm mb-6">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-[1px] bg-border/60 border border-border/60 rounded-2xl overflow-hidden shadow-sm mb-6">
             {stats.map((stat, index) => (
                 <button
                     key={stat.id}
                     onClick={() => onCardClick(stat.id as any)}
-                    className={`
-                        flex-1 flex flex-col gap-2 px-5 py-4 text-left
-                        hover:bg-muted/40 transition-colors duration-200 group
-                        ${index !== stats.length - 1 ? 'border-r border-border/60' : ''}
-                    `}
+                    className="flex flex-col gap-2 px-3 sm:px-5 py-4 text-left bg-white dark:bg-card hover:bg-muted/40 transition-colors duration-200 group relative"
                 >
                     {/* Icon + label row */}
                     <div className="flex items-center justify-between gap-2">

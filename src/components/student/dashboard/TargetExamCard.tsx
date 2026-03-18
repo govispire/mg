@@ -9,6 +9,7 @@ import {
   Clock,
   Target,
   TrendingUp,
+  Bell
 } from 'lucide-react';
 import { getTargetExamRoute } from '@/utils/targetExamRoute';
 import { differenceInDays } from 'date-fns';
@@ -348,125 +349,138 @@ const TargetExamCard: React.FC<TargetExamCardProps> = ({
 
   return (
     <div
-      className={`relative rounded-2xl overflow-hidden bg-gradient-to-br ${meta.gradient} text-white shadow-xl h-full`}
+      className={`relative rounded-xl overflow-hidden bg-[#163654] text-white shadow-xl h-full flex flex-col md:flex-row`}
       style={{ minHeight: 220 }}
     >
-      {/* Decorative circles */}
-      <div className="absolute top-0 right-0 w-56 h-56 rounded-full bg-white/5 -translate-y-1/3 translate-x-1/3 pointer-events-none" />
-      <div className="absolute bottom-0 left-0 w-40 h-40 rounded-full bg-white/5 translate-y-1/3 -translate-x-1/3 pointer-events-none" />
-
-      <div className="relative z-10 p-5 sm:p-6">
-        {/* Top row */}
-        <div className="flex items-start justify-between gap-4 mb-1">
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-1.5 mb-1">
-              <Target className="h-3.5 w-3.5 text-white/70 shrink-0" />
-              <span className="text-[11px] font-semibold text-white/70 uppercase tracking-widest">Target Examination</span>
-            </div>
-            <h2 className="text-2xl sm:text-3xl font-bold leading-tight truncate">{targetExam.toUpperCase()}</h2>
-            <p className="text-sm text-white/80 mt-0.5">{meta.subtitle} · {meta.vacancies}</p>
-          </div>
-
-          {/* Days left */}
-          <div className="shrink-0 flex flex-col items-center bg-white/15 backdrop-blur-sm border border-white/20 rounded-xl px-3 py-2 min-w-[72px] text-center">
-            <span className="text-3xl font-black leading-none text-white">
-              {daysLeft !== null ? daysLeft : '—'}
-            </span>
-            <span className="text-[10px] text-white/80 font-medium mt-0.5">
-              {daysLeft !== null ? 'Days Left' : 'TBA'}
+      {/* Left Content Area */}
+      <div className="relative z-10 p-5 md:p-7 flex-1 flex flex-col justify-between">
+        <div>
+          {/* Top Header Label */}
+          <div className="flex items-center gap-2 mb-1">
+            <Target className="h-4 w-4 text-sky-400 shrink-0" strokeWidth={2.5} />
+            <span className="text-[11px] font-bold text-sky-400 uppercase tracking-widest">
+              Target Examination
             </span>
           </div>
-        </div>
+          
+          {/* Title & Subtitle */}
+          <h2 className="text-3xl md:text-[34px] font-bold leading-tight tracking-tight mb-1 text-white">
+            {targetExam.toUpperCase()}
+          </h2>
+          <p className="text-[13px] md:text-sm font-medium text-slate-300 mb-5">
+            {meta.subtitle} · {meta.vacancies}
+          </p>
 
-        {/* Meta chips */}
-        <div className="flex flex-wrap items-center gap-2 mt-3 mb-4">
-          <span className="flex items-center gap-1 text-xs bg-white/15 backdrop-blur-sm px-2.5 py-1 rounded-full">
-            <Calendar className="h-3 w-3" />
-            Notification: {meta.notification}
-          </span>
-          <span className="flex items-center gap-1 text-xs bg-white/15 backdrop-blur-sm px-2.5 py-1 rounded-full">
-            <MapPin className="h-3 w-3" />
-            {meta.region}
-          </span>
-          <span className="flex items-center gap-1 text-xs bg-white/15 backdrop-blur-sm px-2.5 py-1 rounded-full">
-            <Clock className="h-3 w-3" />
-            {meta.duration} · {meta.marks}
-          </span>
-          {journeyDays > 0 && (
-            <span className="flex items-center gap-1 text-xs bg-white/15 backdrop-blur-sm px-2.5 py-1 rounded-full">
-              <TrendingUp className="h-3 w-3" />
-              Day {journeyDays} of prep
+          {/* Meta chips */}
+          <div className="flex flex-wrap items-center gap-2 mb-6">
+            <span className="flex items-center gap-1.5 text-xs bg-[#224467] border border-white/5 px-2.5 py-1.5 rounded-md text-slate-200 font-medium font-sans">
+              <Bell className="h-3.5 w-3.5 text-slate-300" />
+              Notified: {meta.notification}
             </span>
-          )}
-        </div>
-
-        {/* Progress */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Overall */}
-          <div>
-            <div className="flex items-center justify-between text-xs text-white/70 mb-1.5">
-              <span>Overall Preparation Progress</span>
-              <span className="font-bold text-white">{meta.overallPct}% Complete</span>
-            </div>
-            <div className="w-full h-2 bg-white/20 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-gradient-to-r from-cyan-300 to-blue-300 rounded-full transition-all duration-1000"
-                style={{ width: `${meta.overallPct}%` }}
-              />
-            </div>
+            <span className="flex items-center gap-1.5 text-xs bg-[#224467] border border-white/5 px-2.5 py-1.5 rounded-md text-slate-200 font-medium font-sans">
+              <MapPin className="h-3.5 w-3.5 text-slate-300" />
+              Pan India
+            </span>
+            <span className="flex items-center gap-1.5 text-xs bg-[#224467] border border-white/5 px-2.5 py-1.5 rounded-md text-slate-200 font-medium font-sans">
+              <Clock className="h-3.5 w-3.5 text-slate-300" />
+              {meta.duration} - {meta.marks}
+            </span>
+            {journeyDays > 0 && (
+              <span className="flex items-center gap-1.5 text-xs bg-[#224467] border border-white/5 px-2.5 py-1.5 rounded-md text-slate-200 font-medium font-sans">
+                <Calendar className="h-3.5 w-3.5 text-slate-300" />
+                Day {journeyDays} of Prep
+              </span>
+            )}
           </div>
 
-          {/* Section-wise */}
-          <div>
-            <p className="text-xs text-white/70 mb-1.5">Section-wise Readiness</p>
-            <div className="space-y-1">
-              {meta.sections.map((s) => (
-                <div key={s.name} className="flex items-center gap-2">
-                  <span className="text-[10px] text-white/70 w-24 shrink-0 truncate">{s.name}</span>
-                  <div className="flex-1 h-1.5 bg-white/20 rounded-full overflow-hidden">
-                    <div
-                      className={`h-full ${s.color} opacity-90 rounded-full`}
-                      style={{ width: `${s.pct}%` }}
-                    />
+          {/* Progress Bars Section */}
+          <div className="space-y-4 pr-0 lg:pr-6">
+            {/* Overall */}
+            <div>
+              <div className="flex items-center justify-between text-xs text-slate-200 font-medium mb-2">
+                <span>Overall Preparation</span>
+                <span className="font-bold">{meta.overallPct}%</span>
+              </div>
+              <div className="w-full h-2 bg-[#1b4369] rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-sky-500 rounded-full transition-all duration-1000"
+                  style={{ width: `${meta.overallPct}%` }}
+                />
+              </div>
+            </div>
+
+            {/* Section-wise Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3 pt-2">
+              {meta.sections.map((s, idx) => {
+                // Determine exact colors matching screenshot
+                const colors = ['bg-sky-400', 'bg-violet-400', 'bg-orange-400', 'bg-emerald-400'];
+                const barColor = colors[idx % colors.length];
+
+                return (
+                  <div key={s.name}>
+                    <div className="flex items-center justify-between text-[11px] text-slate-300 font-medium mb-1.5">
+                      <span>{s.name}</span>
+                      <span className="font-bold text-slate-100">{s.pct}%</span>
+                    </div>
+                    <div className="w-full h-1.5 bg-[#1b4369] rounded-full overflow-hidden">
+                      <div
+                        className={`h-full ${barColor} rounded-full`}
+                        style={{ width: `${s.pct}%` }}
+                      />
+                    </div>
                   </div>
-                  <span className="text-[10px] text-white/80 w-7 text-right">{s.pct}%</span>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </div>
 
         {/* Action buttons */}
-        <div className="flex flex-wrap items-center gap-3 mt-5">
-          {/* Primary: solid white */}
+        <div className="flex flex-wrap items-center gap-3 mt-6">
           <Button
             size="sm"
-            className="bg-white text-blue-800 hover:bg-white/90 font-semibold px-4 gap-2 shadow-lg"
+            className="bg-[#244b6c] hover:bg-[#2c587c] text-white border border-[#3e6686] font-medium px-4 py-4 gap-2 rounded-lg"
             onClick={() => navigate(mockRoute)}
           >
-            <Play className="h-4 w-4 fill-current" />
-            Start Full Mock Test
+            <Play className="h-3.5 w-3.5" />
+            Start Full Mock
           </Button>
 
-          {/* Secondary: white with opacity so text is always visible */}
           <Button
             size="sm"
-            className="bg-white/20 hover:bg-white/30 text-white border border-white/40 font-semibold px-4 gap-2 backdrop-blur-sm"
+            className="bg-[#244b6c] hover:bg-[#2c587c] text-white border border-[#3e6686] font-medium px-4 py-4 gap-2 rounded-lg"
             onClick={() => navigate('/student/syllabus')}
           >
-            <BookOpen className="h-4 w-4" />
+            <BookOpen className="h-3.5 w-3.5" />
             View Syllabus
           </Button>
 
-          {/* Score Prediction */}
-          <div className="ml-auto">
-            <Button
-              size="sm"
-              className="bg-amber-400 hover:bg-amber-500 text-amber-900 font-semibold px-4 gap-2 shadow-lg"
-              onClick={() => navigate('/student/performance-analytics')}
-            >
-              📊 Score Prediction
-            </Button>
+          <Button
+            size="sm"
+            className="bg-[#244b6c] hover:bg-[#2c587c] text-white border border-[#3e6686] font-medium px-4 py-4 gap-2 rounded-lg"
+            onClick={() => navigate('/student/performance-analytics')}
+          >
+            <TrendingUp className="h-3.5 w-3.5" />
+            Score Prediction
+          </Button>
+        </div>
+      </div>
+
+      {/* Right Side Days Left Panel */}
+      <div className="hidden md:flex flex-col items-center justify-center p-6 bg-[#1a4466] border border-[#2b5a82] rounded-[16px] m-6 min-w-[130px] shadow-lg h-fit self-start shrink-0">
+        <div className="text-center">
+          <div className="text-[44px] font-bold leading-none text-white tracking-tight mb-0.5">
+            {daysLeft !== null ? daysLeft : '—'}
+          </div>
+          <div className="text-[11px] font-medium text-sky-200 mb-3 tracking-wide">
+            {daysLeft !== null ? 'Days Left' : 'TBA'}
+          </div>
+          <div className="w-12 h-px bg-[#3e6686] mx-auto mb-3" />
+          <div className="text-[10px] text-slate-400 font-medium mb-0.5">
+            Exam Date
+          </div>
+          <div className="text-xs font-bold text-slate-200">
+            {new Date(meta.examDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
           </div>
         </div>
       </div>

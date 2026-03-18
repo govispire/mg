@@ -5,14 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
   Bell,
-  ExternalLink,
-  ChevronRight,
-  Calendar,
-  Users,
-  Clock,
-  TrendingUp,
-  CheckCircle,
-  AlertCircle,
+  ArrowRight
 } from 'lucide-react';
 import { examNotifications } from '@/data/examNotificationData';
 
@@ -59,104 +52,76 @@ const RecentExamNotifications: React.FC = () => {
   const visible = sorted.slice(0, 5);
 
   return (
-    <div className="space-y-3">
+    <div className="bg-white rounded-2xl border border-border/60 shadow-sm overflow-hidden flex flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between p-5 pb-4">
         <div className="flex items-center gap-2">
-          <div className="p-1.5 bg-red-500/10 rounded-lg">
-            <Bell className="h-4 w-4 text-red-500" />
-          </div>
-          <div>
-            <h3 className="font-semibold text-sm text-foreground">Recent Exam Notifications</h3>
-            <p className="text-[11px] text-muted-foreground">Latest govt exam updates & alerts</p>
-          </div>
+          <div className="w-1 h-5 bg-sky-600 rounded-full" />
+          <Bell className="h-5 w-5 text-sky-600" />
+          <h3 className="font-semibold text-base text-slate-800">Recent Exam Notifications</h3>
         </div>
         <Button
           variant="ghost"
-          size="sm"
-          className="text-xs text-primary hover:text-primary gap-1 h-7"
+          className="text-sky-600 hover:text-sky-700 hover:bg-sky-50 text-sm font-medium pr-0 pt-0 pb-0 h-auto"
           onClick={() => navigate('/student/exam-notifications')}
         >
-          View All <ChevronRight className="h-3.5 w-3.5" />
+          View All <ArrowRight className="h-4 w-4 ml-1" />
         </Button>
       </div>
 
-      {/* Cards Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3">
-        {visible.map((exam) => {
-          const cfg =
-            exam.resultStatus === 'declared'
-              ? statusConfig.declared
-              : exam.applyStatus === 'new'
-              ? statusConfig.new
-              : exam.applyStatus === 'apply'
-              ? statusConfig.apply
-              : statusConfig.applied;
+      {/* List View */}
+      <div className="flex flex-col gap-2.5 px-5 pb-5 w-full overflow-x-auto min-w-[500px]">
+        {visible.map((exam, index) => {
+          // Status mapping
+          const isNew = exam.notificationStatus === 'new';
+          
+          // Screenshot specific alternating background colors
+          const bgClass = index % 2 === 0 ? 'bg-[#f0f4f8]' : 'bg-[#e2e8f0]';
 
           return (
-            <Card
+            <div
               key={exam.id}
-              className="relative overflow-hidden border border-border/60 hover:border-primary/40 hover:shadow-md transition-all duration-200 cursor-pointer group p-0"
+              className={`flex items-center justify-between p-3.5 pr-6 rounded-2xl cursor-pointer hover:brightness-95 transition-all ${bgClass}`}
               onClick={() => navigate('/student/exam-notifications')}
             >
-              {/* Top accent bar */}
-              <div
-                className={`h-1 w-full ${
-                  exam.notificationStatus === 'new'
-                    ? 'bg-gradient-to-r from-red-500 to-orange-400'
-                    : exam.applyStatus === 'new'
-                    ? 'bg-gradient-to-r from-emerald-500 to-teal-400'
-                    : exam.resultStatus === 'declared'
-                    ? 'bg-gradient-to-r from-amber-500 to-yellow-400'
-                    : 'bg-gradient-to-r from-sky-500 to-blue-400'
-                }`}
-              />
-
-              <div className="p-3.5">
-                {/* Logo + name */}
-                <div className="flex items-start gap-2.5 mb-2.5">
-                  <div className="w-9 h-9 rounded-lg bg-muted/50 border border-border/50 flex items-center justify-center shrink-0 overflow-hidden">
-                    <img
-                      src={getLogo(exam.examName)}
-                      alt={exam.examName}
-                      className="w-7 h-7 object-contain"
-                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                    />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-bold text-foreground leading-tight line-clamp-2 group-hover:text-primary transition-colors">
-                      {exam.examName}
-                    </p>
-                    {exam.notificationStatus === 'new' && (
-                      <span className="inline-block mt-0.5 text-[9px] font-bold bg-red-500 text-white px-1.5 py-0 rounded-sm uppercase">NEW</span>
+              {/* Left Side */}
+              <div className="flex items-center gap-4">
+                {/* Document Icon Box */}
+                <div className="w-10 h-10 rounded-xl bg-sky-200/50 flex items-center justify-center text-sky-500 shrink-0 border border-sky-200/50">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-sky-500"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                </div>
+                
+                {/* Information */}
+                <div>
+                  <div className="flex items-center gap-2 mb-0.5">
+                    <h4 className="font-semibold text-[13px] text-slate-800 leading-none">{exam.examName}</h4>
+                    {isNew && (
+                      <span className="text-[9px] font-bold text-sky-600 bg-sky-100 px-1.5 py-0.5 rounded uppercase tracking-wider">
+                        NEW
+                      </span>
                     )}
                   </div>
-                </div>
-
-                {/* Stats */}
-                <div className="space-y-1.5 mb-3">
-                  <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                    <Users className="h-3 w-3 shrink-0 text-primary/70" />
-                    <span className="font-medium text-foreground">{exam.vacancies.toLocaleString()}</span>
-                    <span>vacancies</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                    <Calendar className="h-3 w-3 shrink-0 text-emerald-500/80" />
-                    <span>Apply: <span className="text-foreground font-medium">{exam.applicationPeriod.endDate}</span></span>
-                  </div>
-                  <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                    <Clock className="h-3 w-3 shrink-0 text-amber-500/80" />
-                    <span>Exam: <span className="text-foreground font-medium">{exam.examDate}</span></span>
-                  </div>
-                </div>
-
-                {/* Status badge */}
-                <div className={`inline-flex items-center gap-1.5 text-[10px] font-semibold px-2 py-1 rounded-full border ${cfg.color}`}>
-                  <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot} animate-pulse`} />
-                  {cfg.label}
+                  <p className="text-xs text-slate-600 font-medium tracking-wide">
+                    Apply: {exam.applicationPeriod.startDate || "01/06/2025"} - {exam.applicationPeriod.endDate}
+                    <span className="mx-2 text-slate-300">•</span>
+                    {exam.vacancies.toLocaleString()} Vacancies
+                    <span className="mx-2 text-slate-300">•</span>
+                    {exam.qualification}
+                  </p>
                 </div>
               </div>
-            </Card>
+
+              {/* Right Side */}
+              <div className="flex items-center gap-5 shrink-0">
+                 <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-teal-500/20 bg-teal-500/10">
+                   <div className="w-1.5 h-1.5 rounded-full bg-teal-600" />
+                   <span className="text-[11px] font-semibold text-teal-700">Applications Open</span>
+                 </div>
+                 <span className="font-bold text-sm text-slate-800 hover:text-sky-600 transition-colors cursor-pointer block w-10 text-right">
+                   Apply
+                 </span>
+              </div>
+            </div>
           );
         })}
       </div>

@@ -42,6 +42,7 @@ import { NextAction } from '@/components/student/dashboard/NextAction';
 import WordOfTheDayCard from '@/components/student/VocabularyWidget';
 import TargetExamCard from '@/components/student/dashboard/TargetExamCard';
 import RecentExamNotifications from '@/components/student/dashboard/RecentExamNotifications';
+import RecentMockTestPerformance from '@/components/student/dashboard/RecentMockTestPerformance';
 
 interface UserProfile {
   username: string;
@@ -376,27 +377,20 @@ const StudentDashboard = () => {
     <div className="h-screen overflow-y-auto bg-muted/30">
       <div className="p-4 sm:p-6 space-y-4 max-w-full">
 
-        {/* ── TOP ROW: Only these 2 cards, full width ── */}
-        <div className="flex flex-col lg:flex-row gap-4 items-stretch">
-          {/* Target Exam Card */}
-          <div className="flex-1 min-w-0">
-            <TargetExamCard
-              targetExam={targetExamName}
-              examCategory={examCategoryName}
-              userName={userProfile?.username || user?.name || 'Student'}
-              preparationStartDate={userProfile?.preparationStartDate || null}
-            />
-          </div>
-          {/* Word of the Day — equal height */}
-          <div className="w-full lg:w-80 flex-shrink-0">
-            <WordOfTheDayCard />
-          </div>
+        {/* ── TOP ROW: Target Exam Card — full width ── */}
+        <div className="w-full">
+          <TargetExamCard
+            targetExam={targetExamName}
+            examCategory={examCategoryName}
+            userName={userProfile?.username || user?.name || 'Student'}
+            preparationStartDate={userProfile?.preparationStartDate || null}
+          />
         </div>
 
         {/* ── MAIN 2-COLUMN LAYOUT: Stats + Content | Sidebar ── */}
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Main Content */}
-          <div className="flex-1 min-w-0 space-y-4 w-full lg:w-auto">
+          <div className="flex-1 min-w-0 space-y-4 w-full lg:w-auto bg-card/50 border border-border/60 rounded-xl p-4 shadow-sm">
 
           {/* Stats Cards */}
           <StatsOverview
@@ -472,6 +466,9 @@ const StudentDashboard = () => {
 
           {/* Exam Status Summary (Self Care) */}
           <ExamStatusSummary />
+
+          {/* Recent Mock Test Performance Section */}
+          <RecentMockTestPerformance />
 
           {/* Trending Exams Section */}
           <TrendingExams />
@@ -725,37 +722,38 @@ const StudentDashboard = () => {
 
 
             {/* Free Test/Quiz - Mobile */}
-            <Card className="p-4 bg-card">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="font-semibold text-sm">Free Test/Quiz</h3>
-                <span className="text-xs text-muted-foreground">{new Date(selectedDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+            <Card className="p-4 sm:p-5 bg-white border border-border/60 shadow-sm rounded-2xl">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-1 h-5 bg-sky-600 rounded-full" />
+                <h3 className="font-semibold text-base text-slate-800">Free Test/Quiz</h3>
               </div>
-              <div className="space-y-1.5">
+              <div className="space-y-3">
                 {freeTests.slice(0, 5).map((test, idx) => {
                   const isCompleted = !!quizCompletions[test.id];
                   return (
-                    <div key={idx} className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-muted/50 transition-colors">
-                      <div className="shrink-0 w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                        <FileText className="h-4 w-4 text-primary" />
+                    <div key={idx} className="flex items-center justify-between p-2.5 rounded-xl bg-[#cfd9df] hover:brightness-95 transition-all">
+                      <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                        <div className="shrink-0 w-8 h-8 rounded-lg bg-sky-100/60 flex items-center justify-center">
+                          <FileText className="h-4 w-4 text-sky-600" />
+                        </div>
+                        <div className="flex-1 min-w-0 pr-1">
+                          <p className="font-medium text-[12px] text-slate-900 leading-tight mb-1 truncate">{test.title}</p>
+                          <div className="text-[10px] text-slate-700 font-medium flex items-center gap-1.5 whitespace-nowrap">
+                            <span>{test.questions} Qs</span>
+                            <Clock className="h-2.5 w-2.5 shrink-0 text-slate-600" />
+                            <span>{test.duration} mins</span>
+                          </div>
+                        </div>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-sm truncate">{test.title}</p>
-                        <p className="text-xs text-muted-foreground flex items-center gap-1.5">
-                          <span>{test.questions} Qs</span>
-                          <span>·</span>
-                          <Clock className="h-3 w-3 shrink-0" />
-                          <span>{test.duration} mins</span>
-                        </p>
-                      </div>
-                      <div className="shrink-0">
+                      <div className="shrink-0 ml-2">
                         {isCompleted ? (
-                          <div className="flex items-center gap-1 text-primary font-semibold text-xs bg-primary/10 px-2.5 py-1.5 rounded-md">
-                            <CheckCircle className="h-3.5 w-3.5" />
+                          <div className="flex items-center gap-1 text-sky-600 font-semibold text-[10px] bg-sky-100 px-2 py-1 rounded border border-sky-200">
+                            <CheckCircle className="h-3 w-3" />
                             Done
                           </div>
                         ) : (
-                          <Button size="sm" className="h-8 px-3" onClick={() => handleStartTest(test)}>
-                            <Play className="h-3 w-3 mr-1" />
+                          <Button size="sm" className="h-[28px] px-3 bg-[#0284c7] hover:bg-sky-700 text-white rounded text-[11px] font-semibold" onClick={() => handleStartTest(test)}>
+                            <Play className="h-2.5 w-2.5 mr-1" strokeWidth={3} />
                             Start
                           </Button>
                         )}
@@ -764,11 +762,9 @@ const StudentDashboard = () => {
                   );
                 })}
               </div>
-              {allFreteTestsForDate.length > 5 && (
-                <Button variant="ghost" size="sm" className="w-full mt-2 text-xs" asChild>
-                  <Link to="/student/daily-quizzes">View All Tests ({allFreteTestsForDate.length})</Link>
-                </Button>
-              )}
+              <Button variant="outline" className="w-full mt-4 text-[13px] font-semibold text-slate-800 border-slate-200 bg-slate-50 hover:bg-slate-100 rounded-xl py-5" asChild>
+                <Link to="/student/daily-quizzes">View All Tests</Link>
+              </Button>
             </Card>
             {/* Upcoming Live Tests - Mobile */}
             <UpcomingLiveTests />
@@ -899,49 +895,42 @@ const StudentDashboard = () => {
           {/* Upcoming Live Tests — below Bank Exam Percentile */}
           <UpcomingLiveTests />
 
+          {/* Word of the Day — in sidebar */}
+          <WordOfTheDayCard />
+
           {/* Free Test/Quiz */}
-          <Card className="p-4 bg-card">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="font-semibold text-sm">
-                Free Test/Quiz
-              </h3>
-              <span className="text-xs text-muted-foreground">
-                {new Date(selectedDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-              </span>
+          <Card className="p-4 sm:p-5 bg-white border border-border/60 shadow-sm rounded-2xl">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-1 h-5 bg-sky-600 rounded-full" />
+              <h3 className="font-semibold text-base text-slate-800">Free Test/Quiz</h3>
             </div>
-            <div className="space-y-2">
+            <div className="space-y-3">
               {freeTests.slice(0, 5).map((test, idx) => {
                 const isCompleted = !!quizCompletions[test.id];
                 return (
-                  <div key={idx} className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-muted/50 transition-colors">
-                    {/* Icon */}
-                    <div className="shrink-0 w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                      <FileText className="h-4 w-4 text-primary" />
+                  <div key={idx} className="flex items-center justify-between p-2.5 rounded-xl bg-[#cfd9df] hover:brightness-95 transition-all">
+                    <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                      <div className="shrink-0 w-8 h-8 rounded-lg bg-sky-100/60 flex items-center justify-center">
+                        <FileText className="h-4 w-4 text-sky-600" />
+                      </div>
+                      <div className="flex-1 min-w-0 pr-1">
+                        <p className="font-medium text-[12px] text-slate-900 leading-tight mb-1 truncate">{test.title}</p>
+                        <div className="text-[10px] text-slate-700 font-medium flex items-center gap-1.5 whitespace-nowrap">
+                          <span>{test.questions} Qs</span>
+                          <Clock className="h-2.5 w-2.5 shrink-0 text-slate-600" />
+                          <span>{test.duration} mins</span>
+                        </div>
+                      </div>
                     </div>
-                    {/* Text — min-w-0 + flex-1 ensures it shrinks and truncates */}
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-xs leading-tight truncate">{test.title}</p>
-                      <p className="text-[11px] text-muted-foreground flex items-center gap-1.5 mt-0.5">
-                        <span>{test.questions} Qs</span>
-                        <span>·</span>
-                        <Clock className="h-2.5 w-2.5 shrink-0" />
-                        <span>{test.duration} mins</span>
-                      </p>
-                    </div>
-                    {/* Action — shrink-0 keeps button from squishing */}
-                    <div className="shrink-0">
+                    <div className="shrink-0 ml-2">
                       {isCompleted ? (
-                        <div className="flex items-center gap-1 text-primary font-semibold text-[11px] bg-primary/10 px-2 py-1 rounded-md">
+                        <div className="flex items-center gap-1 text-sky-600 font-semibold text-[10px] bg-sky-100 px-2 py-1 rounded border border-sky-200">
                           <CheckCircle className="h-3 w-3" />
                           Done
                         </div>
                       ) : (
-                        <Button
-                          size="sm"
-                          className="h-7 text-xs px-3"
-                          onClick={() => handleStartTest(test)}
-                        >
-                          <Play className="h-3 w-3 mr-1" />
+                        <Button size="sm" className="h-[28px] px-3 bg-[#0284c7] hover:bg-sky-700 text-white rounded text-[11px] font-semibold" onClick={() => handleStartTest(test)}>
+                          <Play className="h-2.5 w-2.5 mr-1" strokeWidth={3} />
                           Start
                         </Button>
                       )}
@@ -950,11 +939,9 @@ const StudentDashboard = () => {
                 );
               })}
             </div>
-            {allFreteTestsForDate.length > 5 && (
-              <Button variant="ghost" size="sm" className="w-full mt-2 text-xs text-muted-foreground hover:text-foreground" asChild>
-                <Link to="/student/daily-quizzes">View All Tests ({allFreteTestsForDate.length})</Link>
-              </Button>
-            )}
+            <Button variant="outline" className="w-full mt-4 text-[13px] font-semibold text-slate-800 border-slate-200 bg-slate-50 hover:bg-slate-100 rounded-xl py-5" asChild>
+              <Link to="/student/daily-quizzes">View All Tests</Link>
+            </Button>
           </Card>
 
 

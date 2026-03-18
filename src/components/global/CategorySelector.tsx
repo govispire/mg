@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Check, Plus, Settings, Filter, BookOpen, Package } from 'lucide-react';
+import { Check, Plus, Settings, Filter, BookOpen, Package, ChevronDown } from 'lucide-react';
 import { useExamCategoryContext } from '@/app/providers';
 import { useExamCatalog } from '@/hooks/useExamCatalog';
 
@@ -340,6 +340,7 @@ export const CategorySelector: React.FC = () => {
           <span className="truncate">
             {getDisplayText()}
           </span>
+          <ChevronDown className="h-3.5 w-3.5 text-muted-foreground ml-0.5 flex-shrink-0" />
         </Button>
       </DialogTrigger>
 
