@@ -25,7 +25,7 @@ export const UpcomingLiveTests = () => {
     ];
 
     return (
-        <Card className="p-4 bg-card border-2 border-orange-500 relative overflow-hidden shadow-lg shadow-orange-500/20">
+        <Card className="h-full flex flex-col p-4 bg-card border-2 border-orange-500 relative overflow-hidden shadow-lg shadow-orange-500/20">
             {/* Glow overlay */}
             <div className="absolute inset-0 bg-gradient-to-r from-orange-500/5 via-transparent to-orange-500/5 animate-pulse pointer-events-none" />
 
@@ -61,7 +61,7 @@ export const UpcomingLiveTests = () => {
             </div>
 
             {/* Test cards */}
-            <div className="space-y-3 relative z-10">
+            <div className="space-y-3 relative z-10 flex-1">
                 {upcomingTests.map((test) => (
                     <div key={test.id} className="bg-muted/30 rounded-lg p-3 border border-border/50 hover:border-orange-200 dark:hover:border-orange-800 transition-all cursor-pointer group">
                         <h4 className="font-medium text-sm mb-2 group-hover:text-primary transition-colors line-clamp-1">
@@ -89,24 +89,26 @@ export const UpcomingLiveTests = () => {
                 ))}
             </div>
 
-            {/* Info bar */}
-            <div className="mt-3 flex items-center gap-2 text-[10px] text-muted-foreground bg-blue-50/50 dark:bg-blue-950/30 p-2 rounded relative z-10">
-                <AlertCircle className="h-3 w-3 text-blue-500 shrink-0" />
-                <span>Live tests simulate real exam environment.</span>
-            </div>
+            <div className="mt-auto pt-3 flex flex-col gap-3 relative z-10">
+                {/* Info bar */}
+                <div className="flex items-center gap-2 text-[10px] text-muted-foreground bg-blue-50/50 dark:bg-blue-950/30 p-2 rounded">
+                    <AlertCircle className="h-3 w-3 text-blue-500 shrink-0" />
+                    <span>Live tests simulate real exam environment.</span>
+                </div>
 
-            {/* View All button */}
-            <Button
-                variant="ghost"
-                size="sm"
-                className="w-full mt-3 h-8 text-xs text-orange-600 hover:text-orange-700 hover:bg-orange-50 dark:hover:bg-orange-950 gap-1 relative z-10"
-                asChild
-            >
-                <Link to="/student/live-tests">
-                    View All Live Tests
-                    <ArrowRight className="h-3.5 w-3.5" />
-                </Link>
-            </Button>
+                {/* View All button */}
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full h-8 text-xs text-orange-600 hover:text-orange-700 hover:bg-orange-50 dark:hover:bg-orange-950 gap-1"
+                    asChild
+                >
+                    <Link to="/student/live-tests">
+                        View All Live Tests
+                        <ArrowRight className="h-3.5 w-3.5" />
+                    </Link>
+                </Button>
+            </div>
         </Card>
     );
 };
