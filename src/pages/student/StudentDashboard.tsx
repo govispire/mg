@@ -729,8 +729,7 @@ const StudentDashboard = () => {
             )}
           </Card>
 
-          {/* Next Best Action */}
-          <NextAction />
+
 
           {/* Recent Exam Notifications */}
           <RecentExamNotifications />

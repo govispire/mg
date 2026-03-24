@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { CourseNavigation } from '@/components/student/courses/CourseNavigation';
+import { CoursePreviewModal } from '@/components/student/courses/CoursePreviewModal';
 import { useCategoryFilteredCourses } from '@/hooks/useCategoryFilteredContent';
 import { courses as allCourses, courseCategories } from '@/data/courseData';
 import {
@@ -25,6 +26,10 @@ import {
   CheckCircle,
   Tag,
   Zap,
+  Eye,
+  GraduationCap,
+  BookmarkCheck,
+  ArrowRight,
 } from 'lucide-react';
 
 // ── Course type chip colors ──────────────────────────────────────────────────
@@ -36,7 +41,12 @@ const typeColor: Record<string, string> = {
 };
 
 // ── Single Course Card ───────────────────────────────────────────────────────
-const CourseCard: React.FC<{ course: (typeof allCourses)[0] }> = ({ course }) => {
+const CourseCard: React.FC<{
+  course: (typeof allCourses)[0];
+  onPreview: (course: (typeof allCourses)[0]) => void;
+  onEnroll: (courseId: string) => void;
+  isEnrolled?: boolean;
+}> = ({ course, onPreview, onEnroll, isEnrolled }) => {
   const navigate = useNavigate();
   const goToCourse = () => navigate(`/student/courses/${course.id}`);
   const discount = course.originalPrice
@@ -114,22 +124,34 @@ const CourseCard: React.FC<{ course: (typeof allCourses)[0] }> = ({ course }) =>
         </div>
 
         {/* Price + CTA */}
-        <div className="mt-auto pt-3 border-t flex items-center justify-between gap-2">
-          <div>
-            <div className="flex items-baseline gap-1.5">
-              <span className="text-lg font-bold text-gray-900">₹{course.price.toLocaleString()}</span>
-              {course.originalPrice && (
-                <span className="text-xs text-gray-400 line-through">₹{course.originalPrice.toLocaleString()}</span>
-              )}
-            </div>
-          </div>
-          <Button size="sm" className="gap-1.5 text-xs h-8 px-3 shrink-0" onClick={goToCourse}>
-            {course.progress ? (
-              <><Play className="h-3 w-3" /> Continue</>
-            ) : (
-              <><ShoppingCart className="h-3 w-3" /> Enroll Now</>
+        <div className="mt-auto pt-3 border-t space-y-2.5">
+          {/* Price */}
+          <div className="flex items-baseline gap-1.5">
+            <span className="text-lg font-bold text-gray-900">₹{course.price.toLocaleString()}</span>
+            {course.originalPrice && (
+              <span className="text-xs text-gray-400 line-through">₹{course.originalPrice.toLocaleString()}</span>
             )}
-          </Button>
+          </div>
+          {/* Buttons */}
+          {course.progress || isEnrolled ? (
+            <Button size="sm" className="w-full gap-1.5 text-xs h-8" onClick={goToCourse}>
+              <Play className="h-3 w-3" /> Continue
+            </Button>
+          ) : (
+            <div className="grid grid-cols-2 gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                className="w-full gap-1 text-xs h-8 border-primary text-primary hover:bg-primary/10"
+                onClick={(e) => { e.stopPropagation(); onPreview(course); }}
+              >
+                <Eye className="h-3 w-3" /> Preview
+              </Button>
+              <Button size="sm" className="w-full gap-1 text-xs h-8" onClick={(e) => { e.stopPropagation(); onEnroll(course.id); navigate(`/student/courses/${course.id}`); }}>
+                <ShoppingCart className="h-3 w-3" /> Enroll
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -155,9 +177,30 @@ const IncludesStrip = () => (
 
 // ── Main Component ───────────────────────────────────────────────────────────
 const StudentCourses = () => {
+  const navigate = useNavigate();
   const { selectedCategories } = useCategoryFilteredCourses();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedExam, setSelectedExam] = useState<string>('all');
+  const [previewCourse, setPreviewCourse] = useState<(typeof allCourses)[0] | null>(null);
+
+  // Enrollment tracking (localStorage)
+  const [enrolledIds, setEnrolledIds] = useState<string[]>(() => {
+    try {
+      return JSON.parse(localStorage.getItem('enrolledCourseIds') || '[]');
+    } catch { return []; }
+  });
+  useEffect(() => {
+    localStorage.setItem('enrolledCourseIds', JSON.stringify(enrolledIds));
+  }, [enrolledIds]);
+
+  const handleEnroll = (courseId: string) => {
+    setEnrolledIds(prev => prev.includes(courseId) ? prev : [...prev, courseId]);
+  };
+
+  // Enrolled courses (from data progress OR manually enrolled)
+  const enrolledCourses = useMemo(() =>
+    allCourses.filter(c => c.progress || enrolledIds.includes(c.id)),
+  [enrolledIds]);
 
   // Build unique exam options from data
   const examOptions = useMemo(() => {
@@ -173,9 +216,10 @@ const StudentCourses = () => {
     return cats.map(id => ({ id, label: catMap[id] || id.toUpperCase() }));
   }, []);
 
-  // Category-grouped + filtered courses
+  // Category-grouped + filtered courses (exclude already enrolled)
+  const enrolledSet = useMemo(() => new Set(enrolledCourses.map(c => c.id)), [enrolledCourses]);
   const groupedCourses = useMemo(() => {
-    let filtered = allCourses;
+    let filtered = allCourses.filter(c => !enrolledSet.has(c.id));
 
     // Category filter from global context
     if (selectedCategories && selectedCategories.length > 0) {
@@ -295,6 +339,56 @@ const StudentCourses = () => {
         )}
       </div>
 
+      {/* ── YOUR ENROLLED COURSES ── */}
+      {enrolledCourses.length > 0 && (
+        <section className="space-y-4">
+          <div className="flex items-center gap-3">
+            <GraduationCap className="h-5 w-5 text-primary" />
+            <h2 className="text-base font-bold text-gray-900">Your Enrolled Courses</h2>
+            <Badge className="text-xs bg-primary/10 text-primary border-primary/20">{enrolledCourses.length}</Badge>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {enrolledCourses.map(course => (
+              <div
+                key={course.id}
+                className="bg-white border-2 border-primary/20 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all group cursor-pointer"
+                onClick={() => navigate(`/student/courses/${course.id}`)}
+              >
+                <div className="relative overflow-hidden">
+                  <img src={course.thumbnail} alt={course.title} className="w-full h-36 object-cover group-hover:scale-105 transition-transform duration-300" />
+                  <div className="absolute top-2 left-2">
+                    <span className="bg-primary text-white text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+                      <BookmarkCheck className="h-2.5 w-2.5" /> Enrolled
+                    </span>
+                  </div>
+                  <div className="absolute bottom-0 left-0 right-0 bg-black/60 px-3 py-1.5">
+                    <div className="flex items-center justify-between text-white text-[10px] mb-1">
+                      <span>Your Progress</span>
+                      <span className="font-medium">{course.progress ?? 0}%</span>
+                    </div>
+                    <div className="h-1.5 bg-white/30 rounded-full">
+                      <div className="h-full bg-green-400 rounded-full" style={{ width: `${course.progress ?? 0}%` }} />
+                    </div>
+                  </div>
+                </div>
+                <div className="p-3 space-y-2">
+                  <h3 className="font-semibold text-sm leading-snug text-gray-800 line-clamp-2 group-hover:text-primary transition-colors">{course.title}</h3>
+                  <p className="text-[11px] text-gray-500 flex items-center gap-1"><Award className="h-3 w-3 text-primary" />{course.instructor}</p>
+                  <div className="flex items-center gap-2 text-[10px] text-gray-500">
+                    <span className="flex items-center gap-0.5"><Video className="h-3 w-3" />{course.videosCount} vids</span>
+                    <span className="flex items-center gap-0.5"><FileText className="h-3 w-3" />{course.testsCount} tests</span>
+                    <span className="flex items-center gap-0.5"><Clock className="h-3 w-3" />{course.duration}</span>
+                  </div>
+                  <Button size="sm" className="w-full gap-1.5 text-xs h-8">
+                    <Play className="h-3 w-3" /> Continue Learning <ArrowRight className="h-3 w-3 ml-auto" />
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* Empty State */}
       {totalResults === 0 && (
         <Card className="p-12 text-center border-dashed">
@@ -324,7 +418,13 @@ const StudentCourses = () => {
           {/* Course grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {catCourses.map(course => (
-              <CourseCard key={course.id} course={course} />
+              <CourseCard
+                key={course.id}
+                course={course}
+                onPreview={setPreviewCourse}
+                onEnroll={handleEnroll}
+                isEnrolled={enrolledIds.includes(course.id)}
+              />
             ))}
           </div>
         </section>
@@ -345,6 +445,13 @@ const StudentCourses = () => {
           ))}
         </div>
       )}
+
+      {/* Course Preview Modal */}
+      <CoursePreviewModal
+        course={previewCourse}
+        open={!!previewCourse}
+        onClose={() => setPreviewCourse(null)}
+      />
     </div>
   );
 };
