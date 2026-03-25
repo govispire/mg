@@ -30,6 +30,7 @@ import {
   GraduationCap,
   BookmarkCheck,
   ArrowRight,
+  Layers,
 } from 'lucide-react';
 
 // ── Course type chip colors ──────────────────────────────────────────────────
@@ -38,6 +39,28 @@ const typeColor: Record<string, string> = {
   Prelims: 'bg-blue-100 text-blue-700 border-blue-200',
   Mains: 'bg-purple-100 text-purple-700 border-purple-200',
   Interview: 'bg-orange-100 text-orange-700 border-orange-200',
+};
+
+// ── Subcategory color accents (cycles through palette) ─────────────────────
+const subcategoryColors: string[] = [
+  'border-l-blue-500',
+  'border-l-purple-500',
+  'border-l-emerald-500',
+  'border-l-orange-500',
+  'border-l-rose-500',
+  'border-l-teal-500',
+  'border-l-amber-500',
+  'border-l-indigo-500',
+];
+
+// ── Category display labels ───────────────────────────────────────────────
+const catLabels: Record<string, string> = {
+  banking: '🏦 Banking & Insurance Exams',
+  ssc: '📋 SSC Exams',
+  railway: '🚂 Railway Exams',
+  upsc: '🏛️ UPSC Exams',
+  tnpsc: '📜 TNPSC Exams',
+  defence: '🛡️ Defence Exams',
 };
 
 // ── Single Course Card ───────────────────────────────────────────────────────
@@ -60,7 +83,7 @@ const CourseCard: React.FC<{
         <img
           src={course.thumbnail}
           alt={course.title}
-          className="w-full h-40 object-cover group-hover:scale-105 transition-transform duration-300"
+          className="w-full h-36 object-cover group-hover:scale-105 transition-transform duration-300"
         />
         {/* Overlay badges */}
         <div className="absolute top-2 left-2 flex gap-1 flex-wrap">
@@ -94,7 +117,7 @@ const CourseCard: React.FC<{
       </div>
 
       {/* Content */}
-      <div className="p-4 flex flex-col flex-1 gap-3">
+      <div className="p-4 flex flex-col flex-1 gap-2.5">
         {/* Type + Rating */}
         <div className="flex items-center justify-between">
           <Badge variant="outline" className={`text-[10px] px-2 ${typeColor[course.type] || ''}`}>
@@ -216,19 +239,20 @@ const StudentCourses = () => {
     return cats.map(id => ({ id, label: catMap[id] || id.toUpperCase() }));
   }, []);
 
-  // Category-grouped + filtered courses (exclude already enrolled)
   const enrolledSet = useMemo(() => new Set(enrolledCourses.map(c => c.id)), [enrolledCourses]);
-  const groupedCourses = useMemo(() => {
+
+  // Build grouped structure: category → subcategory → courses[]
+  const groupedData = useMemo(() => {
     let filtered = allCourses.filter(c => !enrolledSet.has(c.id));
 
-    // Category filter from global context
+    // Global category context filter
     if (selectedCategories && selectedCategories.length > 0) {
       filtered = filtered.filter(c =>
         selectedCategories.some(cat => c.category === cat || c.category.includes(cat))
       );
     }
 
-    // Exam (category) dropdown filter
+    // Exam dropdown filter
     if (selectedExam !== 'all') {
       filtered = filtered.filter(c => c.category === selectedExam);
     }
@@ -239,28 +263,24 @@ const StudentCourses = () => {
       filtered = filtered.filter(c =>
         c.title.toLowerCase().includes(q) ||
         c.instructor.toLowerCase().includes(q) ||
-        c.category.toLowerCase().includes(q)
+        c.category.toLowerCase().includes(q) ||
+        c.subcategory.toLowerCase().includes(q)
       );
     }
 
-    // Group by category
-    const groups: Record<string, typeof allCourses> = {};
+    // Group: category → subcategory → courses
+    const catMap: Record<string, Record<string, typeof allCourses>> = {};
     for (const course of filtered) {
-      if (!groups[course.category]) groups[course.category] = [];
-      groups[course.category].push(course);
+      if (!catMap[course.category]) catMap[course.category] = {};
+      if (!catMap[course.category][course.subcategory]) catMap[course.category][course.subcategory] = [];
+      catMap[course.category][course.subcategory].push(course);
     }
-    return groups;
-  }, [allCourses, selectedExam, searchQuery, selectedCategories]);
+    return catMap;
+  }, [selectedExam, searchQuery, selectedCategories, enrolledSet]);
 
-  const totalResults = Object.values(groupedCourses).flat().length;
-  const catLabels: Record<string, string> = {
-    banking: '🏦 Banking Exams',
-    ssc: '📋 SSC Exams',
-    railway: '🚂 Railway Exams',
-    upsc: '🏛️ UPSC Exams',
-    tnpsc: '📜 TNPSC Exams',
-    defence: '🛡️ Defence Exams',
-  };
+  const totalResults = Object.values(groupedData)
+    .flatMap(subMap => Object.values(subMap))
+    .flat().length;
 
   return (
     <div className="p-4 md:p-6 space-y-6 pb-10 max-w-7xl mx-auto">
@@ -324,7 +344,7 @@ const StudentCourses = () => {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search courses, instructors..."
+            placeholder="Search courses, instructors, subcategories..."
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
             className="pl-10 h-10 bg-white"
@@ -401,32 +421,60 @@ const StudentCourses = () => {
         </Card>
       )}
 
-      {/* Courses by Category */}
-      {Object.entries(groupedCourses).map(([cat, catCourses]) => (
-        <section key={cat} className="space-y-4">
-          {/* Section header */}
-          <div className="flex items-center justify-between">
-            <h2 className="text-base font-bold flex items-center gap-2">
-              <span>{catLabels[cat] || cat.toUpperCase()}</span>
-              <Badge variant="secondary" className="text-xs">{catCourses.length} courses</Badge>
-            </h2>
-            <Button variant="ghost" size="sm" className="text-xs gap-1 text-primary">
-              View All <ChevronRight className="h-3.5 w-3.5" />
+      {/* ── COURSES BY CATEGORY → SUBCATEGORY ── */}
+      {Object.entries(groupedData).map(([cat, subMap]) => (
+        <section key={cat} className="space-y-5">
+          {/* Category Header */}
+          <div className="flex items-center justify-between border-b pb-3">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-primary/10 rounded-xl">
+                <Layers className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <h2 className="text-lg font-bold text-gray-900">{catLabels[cat] || cat.toUpperCase()}</h2>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  {Object.values(subMap).flat().length} courses · {Object.keys(subMap).length} categories
+                </p>
+              </div>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-xs gap-1 text-primary"
+              onClick={() => setSelectedExam(cat)}
+            >
+              Filter to this exam <ChevronRight className="h-3.5 w-3.5" />
             </Button>
           </div>
 
-          {/* Course grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {catCourses.map(course => (
-              <CourseCard
-                key={course.id}
-                course={course}
-                onPreview={setPreviewCourse}
-                onEnroll={handleEnroll}
-                isEnrolled={enrolledIds.includes(course.id)}
-              />
-            ))}
-          </div>
+          {/* Subcategory Sections */}
+          {Object.entries(subMap).map(([subcat, subcatCourses], subIdx) => (
+            <div
+              key={subcat}
+              className={`border-l-4 ${subcategoryColors[subIdx % subcategoryColors.length]} pl-4 space-y-3`}
+            >
+              {/* Subcategory Header */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <h3 className="text-sm font-bold text-gray-800">{subcat}</h3>
+                  <Badge variant="secondary" className="text-xs">{subcatCourses.length} courses</Badge>
+                </div>
+              </div>
+
+              {/* Course Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {subcatCourses.map(course => (
+                  <CourseCard
+                    key={course.id}
+                    course={course}
+                    onPreview={setPreviewCourse}
+                    onEnroll={handleEnroll}
+                    isEnrolled={enrolledIds.includes(course.id)}
+                  />
+                ))}
+              </div>
+            </div>
+          ))}
         </section>
       ))}
 

@@ -16,6 +16,8 @@ export interface Course {
   instructor: string;
   instructorId: string;
   category: string;
+  /** Sub-section header shown on the courses page (e.g. "Bank Foundation Courses") */
+  subcategory: string;
   thumbnail: string;
   price: number;
   originalPrice?: number;
@@ -120,12 +122,14 @@ export const instructors: Instructor[] = [
 ];
 
 export const courses: Course[] = [
+  // ── Banking: All-in-one Subscriptions ──────────────────────────────────────
   {
     id: 'banking-complete',
     title: 'Banking Complete Course 2025',
     instructor: 'Rajesh Kumar',
     instructorId: 'rajesh-kumar',
     category: 'banking',
+    subcategory: 'Bank Exam Subscriptions',
     thumbnail: 'https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=600&h=400&fit=crop',
     price: 2999,
     originalPrice: 4999,
@@ -141,12 +145,14 @@ export const courses: Course[] = [
     testsCount: 60,
     progress: 65
   },
+  // ── Banking: Foundation Courses ────────────────────────────────────────────
   {
     id: 'ibps-po-prelims',
     title: 'IBPS PO Prelims Course',
     instructor: 'Rajesh Kumar',
     instructorId: 'rajesh-kumar',
     category: 'banking',
+    subcategory: 'Bank Foundation Courses',
     thumbnail: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=600&h=400&fit=crop',
     price: 1499,
     rating: 4.7,
@@ -161,12 +167,14 @@ export const courses: Course[] = [
     testsCount: 30,
     progress: 32
   },
+  // ── Banking: SBI Clerk Courses ─────────────────────────────────────────────
   {
     id: 'sbi-clerk-complete',
     title: 'SBI Clerk Complete Course',
     instructor: 'Rajesh Kumar',
     instructorId: 'rajesh-kumar',
     category: 'banking',
+    subcategory: 'SBI Clerk Courses',
     thumbnail: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=600&h=400&fit=crop',
     price: 2499,
     originalPrice: 3999,
@@ -182,12 +190,14 @@ export const courses: Course[] = [
     testsCount: 45,
     progress: 12
   },
+  // ── SSC: CGL & CHSL Foundation ─────────────────────────────────────────────
   {
     id: 'ssc-complete',
     title: 'SSC CGL Complete Course',
     instructor: 'Priya Singh',
     instructorId: 'priya-singh',
     category: 'ssc',
+    subcategory: 'SSC Foundation Courses',
     thumbnail: 'https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?w=600&h=400&fit=crop',
     price: 2799,
     rating: 4.7,
@@ -202,12 +212,14 @@ export const courses: Course[] = [
     testsCount: 50,
     progress: 85
   },
+  // ── Railway: Foundation ────────────────────────────────────────────────────
   {
     id: 'railway-complete',
     title: 'Railway NTPC Complete Course',
     instructor: 'Amit Sharma',
     instructorId: 'amit-sharma',
     category: 'railway',
+    subcategory: 'Railway Foundation Courses',
     thumbnail: 'https://images.unsplash.com/photo-1500673922987-e212871fec22?w=600&h=400&fit=crop',
     price: 2299,
     rating: 4.9,
@@ -222,12 +234,14 @@ export const courses: Course[] = [
     testsCount: 40,
     progress: 0
   },
+  // ── UPSC: Foundation ───────────────────────────────────────────────────────
   {
     id: 'upsc-prelims',
     title: 'UPSC Prelims Foundation',
     instructor: 'Dr. Meera Joshi',
     instructorId: 'meera-joshi',
     category: 'upsc',
+    subcategory: 'UPSC Foundation',
     thumbnail: 'https://images.unsplash.com/photo-1501854140801-50d01698950b?w=600&h=400&fit=crop',
     price: 3999,
     rating: 4.8,
@@ -242,29 +256,34 @@ export const courses: Course[] = [
     testsCount: 80,
     progress: 0
   },
-  // Dummy courses for all banking exams (temporary)
-  { id: 'sbi-po', title: 'SBI PO Complete Course 2025', instructor: 'Rajesh Kumar', instructorId: 'rajesh-kumar', category: 'banking', thumbnail: 'https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=600&h=400&fit=crop', price: 1999, originalPrice: 3999, rating: 4.5, studentsCount: 5000, duration: '3 Months', isPopular: true, isTrending: true, type: 'Complete', subjects: ['english', 'quantitative', 'reasoning', 'general-awareness', 'computer'], chaptersCount: 30, videosCount: 120, testsCount: 40, progress: 0 },
-  { id: 'sbi-clerk', title: 'SBI Clerk Complete Course 2025', instructor: 'Priya Singh', instructorId: 'priya-singh', category: 'banking', thumbnail: 'https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=600&h=400&fit=crop', price: 1999, originalPrice: 3999, rating: 4.6, studentsCount: 4800, duration: '3 Months', isPopular: true, isTrending: false, type: 'Complete', subjects: ['english', 'quantitative', 'reasoning', 'general-awareness', 'computer'], chaptersCount: 30, videosCount: 120, testsCount: 40, progress: 0 },
-  { id: 'ibps-rrb-officer', title: 'IBPS RRB Officer Course 2025', instructor: 'Amit Sharma', instructorId: 'amit-sharma', category: 'banking', thumbnail: 'https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=600&h=400&fit=crop', price: 1999, originalPrice: 3999, rating: 4.7, studentsCount: 4700, duration: '3 Months', isPopular: true, isTrending: false, type: 'Complete', subjects: ['english', 'quantitative', 'reasoning', 'general-awareness', 'computer'], chaptersCount: 30, videosCount: 120, testsCount: 40, progress: 0 },
-  { id: 'ibps-rrb-assistant', title: 'IBPS RRB Assistant Course 2025', instructor: 'Rajesh Kumar', instructorId: 'rajesh-kumar', category: 'banking', thumbnail: 'https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=600&h=400&fit=crop', price: 1999, originalPrice: 3999, rating: 4.5, studentsCount: 4600, duration: '3 Months', isPopular: true, isTrending: false, type: 'Complete', subjects: ['english', 'quantitative', 'reasoning', 'general-awareness', 'computer'], chaptersCount: 30, videosCount: 120, testsCount: 40, progress: 0 },
-  { id: 'ibps-po', title: 'IBPS PO Complete Course 2025', instructor: 'Rajesh Kumar', instructorId: 'rajesh-kumar', category: 'banking', thumbnail: 'https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=600&h=400&fit=crop', price: 1999, originalPrice: 3999, rating: 4.5, studentsCount: 4500, duration: '3 Months', isPopular: true, isTrending: true, type: 'Complete', subjects: ['english', 'quantitative', 'reasoning', 'general-awareness', 'computer'], chaptersCount: 30, videosCount: 120, testsCount: 40, progress: 0 },
-  { id: 'ibps-clerk', title: 'IBPS Clerk Complete Course 2025', instructor: 'Priya Singh', instructorId: 'priya-singh', category: 'banking', thumbnail: 'https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=600&h=400&fit=crop', price: 1999, originalPrice: 3999, rating: 4.6, studentsCount: 4400, duration: '3 Months', isPopular: true, isTrending: false, type: 'Complete', subjects: ['english', 'quantitative', 'reasoning', 'general-awareness', 'computer'], chaptersCount: 30, videosCount: 120, testsCount: 40, progress: 0 },
-  { id: 'tmb', title: 'Tamilnad Mercantile Bank Course 2025', instructor: 'Rajesh Kumar', instructorId: 'rajesh-kumar', category: 'banking', thumbnail: 'https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=600&h=400&fit=crop', price: 1999, originalPrice: 3999, rating: 4.5, studentsCount: 4300, duration: '3 Months', isPopular: false, isTrending: false, type: 'Complete', subjects: ['english', 'quantitative', 'reasoning', 'general-awareness', 'computer'], chaptersCount: 30, videosCount: 120, testsCount: 40, progress: 0 },
-  { id: 'uco-bank-lbo', title: 'UCO Bank LBO Course 2025', instructor: 'Amit Sharma', instructorId: 'amit-sharma', category: 'banking', thumbnail: 'https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=600&h=400&fit=crop', price: 1999, originalPrice: 3999, rating: 4.7, studentsCount: 4200, duration: '3 Months', isPopular: false, isTrending: false, type: 'Complete', subjects: ['english', 'quantitative', 'reasoning', 'general-awareness', 'computer'], chaptersCount: 30, videosCount: 120, testsCount: 40, progress: 0 },
-  { id: 'central-bank-pgdbf', title: 'Central Bank of India PGDBF Course 2025', instructor: 'Rajesh Kumar', instructorId: 'rajesh-kumar', category: 'banking', thumbnail: 'https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=600&h=400&fit=crop', price: 1999, originalPrice: 3999, rating: 4.5, studentsCount: 4100, duration: '3 Months', isPopular: false, isTrending: false, type: 'Complete', subjects: ['english', 'quantitative', 'reasoning', 'general-awareness', 'computer'], chaptersCount: 30, videosCount: 120, testsCount: 40, progress: 0 },
-  { id: 'idbi-jam-pgdbf', title: 'IDBI JAM PGDBF Course 2025', instructor: 'Rajesh Kumar', instructorId: 'rajesh-kumar', category: 'banking', thumbnail: 'https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=600&h=400&fit=crop', price: 1999, originalPrice: 3999, rating: 4.5, studentsCount: 4000, duration: '3 Months', isPopular: false, isTrending: false, type: 'Complete', subjects: ['english', 'quantitative', 'reasoning', 'general-awareness', 'computer'], chaptersCount: 30, videosCount: 120, testsCount: 40, progress: 0 },
-  { id: 'niacl-assistant', title: 'NIACL Assistant Course 2025', instructor: 'Priya Singh', instructorId: 'priya-singh', category: 'banking', thumbnail: 'https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=600&h=400&fit=crop', price: 1999, originalPrice: 3999, rating: 4.6, studentsCount: 3900, duration: '3 Months', isPopular: false, isTrending: false, type: 'Complete', subjects: ['english', 'quantitative', 'reasoning', 'general-awareness', 'computer'], chaptersCount: 30, videosCount: 120, testsCount: 40, progress: 0 },
-  { id: 'nicl-assistant', title: 'NICL Assistant Course 2025', instructor: 'Rajesh Kumar', instructorId: 'rajesh-kumar', category: 'banking', thumbnail: 'https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=600&h=400&fit=crop', price: 1999, originalPrice: 3999, rating: 4.5, studentsCount: 3800, duration: '3 Months', isPopular: false, isTrending: false, type: 'Complete', subjects: ['english', 'quantitative', 'reasoning', 'general-awareness', 'computer'], chaptersCount: 30, videosCount: 120, testsCount: 40, progress: 0 },
-  // SSC Courses
-  { id: 'ssc-cgl', title: 'SSC CGL Complete Course 2025', instructor: 'Priya Singh', instructorId: 'priya-singh', category: 'ssc', thumbnail: 'https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?w=600&h=400&fit=crop', price: 2199, originalPrice: 3999, rating: 4.7, studentsCount: 8500, duration: '4 Months', isPopular: true, isTrending: true, type: 'Complete', subjects: ['english', 'quantitative', 'reasoning', 'general-awareness'], chaptersCount: 35, videosCount: 140, testsCount: 45, progress: 0 },
-  { id: 'ssc-chsl', title: 'SSC CHSL Complete Course 2025', instructor: 'Priya Singh', instructorId: 'priya-singh', category: 'ssc', thumbnail: 'https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?w=600&h=400&fit=crop', price: 1999, originalPrice: 3499, rating: 4.6, studentsCount: 7200, duration: '3 Months', isPopular: true, isTrending: false, type: 'Complete', subjects: ['english', 'quantitative', 'reasoning', 'general-awareness'], chaptersCount: 30, videosCount: 120, testsCount: 40, progress: 0 },
-  { id: 'ssc-mts', title: 'SSC MTS Complete Course 2025', instructor: 'Priya Singh', instructorId: 'priya-singh', category: 'ssc', thumbnail: 'https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?w=600&h=400&fit=crop', price: 1799, originalPrice: 2999, rating: 4.5, studentsCount: 6800, duration: '3 Months', isPopular: false, isTrending: false, type: 'Complete', subjects: ['english', 'quantitative', 'reasoning', 'general-awareness'], chaptersCount: 28, videosCount: 110, testsCount: 35, progress: 0 },
-  { id: 'ssc-gd', title: 'SSC GD Complete Course 2025', instructor: 'Amit Sharma', instructorId: 'amit-sharma', category: 'ssc', thumbnail: 'https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?w=600&h=400&fit=crop', price: 1799, originalPrice: 2999, rating: 4.6, studentsCount: 9200, duration: '3 Months', isPopular: true, isTrending: false, type: 'Complete', subjects: ['english', 'quantitative', 'reasoning', 'general-awareness'], chaptersCount: 28, videosCount: 110, testsCount: 35, progress: 0 },
-  // Railway Courses  
-  { id: 'rrb-ntpc', title: 'RRB NTPC Complete Course 2025', instructor: 'Amit Sharma', instructorId: 'amit-sharma', category: 'railway', thumbnail: 'https://images.unsplash.com/photo-1500673922987-e212871fec22?w=600&h=400&fit=crop', price: 2199, originalPrice: 3999, rating: 4.8, studentsCount: 10500, duration: '4 Months', isPopular: true, isTrending: true, type: 'Complete', subjects: ['english', 'quantitative', 'reasoning', 'general-awareness'], chaptersCount: 35, videosCount: 140, testsCount: 45, progress: 0 },
-  { id: 'rrb-group-d', title: 'RRB Group D Complete Course 2025', instructor: 'Amit Sharma', instructorId: 'amit-sharma', category: 'railway', thumbnail: 'https://images.unsplash.com/photo-1500673922987-e212871fec22?w=600&h=400&fit=crop', price: 1999, originalPrice: 3499, rating: 4.7, studentsCount: 12000, duration: '3 Months', isPopular: true, isTrending: true, type: 'Complete', subjects: ['english', 'quantitative', 'reasoning', 'general-awareness'], chaptersCount: 32, videosCount: 128, testsCount: 40, progress: 0 },
-  { id: 'rrb-alp', title: 'RRB ALP Complete Course 2025', instructor: 'Amit Sharma', instructorId: 'amit-sharma', category: 'railway', thumbnail: 'https://images.unsplash.com/photo-1500673922987-e212871fec22?w=600&h=400&fit=crop', price: 2199, originalPrice: 3999, rating: 4.7, studentsCount: 7800, duration: '4 Months', isPopular: false, isTrending: false, type: 'Complete', subjects: ['english', 'quantitative', 'reasoning', 'general-awareness'], chaptersCount: 35, videosCount: 140, testsCount: 45, progress: 0 },
-  { id: 'rrb-je', title: 'RRB JE Complete Course 2025', instructor: 'Amit Sharma', instructorId: 'amit-sharma', category: 'railway', thumbnail: 'https://images.unsplash.com/photo-1500673922987-e212871fec22?w=600&h=400&fit=crop', price: 2499, originalPrice: 4499, rating: 4.8, studentsCount: 6500, duration: '5 Months', isPopular: false, isTrending: false, type: 'Complete', subjects: ['english', 'quantitative', 'reasoning', 'general-awareness'], chaptersCount: 40, videosCount: 160, testsCount: 50, progress: 0 },
+  // ── Banking: SBI PO ───────────────────────────────────────────────────────
+  { id: 'sbi-po', title: 'SBI PO Complete Course 2025', instructor: 'Rajesh Kumar', instructorId: 'rajesh-kumar', category: 'banking', subcategory: 'SBI PO Courses', thumbnail: 'https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=600&h=400&fit=crop', price: 1999, originalPrice: 3999, rating: 4.5, studentsCount: 5000, duration: '3 Months', isPopular: true, isTrending: true, type: 'Complete', subjects: ['english', 'quantitative', 'reasoning', 'general-awareness', 'computer'], chaptersCount: 30, videosCount: 120, testsCount: 40, progress: 0 },
+  // ── Banking: SBI Clerk ────────────────────────────────────────────────────
+  { id: 'sbi-clerk', title: 'SBI Clerk Complete Course 2025', instructor: 'Priya Singh', instructorId: 'priya-singh', category: 'banking', subcategory: 'SBI Clerk Courses', thumbnail: 'https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=600&h=400&fit=crop', price: 1999, originalPrice: 3999, rating: 4.6, studentsCount: 4800, duration: '3 Months', isPopular: true, isTrending: false, type: 'Complete', subjects: ['english', 'quantitative', 'reasoning', 'general-awareness', 'computer'], chaptersCount: 30, videosCount: 120, testsCount: 40, progress: 0 },
+  // ── Banking: IBPS RRB ─────────────────────────────────────────────────────
+  { id: 'ibps-rrb-officer', title: 'IBPS RRB Officer Course 2025', instructor: 'Amit Sharma', instructorId: 'amit-sharma', category: 'banking', subcategory: 'IBPS RRB Courses', thumbnail: 'https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=600&h=400&fit=crop', price: 1999, originalPrice: 3999, rating: 4.7, studentsCount: 4700, duration: '3 Months', isPopular: true, isTrending: false, type: 'Complete', subjects: ['english', 'quantitative', 'reasoning', 'general-awareness', 'computer'], chaptersCount: 30, videosCount: 120, testsCount: 40, progress: 0 },
+  { id: 'ibps-rrb-assistant', title: 'IBPS RRB Assistant Course 2025', instructor: 'Rajesh Kumar', instructorId: 'rajesh-kumar', category: 'banking', subcategory: 'IBPS RRB Courses', thumbnail: 'https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=600&h=400&fit=crop', price: 1999, originalPrice: 3999, rating: 4.5, studentsCount: 4600, duration: '3 Months', isPopular: true, isTrending: false, type: 'Complete', subjects: ['english', 'quantitative', 'reasoning', 'general-awareness', 'computer'], chaptersCount: 30, videosCount: 120, testsCount: 40, progress: 0 },
+  // ── Banking: IBPS PO & Clerk ──────────────────────────────────────────────
+  { id: 'ibps-po', title: 'IBPS PO Complete Course 2025', instructor: 'Rajesh Kumar', instructorId: 'rajesh-kumar', category: 'banking', subcategory: 'Bank Foundation Courses', thumbnail: 'https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=600&h=400&fit=crop', price: 1999, originalPrice: 3999, rating: 4.5, studentsCount: 4500, duration: '3 Months', isPopular: true, isTrending: true, type: 'Complete', subjects: ['english', 'quantitative', 'reasoning', 'general-awareness', 'computer'], chaptersCount: 30, videosCount: 120, testsCount: 40, progress: 0 },
+  { id: 'ibps-clerk', title: 'IBPS Clerk Complete Course 2025', instructor: 'Priya Singh', instructorId: 'priya-singh', category: 'banking', subcategory: 'Bank Foundation Courses', thumbnail: 'https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=600&h=400&fit=crop', price: 1999, originalPrice: 3999, rating: 4.6, studentsCount: 4400, duration: '3 Months', isPopular: true, isTrending: false, type: 'Complete', subjects: ['english', 'quantitative', 'reasoning', 'general-awareness', 'computer'], chaptersCount: 30, videosCount: 120, testsCount: 40, progress: 0 },
+  // ── Banking: Other Banks ──────────────────────────────────────────────────
+  { id: 'tmb', title: 'Tamilnad Mercantile Bank Course 2025', instructor: 'Rajesh Kumar', instructorId: 'rajesh-kumar', category: 'banking', subcategory: 'Other Bank Courses', thumbnail: 'https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=600&h=400&fit=crop', price: 1999, originalPrice: 3999, rating: 4.5, studentsCount: 4300, duration: '3 Months', isPopular: false, isTrending: false, type: 'Complete', subjects: ['english', 'quantitative', 'reasoning', 'general-awareness', 'computer'], chaptersCount: 30, videosCount: 120, testsCount: 40, progress: 0 },
+  { id: 'uco-bank-lbo', title: 'UCO Bank LBO Course 2025', instructor: 'Amit Sharma', instructorId: 'amit-sharma', category: 'banking', subcategory: 'Other Bank Courses', thumbnail: 'https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=600&h=400&fit=crop', price: 1999, originalPrice: 3999, rating: 4.7, studentsCount: 4200, duration: '3 Months', isPopular: false, isTrending: false, type: 'Complete', subjects: ['english', 'quantitative', 'reasoning', 'general-awareness', 'computer'], chaptersCount: 30, videosCount: 120, testsCount: 40, progress: 0 },
+  { id: 'central-bank-pgdbf', title: 'Central Bank of India PGDBF Course 2025', instructor: 'Rajesh Kumar', instructorId: 'rajesh-kumar', category: 'banking', subcategory: 'Other Bank Courses', thumbnail: 'https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=600&h=400&fit=crop', price: 1999, originalPrice: 3999, rating: 4.5, studentsCount: 4100, duration: '3 Months', isPopular: false, isTrending: false, type: 'Complete', subjects: ['english', 'quantitative', 'reasoning', 'general-awareness', 'computer'], chaptersCount: 30, videosCount: 120, testsCount: 40, progress: 0 },
+  { id: 'idbi-jam-pgdbf', title: 'IDBI JAM PGDBF Course 2025', instructor: 'Rajesh Kumar', instructorId: 'rajesh-kumar', category: 'banking', subcategory: 'Other Bank Courses', thumbnail: 'https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=600&h=400&fit=crop', price: 1999, originalPrice: 3999, rating: 4.5, studentsCount: 4000, duration: '3 Months', isPopular: false, isTrending: false, type: 'Complete', subjects: ['english', 'quantitative', 'reasoning', 'general-awareness', 'computer'], chaptersCount: 30, videosCount: 120, testsCount: 40, progress: 0 },
+  // ── Banking: Insurance ────────────────────────────────────────────────────
+  { id: 'niacl-assistant', title: 'NIACL Assistant Course 2025', instructor: 'Priya Singh', instructorId: 'priya-singh', category: 'banking', subcategory: 'Insurance Courses', thumbnail: 'https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=600&h=400&fit=crop', price: 1999, originalPrice: 3999, rating: 4.6, studentsCount: 3900, duration: '3 Months', isPopular: false, isTrending: false, type: 'Complete', subjects: ['english', 'quantitative', 'reasoning', 'general-awareness', 'computer'], chaptersCount: 30, videosCount: 120, testsCount: 40, progress: 0 },
+  { id: 'nicl-assistant', title: 'NICL Assistant Course 2025', instructor: 'Rajesh Kumar', instructorId: 'rajesh-kumar', category: 'banking', subcategory: 'Insurance Courses', thumbnail: 'https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=600&h=400&fit=crop', price: 1999, originalPrice: 3999, rating: 4.5, studentsCount: 3800, duration: '3 Months', isPopular: false, isTrending: false, type: 'Complete', subjects: ['english', 'quantitative', 'reasoning', 'general-awareness', 'computer'], chaptersCount: 30, videosCount: 120, testsCount: 40, progress: 0 },
+  // ── SSC Courses ───────────────────────────────────────────────────────────
+  { id: 'ssc-cgl', title: 'SSC CGL Complete Course 2025', instructor: 'Priya Singh', instructorId: 'priya-singh', category: 'ssc', subcategory: 'SSC Foundation Courses', thumbnail: 'https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?w=600&h=400&fit=crop', price: 2199, originalPrice: 3999, rating: 4.7, studentsCount: 8500, duration: '4 Months', isPopular: true, isTrending: true, type: 'Complete', subjects: ['english', 'quantitative', 'reasoning', 'general-awareness'], chaptersCount: 35, videosCount: 140, testsCount: 45, progress: 0 },
+  { id: 'ssc-chsl', title: 'SSC CHSL Complete Course 2025', instructor: 'Priya Singh', instructorId: 'priya-singh', category: 'ssc', subcategory: 'SSC Foundation Courses', thumbnail: 'https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?w=600&h=400&fit=crop', price: 1999, originalPrice: 3499, rating: 4.6, studentsCount: 7200, duration: '3 Months', isPopular: true, isTrending: false, type: 'Complete', subjects: ['english', 'quantitative', 'reasoning', 'general-awareness'], chaptersCount: 30, videosCount: 120, testsCount: 40, progress: 0 },
+  { id: 'ssc-mts', title: 'SSC MTS Complete Course 2025', instructor: 'Priya Singh', instructorId: 'priya-singh', category: 'ssc', subcategory: 'SSC Other Courses', thumbnail: 'https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?w=600&h=400&fit=crop', price: 1799, originalPrice: 2999, rating: 4.5, studentsCount: 6800, duration: '3 Months', isPopular: false, isTrending: false, type: 'Complete', subjects: ['english', 'quantitative', 'reasoning', 'general-awareness'], chaptersCount: 28, videosCount: 110, testsCount: 35, progress: 0 },
+  { id: 'ssc-gd', title: 'SSC GD Complete Course 2025', instructor: 'Amit Sharma', instructorId: 'amit-sharma', category: 'ssc', subcategory: 'SSC Other Courses', thumbnail: 'https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?w=600&h=400&fit=crop', price: 1799, originalPrice: 2999, rating: 4.6, studentsCount: 9200, duration: '3 Months', isPopular: true, isTrending: false, type: 'Complete', subjects: ['english', 'quantitative', 'reasoning', 'general-awareness'], chaptersCount: 28, videosCount: 110, testsCount: 35, progress: 0 },
+  // ── Railway Courses ───────────────────────────────────────────────────────
+  { id: 'rrb-ntpc', title: 'RRB NTPC Complete Course 2025', instructor: 'Amit Sharma', instructorId: 'amit-sharma', category: 'railway', subcategory: 'Railway Foundation Courses', thumbnail: 'https://images.unsplash.com/photo-1500673922987-e212871fec22?w=600&h=400&fit=crop', price: 2199, originalPrice: 3999, rating: 4.8, studentsCount: 10500, duration: '4 Months', isPopular: true, isTrending: true, type: 'Complete', subjects: ['english', 'quantitative', 'reasoning', 'general-awareness'], chaptersCount: 35, videosCount: 140, testsCount: 45, progress: 0 },
+  { id: 'rrb-group-d', title: 'RRB Group D Complete Course 2025', instructor: 'Amit Sharma', instructorId: 'amit-sharma', category: 'railway', subcategory: 'Railway Foundation Courses', thumbnail: 'https://images.unsplash.com/photo-1500673922987-e212871fec22?w=600&h=400&fit=crop', price: 1999, originalPrice: 3499, rating: 4.7, studentsCount: 12000, duration: '3 Months', isPopular: true, isTrending: true, type: 'Complete', subjects: ['english', 'quantitative', 'reasoning', 'general-awareness'], chaptersCount: 32, videosCount: 128, testsCount: 40, progress: 0 },
+  { id: 'rrb-alp', title: 'RRB ALP Complete Course 2025', instructor: 'Amit Sharma', instructorId: 'amit-sharma', category: 'railway', subcategory: 'Railway Technical Courses', thumbnail: 'https://images.unsplash.com/photo-1500673922987-e212871fec22?w=600&h=400&fit=crop', price: 2199, originalPrice: 3999, rating: 4.7, studentsCount: 7800, duration: '4 Months', isPopular: false, isTrending: false, type: 'Complete', subjects: ['english', 'quantitative', 'reasoning', 'general-awareness'], chaptersCount: 35, videosCount: 140, testsCount: 45, progress: 0 },
+  { id: 'rrb-je', title: 'RRB JE Complete Course 2025', instructor: 'Amit Sharma', instructorId: 'amit-sharma', category: 'railway', subcategory: 'Railway Technical Courses', thumbnail: 'https://images.unsplash.com/photo-1500673922987-e212871fec22?w=600&h=400&fit=crop', price: 2499, originalPrice: 4499, rating: 4.8, studentsCount: 6500, duration: '5 Months', isPopular: false, isTrending: false, type: 'Complete', subjects: ['english', 'quantitative', 'reasoning', 'general-awareness'], chaptersCount: 40, videosCount: 160, testsCount: 50, progress: 0 },
 ];
 
 export const subjects: { [key: string]: Subject } = {

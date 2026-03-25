@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/app/providers';
@@ -43,6 +43,8 @@ import WordOfTheDayCard from '@/components/student/VocabularyWidget';
 import TargetExamCard from '@/components/student/dashboard/TargetExamCard';
 import RecentExamNotifications from '@/components/student/dashboard/RecentExamNotifications';
 import RecentMockTestPerformance from '@/components/student/dashboard/RecentMockTestPerformance';
+import { courses as allCourses } from '@/data/courseData';
+import { Video, Star, BookOpen as BookOpenIcon } from 'lucide-react';
 
 interface UserProfile {
   username: string;
@@ -59,6 +61,7 @@ interface UserProfile {
 
 const StudentDashboard = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [attendanceView, setAttendanceView] = useState<'week' | 'month'>('week');
   const [currentNewsIndex, setCurrentNewsIndex] = useState(0);
   const [selectedNews, setSelectedNews] = useState<any>(null);
@@ -399,8 +402,85 @@ const StudentDashboard = () => {
             onCardClick={setStatDialogType}
           />
 
-
-
+          {/* ── FEATURED COURSES ── */}
+          {(() => {
+            const featuredCourses = allCourses.filter(c => c.isPopular).slice(0, 4);
+            const enrolledIds: string[] = (() => {
+              try { return JSON.parse(localStorage.getItem('enrolledCourseIds') || '[]'); } catch { return []; }
+            })();
+            return (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-1 h-5 bg-primary rounded-full" />
+                    <h3 className="font-semibold text-base text-slate-900">Featured Courses</h3>
+                  </div>
+                  <Link to="/student/courses" className="text-xs text-primary font-semibold flex items-center gap-1 hover:underline">
+                    View All <ChevronRight className="h-3.5 w-3.5" />
+                  </Link>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
+                  {featuredCourses.map(course => {
+                    const isEnrolled = course.progress || enrolledIds.includes(course.id);
+                    const discount = course.originalPrice
+                      ? Math.round(((course.originalPrice - course.price) / course.originalPrice) * 100)
+                      : 0;
+                    return (
+                      <div
+                        key={course.id}
+                        className="bg-white border border-border/60 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all group cursor-pointer flex flex-col"
+                        onClick={() => navigate(`/student/courses/${course.id}`)}
+                      >
+                        {/* Thumbnail */}
+                        <div className="relative overflow-hidden">
+                          <img
+                            src={course.thumbnail}
+                            alt={course.title}
+                            className="w-full h-28 object-cover group-hover:scale-105 transition-transform duration-300"
+                          />
+                          {discount > 0 && (
+                            <span className="absolute top-2 right-2 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                              {discount}% OFF
+                            </span>
+                          )}
+                          {course.isTrending && (
+                            <span className="absolute top-2 left-2 bg-orange-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
+                              🔥 Trending
+                            </span>
+                          )}
+                        </div>
+                        {/* Info */}
+                        <div className="p-3 flex flex-col flex-1 gap-1.5">
+                          <h4 className="font-semibold text-xs leading-snug text-slate-800 group-hover:text-primary transition-colors line-clamp-2">{course.title}</h4>
+                          <div className="flex items-center gap-2 text-[10px] text-slate-500">
+                            <span className="flex items-center gap-0.5 text-amber-500 font-semibold">
+                              <Star className="h-2.5 w-2.5 fill-amber-400" />{course.rating}
+                            </span>
+                            <span className="flex items-center gap-0.5"><Video className="h-2.5 w-2.5" />{course.videosCount} videos</span>
+                            <span>{course.duration}</span>
+                          </div>
+                          <div className="mt-auto pt-2 border-t flex items-center justify-between gap-2">
+                            <div className="flex items-baseline gap-1">
+                              <span className="text-sm font-bold text-slate-900">₹{course.price.toLocaleString()}</span>
+                              {course.originalPrice && (
+                                <span className="text-[10px] text-slate-400 line-through">₹{course.originalPrice.toLocaleString()}</span>
+                              )}
+                            </div>
+                            <button
+                              className="shrink-0 text-[10px] font-semibold bg-primary text-white px-2 py-1 rounded-lg hover:bg-primary/90 transition-colors"
+                              onClick={(e) => { e.stopPropagation(); navigate(`/student/courses/${course.id}`); }}
+                            >
+                              {isEnrolled ? 'Continue' : 'Enroll'}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })()}
 
           {/* Performance Section */}
           <div className="flex flex-col xl:flex-row gap-4">

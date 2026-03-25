@@ -85,7 +85,7 @@ export const CoursePreviewModal: React.FC<CoursePreviewModalProps> = ({ course, 
         {/* Header */}
         <div className="relative flex-shrink-0">
           {/* Video / Thumbnail Banner */}
-          <div className="relative w-full aspect-video bg-black overflow-hidden">
+          <div className="relative w-full bg-black overflow-hidden" style={{ maxHeight: '220px', minHeight: '160px', height: '28vw' }}>
             {!videoPlaying ? (
               <>
                 <img
