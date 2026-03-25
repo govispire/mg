@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -58,6 +58,233 @@ interface UserProfile {
   state: string;
   avatar?: string;
 }
+
+// ── Featured Courses (Udemy-style) ─────────────────────────────────────────
+const FeaturedCoursesSection = ({ navigate }: { navigate: (path: string) => void }) => {
+  const [fcTab, setFcTab] = useState<string>('banking');
+  const [hoveredCourse, setHoveredCourse] = useState<string | null>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll: advances every 3s, pauses on hover, loops back to start
+  React.useEffect(() => {
+    if (hoveredCourse) return; // pause when a card is hovered
+    const interval = setInterval(() => {
+      const el = scrollRef.current;
+      if (!el) return;
+      const atEnd = el.scrollLeft + el.clientWidth >= el.scrollWidth - 4;
+      if (atEnd) {
+        el.scrollTo({ left: 0, behavior: 'smooth' });
+      } else {
+        el.scrollBy({ left: 220, behavior: 'smooth' });
+      }
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [hoveredCourse, fcTab]);
+
+  const enrolledIds: string[] = (() => {
+    try { return JSON.parse(localStorage.getItem('enrolledCourseIds') || '[]'); } catch { return []; }
+  })();
+
+  const fcTabs = [
+    { id: 'banking', label: 'Banking' },
+    { id: 'ssc', label: 'SSC' },
+    { id: 'railway', label: 'Railway' },
+    { id: 'upsc', label: 'UPSC' },
+    { id: 'all', label: 'All Courses' },
+  ];
+
+  const filteredCourses = fcTab === 'all'
+    ? allCourses
+    : allCourses.filter(c => c.category === fcTab);
+
+  const getBadge = (course: typeof allCourses[0]) => {
+    if (course.isPopular && course.isTrending) return { label: 'Highest Rated', color: 'bg-amber-400 text-black' };
+    if (course.isPopular) return { label: 'Bestseller', color: 'bg-amber-400 text-black' };
+    if (course.isTrending) return { label: 'Trending', color: 'bg-orange-500 text-white' };
+    return null;
+  };
+
+  const scroll = (dir: 'left' | 'right') => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollBy({ left: dir === 'left' ? -300 : 300, behavior: 'smooth' });
+    }
+  };
+
+  const getHighlights = (course: typeof allCourses[0]) => [
+    `${course.videosCount}+ video lessons covering all topics`,
+    `${course.testsCount} practice tests and mock exams`,
+    `${course.chaptersCount} chapters across ${course.subjects.length} subjects`,
+    'Expert faculty with proven track record',
+  ];
+
+  return (
+    <div className="space-y-0 bg-white border border-border/60 rounded-2xl shadow-sm overflow-visible">
+
+      {/* Header + Tabs */}
+      <div className="px-5 pt-5 pb-0">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="font-bold text-base text-slate-900">Featured Courses</h3>
+          <Link to="/student/courses" className="text-xs text-primary font-semibold flex items-center gap-1 hover:underline">
+            Show all <ChevronRight className="h-3.5 w-3.5" />
+          </Link>
+        </div>
+
+        {/* Category tabs */}
+        <div className="flex gap-0 border-b border-slate-200">
+          {fcTabs.map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setFcTab(tab.id)}
+              className={`relative px-4 py-2.5 text-[13px] font-medium whitespace-nowrap transition-colors
+                ${ fcTab === tab.id
+                  ? 'text-slate-900 border-b-2 border-slate-900 -mb-px'
+                  : 'text-slate-500 hover:text-slate-700'
+                }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Scrollable Cards Row */}
+      <div className="relative px-3 py-4">
+        {/* Left arrow */}
+        <button
+          onClick={() => scroll('left')}
+          className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 bg-white border border-slate-200 rounded-full shadow-md flex items-center justify-center hover:bg-slate-50 transition-colors"
+        >
+          <ChevronLeft className="h-4 w-4 text-slate-700" />
+        </button>
+
+        {/* Card scroll container */}
+        <div
+          ref={scrollRef}
+          className="flex gap-4 overflow-x-auto scroll-smooth px-6"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' } as React.CSSProperties}
+        >
+          {filteredCourses.map((course) => {
+            const isEnrolled = !!course.progress || enrolledIds.includes(course.id);
+            const badge = getBadge(course);
+
+            return (
+              <div
+                key={course.id}
+                className="relative flex-none w-48 group cursor-pointer"
+                onMouseEnter={() => setHoveredCourse(course.id)}
+                onMouseLeave={() => setHoveredCourse(null)}
+                onClick={() => navigate(`/student/courses/${course.id}`)}
+              >
+                {/* Card */}
+                <div className="bg-white border border-slate-200 rounded-lg overflow-hidden hover:shadow-lg transition-all h-full">
+                  {/* Thumbnail */}
+                  <div className="relative overflow-hidden">
+                    <img
+                      src={course.thumbnail}
+                      alt={course.title}
+                      className="w-full h-32 object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                  </div>
+
+                  {/* Card Body */}
+                  <div className="p-2.5 space-y-1.5">
+                    <h4 className="font-semibold text-[11px] leading-snug text-slate-900 line-clamp-2">{course.title}</h4>
+                    <p className="text-[10px] text-slate-500 truncate">{course.instructor}</p>
+
+                    {/* Badge + Rating */}
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      {badge && (
+                        <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-sm ${badge.color}`}>
+                          {badge.label}
+                        </span>
+                      )}
+                      <span className="flex items-center gap-0.5 text-[10px] text-amber-600 font-semibold">
+                        ★ {course.rating}
+                      </span>
+                      <span className="text-[9px] text-slate-400">({course.studentsCount.toLocaleString()})</span>
+                    </div>
+
+                    {/* Price */}
+                    <div className="flex items-baseline gap-1.5 pt-0.5">
+                      <span className="text-sm font-bold text-slate-900">₹{course.price.toLocaleString()}</span>
+                      {course.originalPrice && (
+                        <span className="text-[10px] text-slate-400 line-through">₹{course.originalPrice.toLocaleString()}</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Hover Popout */}
+                {hoveredCourse === course.id && (
+                  <div
+                    className="absolute top-0 left-full ml-2 z-50 w-64 bg-white border border-slate-200 rounded-xl shadow-2xl p-4 pointer-events-none"
+                    style={{ minWidth: '240px' }}
+                  >
+                    <h4 className="font-bold text-sm text-slate-900 mb-2 leading-snug">{course.title}</h4>
+
+                    {/* Badge + Updated */}
+                    <div className="flex items-center gap-2 mb-2">
+                      {badge && (
+                        <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-sm ${badge.color}`}>
+                          {badge.label}
+                        </span>
+                      )}
+                      <span className="text-[10px] text-slate-500">Updated <strong>2025</strong></span>
+                    </div>
+
+                    <p className="text-[10px] text-slate-500 mb-2">
+                      {course.videosCount} total hours · All Levels · Subtitles
+                    </p>
+
+                    <p className="text-xs text-slate-700 mb-3 leading-relaxed">
+                      Master {course.title.split(' ').slice(0, 4).join(' ')} with comprehensive video lessons, mock tests and expert guidance.
+                    </p>
+
+                    {/* Bullet highlights */}
+                    <ul className="space-y-1.5 mb-4">
+                      {getHighlights(course).map((h, i) => (
+                        <li key={i} className="flex items-start gap-1.5 text-[10px] text-slate-700">
+                          <span className="text-green-600 mt-0.5 shrink-0">✓</span>
+                          <span>{h}</span>
+                        </li>
+                      ))}
+                    </ul>
+
+                    {/* CTA */}
+                    <button
+                      className="w-full bg-primary text-white text-xs font-semibold py-2 rounded-lg hover:bg-primary/90 transition-colors"
+                    >
+                      {isEnrolled ? 'Continue Course' : 'Enroll Now'}
+                    </button>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Right arrow */}
+        <button
+          onClick={() => scroll('right')}
+          className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 bg-white border border-slate-200 rounded-full shadow-md flex items-center justify-center hover:bg-slate-50 transition-colors"
+        >
+          <ChevronRight className="h-4 w-4 text-slate-700" />
+        </button>
+      </div>
+
+      {/* Footer link */}
+      <div className="px-5 pb-4">
+        <Link
+          to="/student/courses"
+          className="text-xs text-primary font-semibold hover:underline flex items-center gap-1"
+        >
+          Show all {fcTabs.find(t => t.id === fcTab)?.label} courses
+          <ChevronRight className="h-3.5 w-3.5" />
+        </Link>
+      </div>
+    </div>
+  );
+};
 
 const StudentDashboard = () => {
   const { user } = useAuth();
@@ -395,94 +622,14 @@ const StudentDashboard = () => {
           {/* Main Content */}
           <div className="flex-1 min-w-0 space-y-4 w-full lg:w-auto bg-card/50 border border-border/60 rounded-xl p-4 shadow-sm">
 
-          {/* Stats Cards */}
+          {/* 1. Stats Cards */}
           <StatsOverview
             journeyDays={journeyDays}
             userName={userProfile?.username || user?.name || 'Student'}
             onCardClick={setStatDialogType}
           />
 
-          {/* ── FEATURED COURSES ── */}
-          {(() => {
-            const featuredCourses = allCourses.filter(c => c.isPopular).slice(0, 4);
-            const enrolledIds: string[] = (() => {
-              try { return JSON.parse(localStorage.getItem('enrolledCourseIds') || '[]'); } catch { return []; }
-            })();
-            return (
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="w-1 h-5 bg-primary rounded-full" />
-                    <h3 className="font-semibold text-base text-slate-900">Featured Courses</h3>
-                  </div>
-                  <Link to="/student/courses" className="text-xs text-primary font-semibold flex items-center gap-1 hover:underline">
-                    View All <ChevronRight className="h-3.5 w-3.5" />
-                  </Link>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
-                  {featuredCourses.map(course => {
-                    const isEnrolled = course.progress || enrolledIds.includes(course.id);
-                    const discount = course.originalPrice
-                      ? Math.round(((course.originalPrice - course.price) / course.originalPrice) * 100)
-                      : 0;
-                    return (
-                      <div
-                        key={course.id}
-                        className="bg-white border border-border/60 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all group cursor-pointer flex flex-col"
-                        onClick={() => navigate(`/student/courses/${course.id}`)}
-                      >
-                        {/* Thumbnail */}
-                        <div className="relative overflow-hidden">
-                          <img
-                            src={course.thumbnail}
-                            alt={course.title}
-                            className="w-full h-28 object-cover group-hover:scale-105 transition-transform duration-300"
-                          />
-                          {discount > 0 && (
-                            <span className="absolute top-2 right-2 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
-                              {discount}% OFF
-                            </span>
-                          )}
-                          {course.isTrending && (
-                            <span className="absolute top-2 left-2 bg-orange-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
-                              🔥 Trending
-                            </span>
-                          )}
-                        </div>
-                        {/* Info */}
-                        <div className="p-3 flex flex-col flex-1 gap-1.5">
-                          <h4 className="font-semibold text-xs leading-snug text-slate-800 group-hover:text-primary transition-colors line-clamp-2">{course.title}</h4>
-                          <div className="flex items-center gap-2 text-[10px] text-slate-500">
-                            <span className="flex items-center gap-0.5 text-amber-500 font-semibold">
-                              <Star className="h-2.5 w-2.5 fill-amber-400" />{course.rating}
-                            </span>
-                            <span className="flex items-center gap-0.5"><Video className="h-2.5 w-2.5" />{course.videosCount} videos</span>
-                            <span>{course.duration}</span>
-                          </div>
-                          <div className="mt-auto pt-2 border-t flex items-center justify-between gap-2">
-                            <div className="flex items-baseline gap-1">
-                              <span className="text-sm font-bold text-slate-900">₹{course.price.toLocaleString()}</span>
-                              {course.originalPrice && (
-                                <span className="text-[10px] text-slate-400 line-through">₹{course.originalPrice.toLocaleString()}</span>
-                              )}
-                            </div>
-                            <button
-                              className="shrink-0 text-[10px] font-semibold bg-primary text-white px-2 py-1 rounded-lg hover:bg-primary/90 transition-colors"
-                              onClick={(e) => { e.stopPropagation(); navigate(`/student/courses/${course.id}`); }}
-                            >
-                              {isEnrolled ? 'Continue' : 'Enroll'}
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            );
-          })()}
-
-          {/* Performance Section */}
+          {/* 2. Performance Graph + Percentile + Word of the Day */}
           <div className="flex flex-col xl:flex-row gap-4">
             {/* Performance Graph */}
             <div className="w-full xl:w-1/2 flex flex-col">
@@ -614,16 +761,22 @@ const StudentDashboard = () => {
             </div>
           </div>
 
+          {/* 3. Featured Courses — Udemy-style */}
+          <FeaturedCoursesSection navigate={navigate} />
 
-
-
-          {/* Trending Exams Section */}
+          {/* 4. Trending Exams */}
           <TrendingExams />
 
-          {/* Exam Status Summary (Self Care) */}
+          {/* 5. Exam Status Summary */}
           <ExamStatusSummary />
 
-          {/* Restored Grid: Free Test/Quiz & Upcoming Live Tests */}
+          {/* 6. Recent Exam Notifications */}
+          <RecentExamNotifications />
+
+          {/* 7. Your Exams Section */}
+          <YourExams />
+
+          {/* 8. Free Test/Quiz + Upcoming Live Tests */}
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 items-stretch">
             {/* Free Test/Quiz */}
             <Card className="p-4 sm:p-5 bg-white border border-border/60 shadow-sm rounded-2xl flex flex-col h-full">
@@ -675,10 +828,7 @@ const StudentDashboard = () => {
             <UpcomingLiveTests />
           </div>
 
-          {/* Your Exams Section */}
-          <YourExams />
-
-          {/* Your Current Affairs Section */}
+          {/* 9. Your Current Affairs Section */}
           <Card className="p-4 bg-card group/card">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
@@ -789,7 +939,6 @@ const StudentDashboard = () => {
                       className="absolute top-2 right-2 h-8 w-8 bg-card/80 hover:bg-card"
                       onClick={(e) => {
                         e.stopPropagation();
-                        // item is mapped from allArticles, so item.id exists
                         if (item.id) toggleSave(item.id);
                       }}
                     >
@@ -808,11 +957,6 @@ const StudentDashboard = () => {
               </div>
             )}
           </Card>
-
-
-
-          {/* Recent Exam Notifications */}
-          <RecentExamNotifications />
 
           {/* Mobile Right Sidebar Content */}
           <div className="lg:hidden space-y-4">
