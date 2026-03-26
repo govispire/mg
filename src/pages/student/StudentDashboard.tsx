@@ -61,7 +61,6 @@ interface UserProfile {
 
 // ── Featured Courses (Udemy-style) ─────────────────────────────────────────
 const FeaturedCoursesSection = ({ navigate }: { navigate: (path: string) => void }) => {
-  const [fcTab, setFcTab] = useState<string>('banking');
   const [hoveredCourse, setHoveredCourse] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -79,23 +78,14 @@ const FeaturedCoursesSection = ({ navigate }: { navigate: (path: string) => void
       }
     }, 3000);
     return () => clearInterval(interval);
-  }, [hoveredCourse, fcTab]);
+  }, [hoveredCourse]);
 
   const enrolledIds: string[] = (() => {
     try { return JSON.parse(localStorage.getItem('enrolledCourseIds') || '[]'); } catch { return []; }
   })();
 
-  const fcTabs = [
-    { id: 'banking', label: 'Banking' },
-    { id: 'ssc', label: 'SSC' },
-    { id: 'railway', label: 'Railway' },
-    { id: 'upsc', label: 'UPSC' },
-    { id: 'all', label: 'All Courses' },
-  ];
-
-  const filteredCourses = fcTab === 'all'
-    ? allCourses
-    : allCourses.filter(c => c.category === fcTab);
+  // Only show Banking exam courses
+  const filteredCourses = allCourses.filter(c => c.category === 'banking');
 
   const getBadge = (course: typeof allCourses[0]) => {
     if (course.isPopular && course.isTrending) return { label: 'Highest Rated', color: 'bg-amber-400 text-black' };
@@ -120,30 +110,11 @@ const FeaturedCoursesSection = ({ navigate }: { navigate: (path: string) => void
   return (
     <div className="space-y-0 bg-white border border-border/60 rounded-2xl shadow-sm overflow-visible">
 
-      {/* Header + Tabs */}
-      <div className="px-5 pt-5 pb-0">
-        <div className="flex items-center justify-between mb-3">
+      {/* Header */}
+      <div className="px-5 pt-5 pb-3">
+        <div className="flex items-center mb-1">
           <h3 className="font-bold text-base text-slate-900">Featured Courses</h3>
-          <Link to="/student/courses" className="text-xs text-primary font-semibold flex items-center gap-1 hover:underline">
-            Show all <ChevronRight className="h-3.5 w-3.5" />
-          </Link>
-        </div>
-
-        {/* Category tabs */}
-        <div className="flex gap-0 border-b border-slate-200">
-          {fcTabs.map(tab => (
-            <button
-              key={tab.id}
-              onClick={() => setFcTab(tab.id)}
-              className={`relative px-4 py-2.5 text-[13px] font-medium whitespace-nowrap transition-colors
-                ${ fcTab === tab.id
-                  ? 'text-slate-900 border-b-2 border-slate-900 -mb-px'
-                  : 'text-slate-500 hover:text-slate-700'
-                }`}
-            >
-              {tab.label}
-            </button>
-          ))}
+          <span className="ml-2 text-[11px] text-slate-400 font-medium">Banking Exams</span>
         </div>
       </div>
 
@@ -272,16 +243,6 @@ const FeaturedCoursesSection = ({ navigate }: { navigate: (path: string) => void
         </button>
       </div>
 
-      {/* Footer link */}
-      <div className="px-5 pb-4">
-        <Link
-          to="/student/courses"
-          className="text-xs text-primary font-semibold hover:underline flex items-center gap-1"
-        >
-          Show all {fcTabs.find(t => t.id === fcTab)?.label} courses
-          <ChevronRight className="h-3.5 w-3.5" />
-        </Link>
-      </div>
     </div>
   );
 };
@@ -773,43 +734,47 @@ const StudentDashboard = () => {
           {/* 6. Recent Exam Notifications */}
           <RecentExamNotifications />
 
-          {/* 7. Your Exams Section */}
-          <YourExams />
 
           {/* 8. Free Test/Quiz + Upcoming Live Tests */}
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 items-stretch">
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-5 items-stretch">
             {/* Free Test/Quiz */}
-            <Card className="p-4 sm:p-5 bg-white border border-border/60 shadow-sm rounded-2xl flex flex-col h-full">
-              <div className="flex items-center gap-2 mb-4">
-                <div className="w-1 h-5 bg-sky-600 rounded-full" />
-                <h3 className="font-semibold text-base text-slate-800">Free Test/Quiz</h3>
+            <Card className="p-5 bg-white border border-slate-200 shadow-sm rounded-2xl flex flex-col h-full">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-1 h-5 bg-sky-500 rounded-full" />
+                  <h3 className="font-bold text-[15px] text-slate-800">Daily Free Quiz</h3>
+                </div>
+                <span className="text-[11px] text-sky-600 font-semibold bg-sky-50 border border-sky-100 px-2 py-0.5 rounded-full">
+                  {freeTests.length} tests today
+                </span>
               </div>
-              <div className="space-y-3 flex-1">
+              <div className="space-y-2.5 flex-1">
                 {freeTests.slice(0, 5).map((test, idx) => {
                   const isCompleted = !!quizCompletions[test.id];
                   return (
-                    <div key={idx} className="flex items-center justify-between p-2.5 rounded-xl bg-[#cfd9df] hover:brightness-95 transition-all">
-                      <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                        <div className="shrink-0 w-8 h-8 rounded-lg bg-sky-100/60 flex items-center justify-center">
+                    <div key={idx} className="flex items-center justify-between px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-100 hover:border-sky-200 hover:bg-sky-50/40 transition-all group">
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                        <div className="shrink-0 w-8 h-8 rounded-lg bg-sky-100 flex items-center justify-center">
                           <FileText className="h-4 w-4 text-sky-600" />
                         </div>
-                        <div className="flex-1 min-w-0 pr-1">
-                          <p className="font-medium text-[12px] text-slate-900 leading-tight mb-1 truncate">{test.title}</p>
-                          <div className="text-[10px] text-slate-700 font-medium flex items-center gap-1.5 whitespace-nowrap">
-                            <span>{test.questions} Qs</span>
-                            <Clock className="h-2.5 w-2.5 shrink-0 text-slate-600" />
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-[12.5px] text-slate-800 truncate group-hover:text-sky-700 transition-colors">{test.title}</p>
+                          <div className="text-[10px] text-slate-500 flex items-center gap-2 mt-0.5">
+                            <span>{test.questions} Questions</span>
+                            <span className="text-slate-300">•</span>
+                            <Clock className="h-2.5 w-2.5 text-slate-400" />
                             <span>{test.duration} mins</span>
                           </div>
                         </div>
                       </div>
-                      <div className="shrink-0 ml-2">
+                      <div className="shrink-0 ml-3">
                         {isCompleted ? (
-                          <div className="flex items-center gap-1 text-sky-600 font-semibold text-[10px] bg-sky-100 px-2 py-1 rounded border border-sky-200">
+                          <div className="flex items-center gap-1 text-emerald-600 font-semibold text-[10px] bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">
                             <CheckCircle className="h-3 w-3" />
                             Done
                           </div>
                         ) : (
-                          <Button size="sm" className="h-[28px] px-3 bg-[#0284c7] hover:bg-sky-700 text-white rounded text-[11px] font-semibold" onClick={() => handleStartTest(test)}>
+                          <Button size="sm" className="h-7 px-3 bg-sky-500 hover:bg-sky-600 text-white rounded-lg text-[11px] font-semibold shadow-sm" onClick={() => handleStartTest(test)}>
                             <Play className="h-2.5 w-2.5 mr-1" strokeWidth={3} />
                             Start
                           </Button>
@@ -819,8 +784,8 @@ const StudentDashboard = () => {
                   );
                 })}
               </div>
-              <Button variant="outline" className="w-full mt-4 text-[13px] font-semibold text-slate-800 border-slate-200 bg-slate-50 hover:bg-slate-100 rounded-xl py-5" asChild>
-                <Link to="/student/daily-quizzes">View All Tests</Link>
+              <Button variant="outline" className="w-full mt-4 text-[13px] font-semibold text-sky-600 border-sky-200 bg-sky-50 hover:bg-sky-100 rounded-xl py-2.5" asChild>
+                <Link to="/student/daily-quizzes">View All Tests →</Link>
               </Button>
             </Card>
 

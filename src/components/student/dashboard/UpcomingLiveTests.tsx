@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Calendar, Clock, AlertCircle, ArrowRight } from 'lucide-react';
+import { Calendar, Clock } from 'lucide-react';
 
 export const UpcomingLiveTests = () => {
     const upcomingTests = [
@@ -22,66 +22,71 @@ export const UpcomingLiveTests = () => {
             duration: '60 mins',
             registrations: '8.2k+',
         },
+        {
+            id: 3,
+            title: 'IBPS RRB Officer Scale-I Mock',
+            date: '02 Feb, 2026',
+            time: '11:00 AM',
+            duration: '45 mins',
+            registrations: '6.1k+',
+        },
+        {
+            id: 4,
+            title: 'RBI Assistant Prelims Mock',
+            date: '05 Feb, 2026',
+            time: '03:00 PM',
+            duration: '60 mins',
+            registrations: '4.8k+',
+        },
+        {
+            id: 5,
+            title: 'SBI PO Prelims Grand Mock',
+            date: '08 Feb, 2026',
+            time: '10:00 AM',
+            duration: '60 mins',
+            registrations: '9.3k+',
+        },
     ];
 
     return (
-        <Card className="h-full flex flex-col p-4 bg-card border-2 border-orange-500 relative overflow-hidden shadow-lg shadow-orange-500/20">
-            {/* Glow overlay */}
-            <div className="absolute inset-0 bg-gradient-to-r from-orange-500/5 via-transparent to-orange-500/5 animate-pulse pointer-events-none" />
-
-            {/* Top LIVE badge */}
-            <div className="absolute -top-1 -right-1 z-10">
-                <div className="relative">
-                    <div className="absolute inset-0 bg-red-500 rounded-full blur-md animate-pulse" />
-                    <div className="relative bg-gradient-to-r from-red-600 to-orange-600 text-white px-3 py-1 rounded-full text-[10px] font-bold flex items-center gap-1.5 shadow-lg">
-                        <span className="relative flex h-2 w-2">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75" />
-                            <span className="relative inline-flex rounded-full h-2 w-2 bg-white" />
-                        </span>
-                        LIVE
-                    </div>
-                </div>
-            </div>
-
+        <Card className="p-5 bg-white border border-slate-200 shadow-sm rounded-2xl flex flex-col h-full">
             {/* Header */}
-            <div className="flex items-center justify-between mb-3 relative z-10">
-                <h3 className="font-semibold text-sm flex items-center gap-2">
-                    <span className="relative flex h-3 w-3">
+            <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                    <div className="w-1 h-5 bg-orange-500 rounded-full" />
+                    <h3 className="font-bold text-[15px] text-slate-800">Upcoming Live Tests</h3>
+                </div>
+                <span className="text-[11px] text-orange-600 font-semibold bg-orange-50 border border-orange-100 px-2 py-0.5 rounded-full flex items-center gap-1">
+                    <span className="relative flex h-1.5 w-1.5">
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75" />
-                        <span className="relative inline-flex rounded-full h-3 w-3 bg-orange-500" />
+                        <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-orange-500" />
                     </span>
-                    Upcoming Live Tests
-                    <span className="ml-1 bg-orange-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full animate-bounce">
-                        {upcomingTests.length}
-                    </span>
-                </h3>
-                <span className="text-[10px] text-orange-600 font-medium bg-orange-50 dark:bg-orange-950 px-2 py-0.5 rounded-full border border-orange-100 dark:border-orange-900">
-                    Premium
+                    Live
                 </span>
             </div>
 
-            {/* Test cards */}
-            <div className="space-y-3 relative z-10 flex-1">
-                {upcomingTests.map((test) => (
-                    <div key={test.id} className="bg-muted/30 rounded-lg p-3 border border-border/50 hover:border-orange-200 dark:hover:border-orange-800 transition-all cursor-pointer group">
-                        <h4 className="font-medium text-sm mb-2 group-hover:text-primary transition-colors line-clamp-1">
-                            {test.title}
-                        </h4>
-                        <div className="flex items-center justify-between text-xs text-muted-foreground mb-3">
-                            <div className="flex items-center gap-1">
-                                <Calendar className="h-3 w-3" />
-                                <span>{test.date}</span>
+            {/* Test rows */}
+            <div className="space-y-2.5 flex-1">
+                {upcomingTests.slice(0, 5).map((test) => (
+                    <div key={test.id} className="flex items-center justify-between px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-100 hover:border-orange-200 hover:bg-orange-50/30 transition-all group">
+                        <div className="flex items-center gap-3 min-w-0 flex-1">
+                            <div className="shrink-0 w-8 h-8 rounded-lg bg-orange-100 flex items-center justify-center">
+                                <Calendar className="h-4 w-4 text-orange-600" />
                             </div>
-                            <div className="flex items-center gap-1">
-                                <Clock className="h-3 w-3" />
-                                <span>{test.time}</span>
+                            <div className="flex-1 min-w-0">
+                                <p className="font-semibold text-[12.5px] text-slate-800 truncate group-hover:text-orange-700 transition-colors">{test.title}</p>
+                                <div className="text-[10px] text-slate-500 flex items-center gap-2 mt-0.5">
+                                    <span>{test.date}</span>
+                                    <span className="text-slate-300">•</span>
+                                    <Clock className="h-2.5 w-2.5 text-slate-400" />
+                                    <span>{test.time}</span>
+                                    <span className="text-slate-300">•</span>
+                                    <span className="font-medium text-slate-600">{test.registrations} registered</span>
+                                </div>
                             </div>
                         </div>
-                        <div className="flex items-center justify-between">
-                            <div className="text-[10px] text-muted-foreground">
-                                <span className="font-medium text-foreground">{test.registrations}</span> registered
-                            </div>
-                            <Button size="sm" className="h-7 text-xs bg-orange-600 hover:bg-orange-700 text-white border-none" asChild>
+                        <div className="shrink-0 ml-3">
+                            <Button size="sm" className="h-7 px-3 bg-orange-500 hover:bg-orange-600 text-white rounded-lg text-[11px] font-semibold shadow-sm" asChild>
                                 <Link to="/student/live-tests">Register</Link>
                             </Button>
                         </div>
@@ -89,26 +94,10 @@ export const UpcomingLiveTests = () => {
                 ))}
             </div>
 
-            <div className="mt-auto pt-3 flex flex-col gap-3 relative z-10">
-                {/* Info bar */}
-                <div className="flex items-center gap-2 text-[10px] text-muted-foreground bg-blue-50/50 dark:bg-blue-950/30 p-2 rounded">
-                    <AlertCircle className="h-3 w-3 text-blue-500 shrink-0" />
-                    <span>Live tests simulate real exam environment.</span>
-                </div>
-
-                {/* View All button */}
-                <Button
-                    variant="ghost"
-                    size="sm"
-                    className="w-full h-8 text-xs text-orange-600 hover:text-orange-700 hover:bg-orange-50 dark:hover:bg-orange-950 gap-1"
-                    asChild
-                >
-                    <Link to="/student/live-tests">
-                        View All Live Tests
-                        <ArrowRight className="h-3.5 w-3.5" />
-                    </Link>
-                </Button>
-            </div>
+            {/* Footer */}
+            <Button variant="outline" className="w-full mt-4 text-[13px] font-semibold text-orange-600 border-orange-200 bg-orange-50 hover:bg-orange-100 rounded-xl py-2.5" asChild>
+                <Link to="/student/live-tests">View All Live Tests →</Link>
+            </Button>
         </Card>
     );
 };
