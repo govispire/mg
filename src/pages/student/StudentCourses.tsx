@@ -77,7 +77,7 @@ const CourseCard: React.FC<{
     : 0;
 
   return (
-    <div className="bg-white border rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-200 group flex flex-col">
+    <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 group flex flex-col">
       {/* Thumbnail */}
       <div className="relative overflow-hidden">
         <img
@@ -85,28 +85,27 @@ const CourseCard: React.FC<{
           alt={course.title}
           className="w-full h-36 object-cover group-hover:scale-105 transition-transform duration-300"
         />
-        {/* Overlay badges */}
-        <div className="absolute top-2 left-2 flex gap-1 flex-wrap">
-          {course.isTrending && (
-            <span className="bg-orange-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
+        {/* Single overlay badge — only show one */}
+        <div className="absolute top-2 left-2">
+          {course.isTrending ? (
+            <span className="bg-amber-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
               <Flame className="h-2.5 w-2.5" /> Trending
             </span>
-          )}
-          {course.isPopular && (
+          ) : course.isPopular ? (
             <span className="bg-primary text-white text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
               <Zap className="h-2.5 w-2.5" /> Popular
             </span>
-          )}
+          ) : null}
         </div>
         {discount > 0 && (
-          <div className="absolute top-2 right-2 bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+          <div className="absolute top-2 right-2 bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
             {discount}% OFF
           </div>
         )}
         {course.progress ? (
           <div className="absolute bottom-0 left-0 right-0 bg-black/60 px-3 py-1.5">
-            <div className="flex items-center justify-between text-white text-xs mb-1">
-              <span>Your Progress</span>
+            <div className="flex items-center justify-between text-white text-[10px] mb-1">
+              <span>Progress</span>
               <span className="font-medium">{course.progress}%</span>
             </div>
             <div className="h-1.5 bg-white/30 rounded-full">
@@ -117,7 +116,7 @@ const CourseCard: React.FC<{
       </div>
 
       {/* Content */}
-      <div className="p-4 flex flex-col flex-1 gap-2.5">
+      <div className="p-4 flex flex-col flex-1 gap-2">
         {/* Type + Rating */}
         <div className="flex items-center justify-between">
           <Badge variant="outline" className={`text-[10px] px-2 ${typeColor[course.type] || ''}`}>
@@ -126,53 +125,41 @@ const CourseCard: React.FC<{
           <div className="flex items-center gap-1 text-xs text-amber-500">
             <Star className="h-3 w-3 fill-amber-400" />
             <span className="font-semibold text-gray-700">{course.rating}</span>
+            <span className="text-[10px] text-gray-400">({course.studentsCount.toLocaleString()})</span>
           </div>
         </div>
 
         {/* Title */}
-        <h3 className="font-semibold text-sm leading-snug text-gray-800 group-hover:text-primary transition-colors line-clamp-2">{course.title}</h3>
-
-        {/* Instructor */}
-        <p className="text-xs text-gray-500 flex items-center gap-1">
-          <Award className="h-3 w-3 text-primary" />
-          {course.instructor}
-        </p>
-
-        {/* Stats row */}
-        <div className="flex items-center gap-3 text-[11px] text-gray-500 flex-wrap">
-          <span className="flex items-center gap-1"><Video className="h-3 w-3" />{course.videosCount} Videos</span>
-          <span className="flex items-center gap-1"><FileText className="h-3 w-3" />{course.testsCount} Tests</span>
-          <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{course.duration}</span>
-          <span className="flex items-center gap-1"><Users className="h-3 w-3" />{course.studentsCount.toLocaleString()}</span>
-        </div>
+        <h3 className="font-semibold text-sm leading-snug text-gray-800 group-hover:text-primary transition-colors line-clamp-2 flex-1">{course.title}</h3>
 
         {/* Price + CTA */}
-        <div className="mt-auto pt-3 border-t space-y-2.5">
-          {/* Price */}
+        <div className="mt-auto pt-3 border-t space-y-2">
           <div className="flex items-baseline gap-1.5">
-            <span className="text-lg font-bold text-gray-900">₹{course.price.toLocaleString()}</span>
+            <span className="text-base font-bold text-gray-900">₹{course.price.toLocaleString()}</span>
             {course.originalPrice && (
               <span className="text-xs text-gray-400 line-through">₹{course.originalPrice.toLocaleString()}</span>
             )}
           </div>
-          {/* Buttons */}
+          {/* CTA: enrolled = resume, else enroll primary + preview link */}
           {course.progress || isEnrolled ? (
             <Button size="sm" className="w-full gap-1.5 text-xs h-8" onClick={goToCourse}>
-              <Play className="h-3 w-3" /> Continue
+              <Play className="h-3 w-3" /> Continue Learning
             </Button>
           ) : (
-            <div className="grid grid-cols-2 gap-2">
+            <div className="space-y-1.5">
               <Button
                 size="sm"
-                variant="outline"
-                className="w-full gap-1 text-xs h-8 border-primary text-primary hover:bg-primary/10"
+                className="w-full gap-1.5 text-xs h-8 bg-primary hover:bg-primary/90"
+                onClick={(e) => { e.stopPropagation(); onEnroll(course.id); navigate(`/student/courses/${course.id}`); }}
+              >
+                <ShoppingCart className="h-3 w-3" /> Enroll Now
+              </Button>
+              <button
+                className="w-full text-[11px] text-primary/70 hover:text-primary font-medium flex items-center justify-center gap-1 py-0.5 transition-colors"
                 onClick={(e) => { e.stopPropagation(); onPreview(course); }}
               >
-                <Eye className="h-3 w-3" /> Preview
-              </Button>
-              <Button size="sm" className="w-full gap-1 text-xs h-8" onClick={(e) => { e.stopPropagation(); onEnroll(course.id); navigate(`/student/courses/${course.id}`); }}>
-                <ShoppingCart className="h-3 w-3" /> Enroll
-              </Button>
+                <Eye className="h-3 w-3" /> Preview course
+              </button>
             </div>
           )}
         </div>
@@ -283,7 +270,7 @@ const StudentCourses = () => {
     .flat().length;
 
   return (
-    <div className="p-4 md:p-6 space-y-6 pb-10 max-w-7xl mx-auto">
+    <div className="space-y-6 pb-10 max-w-7xl mx-auto">
       {/* Breadcrumb */}
       <CourseNavigation items={[{ label: 'Dashboard', href: '/student/dashboard' }, { label: 'Courses', isActive: true }]} />
 

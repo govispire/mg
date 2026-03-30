@@ -4,10 +4,19 @@ import { Map, Hourglass, Flame, ClipboardCheck, ArrowUpRight } from 'lucide-reac
 interface StatsOverviewProps {
     journeyDays: number;
     userName: string;
+    studyHours: number;
+    activeStreak: number;
+    mockTestsTaken: number;
     onCardClick: (type: 'journey' | 'hours' | 'active' | 'tests') => void;
 }
 
-export const StatsOverview: React.FC<StatsOverviewProps> = ({ journeyDays, onCardClick }) => {
+export const StatsOverview: React.FC<StatsOverviewProps> = ({
+    journeyDays,
+    studyHours,
+    activeStreak,
+    mockTestsTaken,
+    onCardClick
+}) => {
     const stats = [
         {
             id: 'journey',
@@ -20,24 +29,24 @@ export const StatsOverview: React.FC<StatsOverviewProps> = ({ journeyDays, onCar
         {
             id: 'hours',
             label: 'Total Study Hours',
-            value: 195,
-            subtext: '12 hrs more than last week',
+            value: studyHours,
+            subtext: studyHours > 0 ? 'From completed quizzes' : 'Complete quizzes to track',
             icon: Hourglass,
             iconColor: 'text-violet-500',
         },
         {
             id: 'active',
             label: 'Active Days Streak',
-            value: 67,
-            subtext: 'Personal best: 72 days',
+            value: activeStreak,
+            subtext: activeStreak > 0 ? `${activeStreak} day${activeStreak !== 1 ? 's' : ''} in a row 🔥` : 'Complete 2 quizzes today',
             icon: Flame,
             iconColor: 'text-emerald-500',
         },
         {
             id: 'tests',
-            label: 'Mock Tests Taken',
-            value: 40,
-            subtext: '2 tests pending review',
+            label: 'Quizzes Completed',
+            value: mockTestsTaken,
+            subtext: mockTestsTaken > 0 ? `${mockTestsTaken} quiz${mockTestsTaken !== 1 ? 'zes' : ''} finished` : 'Start your first quiz!',
             icon: ClipboardCheck,
             iconColor: 'text-orange-500',
         },
@@ -45,7 +54,7 @@ export const StatsOverview: React.FC<StatsOverviewProps> = ({ journeyDays, onCar
 
     return (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-[1px] bg-border/60 border border-border/60 rounded-2xl overflow-hidden shadow-sm mb-6">
-            {stats.map((stat, index) => (
+            {stats.map((stat) => (
                 <button
                     key={stat.id}
                     onClick={() => onCardClick(stat.id as any)}

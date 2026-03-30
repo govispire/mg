@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { api } from '@/lib/api';
 
 export interface QuizResult {
   id: string;
@@ -49,24 +50,45 @@ export function useQuizStorage() {
   const [streakData, setStreakData] = useState<StreakData>(defaultStreakData);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Load data from localStorage on mount
+  // Load data from API (or localStorage fallback) on mount
   useEffect(() => {
+    const token = localStorage.getItem('token');
+
+    if (token) {
+      // Load from backend
+      Promise.all([api.getQuizResults(), api.getStreak()])
+        .then(([results, streak]) => {
+          setQuizResults(results as any);
+
+          // Check streak reset logic
+          const today = new Date().toDateString();
+          const yesterday = new Date(Date.now() - 86400000).toDateString();
+          if (streak.lastQuizDate && streak.lastQuizDate !== today && streak.lastQuizDate !== yesterday) {
+            setStreakData({ ...streak, currentStreak: 0, dailyGoalCompleted: false });
+          } else if (streak.lastQuizDate !== today) {
+            setStreakData({ ...streak, dailyGoalCompleted: false });
+          } else {
+            setStreakData(streak);
+          }
+        })
+        .catch(() => loadFromLocalStorage())
+        .finally(() => setIsLoading(false));
+    } else {
+      loadFromLocalStorage();
+      setIsLoading(false);
+    }
+  }, []);
+
+  function loadFromLocalStorage() {
     try {
       const storedResults = localStorage.getItem(QUIZ_RESULTS_KEY);
       const storedStreak = localStorage.getItem(STREAK_DATA_KEY);
-      
-      if (storedResults) {
-        setQuizResults(JSON.parse(storedResults));
-      }
-      
+      if (storedResults) setQuizResults(JSON.parse(storedResults));
       if (storedStreak) {
         const parsed = JSON.parse(storedStreak);
-        // Check if streak should be reset (missed a day)
         const today = new Date().toDateString();
         const yesterday = new Date(Date.now() - 86400000).toDateString();
-        
         if (parsed.lastQuizDate && parsed.lastQuizDate !== today && parsed.lastQuizDate !== yesterday) {
-          // Reset streak if more than a day has passed
           setStreakData({ ...parsed, currentStreak: 0, dailyGoalCompleted: false });
         } else if (parsed.lastQuizDate !== today) {
           setStreakData({ ...parsed, dailyGoalCompleted: false });
@@ -74,12 +96,8 @@ export function useQuizStorage() {
           setStreakData(parsed);
         }
       }
-    } catch (error) {
-      console.error('Error loading quiz data:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+    } catch {}
+  }
 
   // Save quiz result
   const saveQuizResult = useCallback((result: Omit<QuizResult, 'id'>) => {
@@ -89,10 +107,26 @@ export function useQuizStorage() {
     };
 
     setQuizResults(prev => {
-      const updated = [newResult, ...prev].slice(0, 100); // Keep last 100 results
-      localStorage.setItem(QUIZ_RESULTS_KEY, JSON.stringify(updated));
+      const updated = [newResult, ...prev].slice(0, 100);
+      localStorage.setItem(QUIZ_RESULTS_KEY, JSON.stringify(updated)); // keep local copy
       return updated;
     });
+
+    // Persist to API
+    const token = localStorage.getItem('token');
+    if (token) {
+      api.saveQuizResult({
+        date: result.date,
+        score: result.score,
+        totalQuestions: result.totalQuestions,
+        percentage: result.percentage,
+        timeTaken: result.timeTaken,
+        timePerQuestion: result.timePerQuestion,
+        topicAccuracy: result.topicAccuracy,
+        subjectAccuracy: result.subjectAccuracy,
+        answers: result.answers,
+      }).catch(() => {});
+    }
 
     // Update streak
     updateStreak(result.percentage);
@@ -105,10 +139,8 @@ export function useQuizStorage() {
     setStreakData(prev => {
       const today = new Date().toDateString();
       const yesterday = new Date(Date.now() - 86400000).toDateString();
-      
       let newStreak = prev.currentStreak;
-      
-      // Only count towards streak if score >= 50%
+
       if (percentage >= 50) {
         if (prev.lastQuizDate === yesterday) {
           newStreak = prev.currentStreak + 1;
@@ -116,11 +148,9 @@ export function useQuizStorage() {
           newStreak = 1;
         }
       }
-      
+
       const points = Math.round(percentage * 10);
       const newUnlockedRewards = [...prev.unlockedRewards];
-      
-      // Check for new rewards
       const milestones = [
         { streak: 3, reward: '3-day-streak' },
         { streak: 7, reward: '7-day-streak' },
@@ -129,13 +159,12 @@ export function useQuizStorage() {
         { streak: 50, reward: '50-day-streak' },
         { streak: 100, reward: '100-day-streak' },
       ];
-      
       milestones.forEach(({ streak, reward }) => {
         if (newStreak >= streak && !newUnlockedRewards.includes(reward)) {
           newUnlockedRewards.push(reward);
         }
       });
-      
+
       const updated: StreakData = {
         currentStreak: newStreak,
         longestStreak: Math.max(prev.longestStreak, newStreak),
@@ -145,8 +174,14 @@ export function useQuizStorage() {
         unlockedRewards: newUnlockedRewards,
         dailyGoalCompleted: true,
       };
-      
+
+      // Persist streak to localStorage + API
       localStorage.setItem(STREAK_DATA_KEY, JSON.stringify(updated));
+      const token = localStorage.getItem('token');
+      if (token) {
+        api.updateStreak(updated).catch(() => {});
+      }
+
       return updated;
     });
   }, []);

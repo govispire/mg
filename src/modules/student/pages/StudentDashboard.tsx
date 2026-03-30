@@ -28,6 +28,7 @@ import { toast } from 'sonner';
 import { ArrowLeft } from 'lucide-react';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { differenceInDays } from 'date-fns';
+import { useDashboardStats } from '@/hooks/useDashboardStats';
 import { CompulsoryFormModal, WelcomeMessageModal } from '@/components/auth/UpdatedAuthModal';
 import { allArticles } from '@/components/current-affairs/articlesData';
 import { useSavedArticles } from '@/hooks/useSavedArticles';
@@ -53,6 +54,7 @@ interface UserProfile {
 
 const StudentDashboard = () => {
   const { user } = useAuth();
+  const stats = useDashboardStats();
   const [attendanceView, setAttendanceView] = useState<'week' | 'month'>('week');
   const [currentNewsIndex, setCurrentNewsIndex] = useState(0);
   const [selectedNews, setSelectedNews] = useState<any>(null);
@@ -402,8 +404,8 @@ const StudentDashboard = () => {
                   <ArrowUpRight className="h-4 w-4" />
                 </div>
               </div>
-              <p className="text-2xl sm:text-3xl font-bold text-primary">195</p>
-              <p className="text-xs text-muted-foreground mt-1">6+ hours today</p>
+              <p className="text-2xl sm:text-3xl font-bold text-primary">{stats.studyHours}</p>
+              <p className="text-xs text-muted-foreground mt-1">{stats.studyHours > 0 ? 'Keep it up!' : 'Start studying today'}</p>
             </Card>
             <Card
               className="p-4 bg-card cursor-pointer hover:shadow-md transition-shadow group"
@@ -415,8 +417,8 @@ const StudentDashboard = () => {
                   <ArrowUpRight className="h-4 w-4" />
                 </div>
               </div>
-              <p className="text-2xl sm:text-3xl font-bold text-primary">67</p>
-              <p className="text-xs text-muted-foreground mt-1">Continuously studying</p>
+              <p className="text-2xl sm:text-3xl font-bold text-primary">{stats.activeStreak}</p>
+              <p className="text-xs text-muted-foreground mt-1">{stats.activeStreak > 0 ? '🔥 Streak going!' : 'Complete 2 quizzes to start'}</p>
             </Card>
             <Card
               className="p-4 bg-card cursor-pointer hover:shadow-md transition-shadow group"
@@ -428,8 +430,8 @@ const StudentDashboard = () => {
                   <ArrowUpRight className="h-4 w-4" />
                 </div>
               </div>
-              <p className="text-2xl sm:text-3xl font-bold text-primary">40</p>
-              <p className="text-xs text-muted-foreground mt-1">Last test 2 days ago</p>
+              <p className="text-2xl sm:text-3xl font-bold text-primary">{stats.mockTestsTaken}</p>
+              <p className="text-xs text-muted-foreground mt-1">{stats.mockTestsTaken > 0 ? `Avg score ${stats.avgScore}%` : 'No tests yet'}</p>
             </Card>
           </div>
 

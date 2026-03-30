@@ -1,6 +1,6 @@
 import * as React from 'react';
 const { useState, useEffect, useRef } = React;
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, Link, useLocation } from 'react-router-dom';
 import { 
   Calendar, Clock, ChevronRight, Home, Moon, Sun, Minus, Plus, 
   Bookmark, BookmarkCheck, Share2, Volume2, VolumeX, Check, X, Zap,
@@ -13,19 +13,30 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import LandingHeader from '@/components/LandingHeader';
 import Footer from '@/components/Footer';
 import { toast } from 'sonner';
-import { allArticles, getArticleById, getRelatedArticles } from '@/components/current-affairs/articlesData';
+import { getArticleById as getStaticArticleById, getRelatedArticles } from '@/components/current-affairs/articlesData';
 import { Article, ReadingSettings } from '@/components/current-affairs/types';
 import { ShareDialog } from '@/components/current-affairs/ShareDialog';
 import ArticleQuiz from '@/components/current-affairs/ArticleQuiz';
 import { useReadingProgress } from '@/hooks/useReadingProgress';
 import { useAudioNarration } from '@/hooks/useAudioNarration';
+import { useCurrentAffairsStore } from '@/hooks/useCurrentAffairsStore';
 
 const CurrentAffairsReader = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  
-  const article = id ? getArticleById(id) : null;
-  const relatedArticles = article ? getRelatedArticles(article) : [];
+  const location = useLocation();
+
+  // Detect if accessed from within student portal (avoid logout on back)
+  const isInsideStudentPortal = location.pathname.startsWith('/student') ||
+    document.referrer.includes('/student') ||
+    location.state?.from?.includes('/student');
+  const backPath = isInsideStudentPortal ? '/student/current-affairs' : '/current-affairs';
+
+  // Try store first (admin-created articles), then fall back to static data
+  const { getArticleFromStore } = useCurrentAffairsStore();
+  const storeArticle = id ? getArticleFromStore(id) : undefined;
+  const article = storeArticle ?? (id ? getStaticArticleById(id) : null);
+  const relatedArticles = article ? getRelatedArticles(article as Article) : [];
   
   const [shareArticle, setShareArticle] = useState<Article | null>(null);
   const [showQuiz, setShowQuiz] = useState(false);
@@ -132,11 +143,20 @@ const CurrentAffairsReader = () => {
     );
   }
   
+  // Map fontFamily setting to CSS font-family value
   const fontFamilyClass = {
     sans: 'font-sans',
     serif: 'font-serif',
     mono: 'font-mono'
   }[readingSettings.fontFamily];
+
+  const fontFamilyStyle: React.CSSProperties = {
+    fontFamily: readingSettings.fontFamily === 'serif'
+      ? 'Georgia, "Times New Roman", Times, serif'
+      : readingSettings.fontFamily === 'mono'
+      ? '"Courier New", Courier, monospace'
+      : 'var(--font-sans, ui-sans-serif, system-ui, sans-serif)',
+  };
   
   const currentProgress = getReadingProgress(article.id);
   const isCurrentlyNarrating = isNarrating && narrationArticleId === article.id;
@@ -159,7 +179,7 @@ const CurrentAffairsReader = () => {
               <Button 
                 variant="ghost" 
                 size="sm"
-                onClick={() => navigate('/current-affairs')}
+                onClick={() => navigate(backPath)}
                 className={readingSettings.isDarkMode ? 'text-gray-100' : ''}
               >
                 <ArrowLeft className="h-4 w-4 mr-2" />
@@ -297,7 +317,7 @@ const CurrentAffairsReader = () => {
           
           <h1 
             className={`text-3xl md:text-4xl font-bold mb-4 ${fontFamilyClass}`}
-            style={{ fontSize: readingSettings.fontSize + 12 }}
+            style={{ fontSize: readingSettings.fontSize + 12, ...fontFamilyStyle }}
           >
             {article.title}
           </h1>
@@ -323,28 +343,23 @@ const CurrentAffairsReader = () => {
           />
         )}
         
-        {/* Excerpt */}
-        <p 
+        {/* Excerpt — may be plain text or HTML from RichTextEditor */}
+        <div
           className={`text-lg mb-8 ${readingSettings.isDarkMode ? 'text-gray-300' : 'text-muted-foreground'} ${fontFamilyClass}`}
-          style={{ fontSize: readingSettings.fontSize + 2, lineHeight: readingSettings.lineHeight }}
-        >
-          {article.excerpt}
-        </p>
+          style={{ fontSize: readingSettings.fontSize + 2, lineHeight: readingSettings.lineHeight, ...fontFamilyStyle }}
+          dangerouslySetInnerHTML={{ __html: article.excerpt }}
+        />
         
-        {/* Article Content */}
+        {/* Article Content — HTML from RichTextEditor, rendered safely */}
         <div 
           className={`prose max-w-none ${readingSettings.isDarkMode ? 'prose-invert' : ''} ${fontFamilyClass}`}
           style={{ 
             fontSize: readingSettings.fontSize,
-            lineHeight: readingSettings.lineHeight
+            lineHeight: readingSettings.lineHeight,
+            ...fontFamilyStyle
           }}
-        >
-          {article.content?.split('\n').map((paragraph, idx) => (
-            <p key={idx} className="mb-6 whitespace-pre-wrap">
-              {paragraph}
-            </p>
-          ))}
-        </div>
+          dangerouslySetInnerHTML={{ __html: article.content || '' }}
+        />
         
         {/* Tags */}
         <div className="flex flex-wrap gap-2 mt-12 pt-6 border-t">

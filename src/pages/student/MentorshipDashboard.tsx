@@ -115,7 +115,7 @@ const MentorshipDashboard = () => {
       </div>
 
       {hasMentorshipPlan && (
-        <div className="bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl p-6 mb-6 shadow-lg">
+        <div className="bg-gradient-to-r from-primary via-primary/90 to-primary/80 text-white rounded-xl p-6 mb-6 shadow-lg">
           <div className="flex items-start justify-between">
             <div>
               <h2 className="text-2xl font-bold mb-2">Your Active Plan</h2>
@@ -156,7 +156,7 @@ const MentorshipDashboard = () => {
               </p>
               <Button
                 onClick={handleStartWizard}
-                className="bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:from-purple-700 hover:to-blue-700"
+                className="bg-primary hover:bg-primary/90 text-white"
               >
                 <Sparkles className="mr-2 h-4 w-4" />
                 Start Mentorship Wizard
@@ -170,7 +170,7 @@ const MentorshipDashboard = () => {
         <TabsList className="grid w-full grid-cols-3 lg:grid-cols-6 h-auto p-1 bg-gray-100 rounded-xl">
           <TabsTrigger
             value="dashboard"
-            className="flex items-center gap-2 py-3 data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm transition-all"
+            className="flex items-center gap-2 py-3 data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm transition-all"
           >
             <LayoutDashboard className="h-4 w-4" />
             <span className="font-medium">Overview</span>
@@ -218,7 +218,7 @@ const MentorshipDashboard = () => {
 
           <TabsTrigger
             value="success-stories"
-            className="flex items-center gap-2 py-3 data-[state=active]:bg-white data-[state=active]:text-blue-600 data-[state=active]:shadow-sm transition-all"
+            className="flex items-center gap-2 py-3 data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm transition-all"
           >
             <Trophy className="h-4 w-4" />
             <span className="font-medium">Stories</span>
@@ -270,7 +270,7 @@ const MentorshipDashboard = () => {
                   </div>
                 </div>
                 {task.status !== 'completed' && (
-                  <button className="mt-4 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-all">
+                  <button className="mt-4 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-all">
                     Start Task
                   </button>
                 )}
@@ -290,7 +290,7 @@ const MentorshipDashboard = () => {
               </div>
             </div>
 
-            <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-6 border border-blue-200 mb-6">
+            <div className="bg-gradient-to-r from-primary/10 to-primary/5 rounded-xl p-6 border border-primary/20 mb-6">
               <h3 className="text-lg font-semibold mb-2 flex items-center gap-2">
                 <CalendarIcon className="w-5 h-5 text-purple-600" />
                 Today's Focus
@@ -307,7 +307,7 @@ const MentorshipDashboard = () => {
                 }`}>
                 <div className="flex items-start justify-between">
                   <div className="flex items-start gap-4 flex-1">
-                    <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg ${item.completed ? 'bg-green-500 text-white' : 'bg-purple-100 text-purple-700'
+                    <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg ${item.completed ? 'bg-primary text-white' : 'bg-primary/10 text-primary'
                       }`}>
                       {item.completed ? <CheckCircle2 className="w-6 h-6" /> : item.day}
                     </div>
@@ -335,7 +335,7 @@ const MentorshipDashboard = () => {
                   </div>
                 </div>
                 {!item.completed && (
-                  <button className="mt-4 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-all">
+                  <button className="mt-4 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-all">
                     Mark as Completed
                   </button>
                 )}

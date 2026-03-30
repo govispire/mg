@@ -53,13 +53,13 @@ export const UpcomingLiveTests = () => {
             {/* Header */}
             <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
-                    <div className="w-1 h-5 bg-orange-500 rounded-full" />
+                    <div className="w-1 h-5 bg-primary rounded-full" />
                     <h3 className="font-bold text-[15px] text-slate-800">Upcoming Live Tests</h3>
                 </div>
-                <span className="text-[11px] text-orange-600 font-semibold bg-orange-50 border border-orange-100 px-2 py-0.5 rounded-full flex items-center gap-1">
+                <span className="text-[11px] text-primary font-semibold bg-primary/10 border border-primary/20 px-2 py-0.5 rounded-full flex items-center gap-1">
                     <span className="relative flex h-1.5 w-1.5">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75" />
-                        <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-orange-500" />
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
+                        <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-primary" />
                     </span>
                     Live
                 </span>
@@ -68,13 +68,13 @@ export const UpcomingLiveTests = () => {
             {/* Test rows */}
             <div className="space-y-2.5 flex-1">
                 {upcomingTests.slice(0, 5).map((test) => (
-                    <div key={test.id} className="flex items-center justify-between px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-100 hover:border-orange-200 hover:bg-orange-50/30 transition-all group">
+                    <div key={test.id} className="flex items-center justify-between px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-100 hover:border-primary/30 hover:bg-primary/5 transition-all group">
                         <div className="flex items-center gap-3 min-w-0 flex-1">
-                            <div className="shrink-0 w-8 h-8 rounded-lg bg-orange-100 flex items-center justify-center">
-                                <Calendar className="h-4 w-4 text-orange-600" />
+                            <div className="shrink-0 w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                                <Calendar className="h-4 w-4 text-primary" />
                             </div>
                             <div className="flex-1 min-w-0">
-                                <p className="font-semibold text-[12.5px] text-slate-800 truncate group-hover:text-orange-700 transition-colors">{test.title}</p>
+                                <p className="font-semibold text-[12.5px] text-slate-800 truncate group-hover:text-primary transition-colors">{test.title}</p>
                                 <div className="text-[10px] text-slate-500 flex items-center gap-2 mt-0.5">
                                     <span>{test.date}</span>
                                     <span className="text-slate-300">•</span>
@@ -86,7 +86,7 @@ export const UpcomingLiveTests = () => {
                             </div>
                         </div>
                         <div className="shrink-0 ml-3">
-                            <Button size="sm" className="h-7 px-3 bg-orange-500 hover:bg-orange-600 text-white rounded-lg text-[11px] font-semibold shadow-sm" asChild>
+                            <Button size="sm" className="h-7 px-3 bg-primary hover:bg-primary/90 text-white rounded-lg text-[11px] font-semibold shadow-sm" asChild>
                                 <Link to="/student/live-tests">Register</Link>
                             </Button>
                         </div>
@@ -95,7 +95,7 @@ export const UpcomingLiveTests = () => {
             </div>
 
             {/* Footer */}
-            <Button variant="outline" className="w-full mt-4 text-[13px] font-semibold text-orange-600 border-orange-200 bg-orange-50 hover:bg-orange-100 rounded-xl py-2.5" asChild>
+            <Button variant="outline" className="w-full mt-4 text-[13px] font-semibold text-primary border-primary/30 bg-primary/5 hover:bg-primary/10 rounded-xl py-2.5" asChild>
                 <Link to="/student/live-tests">View All Live Tests →</Link>
             </Button>
         </Card>

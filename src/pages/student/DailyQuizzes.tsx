@@ -142,9 +142,9 @@ const FreeQuizzes = () => {
 
     if (!inMonth) return base + 'text-gray-200 pointer-events-none';
     if (isFuture) return base + 'text-gray-300 cursor-not-allowed';
-    if (isSelected) return base + 'bg-blue-600 text-white shadow cursor-pointer';
-    if (isTodayDate) return base + 'ring-2 ring-blue-500 text-blue-700 cursor-pointer hover:bg-blue-50';
-    return base + 'text-gray-700 cursor-pointer hover:bg-blue-50';
+    if (isSelected) return base + 'bg-primary text-white shadow cursor-pointer';
+    if (isTodayDate) return base + 'ring-2 ring-primary text-primary cursor-pointer hover:bg-primary/10';
+    return base + 'text-gray-700 cursor-pointer hover:bg-primary/10';
   };
 
   const selectedDateLabel = selectedDate === todayStr
@@ -152,7 +152,7 @@ const FreeQuizzes = () => {
     : new Date(selectedDate + 'T00:00:00').toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
 
   return (
-    <div className="p-4 sm:p-6 space-y-4 max-w-7xl mx-auto">
+    <div className="space-y-4 max-w-7xl mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
@@ -329,8 +329,8 @@ const FreeQuizzes = () => {
               </div>
               <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t text-[10px] text-muted-foreground">
                 <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-blue-400 inline-block" /> Has quizzes</span>
-                <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full ring-2 ring-blue-500 inline-block" /> Today</span>
-                <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-blue-600 inline-block" /> Selected</span>
+                <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full ring-2 ring-primary inline-block" /> Today</span>
+                <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-full bg-primary inline-block" /> Selected</span>
               </div>
               {selectedDate !== todayStr && (
                 <Button variant="outline" size="sm" className="w-full mt-3 text-xs h-8" onClick={() => { setSelectedDate(todayStr); setCalendarMonth(new Date()); }}>

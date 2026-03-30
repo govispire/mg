@@ -331,7 +331,7 @@ const StudentVocabulary: React.FC = () => {
     }
 
     return (
-        <div className="w-full px-4 py-6 space-y-6">
+        <div className="space-y-6 max-w-7xl mx-auto">
             {/* ── Page Header ── */}
             <div className="flex items-center justify-between">
                 <div>
@@ -345,7 +345,7 @@ const StudentVocabulary: React.FC = () => {
                 </div>
                 <Button
                     onClick={() => setQuizActive(true)}
-                    className="gap-2 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 shadow-md shadow-violet-200 border-0 font-semibold"
+                    className="gap-2 bg-primary hover:bg-primary/90 shadow-md font-semibold border-0"
                 >
                     <Brain className="h-4 w-4" /> Take Quiz
                 </Button>
@@ -368,7 +368,7 @@ const StudentVocabulary: React.FC = () => {
                     <div className="flex items-center gap-2">
                         <Star className="h-4 w-4 text-violet-600 fill-violet-600" />
                         <span className="text-sm font-bold">Vocabulary Level</span>
-                        <span className="text-sm font-black text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-indigo-600">
+                        <span className="text-sm font-black text-primary">
                             {stats.level}
                         </span>
                     </div>
@@ -376,7 +376,7 @@ const StudentVocabulary: React.FC = () => {
                 </div>
                 <div className="h-2.5 bg-muted rounded-full overflow-hidden">
                     <div
-                        className="h-full rounded-full bg-gradient-to-r from-violet-500 via-indigo-500 to-blue-500 transition-all duration-1000 ease-out"
+                        className="h-full rounded-full bg-primary transition-all duration-1000 ease-out"
                         style={{ width: `${Math.max(levelPct, 3)}%` }}
                     />
                 </div>

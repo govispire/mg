@@ -25,7 +25,7 @@ export const ExamStatusSummary = () => {
 
     if (activeExams.length === 0) {
         return (
-            <Card className="p-6 bg-gradient-to-br from-indigo-50 to-purple-50 border-dashed border-2 border-indigo-200">
+            <Card className="p-6 bg-primary/5 border-dashed border-2 border-primary/20">
                 <div className="flex flex-col items-center justify-center text-center">
                     <div className="h-12 w-12 bg-white rounded-full flex items-center justify-center shadow-sm mb-3">
                         <Plus className="h-6 w-6 text-primary" />
@@ -47,7 +47,7 @@ export const ExamStatusSummary = () => {
             <Card className="p-4 sm:p-5 bg-gradient-to-br from-card via-card to-primary/5 border-2 shadow-lg relative overflow-visible">
                 {/* Decorative Background Elements */}
                 <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -z-0" />
-                <div className="absolute bottom-0 left-0 w-48 h-48 bg-purple-500/5 rounded-full blur-3xl -z-0" />
+                <div className="absolute bottom-0 left-0 w-48 h-48 bg-primary/5 rounded-full blur-3xl -z-0" />
 
                 <div className="relative z-10">
                     <div className="flex items-center justify-between mb-5">

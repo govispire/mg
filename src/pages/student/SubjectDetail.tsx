@@ -30,7 +30,7 @@ const SubjectDetail = () => {
   }
   
   return (
-    <div className="space-y-4 sm:space-y-6 p-2 sm:p-4">
+    <div className="space-y-4 sm:space-y-6 max-w-7xl mx-auto">
       <CourseNavigation 
         items={[
           { label: 'Courses', href: '/student/courses' },

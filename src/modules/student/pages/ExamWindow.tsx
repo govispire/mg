@@ -143,12 +143,14 @@ const ExamWindow = () => {
 
         localStorage.setItem('exam_result_' + quizId, JSON.stringify(result));
 
-        // Store in quiz completions immediately
+        // Store in quiz completions immediately (include title for history display)
         const completions = JSON.parse(localStorage.getItem('quizCompletions') || '{}');
         completions[quizId] = {
             completed: true,
             score,
-            date: new Date().toISOString()
+            date: new Date().toISOString(),
+            title: quizTitle,
+            duration: duration,
         };
         localStorage.setItem('quizCompletions', JSON.stringify(completions));
 

@@ -25,8 +25,8 @@ export const UpcomingLiveTests = () => {
     ];
 
     return (
-        <Card className="p-4 bg-card border-2 border-orange-500 relative overflow-hidden shadow-lg shadow-orange-500/20">
-            <div className="absolute inset-0 bg-gradient-to-r from-orange-500/5 via-transparent to-orange-500/5 animate-pulse pointer-events-none" />
+        <Card className="p-4 bg-card border-2 border-primary/40 relative overflow-hidden shadow-lg shadow-primary/10">
+            <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-primary/5 animate-pulse pointer-events-none" />
 
             <div className="absolute -top-1 -right-1 z-10">
                 <div className="relative">
@@ -44,22 +44,22 @@ export const UpcomingLiveTests = () => {
             <div className="flex items-center justify-between mb-3 relative z-10">
                 <h3 className="font-semibold text-sm flex items-center gap-2">
                     <span className="relative flex h-3 w-3">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75" />
-                        <span className="relative inline-flex rounded-full h-3 w-3 bg-orange-500" />
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75" />
+                        <span className="relative inline-flex rounded-full h-3 w-3 bg-primary" />
                     </span>
                     Upcoming Live Tests
-                    <span className="ml-1 bg-orange-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full animate-bounce">
+                    <span className="ml-1 bg-primary text-white text-[10px] font-bold px-2 py-0.5 rounded-full animate-bounce">
                         {upcomingTests.length}
                     </span>
                 </h3>
-                <span className="text-[10px] text-orange-600 font-medium bg-orange-50 dark:bg-orange-950 px-2 py-0.5 rounded-full border border-orange-100 dark:border-orange-900">
+                <span className="text-[10px] text-primary font-medium bg-primary/10 dark:bg-primary/20 px-2 py-0.5 rounded-full border border-primary/20">
                     Premium
                 </span>
             </div>
 
             <div className="space-y-3 relative z-10">
                 {upcomingTests.map((test) => (
-                    <div key={test.id} className="bg-muted/30 rounded-lg p-3 border border-border/50 hover:border-orange-200 dark:hover:border-orange-800 transition-all cursor-pointer group">
+                    <div key={test.id} className="bg-muted/30 rounded-lg p-3 border border-border/50 hover:border-primary/30 transition-all cursor-pointer group">
                         <h4 className="font-medium text-sm mb-2 group-hover:text-primary transition-colors line-clamp-1">
                             {test.title}
                         </h4>
@@ -77,7 +77,7 @@ export const UpcomingLiveTests = () => {
                             <div className="text-[10px] text-muted-foreground">
                                 <span className="font-medium text-foreground">{test.registrations}</span> registered
                             </div>
-                            <Button size="sm" className="h-7 text-xs bg-orange-600 hover:bg-orange-700 text-white border-none" asChild>
+                            <Button size="sm" className="h-7 text-xs bg-primary hover:bg-primary/90 text-white border-none" asChild>
                                 <Link to="/student/live-tests">Register</Link>
                             </Button>
                         </div>
@@ -93,7 +93,7 @@ export const UpcomingLiveTests = () => {
             <Button
                 variant="ghost"
                 size="sm"
-                className="w-full mt-3 h-8 text-xs text-orange-600 hover:text-orange-700 hover:bg-orange-50 dark:hover:bg-orange-950 gap-1 relative z-10"
+                className="w-full mt-3 h-8 text-xs text-primary hover:text-primary/80 hover:bg-primary/10 gap-1 relative z-10"
                 asChild
             >
                 <Link to="/student/live-tests">

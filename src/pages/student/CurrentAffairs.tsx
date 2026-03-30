@@ -14,33 +14,24 @@ import { Link, useNavigate } from 'react-router-dom';
 import AllInOneView from '@/components/current-affairs/AllInOneView';
 import DailyNewsView from '@/components/current-affairs/DailyNewsView';
 import { ContinueReadingSection } from '@/components/current-affairs/ContinueReadingSection';
-import { allArticles } from '@/components/current-affairs/articlesData';
+import { useCurrentAffairsStore } from '@/hooks/useCurrentAffairsStore';
 import { dailyQuizzes } from '@/data/dailyQuizzesData';
 import { Article } from '@/components/current-affairs/types';
 import { motion } from 'framer-motion';
 
 const CurrentAffairs = () => {
   const { currentAffairs, stats, hasFilters, selectedCategories } = useCategoryFilteredCurrentAffairs();
+  const { getNewsArticles, getDailyNewsArticles, getAllInOneArticles } = useCurrentAffairsStore();
   const [activeTab, setActiveTab] = useState('news');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const navigate = useNavigate();
 
-  const getFilteredAffairs = () => {
-    // For quizzes tabs
-    if (activeTab === 'daily-quizzes' || activeTab === 'weekly-quizzes' || activeTab === 'monthly-quizzes') {
-      const typeMap: Record<string, string> = {
-        'daily-quizzes': 'daily',
-        'weekly-quizzes': 'weekly',
-        'monthly-quizzes': 'monthly'
-      };
-      return currentAffairs.filter(affair => affair.type === (typeMap[activeTab] || activeTab));
-    }
-    return [];
-  };
+  // Use the store — picks up both static seed articles + admin-created ones
+  const allNewsArticles = getNewsArticles();
+  const allDailyNewsArticles = getDailyNewsArticles();
+  const allInOneArticles = getAllInOneArticles();
 
-  const filteredAffairs = getFilteredAffairs();
-
-  // Rich Articles Filtering for News Tab
+  // Category filtering for the News tab (existing logic preserved)
   const categoryMapping: Record<string, string[]> = {
     'banking-insurance': ['Banking', 'Economy'],
     'banking': ['Banking', 'Economy'],
@@ -53,7 +44,7 @@ const CurrentAffairs = () => {
   };
 
   const getRichFilteredArticles = () => {
-    if (!hasFilters) return allArticles;
+    if (!hasFilters) return allNewsArticles;
 
     // Get all allowed category names based on selected IDs
     const allowedCategories = new Set<string>();
@@ -62,7 +53,7 @@ const CurrentAffairs = () => {
       mapped.forEach(c => allowedCategories.add(c));
     });
 
-    return allArticles.filter(article => allowedCategories.has(article.category));
+    return allNewsArticles.filter(article => allowedCategories.has(article.category));
   };
 
   const richArticles = getRichFilteredArticles();
@@ -80,7 +71,7 @@ const CurrentAffairs = () => {
   };
 
   return (
-    <div className="p-4 md:p-6 space-y-6 max-w-7xl mx-auto">
+    <div className="space-y-6 max-w-7xl mx-auto">
       {/* Header */}
       <div className="flex flex-col sm:flex-row gap-4 items-start">
         <div className="flex-1">
@@ -166,7 +157,7 @@ const CurrentAffairs = () => {
                 >
                   <Card
                     className="h-full hover:shadow-xl transition-all duration-300 group cursor-pointer overflow-hidden relative"
-                    onClick={() => navigate(`/current-affairs/${article.id}`)}
+                    onClick={() => navigate(`/current-affairs/${article.id}`, { state: { from: '/student/current-affairs' } })}
                   >
                     <div className="relative h-48 overflow-hidden">
                       <img
@@ -225,7 +216,7 @@ const CurrentAffairs = () => {
                 >
                   <Card
                     className="hover:shadow-lg transition-all duration-300 group cursor-pointer"
-                    onClick={() => navigate(`/current-affairs/${article.id}`)}
+                    onClick={() => navigate(`/current-affairs/${article.id}`, { state: { from: '/student/current-affairs' } })}
                   >
                     <CardContent className="p-4 flex gap-4">
                       <div className="hidden sm:block w-32 h-24 rounded-lg overflow-hidden flex-shrink-0">
@@ -285,27 +276,29 @@ const CurrentAffairs = () => {
                   dailyQuizzes
                     .filter(quiz => quiz.subject === 'Current Affairs')
                     .sort((a, b) => new Date(b.scheduledDate).getTime() - new Date(a.scheduledDate).getTime())
-                    .reduce((groups, quiz) => {
+                    .reduce((groups: Record<string, typeof dailyQuizzes>, quiz) => {
                       const date = new Date(quiz.scheduledDate);
                       const key = date.toLocaleString('default', { month: 'long', year: 'numeric' });
                       if (!groups[key]) groups[key] = [];
                       groups[key].push(quiz);
                       return groups;
                     }, {} as Record<string, typeof dailyQuizzes>)
-                ).map(([month, quizzes]) => (
+                ).map(([month, quizzes]) => {
+                  const typedQuizzes = quizzes as typeof dailyQuizzes;
+                  return (
                   <div key={month} className="space-y-4">
                     <div className="flex items-center gap-2">
                       <CalendarDays className="h-5 w-5 text-primary" />
                       <h3 className="text-lg font-semibold text-foreground">{month}</h3>
-                      <Badge variant="secondary" className="ml-2">{quizzes.length}</Badge>
+                      <Badge variant="secondary" className="ml-2">{typedQuizzes.length}</Badge>
                     </div>
                     <div className={viewMode === 'grid' ? "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4" : "space-y-2"}>
-                      {quizzes.map((quiz) => (
+                      {typedQuizzes.map((quiz) => (
                         viewMode === 'grid' ? (
                           <Card
                             key={quiz.id}
                             className="hover:shadow-lg transition-all cursor-pointer border-primary/10 group flex flex-col h-full"
-                            onClick={() => navigate(`/student/tests/${quiz.id}`)}
+                    onClick={() => navigate(`/student/tests/${quiz.id}`, { state: { from: '/student/current-affairs' } })}
                           >
                             <CardContent className="p-4 flex flex-col h-full">
                               <div className="flex items-center justify-between mb-3">
@@ -360,16 +353,17 @@ const CurrentAffairs = () => {
                       ))}
                     </div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               <div className={viewMode === 'grid' ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" : "space-y-2"}>
-                {filteredAffairs.filter(a => a.type === (tab === 'weekly-quizzes' ? 'weekly' : 'monthly')).map((affair) => (
+                {currentAffairs.filter(a => a.type === (tab === 'weekly-quizzes' ? 'weekly' : 'monthly')).map((affair) => (
                   viewMode === 'grid' ? (
                     <Card
                       key={affair.id}
                       className="hover:shadow-lg transition-all cursor-pointer border-primary/10 group"
-                      onClick={() => navigate(`/current-affairs/${affair.id}`)}
+                      onClick={() => navigate(`/current-affairs/${affair.id}`, { state: { from: '/student/current-affairs' } })}
                     >
                       <CardContent className="pt-6">
                         <div className="flex items-center justify-between mb-4">

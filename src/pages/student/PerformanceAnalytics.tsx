@@ -19,7 +19,7 @@ const PerformanceAnalytics = () => {
   const currentCategoryData = performanceData.find(data => data.categoryId === selectedCategoryData) || performanceData[0];
 
   return (
-    <div className="p-4 md:p-6 space-y-6 max-w-7xl mx-auto">
+    <div className="space-y-6 max-w-7xl mx-auto">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>

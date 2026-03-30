@@ -4,47 +4,45 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/app/providers';
 import {
-  Target,
   ChevronLeft,
   ChevronRight,
   Newspaper,
   Bookmark,
-  LayoutGrid,
   Play,
   Clock,
   FileText,
   CheckCircle,
   Trash2,
+  Zap,
+  ArrowRight,
+  Target,
 } from 'lucide-react';
 import NewsArticleDialog from '@/components/student/NewsArticleDialog';
 import StatCardDialog from '@/components/student/StatCardDialog';
 import { dailyQuizzes } from '@/data/dailyQuizzesData';
 import QuizAttemptIBPS, { QuizResult } from '@/components/student/quiz/QuizAttemptIBPS';
 import launchExamWindow from '@/utils/launchExam';
-import { getQuestionsForQuiz } from '@/data/quizQuestionsData';
 import { toast } from 'sonner';
-import { ArrowLeft } from 'lucide-react';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { differenceInDays } from 'date-fns';
 import { CompulsoryFormModal, WelcomeMessageModal } from '@/components/auth/UpdatedAuthModal';
 import { allArticles } from '@/components/current-affairs/articlesData';
 import { useSavedArticles } from '@/hooks/useSavedArticles';
 import { UpcomingLiveTests } from '@/components/student/dashboard/UpcomingLiveTests';
+import { UpcomingExamsWidget } from '@/components/student/dashboard/UpcomingExamsWidget';
 import { TrendingExams } from '@/components/student/dashboard/TrendingExams';
-import { YourExams } from '@/components/student/dashboard/YourExams';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { ExamStatusSummary } from '@/components/student/dashboard/ExamStatusSummary';
 import { StatsOverview } from '@/components/student/dashboard/StatsOverview';
 import { PerformanceGraph } from '@/components/student/dashboard/PerformanceGraph';
-import { NextAction } from '@/components/student/dashboard/NextAction';
 import WordOfTheDayCard from '@/components/student/VocabularyWidget';
 import TargetExamCard from '@/components/student/dashboard/TargetExamCard';
 import RecentExamNotifications from '@/components/student/dashboard/RecentExamNotifications';
-import RecentMockTestPerformance from '@/components/student/dashboard/RecentMockTestPerformance';
 import { courses as allCourses } from '@/data/courseData';
-import { Video, Star, BookOpen as BookOpenIcon } from 'lucide-react';
+import { DailyGoalsWidget } from '@/components/student/dashboard/DailyGoalsWidget';
+import { useDashboardStats } from '@/hooks/useDashboardStats';
 
 interface UserProfile {
   username: string;
@@ -412,17 +410,9 @@ const StudentDashboard = () => {
       content: article.content || ''
     }));
 
-  // Performance data for chart
-  const performanceData = [
-    { week: 'Week 1', tests: 45, quizzes: 52 },
-    { week: 'Week 2', tests: 52, quizzes: 58 },
-    { week: 'Week 3', tests: 48, quizzes: 62 },
-    { week: 'Week 4', tests: 62, quizzes: 72 },
-    { week: 'Week 5', tests: 68, quizzes: 78 },
-    { week: 'Week 6', tests: 72, quizzes: 82 },
-    { week: 'Week 7', tests: 78, quizzes: 85 },
-    { week: 'Week 8', tests: 82, quizzes: 88 },
-  ];
+  // Real stats from localStorage activity
+  const dashStats = useDashboardStats();
+  const performanceData = dashStats.performanceData;
 
   // Dynamic Date Logic
   const today = new Date();
@@ -564,9 +554,11 @@ const StudentDashboard = () => {
     toast.success(`🎉 Quiz completed! Score: ${result.score}%`);
   };
 
+  const firstName = (userProfile?.username || user?.name || 'Student').split(' ')[0];
+
   return (
-    <div className="h-screen overflow-y-auto bg-muted/30">
-      <div className="p-4 sm:p-6 space-y-4 max-w-full">
+    <div className="space-y-4 max-w-7xl mx-auto">
+
 
         {/* ── TOP ROW: Target Exam Card — full width ── */}
         <div className="w-full">
@@ -587,10 +579,16 @@ const StudentDashboard = () => {
           <StatsOverview
             journeyDays={journeyDays}
             userName={userProfile?.username || user?.name || 'Student'}
+            studyHours={dashStats.studyHours}
+            activeStreak={dashStats.activeStreak}
+            mockTestsTaken={dashStats.mockTestsTaken}
             onCardClick={setStatDialogType}
           />
 
-          {/* 2. Performance Graph + Percentile + Word of the Day */}
+          {/* 2. Daily Goals — most important, shown first */}
+          <DailyGoalsWidget />
+
+          {/* 3. Performance Graph + Percentile + Word of the Day */}
           <div className="flex flex-col xl:flex-row gap-4">
             {/* Performance Graph */}
             <div className="w-full xl:w-1/2 flex flex-col">
@@ -685,8 +683,8 @@ const StudentDashboard = () => {
 
                   {/* Center Value */}
                   <div className="absolute bottom-0 left-1/2 -translate-x-1/2 text-center">
-                    <div className="text-3xl font-bold text-primary">87.5</div>
-                    <div className="text-xs text-muted-foreground">Percentile</div>
+                    <div className="text-3xl font-bold text-primary">{dashStats.percentile > 0 ? dashStats.percentile.toFixed(1) : '—'}</div>
+                    <div className="text-xs text-muted-foreground">{dashStats.percentile > 0 ? 'Percentile' : 'No data yet'}</div>
                   </div>
                 </div>
 
@@ -702,7 +700,9 @@ const StudentDashboard = () => {
                   </div>
                   <div className="flex items-center justify-between text-sm pt-2 border-t">
                     <span className="text-muted-foreground">Avg Percentile:</span>
-                    <span className="font-bold text-green-600">85.2</span>
+                    <span className={`font-bold ${dashStats.percentile > 0 ? 'text-green-600' : 'text-slate-400'}`}>
+                      {dashStats.percentile > 0 ? `${dashStats.percentile}` : 'N/A'}
+                    </span>
                   </div>
                 </div>
 
@@ -722,7 +722,7 @@ const StudentDashboard = () => {
             </div>
           </div>
 
-          {/* 3. Featured Courses — Udemy-style */}
+          {/* 4. Featured Courses — Udemy-style */}
           <FeaturedCoursesSection navigate={navigate} />
 
           {/* 4. Trending Exams */}
@@ -741,10 +741,10 @@ const StudentDashboard = () => {
             <Card className="p-5 bg-white border border-slate-200 shadow-sm rounded-2xl flex flex-col h-full">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
-                  <div className="w-1 h-5 bg-sky-500 rounded-full" />
+                  <div className="w-1 h-5 bg-primary rounded-full" />
                   <h3 className="font-bold text-[15px] text-slate-800">Daily Free Quiz</h3>
                 </div>
-                <span className="text-[11px] text-sky-600 font-semibold bg-sky-50 border border-sky-100 px-2 py-0.5 rounded-full">
+                <span className="text-[11px] text-primary font-semibold bg-primary/10 border border-primary/20 px-2 py-0.5 rounded-full">
                   {freeTests.length} tests today
                 </span>
               </div>
@@ -752,13 +752,13 @@ const StudentDashboard = () => {
                 {freeTests.slice(0, 5).map((test, idx) => {
                   const isCompleted = !!quizCompletions[test.id];
                   return (
-                    <div key={idx} className="flex items-center justify-between px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-100 hover:border-sky-200 hover:bg-sky-50/40 transition-all group">
+                    <div key={idx} className="flex items-center justify-between px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-100 hover:border-primary/30 hover:bg-primary/5 transition-all group">
                       <div className="flex items-center gap-3 min-w-0 flex-1">
-                        <div className="shrink-0 w-8 h-8 rounded-lg bg-sky-100 flex items-center justify-center">
-                          <FileText className="h-4 w-4 text-sky-600" />
+                        <div className="shrink-0 w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+                          <FileText className="h-4 w-4 text-primary" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="font-semibold text-[12.5px] text-slate-800 truncate group-hover:text-sky-700 transition-colors">{test.title}</p>
+                          <p className="font-semibold text-[12.5px] text-slate-800 truncate group-hover:text-primary transition-colors">{test.title}</p>
                           <div className="text-[10px] text-slate-500 flex items-center gap-2 mt-0.5">
                             <span>{test.questions} Questions</span>
                             <span className="text-slate-300">•</span>
@@ -774,7 +774,7 @@ const StudentDashboard = () => {
                             Done
                           </div>
                         ) : (
-                          <Button size="sm" className="h-7 px-3 bg-sky-500 hover:bg-sky-600 text-white rounded-lg text-[11px] font-semibold shadow-sm" onClick={() => handleStartTest(test)}>
+                          <Button size="sm" className="h-7 px-3 bg-primary hover:bg-primary/90 text-white rounded-lg text-[11px] font-semibold shadow-sm" onClick={() => handleStartTest(test)}>
                             <Play className="h-2.5 w-2.5 mr-1" strokeWidth={3} />
                             Start
                           </Button>
@@ -784,12 +784,12 @@ const StudentDashboard = () => {
                   );
                 })}
               </div>
-              <Button variant="outline" className="w-full mt-4 text-[13px] font-semibold text-sky-600 border-sky-200 bg-sky-50 hover:bg-sky-100 rounded-xl py-2.5" asChild>
+              <Button variant="outline" className="w-full mt-4 text-[13px] font-semibold text-primary border-primary/30 bg-primary/5 hover:bg-primary/10 rounded-xl py-2.5" asChild>
                 <Link to="/student/daily-quizzes">View All Tests →</Link>
               </Button>
             </Card>
 
-            {/* Upcoming Live Tests */}
+            {/* Upcoming Live Tests (restored) */}
             <UpcomingLiveTests />
           </div>
 
@@ -798,18 +798,21 @@ const StudentDashboard = () => {
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <Newspaper className="h-4 w-4 text-primary" />
-                <h3 className="font-semibold text-base">Your Current Affairs</h3>
+                <h3 className="font-semibold text-base">Current Affairs</h3>
               </div>
               <div className="flex items-center gap-2">
-                {/* Auto Slide Toggle */}
-                <div
-                  className={`flex items-center gap-1.5 px-2 py-1 rounded-full text-[10px] font-medium cursor-pointer transition-colors ${isAutoSlide ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'}`}
+                {/* Auto Slide Toggle — compact pill */}
+                <button
                   onClick={() => setIsAutoSlide(!isAutoSlide)}
-                  title={isAutoSlide ? "Pause Auto-Slide" : "Enable Auto-Slide"}
+                  className={`flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-semibold border transition-colors ${
+                    isAutoSlide
+                      ? 'bg-primary/10 text-primary border-primary/20'
+                      : 'bg-muted text-muted-foreground border-border'
+                  }`}
                 >
-                  <div className={`w-1.5 h-1.5 rounded-full ${isAutoSlide ? 'bg-primary animate-pulse' : 'bg-muted-foreground'}`}></div>
-                  <span>{isAutoSlide ? 'Auto On' : 'Auto Off'}</span>
-                </div>
+                  <span className={`w-1.5 h-1.5 rounded-full ${isAutoSlide ? 'bg-primary animate-pulse' : 'bg-slate-400'}`} />
+                  {isAutoSlide ? 'Auto' : 'Manual'}
+                </button>
 
                 {/* Saved Articles Sheet Trigger */}
                 <Sheet open={savedSheetOpen} onOpenChange={setSavedSheetOpen}>
@@ -870,12 +873,6 @@ const StudentDashboard = () => {
                   </SheetContent>
                 </Sheet>
 
-                <Button variant="ghost" size="icon" className="h-8 w-8">
-                  <LayoutGrid className="h-4 w-4" />
-                </Button>
-                <div className="w-10 h-5 bg-primary rounded-full relative mx-1">
-                  <div className="absolute right-1 top-1 w-3 h-3 bg-primary-foreground rounded-full"></div>
-                </div>
                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setIsAutoSlide(false); handlePrevNews(); }}>
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
@@ -885,34 +882,36 @@ const StudentDashboard = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {currentAffairsData.map((item, idx) => (
                 <div
                   key={idx}
-                  className="group cursor-pointer"
+                  className="group cursor-pointer bg-slate-50 border border-border/50 rounded-xl overflow-hidden hover:shadow-md hover:border-primary/30 transition-all"
                   onClick={() => handleNewsClick(item)}
                 >
-                  <div className="relative rounded-lg overflow-hidden mb-2">
+                  <div className="relative overflow-hidden">
                     <img
                       src={item.image}
                       alt={item.title}
-                      className="w-full h-36 object-cover transition-transform group-hover:scale-105"
+                      className="w-full h-24 object-cover transition-transform group-hover:scale-105"
                     />
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="absolute top-2 right-2 h-8 w-8 bg-card/80 hover:bg-card"
+                      className="absolute top-1.5 right-1.5 h-7 w-7 bg-white/80 hover:bg-white rounded-lg"
                       onClick={(e) => {
                         e.stopPropagation();
                         if (item.id) toggleSave(item.id);
                       }}
                     >
-                      <Bookmark className={`h-4 w-4 ${item.id && isSaved(item.id) ? "fill-primary text-primary" : ""}`} />
+                      <Bookmark className={`h-3.5 w-3.5 ${item.id && isSaved(item.id) ? "fill-primary text-primary" : ""}`} />
                     </Button>
+                    <span className="absolute bottom-1.5 left-1.5 text-[9px] font-bold bg-white/90 text-slate-600 px-1.5 py-0.5 rounded-md uppercase tracking-wide">{item.category}</span>
                   </div>
-                  <p className="text-xs text-muted-foreground mb-1">{item.category}</p>
-                  <h4 className="font-semibold text-sm mb-1">{item.title}</h4>
-                  <p className="text-xs text-muted-foreground line-clamp-2">{item.description}</p>
+                  <div className="p-3">
+                    <h4 className="font-semibold text-[12.5px] text-slate-800 line-clamp-2 leading-snug group-hover:text-primary transition-colors">{item.title}</h4>
+                    <p className="text-[11px] text-slate-500 line-clamp-1 mt-1">{item.description}</p>
+                  </div>
                 </div>
               ))}
             </div>
@@ -1068,7 +1067,6 @@ const StudentDashboard = () => {
         userInitial={(user?.name || 'S').charAt(0).toUpperCase()}
         userAvatar={userProfile?.avatar}
       />
-      </div>
     </div>
   );
 };

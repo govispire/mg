@@ -310,7 +310,7 @@ const StudentTests = () => {
   };
 
   return (
-    <div className="p-4 md:p-6 space-y-4 max-w-7xl mx-auto">
+    <div className="space-y-4 max-w-7xl mx-auto">
       {/* Category Tabs */}
       {availableCategories.length > 0 && (
         <div className="bg-white rounded-lg shadow-sm">

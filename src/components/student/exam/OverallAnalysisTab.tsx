@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+
 import { Target, CheckCircle, XCircle, Clock, Users, Trophy, Brain, TrendingUp, AlertTriangle } from 'lucide-react';
 import { TestAnalysisData } from '@/data/testAnalysisData';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -26,6 +26,10 @@ export const OverallAnalysisTab: React.FC<OverallAnalysisTabProps> = ({ analysis
   const totalTime = analysisData.sectionWiseData.reduce((s, sec) => s + sec.timeSpent, 0);
   const overallAccuracy = totalAttempted > 0 ? Math.round((totalCorrect / totalAttempted) * 100) : 0;
   const totalNegative = totalWrong * 0.25;
+
+  // ── Slider state (initialized after totals) ──────────────────
+  const [rankSliderMarks, setRankSliderMarks] = useState<number>(() => totalScore);
+  const [percentileSliderMarks, setPercentileSliderMarks] = useState<number>(0);
 
   // ── Quick info cards ─────────────────────────────────────────
   const quickInfoCards = [
@@ -314,122 +318,343 @@ export const OverallAnalysisTab: React.FC<OverallAnalysisTabProps> = ({ analysis
         <ResponsiveTable />
       </Card>
 
-      {/* Performance Comparison Graph */}
-      <Card className="p-3 sm:p-4 lg:p-6 shadow-sm">
-        <h3 className="text-base sm:text-lg lg:text-xl font-semibold mb-3 sm:mb-4 lg:mb-6">Performance Comparison</h3>
-        <div className="w-full">
-          <ResponsiveContainer width="100%" height={isMobile ? 220 : 300}>
-            <LineChart data={performanceData} margin={{ top: 15, right: isMobile ? 15 : 30, left: isMobile ? 5 : 20, bottom: isMobile ? 60 : 20 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#e0e7ff" />
-              <XAxis dataKey="section" fontSize={isMobile ? 10 : 12} interval={0} angle={isMobile ? -45 : 0} textAnchor={isMobile ? 'end' : 'middle'} height={isMobile ? 70 : 50} tick={{ fontSize: isMobile ? 10 : 12 }} />
-              <YAxis fontSize={isMobile ? 10 : 12} width={isMobile ? 35 : 50} tick={{ fontSize: isMobile ? 10 : 12 }} />
-              <Tooltip contentStyle={{ fontSize: isMobile ? '11px' : '13px', padding: isMobile ? '8px 10px' : '12px 16px', borderRadius: '8px', border: '1px solid #e5e7eb', backgroundColor: 'white', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)' }} labelStyle={{ fontSize: isMobile ? '11px' : '13px', fontWeight: 'bold' }} />
-              <Line type="monotone" dataKey="yourScore" stroke="#3b82f6" strokeWidth={isMobile ? 2 : 3} name="Your Score" dot={{ r: isMobile ? 3 : 4, fill: '#3b82f6' }} activeDot={{ r: isMobile ? 5 : 6, fill: '#1d4ed8' }} />
-              <Line type="monotone" dataKey="topperScore" stroke="#10b981" strokeWidth={isMobile ? 2 : 3} name="Topper Score" dot={{ r: isMobile ? 3 : 4, fill: '#10b981' }} activeDot={{ r: isMobile ? 5 : 6, fill: '#047857' }} />
-            </LineChart>
-          </ResponsiveContainer>
-          {isMobile && (
-            <div className="flex justify-center gap-4 mt-3 text-xs">
-              <div className="flex items-center gap-1.5"><div className="w-3 h-0.5 bg-blue-500 rounded" /><span>Your Score</span></div>
-              <div className="flex items-center gap-1.5"><div className="w-3 h-0.5 bg-green-500 rounded" /><span>Topper Score</span></div>
-            </div>
-          )}
-        </div>
-      </Card>
+      {/* ── Attempt Analysis (30%) + Where You Stand (70%) ── */}
+      <div className="flex flex-col lg:flex-row gap-4">
 
-      {/* ── Attempt Analysis ── */}
-      <Card className="p-4 sm:p-6 shadow-sm">
-        <h3 className="text-base sm:text-lg font-semibold mb-4">Attempt Analysis</h3>
-        <div className="flex flex-col sm:flex-row items-center gap-6">
-          {/* SVG donut ring */}
-          <div className="relative flex-shrink-0">
-            <svg width="150" height="150" viewBox="0 0 150 150">
-              <circle cx="75" cy="75" r="56" fill="none" stroke="#e5e7eb" strokeWidth="14" />
-              {/* green correct */}
-              <circle cx="75" cy="75" r="56" fill="none" stroke="#22c55e" strokeWidth="14"
-                strokeDasharray={`${correctDash} ${C - correctDash}`}
-                style={{ transform: 'rotate(-90deg)', transformOrigin: '75px 75px' }} />
-              {/* red wrong offset after correct */}
-              <circle cx="75" cy="75" r="56" fill="none" stroke="#ef4444" strokeWidth="14"
-                strokeDasharray={`${wrongDash} ${C - wrongDash}`}
-                strokeDashoffset={-(correctDash)}
-                style={{ transform: 'rotate(-90deg)', transformOrigin: '75px 75px' }} />
-              <text x="75" y="70" textAnchor="middle" fontSize="22" fontWeight="bold" fill="#16a34a">{totalAttempted}</text>
-              <text x="75" y="87" textAnchor="middle" fontSize="9" fill="#6b7280" fontWeight="600" letterSpacing="0.5">ATTEMPTED</text>
-            </svg>
-          </div>
-          {/* Stats */}
-          <div className="flex-1 space-y-3 w-full">
-            {[
-              { dot: '#22c55e', label: 'Correct', value: String(totalCorrect), cls: 'text-green-600' },
-              { dot: '#ef4444', label: 'Wrong', value: String(totalWrong), cls: 'text-red-500' },
-              { dot: '#9ca3af', label: 'Skipped', value: String(totalSkipped), cls: 'text-gray-600' },
-              { dot: '#f59e0b', label: 'Negative Marks', value: `-${totalNegative.toFixed(2)}`, cls: 'text-amber-600' },
-            ].map(({ dot, label, value, cls }) => (
-              <div key={label} className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: dot }} />
-                  <span className="text-sm text-gray-700">{label}</span>
+        {/* Attempt Analysis — 30% */}
+        <Card className="lg:w-[30%] flex-shrink-0 p-3 shadow-sm">
+          <h3 className="text-sm font-semibold mb-2">Attempt Analysis</h3>
+          <div className="flex items-center gap-3">
+            {/* Compact donut */}
+            <div className="relative flex-shrink-0">
+              <svg width="96" height="96" viewBox="0 0 150 150">
+                <circle cx="75" cy="75" r="56" fill="none" stroke="#e5e7eb" strokeWidth="16" />
+                <circle cx="75" cy="75" r="56" fill="none" stroke="#22c55e" strokeWidth="16"
+                  strokeDasharray={`${correctDash} ${C - correctDash}`}
+                  style={{ transform: 'rotate(-90deg)', transformOrigin: '75px 75px' }} />
+                <circle cx="75" cy="75" r="56" fill="none" stroke="#ef4444" strokeWidth="16"
+                  strokeDasharray={`${wrongDash} ${C - wrongDash}`}
+                  strokeDashoffset={-(correctDash)}
+                  style={{ transform: 'rotate(-90deg)', transformOrigin: '75px 75px' }} />
+                <text x="75" y="70" textAnchor="middle" fontSize="24" fontWeight="bold" fill="#16a34a">{totalAttempted}</text>
+                <text x="75" y="88" textAnchor="middle" fontSize="10" fill="#6b7280" fontWeight="600" letterSpacing="0.5">ATTEMPTED</text>
+              </svg>
+            </div>
+            {/* Stats */}
+            <div className="flex-1 space-y-1.5">
+              {[
+                { dot: '#22c55e', label: 'Correct', value: String(totalCorrect), cls: 'text-green-600' },
+                { dot: '#ef4444', label: 'Wrong', value: String(totalWrong), cls: 'text-red-500' },
+                { dot: '#9ca3af', label: 'Skipped', value: String(totalSkipped), cls: 'text-gray-600' },
+                { dot: '#f59e0b', label: 'Neg. Marks', value: `-${totalNegative.toFixed(2)}`, cls: 'text-amber-600' },
+              ].map(({ dot, label, value, cls }) => (
+                <div key={label} className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: dot }} />
+                    <span className="text-xs text-gray-600">{label}</span>
+                  </div>
+                  <span className={`text-xs font-bold ${cls}`}>{value}</span>
                 </div>
-                <span className={`text-base font-bold ${cls}`}>{value}</span>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
-      </Card>
+        </Card>
 
-      {/* ── Where You Stand ── */}
-      <Card className="p-4 sm:p-6 shadow-sm">
-        <div className="flex items-center gap-2 mb-4">
-          <h3 className="text-base sm:text-lg font-semibold">Where You Stand</h3>
-          <span className="text-[10px] bg-amber-100 text-amber-700 border border-amber-200 rounded-full px-2 py-0.5 font-medium">Cut-off Context</span>
-        </div>
-        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4">
-          <div>
-            <p className="text-xs text-gray-500 mb-0.5">Your score vs estimated cut-off</p>
-            <p className="text-2xl font-extrabold text-green-700">
-              {totalScore} <span className="text-sm font-normal text-gray-500">vs ~{estimatedCutoff} cut-off</span>
-            </p>
-            <p className="text-xs text-gray-600 mt-0.5">
-              You are{' '}
-              <span className={`font-semibold ${aboveCutoff >= 0 ? 'text-green-600' : 'text-red-500'}`}>
-                {aboveCutoff >= 0 ? `+${aboveCutoff}` : aboveCutoff} marks
-              </span>{' '}
-              {aboveCutoff >= 0 ? 'above' : 'below'} the General category cut-off
-            </p>
+        {/* Where You Stand — 70% */}
+        <Card className="lg:w-[70%] p-3 shadow-sm">
+          <div className="flex items-center gap-2 mb-2">
+            <h3 className="text-sm font-semibold">Where You Stand</h3>
+            <span className="text-[10px] bg-amber-100 text-amber-700 border border-amber-200 rounded-full px-2 py-0.5 font-medium">Cut-off Context</span>
           </div>
-          {aboveCutoff > 0 && (
-            <div className="text-right">
-              <p className="text-[10px] text-gray-400 uppercase tracking-wide">Beat by</p>
-              <p className="text-3xl font-extrabold text-green-700">{beatStudents.toLocaleString()}</p>
-              <p className="text-[10px] text-gray-500">students out of {analysisData.totalStudents.toLocaleString()}</p>
+          <div className="flex items-start justify-between gap-3 mb-3">
+            <div>
+              <p className="text-[10px] text-gray-500 mb-0.5">Your score vs estimated cut-off</p>
+              <p className="text-xl font-extrabold text-green-700 leading-tight">
+                {totalScore} <span className="text-xs font-normal text-gray-500">vs ~{estimatedCutoff} cut-off</span>
+              </p>
+              <p className="text-xs text-gray-600 mt-0.5">
+                You are{' '}
+                <span className={`font-semibold ${aboveCutoff >= 0 ? 'text-green-600' : 'text-red-500'}`}>
+                  {aboveCutoff >= 0 ? `+${aboveCutoff}` : aboveCutoff} marks
+                </span>{' '}
+                {aboveCutoff >= 0 ? 'above' : 'below'} the General category cut-off
+              </p>
             </div>
-          )}
-        </div>
-        {/* Score bar */}
-        <div className="relative mt-6">
-          <div className="w-full h-6 rounded-full overflow-visible bg-gray-100 relative">
-            <div className="h-full rounded-full bg-gradient-to-r from-green-300 to-green-600 transition-all duration-700" style={{ width: `${yourScorePct}%` }} />
-            {/* Cut-off marker */}
-            <div className="absolute top-0 bottom-0 w-0.5 bg-amber-500" style={{ left: `${cutoffPct}%` }}>
-              <div className="absolute -top-7 left-1/2 -translate-x-1/2 whitespace-nowrap bg-amber-500 text-white text-[10px] font-bold px-2 py-0.5 rounded">
-                ~{estimatedCutoff} Cut-off
+            {aboveCutoff > 0 && (
+              <div className="text-right flex-shrink-0">
+                <p className="text-[9px] text-gray-400 uppercase tracking-wide">Beat by</p>
+                <p className="text-2xl font-extrabold text-green-700 leading-tight">{beatStudents.toLocaleString()}</p>
+                <p className="text-[9px] text-gray-500">of {analysisData.totalStudents.toLocaleString()} students</p>
+              </div>
+            )}
+          </div>
+          {/* Score bar */}
+          <div className="relative mt-3">
+            <div className="w-full h-5 rounded-full overflow-visible bg-gray-100 relative">
+              <div className="h-full rounded-full bg-gradient-to-r from-green-300 to-green-600 transition-all duration-700" style={{ width: `${yourScorePct}%` }} />
+              <div className="absolute top-0 bottom-0 w-0.5 bg-amber-500" style={{ left: `${cutoffPct}%` }}>
+                <div className="absolute -top-6 left-1/2 -translate-x-1/2 whitespace-nowrap bg-amber-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded">
+                  ~{estimatedCutoff} Cut-off
+                </div>
+              </div>
+              <div className="absolute right-2 top-0 bottom-0 flex items-center">
+                <span className="text-xs font-bold text-white drop-shadow">{totalScore}</span>
               </div>
             </div>
-            {/* Your score label */}
-            <div className="absolute right-2 top-0 bottom-0 flex items-center">
-              <span className="text-xs font-bold text-white drop-shadow">{totalScore}</span>
+            <div className="flex justify-between text-[9px] text-gray-400 mt-1 px-0.5">
+              <span>0</span>
+              <span>{Math.round(sumMaxScore * 0.25)}</span>
+              <span>{Math.round(sumMaxScore * 0.50)}</span>
+              <span>{Math.round(sumMaxScore * 0.75)}</span>
+              <span>{sumMaxScore}</span>
             </div>
           </div>
-          <div className="flex justify-between text-[10px] text-gray-400 mt-1 px-0.5">
-            <span>0</span>
-            <span>{Math.round(sumMaxScore * 0.25)}</span>
-            <span>{Math.round(sumMaxScore * 0.50)}</span>
-            <span>{Math.round(sumMaxScore * 0.75)}</span>
-            <span>{sumMaxScore}</span>
-          </div>
-        </div>
-      </Card>
+        </Card>
+
+      </div>
+
+
+      {/* ── Rank Predictor ── */}
+      {(() => {
+        const minMark = Math.round(sumMaxScore * -0.10);
+        const maxMark = sumMaxScore;
+        const pct = (rankSliderMarks - minMark) / (maxMark - minMark);
+        const rawRank = Math.round(analysisData.totalStudents * Math.pow(Math.max(0, 1 - pct), 1.8));
+        const predictedRank = Math.max(1, Math.min(analysisData.totalStudents, rawRank));
+        const thumbPct = Math.round(((rankSliderMarks - minMark) / (maxMark - minMark)) * 100);
+        // Actual student rank thumb position
+        const actualThumbPct = Math.round(((totalScore - minMark) / (maxMark - minMark)) * 100);
+        const isCustom = rankSliderMarks !== totalScore;
+        return (
+          <Card className="p-4 sm:p-6 shadow-sm">
+            <div className="flex items-center gap-2 mb-5">
+              <h3 className="text-base sm:text-lg font-semibold">Rank Predictor</h3>
+              <span className="text-[10px] bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-full px-2 py-0.5 font-medium">Interactive</span>
+            </div>
+
+            <div className="bg-gray-50 rounded-xl border border-gray-200 p-5 sm:p-6">
+              {/* Header: Student avatar + rank info + score chips */}
+              <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 mb-6">
+                {/* Student avatar + rank */}
+                <div className="flex items-center gap-3">
+                  <div className="relative">
+                    {/* Student icon */}
+                    <div className="w-14 h-14 rounded-full bg-indigo-100 border-4 border-indigo-400 flex items-center justify-center shadow-sm">
+                      <svg className="w-7 h-7 text-indigo-600" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/>
+                      </svg>
+                    </div>
+                    {/* Rank badge */}
+                    <div className="absolute -bottom-1 -right-1 bg-indigo-600 text-white text-[9px] font-extrabold rounded-full w-5 h-5 flex items-center justify-center border border-white">
+                      #{analysisData.rank <= 99 ? analysisData.rank : '99+'}
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-gray-400 mb-0.5">
+                      {isCustom ? `Predicted at ${rankSliderMarks} marks` : 'Your Rank'}
+                    </p>
+                    <p className="text-3xl font-extrabold text-indigo-700 leading-none">
+                      #{isCustom ? predictedRank.toLocaleString() : analysisData.rank.toLocaleString()}
+                    </p>
+                    <p className="text-[10px] text-gray-400 mt-0.5">out of {analysisData.totalStudents.toLocaleString()} students</p>
+                  </div>
+                </div>
+
+                {/* Score chips */}
+                <div className="flex gap-2 sm:ml-auto">
+                  <div className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-center min-w-[70px]">
+                    <p className="text-[9px] text-gray-400 font-medium uppercase">Your Score</p>
+                    <p className="text-base font-extrabold text-green-700">{totalScore}</p>
+                  </div>
+                  <div className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-center min-w-[70px]">
+                    <p className="text-[9px] text-gray-400 font-medium uppercase">Topper</p>
+                    <p className="text-base font-extrabold text-amber-600">{analysisData.comparisonData.topperScore}</p>
+                  </div>
+                  <div className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-center min-w-[70px]">
+                    <p className="text-[9px] text-gray-400 font-medium uppercase">Avg Score</p>
+                    <p className="text-base font-extrabold text-blue-600">{analysisData.comparisonData.averageScore}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Slider */}
+              <div className="space-y-3">
+                <div className="relative pt-10 pb-6">
+                  {/* Tooltip above dragging thumb */}
+                  <div
+                    className="absolute -top-1 flex flex-col items-center pointer-events-none"
+                    style={{ left: `calc(${thumbPct}% - 36px)`, zIndex: 10 }}
+                  >
+                    <div className="bg-indigo-600 text-white text-[10px] font-bold px-2.5 py-1 rounded-lg shadow-md whitespace-nowrap">
+                      Rank : {isCustom ? predictedRank.toLocaleString() : analysisData.rank.toLocaleString()}
+                    </div>
+                    <div className="w-0 h-0 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-indigo-600" />
+                  </div>
+
+                  {/* Track */}
+                  <div className="relative h-1.5 bg-gray-200 rounded-full cursor-pointer">
+                    <div className="absolute inset-y-0 left-0 rounded-full bg-indigo-500" style={{ width: `${thumbPct}%` }} />
+                    <input
+                      type="range"
+                      min={minMark}
+                      max={maxMark}
+                      step={1}
+                      value={rankSliderMarks}
+                      onChange={e => setRankSliderMarks(Number(e.target.value))}
+                      className="absolute inset-0 w-full opacity-0 cursor-pointer h-full"
+                      style={{ zIndex: 20 }}
+                    />
+                    {/* Drag thumb */}
+                    <div
+                      className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-5 h-5 rounded-full bg-white border-4 border-indigo-500 shadow-md pointer-events-none"
+                      style={{ left: `${thumbPct}%` }}
+                    />
+                    {/* Marks tooltip below thumb */}
+                    <div
+                      className="absolute top-full mt-2 flex flex-col items-center pointer-events-none"
+                      style={{ left: `calc(${thumbPct}% - 30px)` }}
+                    >
+                      <div className="bg-white border border-indigo-200 text-indigo-700 text-[10px] font-bold px-2.5 py-1 rounded-lg shadow-sm whitespace-nowrap">
+                        Marks : {rankSliderMarks}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Scale labels */}
+                <div className="flex justify-between text-[10px] text-gray-400 px-0.5">
+                  {Array.from({ length: 6 }, (_, i) => {
+                    const v = Math.round(minMark + ((maxMark - minMark) / 5) * i);
+                    return <span key={i}>{v}</span>;
+                  })}
+                </div>
+                <p className="text-center text-[10px] text-gray-400">← Drag to predict rank at different marks →</p>
+              </div>
+            </div>
+          </Card>
+        );
+      })()}
+
+      {/* ── Score Percentile Distribution ── */}
+      {(() => {
+        const maxMark = sumMaxScore;
+        const avgScore = analysisData.comparisonData.averageScore;
+        const spread = sumMaxScore * 0.18;
+        const rawPercentile = 100 / (1 + Math.exp(-(percentileSliderMarks - avgScore) / spread));
+        const predictedPercentile = Math.min(99.9, Math.max(0.1, Math.round(rawPercentile * 10) / 10));
+        // Student's actual percentile (initialised from real data)
+        const actualPercentile = analysisData.percentile;
+        const thumbPct = Math.round((percentileSliderMarks / maxMark) * 100);
+        const perColor = predictedPercentile >= 90 ? '#16a34a' : predictedPercentile >= 75 ? '#2563eb' : predictedPercentile >= 50 ? '#d97706' : '#dc2626';
+        const perLabel = predictedPercentile >= 90 ? 'Excellent' : predictedPercentile >= 75 ? 'Good' : predictedPercentile >= 50 ? 'Average' : 'Below Avg';
+        const isCustom = percentileSliderMarks !== totalScore;
+        return (
+          <Card className="p-4 sm:p-6 shadow-sm">
+            <div className="flex items-center gap-2 mb-5">
+              <h3 className="text-base sm:text-lg font-semibold">Score Percentile Distribution</h3>
+              <span className="text-[10px] bg-sky-100 text-sky-700 border border-sky-200 rounded-full px-2 py-0.5 font-medium">Percentile Predictor</span>
+            </div>
+
+            <div className="bg-gray-50 rounded-xl border border-gray-200 p-5 sm:p-6 space-y-5">
+              {/* Main: donut + big number */}
+              <div className="flex items-center gap-5">
+                {/* Donut ring */}
+                <div className="relative w-20 h-20 flex-shrink-0">
+                  <svg viewBox="0 0 36 36" className="w-20 h-20 -rotate-90">
+                    <circle cx="18" cy="18" r="15.9155" fill="none" stroke="#e5e7eb" strokeWidth="3.8" />
+                    <circle
+                      cx="18" cy="18" r="15.9155" fill="none"
+                      stroke={perColor}
+                      strokeWidth="3.8"
+                      strokeDasharray={`${predictedPercentile} ${100 - predictedPercentile}`}
+                      strokeLinecap="round"
+                      style={{ transition: 'stroke-dasharray 0.3s ease' }}
+                    />
+                  </svg>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <span className="text-sm font-extrabold leading-none" style={{ color: perColor }}>
+                      {predictedPercentile.toFixed(1)}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Percentile number + label */}
+                <div>
+                  <p className="text-[10px] text-gray-400 mb-0.5">
+                    {isCustom ? `At ${percentileSliderMarks} marks` : 'Your Percentile'}
+                  </p>
+                  <p className="text-4xl font-extrabold leading-none" style={{ color: perColor }}>
+                    {isCustom ? predictedPercentile.toFixed(1) : actualPercentile}
+                  </p>
+                  <p className="text-sm text-gray-500 mt-0.5">Percentile</p>
+                  <span
+                    className="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full mt-1"
+                    style={{ background: perColor + '18', color: perColor }}
+                  >
+                    {perLabel}
+                  </span>
+                </div>
+              </div>
+
+              {/* Slider */}
+              <div className="space-y-2">
+                <div className="relative pt-9 pb-2">
+                  {/* Tooltip above thumb */}
+                  <div
+                    className="absolute top-0 flex flex-col items-center pointer-events-none"
+                    style={{ left: `calc(${thumbPct}% - 38px)`, zIndex: 10 }}
+                  >
+                    <div
+                      className="text-white text-[10px] font-bold px-2.5 py-1 rounded-lg shadow-md whitespace-nowrap"
+                      style={{ background: perColor }}
+                    >
+                      Score: {percentileSliderMarks} &nbsp;·&nbsp; {predictedPercentile.toFixed(1)}%ile
+                    </div>
+                    <div
+                      className="w-0 h-0 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent"
+                      style={{ borderTopColor: perColor }}
+                    />
+                  </div>
+
+                  {/* Track */}
+                  <div className="relative h-1.5 bg-gray-200 rounded-full cursor-pointer">
+                    <div
+                      className="absolute inset-y-0 left-0 rounded-full transition-all duration-75"
+                      style={{
+                        width: `${thumbPct}%`,
+                        background: 'linear-gradient(90deg, #dc2626, #d97706 40%, #22c55e 80%, #16a34a)',
+                      }}
+                    />
+                    <input
+                      type="range"
+                      min={0}
+                      max={maxMark}
+                      step={1}
+                      value={percentileSliderMarks}
+                      onChange={e => setPercentileSliderMarks(Number(e.target.value))}
+                      className="absolute inset-0 w-full opacity-0 cursor-pointer h-full"
+                      style={{ zIndex: 20 }}
+                    />
+                    <div
+                      className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-5 h-5 rounded-full bg-white border-4 shadow-md pointer-events-none"
+                      style={{ left: `${thumbPct}%`, borderColor: perColor }}
+                    />
+                  </div>
+                </div>
+
+                {/* Scale */}
+                <div className="flex justify-between text-[10px] text-gray-400 px-0.5">
+                  {Array.from({ length: 6 }, (_, i) => (
+                    <span key={i}>{Math.round((maxMark / 5) * i)}</span>
+                  ))}
+                </div>
+                <p className="text-center text-[10px] text-gray-400">Slide the bar to check percentile at different scores</p>
+              </div>
+            </div>
+          </Card>
+        );
+      })()}
+
 
       {/* ── Predicted Real Exam Score ── */}
       <Card className="p-4 sm:p-6 shadow-sm">

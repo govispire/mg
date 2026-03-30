@@ -567,37 +567,109 @@ const StatCardDialog = ({ type, open, onOpenChange, preparationStartDate }: Stat
     );
   };
 
-  // Streak badges data
+  // ── Compute real dynamic stats from localStorage ────────────────────────
+  const dynamicStats = useMemo(() => {
+    let quizCompletions: Record<string, { completed: boolean; score: number; date: string; duration?: number; title?: string }> = {};
+    let studentPresence: Record<string, boolean> = {};
+    try {
+      quizCompletions = JSON.parse(localStorage.getItem('quizCompletions') || '{}');
+      studentPresence = JSON.parse(localStorage.getItem('studentPresence') || '{}');
+    } catch { /* ignore */ }
+
+    // ── Streak (consecutive days ending today or yesterday) ──
+    const formatDate = (d: Date) => {
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    };
+    const today = new Date();
+    const todayStr = formatDate(today);
+    let streak = 0;
+    let checkDate = new Date(today);
+    if (!studentPresence[todayStr]) checkDate.setDate(checkDate.getDate() - 1);
+    for (let i = 0; i < 365; i++) {
+      if (studentPresence[formatDate(checkDate)]) {
+        streak++;
+        checkDate.setDate(checkDate.getDate() - 1);
+      } else break;
+    }
+
+    // ── Total active days (all time) ──
+    const totalActiveDays = Object.values(studentPresence).filter(Boolean).length;
+
+    // ── Test history from quizCompletions ──
+    const completedEntries = Object.entries(quizCompletions)
+      .filter(([, v]) => v.completed)
+      .sort((a, b) => new Date(b[1].date).getTime() - new Date(a[1].date).getTime());
+
+    const totalTests = completedEntries.length;
+    const scores = completedEntries.map(([, v]) => v.score).filter(s => s > 0);
+    const avgScore = scores.length > 0 ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0;
+
+    const currentMonthStr = formatDate(today).substring(0, 7); // 'yyyy-mm'
+    const thisMonth = completedEntries.filter(([, v]) => v.date.substring(0, 7) === currentMonthStr).length;
+
+    const recentTests = completedEntries.slice(0, 10).map(([id, v]) => ({
+      id,
+      name: v.title || id.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase()),
+      date: v.date.substring(0, 10),
+      score: v.score,
+      total: 100,
+    }));
+
+    // ── Study hours from presence + quiz activity ──
+    const studyDataToday = getRealStudyDataForYear(today.getFullYear());
+    const totalMinutesAll = Object.values(studyDataToday).reduce((s, m) => s + m, 0);
+    const totalHoursNum = Math.round(totalMinutesAll / 60 * 10) / 10;
+    const hoursToday = Math.round((studyDataToday[todayStr] || 0) / 60 * 10) / 10;
+
+    // This week (Mon-Sun)
+    const weekStart = new Date(today);
+    const dow = today.getDay();
+    weekStart.setDate(today.getDate() - (dow === 0 ? 6 : dow - 1));
+    let weekMinutes = 0;
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(weekStart);
+      d.setDate(weekStart.getDate() + i);
+      weekMinutes += studyDataToday[formatDate(d)] || 0;
+    }
+    const hoursThisWeek = Math.round(weekMinutes / 60 * 10) / 10;
+
+    // Monthly breakdown (current year)
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const currentYear = today.getFullYear();
+    const monthlyBreakdown: { month: string; hours: number; days: number }[] = [];
+    let maxMonthHours = 1;
+    for (let month = 0; month <= today.getMonth(); month++) {
+      let monthMinutes = 0; let activeDays = 0;
+      const daysInMonth = new Date(currentYear, month + 1, 0).getDate();
+      for (let day = 1; day <= daysInMonth; day++) {
+        const key = `${currentYear}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const mins = studyDataToday[key] || 0;
+        if (mins > 0) { monthMinutes += mins; activeDays++; }
+      }
+      const monthHours = Math.round(monthMinutes / 60 * 10) / 10;
+      if (monthHours > maxMonthHours) maxMonthHours = monthHours;
+      monthlyBreakdown.push({ month: `${monthNames[month]} ${currentYear}`, hours: monthHours, days: activeDays });
+    }
+
+    return { streak, totalActiveDays, totalTests, avgScore, thisMonth, recentTests, totalHoursNum, hoursToday, hoursThisWeek, monthlyBreakdown, maxMonthHours };
+  }, [open]);
+
+  // Streak badges — dynamically marked "achieved" based on real streak
   const streakBadges = [
-    { name: 'Novice', days: 7, color: 'bg-gray-400', achieved: true },
-    { name: 'Learner', days: 14, color: 'bg-blue-400', achieved: true },
-    { name: 'Dedicated', days: 30, color: 'bg-green-400', achieved: true },
-    { name: 'Champion', days: 50, color: 'bg-purple-400', achieved: true },
-    { name: 'Maverick', days: 67, color: 'bg-orange-400', achieved: true },
-    { name: 'Legend', days: 100, color: 'bg-red-400', achieved: false },
-    { name: 'Master', days: 150, color: 'bg-yellow-400', achieved: false },
+    { name: 'Novice', days: 7, color: 'bg-gray-400', achieved: dynamicStats.streak >= 7 },
+    { name: 'Learner', days: 14, color: 'bg-blue-400', achieved: dynamicStats.streak >= 14 },
+    { name: 'Dedicated', days: 30, color: 'bg-green-400', achieved: dynamicStats.streak >= 30 },
+    { name: 'Champion', days: 50, color: 'bg-purple-400', achieved: dynamicStats.streak >= 50 },
+    { name: 'Maverick', days: 67, color: 'bg-orange-400', achieved: dynamicStats.streak >= 67 },
+    { name: 'Legend', days: 100, color: 'bg-red-400', achieved: dynamicStats.streak >= 100 },
+    { name: 'Master', days: 150, color: 'bg-yellow-400', achieved: dynamicStats.streak >= 150 },
   ];
 
-  // Mock test history data
-  const mockTestHistory = [
-    { id: 1, name: 'IBPS PO Prelims Mock Test 1', date: '2025-04-28', score: 85, total: 100 },
-    { id: 2, name: 'SSC CGL General Awareness', date: '2025-04-26', score: 72, total: 100 },
-    { id: 3, name: 'Banking Awareness Quiz', date: '2025-04-25', score: 90, total: 100 },
-    { id: 4, name: 'Quantitative Aptitude Test', date: '2025-04-23', score: 78, total: 100 },
-    { id: 5, name: 'English Comprehension', date: '2025-04-20', score: 88, total: 100 },
-    { id: 6, name: 'Reasoning Section Test', date: '2025-04-18', score: 82, total: 100 },
-    { id: 7, name: 'Current Affairs Weekly', date: '2025-04-15', score: 95, total: 100 },
-    { id: 8, name: 'IBPS PO Mains Mock', date: '2025-04-12', score: 80, total: 100 },
-  ];
+  const nextBadge = streakBadges.find(b => !b.achieved);
 
-  // Study hours breakdown
-  const studyHoursData = [
-    { month: 'Jan 2025', hours: 45, days: 20 },
-    { month: 'Feb 2025', hours: 52, days: 22 },
-    { month: 'Mar 2025', hours: 48, days: 19 },
-    { month: 'Apr 2025', hours: 38, days: 15 },
-    { month: 'May 2025', hours: 12, days: 5 },
-  ];
 
   const renderContent = () => {
     switch (type) {
@@ -678,16 +750,36 @@ const StatCardDialog = ({ type, open, onOpenChange, preparationStartDate }: Stat
             <div className="space-y-6">
               <div className="bg-purple-50 p-4 rounded-lg">
                 <h3 className="font-semibold text-lg mb-2">Your Active Days Streak</h3>
-                <p className="text-sm text-gray-600">Keep your streak going! Current streak: 67 days</p>
+                <p className="text-sm text-gray-600">
+                  Keep your streak going! Current streak: {dynamicStats.streak} {dynamicStats.streak === 1 ? 'day' : 'days'}
+                </p>
               </div>
 
               <Card className="p-4 bg-gradient-to-r from-orange-400 to-red-400 text-white">
                 <div className="text-center">
-                  <div className="text-5xl font-bold mb-2">67</div>
+                  <div className="text-5xl font-bold mb-2">{dynamicStats.streak}</div>
                   <div className="text-sm">Current Streak</div>
-                  <div className="mt-3 text-xs opacity-90">🔥 You're on fire! Keep it up!</div>
+                  <div className="mt-3 text-xs opacity-90">
+                    {dynamicStats.streak >= 100 ? '🏆 Legendary! You are unstoppable!' :
+                     dynamicStats.streak >= 50 ? '🔥 You\'re on fire! Keep it up!' :
+                     dynamicStats.streak >= 14 ? '💪 Great momentum! Keep going!' :
+                     dynamicStats.streak >= 7 ? '⭐ Nice streak! Don\'t break it!' :
+                     dynamicStats.streak >= 1 ? '🌱 Great start! Build your habit!' :
+                     '💡 Complete 2 quizzes today to start your streak!'}
+                  </div>
                 </div>
               </Card>
+
+              <div className="grid grid-cols-2 gap-3">
+                <Card className="p-3 text-center">
+                  <div className="text-2xl font-bold text-purple-600">{dynamicStats.streak}</div>
+                  <div className="text-xs text-gray-600">Current Streak</div>
+                </Card>
+                <Card className="p-3 text-center">
+                  <div className="text-2xl font-bold text-blue-600">{dynamicStats.totalActiveDays}</div>
+                  <div className="text-xs text-gray-600">Total Active Days</div>
+                </Card>
+              </div>
 
               <div>
                 <h4 className="font-semibold mb-4">Streak Badges</h4>
@@ -714,13 +806,28 @@ const StatCardDialog = ({ type, open, onOpenChange, preparationStartDate }: Stat
                 </div>
               </div>
 
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <h4 className="font-semibold mb-2">Next Milestone</h4>
-                <p className="text-sm text-gray-600">Legend Badge - 33 days to go!</p>
-                <div className="mt-2 h-2 bg-gray-200 rounded-full overflow-hidden">
-                  <div className="h-full bg-orange-400" style={{ width: '67%' }} />
+              {nextBadge ? (
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <h4 className="font-semibold mb-2">Next Milestone</h4>
+                  <p className="text-sm text-gray-600">
+                    {nextBadge.name} Badge — {nextBadge.days - dynamicStats.streak} more {nextBadge.days - dynamicStats.streak === 1 ? 'day' : 'days'} to go!
+                  </p>
+                  <div className="mt-2 h-2 bg-gray-200 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-orange-400 transition-all"
+                      style={{ width: `${Math.min(100, Math.round((dynamicStats.streak / nextBadge.days) * 100))}%` }}
+                    />
+                  </div>
+                  <div className="text-xs text-gray-500 mt-1">
+                    {dynamicStats.streak} / {nextBadge.days} days
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div className="bg-yellow-50 p-4 rounded-lg">
+                  <h4 className="font-semibold mb-2">🏆 All Badges Achieved!</h4>
+                  <p className="text-sm text-gray-600">You are a true legend. Keep the streak alive!</p>
+                </div>
+              )}
             </div>
           </ScrollArea>
         );
@@ -736,40 +843,51 @@ const StatCardDialog = ({ type, open, onOpenChange, preparationStartDate }: Stat
 
               <div className="grid grid-cols-3 gap-4">
                 <Card className="p-4 text-center">
-                  <div className="text-2xl font-bold text-gray-900">40</div>
+                  <div className="text-2xl font-bold text-gray-900">{dynamicStats.totalTests}</div>
                   <div className="text-xs text-gray-600">Total Tests</div>
                 </Card>
                 <Card className="p-4 text-center">
-                  <div className="text-2xl font-bold text-green-600">83%</div>
+                  <div className="text-2xl font-bold text-green-600">
+                    {dynamicStats.totalTests > 0 ? `${dynamicStats.avgScore}%` : '—'}
+                  </div>
                   <div className="text-xs text-gray-600">Avg Score</div>
                 </Card>
                 <Card className="p-4 text-center">
-                  <div className="text-2xl font-bold text-blue-600">32</div>
+                  <div className="text-2xl font-bold text-blue-600">{dynamicStats.thisMonth}</div>
                   <div className="text-xs text-gray-600">This Month</div>
                 </Card>
               </div>
 
               <div className="space-y-3">
                 <h4 className="font-semibold">Recent Tests</h4>
-                {mockTestHistory.map((test) => (
-                  <Card key={test.id} className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <div className="font-medium text-sm">{test.name}</div>
-                        <div className="text-xs text-gray-600 mt-1">{test.date}</div>
-                      </div>
-                      <div className="text-right">
-                        <div className={`text-lg font-bold ${test.score >= 85 ? 'text-green-600' :
-                          test.score >= 70 ? 'text-blue-600' :
+                {dynamicStats.recentTests.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">
+                    <FileCheck className="h-10 w-10 mx-auto mb-3 opacity-30" />
+                    <p className="text-sm">No tests completed yet.</p>
+                    <p className="text-xs mt-1">Complete daily quizzes to see your history here.</p>
+                  </div>
+                ) : (
+                  dynamicStats.recentTests.map((test) => (
+                    <Card key={test.id} className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <div className="font-medium text-sm">{test.name}</div>
+                          <div className="text-xs text-gray-600 mt-1">{test.date}</div>
+                        </div>
+                        <div className="text-right">
+                          <div className={`text-lg font-bold ${
+                            test.score >= 85 ? 'text-green-600' :
+                            test.score >= 70 ? 'text-blue-600' :
                             'text-orange-600'
                           }`}>
-                          {test.score}/{test.total}
+                            {test.score}/{test.total}
+                          </div>
+                          <div className="text-xs text-gray-600">{test.score}%</div>
                         </div>
-                        <div className="text-xs text-gray-600">{test.score}%</div>
                       </div>
-                    </div>
-                  </Card>
-                ))}
+                    </Card>
+                  ))
+                )}
               </div>
             </div>
           </ScrollArea>
@@ -786,48 +904,59 @@ const StatCardDialog = ({ type, open, onOpenChange, preparationStartDate }: Stat
 
               <Card className="p-4 bg-gradient-to-r from-cyan-400 to-blue-400 text-white">
                 <div className="text-center">
-                  <div className="text-5xl font-bold mb-2">195</div>
+                  <div className="text-5xl font-bold mb-2">{dynamicStats.totalHoursNum}</div>
                   <div className="text-sm">Total Study Hours</div>
-                  <div className="mt-3 text-xs opacity-90">Since January 2025</div>
+                  <div className="mt-3 text-xs opacity-90">
+                    {dynamicStats.totalHoursNum > 0 ? `Since ${dynamicStats.monthlyBreakdown[0]?.month || 'start'}` : 'Start studying to track hours'}
+                  </div>
                 </div>
               </Card>
 
               <div className="grid grid-cols-2 gap-4">
                 <Card className="p-4 text-center">
-                  <div className="text-2xl font-bold text-gray-900">6.2</div>
+                  <div className="text-2xl font-bold text-gray-900">{dynamicStats.hoursToday}</div>
                   <div className="text-xs text-gray-600">Hours Today</div>
                 </Card>
                 <Card className="p-4 text-center">
-                  <div className="text-2xl font-bold text-blue-600">38</div>
+                  <div className="text-2xl font-bold text-blue-600">{dynamicStats.hoursThisWeek}</div>
                   <div className="text-xs text-gray-600">Hours This Week</div>
                 </Card>
               </div>
 
               <div className="space-y-3">
                 <h4 className="font-semibold">Monthly Breakdown</h4>
-                {studyHoursData.map((data, idx) => (
-                  <Card key={idx} className="p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="font-medium">{data.month}</div>
-                      <div className="text-right">
-                        <div className="text-lg font-bold text-blue-600">{data.hours}h</div>
-                        <div className="text-xs text-gray-600">{data.days} days active</div>
+                {dynamicStats.monthlyBreakdown.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">
+                    <Clock className="h-10 w-10 mx-auto mb-3 opacity-30" />
+                    <p className="text-sm">No activity recorded yet.</p>
+                  </div>
+                ) : (
+                  dynamicStats.monthlyBreakdown.map((data, idx) => (
+                    <Card key={idx} className="p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="font-medium">{data.month}</div>
+                        <div className="text-right">
+                          <div className="text-lg font-bold text-blue-600">{data.hours}h</div>
+                          <div className="text-xs text-gray-600">{data.days} days active</div>
+                        </div>
                       </div>
-                    </div>
-                    <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-blue-400"
-                        style={{ width: `${(data.hours / 52) * 100}%` }}
-                      />
-                    </div>
-                  </Card>
-                ))}
+                      <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-blue-400 transition-all"
+                          style={{ width: `${dynamicStats.maxMonthHours > 0 ? Math.round((data.hours / dynamicStats.maxMonthHours) * 100) : 0}%` }}
+                        />
+                      </div>
+                    </Card>
+                  ))
+                )}
               </div>
 
               <div className="bg-gray-50 p-4 rounded-lg">
-                <h4 className="font-semibold mb-2">Average Study Time</h4>
-                <div className="text-2xl font-bold text-gray-900">3.2 hours/day</div>
-                <p className="text-xs text-gray-600 mt-1">Based on active days</p>
+                <h4 className="font-semibold mb-2">Study Time Formula</h4>
+                <ul className="text-xs text-gray-600 space-y-1">
+                  <li>✅ Presence marked (2+ quizzes/day) = 2 hours base</li>
+                  <li>📝 Each quiz completed = +30 minutes</li>
+                </ul>
               </div>
             </div>
           </ScrollArea>

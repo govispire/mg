@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { ArrowLeft, Clock, Calendar, BookOpen, Share2, Bookmark, CheckCircle2, Download, Search, Filter, X, ChevronsUp } from 'lucide-react';
-import { allArticles, getRelatedArticles } from '@/components/current-affairs/articlesData';
+import { useCurrentAffairsStore } from '@/hooks/useCurrentAffairsStore';
 import { useReadingProgress } from '@/hooks/useReadingProgress';
 import { generateTopicPDF } from '@/utils/pdfGenerator';
 import {
@@ -33,9 +33,15 @@ const TopicArticlesPage = () => {
 
   const decodedTopic = decodeURIComponent(topic || '');
 
-  // Get all articles for this topic
-  const topicArticles = allArticles.filter(
-    article => article.topic.toLowerCase() === decodedTopic.toLowerCase()
+  // Pull from store — includes both seeded + admin-created articles.
+  // AllInOneView navigates by CATEGORY; fall back to topic match for legacy routes.
+  const { getNewsArticles } = useCurrentAffairsStore();
+  const allStoreArticles = getNewsArticles();
+
+  const topicArticles = allStoreArticles.filter(
+    article =>
+      article.category.toLowerCase() === decodedTopic.toLowerCase() ||
+      article.topic.toLowerCase() === decodedTopic.toLowerCase()
   );
 
   // Handle scroll for back to top button

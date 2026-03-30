@@ -72,7 +72,7 @@ const PDFCourses = () => {
   }, [filteredCategories, activeTab]);
 
   return (
-    <div className="p-4 md:p-6 space-y-6 max-w-7xl mx-auto">
+    <div className="space-y-6 max-w-7xl mx-auto">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold">PDF Courses & Materials</h1>

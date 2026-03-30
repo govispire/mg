@@ -297,9 +297,75 @@ const bankingSyllabus: Record<string, ExamSyllabusConfig> = {
             ]
           }
         ]
+      },
+      {
+        id: 'interview',
+        name: 'Interview',
+        duration: '20-30 minutes',
+        totalMarks: 100,
+        negativeMarking: 'No negative marking',
+        sectionalCutoff: false,
+        subjects: [
+          {
+            id: 'hr-questions',
+            name: 'HR & Personal Interview',
+            marks: 0,
+            iconName: 'Users',
+            iconBg: 'bg-emerald-500',
+            topics: [
+              { id: 'self-introduction', name: 'Self Introduction Tips', progress: 0, ...generateTopicResources('Self Introduction', 'Interview') },
+              { id: 'hr-basics', name: 'Common HR Questions', progress: 0, ...generateTopicResources('HR Questions', 'Interview') },
+              { id: 'strengths-weaknesses', name: 'Strengths & Weaknesses', progress: 0, ...generateTopicResources('Strengths and Weaknesses', 'Interview') },
+              { id: 'career-goals', name: 'Career Goals & Motivation', progress: 0, ...generateTopicResources('Career Goals', 'Interview') },
+              { id: 'body-language', name: 'Body Language & Communication', progress: 0, ...generateTopicResources('Body Language', 'Interview') },
+              { id: 'situational-questions', name: 'Situational Questions', progress: 0, ...generateTopicResources('Situational Questions', 'Interview') },
+            ]
+          },
+          {
+            id: 'banking-awareness-interview',
+            name: 'Banking & Finance Awareness',
+            marks: 0,
+            iconName: 'Building2',
+            iconBg: 'bg-blue-500',
+            topics: [
+              { id: 'rbi-functions', name: 'RBI & Its Functions', progress: 0, ...generateTopicResources('RBI Functions', 'Interview') },
+              { id: 'banking-types', name: 'Types of Banks in India', progress: 0, ...generateTopicResources('Types of Banks', 'Interview') },
+              { id: 'financial-products', name: 'Financial Products & Services', progress: 0, ...generateTopicResources('Financial Products', 'Interview') },
+              { id: 'banking-reforms', name: 'Banking Reforms & Policies', progress: 0, ...generateTopicResources('Banking Reforms', 'Interview') },
+              { id: 'nbfc', name: 'NBFCs & FinTech', progress: 0, ...generateTopicResources('NBFCs and FinTech', 'Interview') },
+              { id: 'priority-sector', name: 'Priority Sector Lending', progress: 0, ...generateTopicResources('Priority Sector', 'Interview') },
+            ]
+          },
+          {
+            id: 'gd-preparation',
+            name: 'Group Discussion Preparation',
+            marks: 0,
+            iconName: 'Users',
+            iconBg: 'bg-purple-500',
+            topics: [
+              { id: 'gd-basics', name: 'GD Basics & Etiquette', progress: 0, ...generateTopicResources('GD Basics', 'Interview') },
+              { id: 'current-topics', name: 'Current Affairs for GD', progress: 0, ...generateTopicResources('Current Affairs GD', 'Interview') },
+              { id: 'structured-arguments', name: 'Structuring Arguments', progress: 0, ...generateTopicResources('Arguments', 'Interview') },
+              { id: 'leadership-gd', name: 'Leadership in GD', progress: 0, ...generateTopicResources('Leadership GD', 'Interview') },
+            ]
+          },
+          {
+            id: 'document-preparation',
+            name: 'Document Verification',
+            marks: 0,
+            iconName: 'FileText',
+            iconBg: 'bg-amber-500',
+            topics: [
+              { id: 'required-docs', name: 'Required Documents Checklist', progress: 0, ...generateTopicResources('Documents Checklist', 'Interview') },
+              { id: 'certificate-verification', name: 'Certificate Verification Process', progress: 0, ...generateTopicResources('Certificate Verification', 'Interview') },
+              { id: 'medical-fitness', name: 'Medical Fitness Standards', progress: 0, ...generateTopicResources('Medical Fitness', 'Interview') },
+            ]
+          }
+        ]
       }
     ]
   },
+
   'sbi-po': {
     examId: 'sbi-po',
     examName: 'SBI PO',
@@ -474,9 +540,75 @@ const bankingSyllabus: Record<string, ExamSyllabusConfig> = {
             ]
           }
         ]
+      },
+      {
+        id: 'interview',
+        name: 'Interview',
+        duration: '20-30 minutes',
+        totalMarks: 100,
+        negativeMarking: 'No negative marking',
+        sectionalCutoff: false,
+        subjects: [
+          {
+            id: 'hr-questions',
+            name: 'HR & Personal Interview',
+            marks: 0,
+            iconName: 'Users',
+            iconBg: 'bg-emerald-500',
+            topics: [
+              { id: 'self-introduction', name: 'Self Introduction Tips', progress: 0, ...generateTopicResources('Self Introduction', 'Interview') },
+              { id: 'hr-basics', name: 'Common HR Questions', progress: 0, ...generateTopicResources('HR Questions', 'Interview') },
+              { id: 'strengths-weaknesses', name: 'Strengths & Weaknesses', progress: 0, ...generateTopicResources('Strengths and Weaknesses', 'Interview') },
+              { id: 'career-goals', name: 'Career Goals & Motivation', progress: 0, ...generateTopicResources('Career Goals', 'Interview') },
+              { id: 'body-language', name: 'Body Language & Communication', progress: 0, ...generateTopicResources('Body Language', 'Interview') },
+              { id: 'situational-questions', name: 'Situational Questions', progress: 0, ...generateTopicResources('Situational Questions', 'Interview') },
+            ]
+          },
+          {
+            id: 'banking-awareness-interview',
+            name: 'Banking & Finance Awareness',
+            marks: 0,
+            iconName: 'Building2',
+            iconBg: 'bg-blue-500',
+            topics: [
+              { id: 'rbi-functions', name: 'RBI & Its Functions', progress: 0, ...generateTopicResources('RBI Functions', 'Interview') },
+              { id: 'banking-types', name: 'Types of Banks in India', progress: 0, ...generateTopicResources('Types of Banks', 'Interview') },
+              { id: 'financial-products', name: 'Financial Products & Services', progress: 0, ...generateTopicResources('Financial Products', 'Interview') },
+              { id: 'banking-reforms', name: 'Banking Reforms & Policies', progress: 0, ...generateTopicResources('Banking Reforms', 'Interview') },
+              { id: 'nbfc', name: 'NBFCs & FinTech', progress: 0, ...generateTopicResources('NBFCs and FinTech', 'Interview') },
+              { id: 'priority-sector', name: 'Priority Sector Lending', progress: 0, ...generateTopicResources('Priority Sector', 'Interview') },
+            ]
+          },
+          {
+            id: 'gd-preparation',
+            name: 'Group Discussion Preparation',
+            marks: 0,
+            iconName: 'Users',
+            iconBg: 'bg-purple-500',
+            topics: [
+              { id: 'gd-basics', name: 'GD Basics & Etiquette', progress: 0, ...generateTopicResources('GD Basics', 'Interview') },
+              { id: 'current-topics', name: 'Current Affairs for GD', progress: 0, ...generateTopicResources('Current Affairs GD', 'Interview') },
+              { id: 'structured-arguments', name: 'Structuring Arguments', progress: 0, ...generateTopicResources('Arguments', 'Interview') },
+              { id: 'leadership-gd', name: 'Leadership in GD', progress: 0, ...generateTopicResources('Leadership GD', 'Interview') },
+            ]
+          },
+          {
+            id: 'document-preparation',
+            name: 'Document Verification',
+            marks: 0,
+            iconName: 'FileText',
+            iconBg: 'bg-amber-500',
+            topics: [
+              { id: 'required-docs', name: 'Required Documents Checklist', progress: 0, ...generateTopicResources('Documents Checklist', 'Interview') },
+              { id: 'certificate-verification', name: 'Certificate Verification Process', progress: 0, ...generateTopicResources('Certificate Verification', 'Interview') },
+              { id: 'medical-fitness', name: 'Medical Fitness Standards', progress: 0, ...generateTopicResources('Medical Fitness', 'Interview') },
+            ]
+          }
+        ]
       }
     ]
   },
+
   'ibps-clerk': {
     examId: 'ibps-clerk',
     examName: 'IBPS Clerk',

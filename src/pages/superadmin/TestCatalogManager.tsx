@@ -34,10 +34,14 @@ import { useToast } from '@/hooks/use-toast';
 import {
     Plus, Pencil, Trash2, Eye, EyeOff, BookOpen,
     ChevronRight, Layers, GraduationCap, RefreshCw,
-    Search, Star, Image as ImageIcon,
+    Search, Star, Image as ImageIcon, Newspaper, Tag, Zap, Save,
 } from 'lucide-react';
 import { useExamCatalog, type CatalogCategory, type CatalogSection, type CatalogExam } from '@/hooks/useExamCatalog';
 import { cn } from '@/lib/utils';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import RichTextEditor from '@/components/ui/RichTextEditor';
+import { useCurrentAffairsStore } from '@/hooks/useCurrentAffairsStore';
+import { toast as sonnerToast } from 'sonner';
 
 // ─── Small reusable helpers ───────────────────────────────────────────────────
 
@@ -195,6 +199,159 @@ const COLOR_OPTIONS = [
     { label: 'Teal', value: 'bg-teal-50 border-teal-200' },
     { label: 'Indigo', value: 'bg-indigo-50 border-indigo-200' },
 ];
+
+// ─── Blog Creation Form Component ────────────────────────────────────────────
+
+const BLOG_CATEGORIES = ['Banking', 'Economy', 'National', 'International', 'Government', 'Science', 'Sports'];
+
+const BlogCreationForm: React.FC = () => {
+    const { addArticle } = useCurrentAffairsStore();
+    const [title, setTitle] = useState('');
+    const [category, setCategory] = useState('Banking');
+    const [publishType, setPublishType] = useState<'news' | 'daily-news' | 'all-in-one'>('news');
+    const [importance, setImportance] = useState<'high' | 'medium' | 'low'>('medium');
+    const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+    const [topic, setTopic] = useState('');
+    const [tagInput, setTagInput] = useState('');
+    const [tags, setTags] = useState<string[]>([]);
+    const [imageUrl, setImageUrl] = useState('');
+    const [readTime, setReadTime] = useState('5 min');
+    const [excerpt, setExcerpt] = useState('');
+    const [content, setContent] = useState('');
+    const [saved, setSaved] = useState(false);
+
+    const addTag = () => {
+        const tag = tagInput.trim().startsWith('#') ? tagInput.trim() : `#${tagInput.trim()}`;
+        if (tagInput.trim() && !tags.includes(tag)) setTags(t => [...t, tag]);
+        setTagInput('');
+    };
+
+    const handlePublish = () => {
+        if (!title.trim()) { sonnerToast.error('Title is required'); return; }
+        if (!topic.trim()) { sonnerToast.error('Topic is required'); return; }
+        if (!excerpt.trim()) { sonnerToast.error('Excerpt/Summary is required'); return; }
+        addArticle({
+            title, category, importance, publishType,
+            date, publishedAt: date, topic, tags,
+            image: imageUrl, readTime, excerpt, content,
+            relatedIds: [], hasQuiz: false, quizQuestions: 0,
+            isAdminCreated: true, quizItems: [],
+        });
+        sonnerToast.success(`Blog "${title}" published! It now appears in the student Current Affairs → ${publishType === 'news' ? 'News' : publishType === 'daily-news' ? 'Daily News' : 'All in One'} tab.`);
+        setSaved(true);
+        setTimeout(() => setSaved(false), 4000);
+        // Reset
+        setTitle(''); setTopic(''); setExcerpt(''); setContent(''); setTags([]); setImageUrl('');
+    };
+
+    return (
+        <div className="space-y-5 max-w-4xl mx-auto">
+            <div className="flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-lg px-4 py-2.5 text-sm text-blue-700">
+                <Newspaper size={15} className="shrink-0" />
+                Articles created here appear in <strong className="mx-1">student Current Affairs</strong> under the selected section.
+            </div>
+
+            {saved && (
+                <div className="flex items-center gap-2 bg-green-50 border border-green-200 rounded-lg px-4 py-2.5 text-sm text-green-700">
+                    <Zap size={15} />
+                    Published! Open the student portal to see it live.
+                </div>
+            )}
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1.5 md:col-span-2">
+                    <Label className="font-medium">Article Title <span className="text-destructive">*</span></Label>
+                    <Input value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. RBI Monetary Policy Update 2025" className="text-base" />
+                </div>
+
+                <div className="space-y-1.5">
+                    <Label className="font-medium">Category</Label>
+                    <select value={category} onChange={e => setCategory(e.target.value)} className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background">
+                        {BLOG_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                </div>
+
+                <div className="space-y-1.5">
+                    <Label className="font-medium">Topic <span className="text-destructive">*</span></Label>
+                    <Input value={topic} onChange={e => setTopic(e.target.value)} list="blog-topics" placeholder="e.g. RBI Policy, Budget 2025" />
+                    <datalist id="blog-topics">
+                        {['RBI Policy', 'Budget 2025', 'Defence', 'Space & ISRO', 'Digital India', 'Environment', 'Sports', 'Awards'].map(t => <option key={t} value={t} />)}
+                    </datalist>
+                </div>
+
+                <div className="space-y-1.5">
+                    <Label className="font-medium">Publish To</Label>
+                    <select value={publishType} onChange={e => setPublishType(e.target.value as typeof publishType)} className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm">
+                        <option value="news">News Tab</option>
+                        <option value="daily-news">Daily News Tab</option>
+                        <option value="all-in-one">All in One Tab</option>
+                    </select>
+                </div>
+
+                <div className="space-y-1.5">
+                    <Label className="font-medium">Importance</Label>
+                    <select value={importance} onChange={e => setImportance(e.target.value as typeof importance)} className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm">
+                        <option value="high">🔴 High Priority</option>
+                        <option value="medium">🟡 Medium</option>
+                        <option value="low">⚪ Normal</option>
+                    </select>
+                </div>
+
+                <div className="space-y-1.5">
+                    <Label className="font-medium">Date</Label>
+                    <Input type="date" value={date} onChange={e => setDate(e.target.value)} />
+                </div>
+
+                <div className="space-y-1.5">
+                    <Label className="font-medium">Read Time</Label>
+                    <Input value={readTime} onChange={e => setReadTime(e.target.value)} placeholder="5 min" />
+                </div>
+
+                <div className="space-y-1.5 md:col-span-2">
+                    <Label className="font-medium">Featured Image URL</Label>
+                    <Input value={imageUrl} onChange={e => setImageUrl(e.target.value)} placeholder="https://images.unsplash.com/..." />
+                    {imageUrl && <img src={imageUrl} alt="preview" className="mt-1 h-20 w-full object-cover rounded-lg border" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />}
+                </div>
+
+                <div className="space-y-1.5 md:col-span-2">
+                    <Label className="font-medium">Tags</Label>
+                    <div className="flex gap-2">
+                        <Input value={tagInput} onChange={e => setTagInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addTag(); }}} placeholder="#RBI, #Banking" />
+                        <Button type="button" variant="outline" size="sm" onClick={addTag}><Tag size={14} className="mr-1" />Add</Button>
+                    </div>
+                    {tags.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5 mt-1">
+                            {tags.map(t => (
+                                <Badge key={t} variant="secondary" className="cursor-pointer gap-1" onClick={() => setTags(prev => prev.filter(x => x !== t))}>
+                                    {t} ×
+                                </Badge>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            <div className="space-y-1.5">
+                <Label className="font-medium">Excerpt / Summary <span className="text-destructive">*</span></Label>
+                <RichTextEditor value={excerpt} onChange={setExcerpt} placeholder="Short preview shown in article listing..." minHeight={120} />
+            </div>
+
+            <div className="space-y-1.5">
+                <Label className="font-medium">Full Content</Label>
+                <RichTextEditor value={content} onChange={setContent} placeholder="Write the full article here. Use bold for key facts, bullet points for lists..." minHeight={280} />
+            </div>
+
+            <div className="flex justify-end gap-3">
+                <Button type="button" variant="outline" onClick={() => { setTitle(''); setExcerpt(''); setContent(''); setTags([]); }}>
+                    Clear
+                </Button>
+                <Button type="button" onClick={handlePublish} className="gap-2">
+                    <Save size={14} /> Publish Article
+                </Button>
+            </div>
+        </div>
+    );
+};
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
@@ -416,7 +573,15 @@ const TestCatalogManager: React.FC = () => {
                 </div>
             </div>
 
-            {/* ── Stats Bar ────────────────────────────────────────────────────────── */}
+            {/* ── Main Tabs: Catalog | Blog Creation ───────────────────── */}
+            <Tabs defaultValue="catalog">
+              <TabsList className="mb-4">
+                <TabsTrigger value="catalog" className="gap-2"><GraduationCap size={14} />Test Catalog</TabsTrigger>
+                <TabsTrigger value="blog" className="gap-2"><Newspaper size={14} />Blog Creation</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="catalog">
+
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <StatBadge count={catalog.length} label="Categories" color="bg-blue-50" />
                 <StatBadge count={visibleCount} label="Visible" color="bg-green-50" />
@@ -692,6 +857,15 @@ const TestCatalogManager: React.FC = () => {
                     })}
                 </Accordion>
             )}
+
+              </TabsContent>
+
+              {/* ─── Blog Creation Tab ───────────────────────────────────────────── */}
+              <TabsContent value="blog">
+                <BlogCreationForm />
+              </TabsContent>
+
+            </Tabs>
 
             {/* ═══════════════════════════════════════════════════════════════════════
           DIALOGS

@@ -72,8 +72,8 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ role, basePath }) => 
           </div>
         </header>
 
-        {/* Page content - Full width, let pages manage their own constraints */}
-        <main className="flex-1 overflow-auto bg-gray-50 border-l-2 border-gray-100">
+        {/* Page content - Consistent padding applied here for all pages */}
+        <main className="flex-1 overflow-auto bg-gray-50 border-l-2 border-gray-100 p-4 md:p-6">
           <Outlet />
         </main>
       </div>

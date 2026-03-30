@@ -17,6 +17,9 @@ import TestBuilderPage from '@/pages/superadmin/TestBuilderPage';
 import EmployeeApprovalQueue from '@/pages/superadmin/EmployeeApprovalQueue';
 import EmployeeManager from '@/pages/superadmin/EmployeeManager';
 import SuperAdminVocabulary from '@/pages/superadmin/SuperAdminVocabulary';
+import SyllabusManager from '@/pages/superadmin/SyllabusManager';
+import UpcomingExamsManager from '@/pages/superadmin/UpcomingExamsManager';
+import CurrentAffairsManager from '@/pages/superadmin/CurrentAffairsManager';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import NotFound from '@/pages/NotFound';
 
@@ -40,6 +43,9 @@ const SuperAdminRoutes = () => {
           <Route path="/approval-queue" element={<EmployeeApprovalQueue />} />
           <Route path="/employee-manager" element={<EmployeeManager />} />
           <Route path="/vocabulary" element={<SuperAdminVocabulary />} />
+          <Route path="/syllabus-manager" element={<SyllabusManager />} />
+          <Route path="/upcoming-exams" element={<UpcomingExamsManager />} />
+          <Route path="/current-affairs" element={<CurrentAffairsManager />} />
           <Route path="*" element={<NotFound />} />
         </Route>
       </Route>

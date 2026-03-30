@@ -202,7 +202,7 @@ const ExamNotifications = () => {
   };
 
   return (
-    <div className="p-4 md:p-6 space-y-2 max-w-7xl mx-auto">
+    <div className="space-y-2 max-w-7xl mx-auto">
 
 
       {/* Filters Section */}

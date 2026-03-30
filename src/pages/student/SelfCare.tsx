@@ -25,7 +25,7 @@ const SelfCare = () => {
   };
 
   return (
-    <div className="space-y-3 p-2">
+    <div className="space-y-4 max-w-7xl mx-auto">
       <div className="px-1">
         <h1 className="text-xl font-bold">Exam Tracker</h1>
         <p className="text-sm text-muted-foreground">Track your real exam applications and progress</p>

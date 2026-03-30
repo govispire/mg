@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
+import { api } from '@/lib/api';
 
 export type UserRole = 'student' | 'employee' | 'admin' | 'super-admin' | 'owner' | null;
 
@@ -21,46 +22,7 @@ interface AuthContextType {
   register: (name: string, email: string, password: string, role?: UserRole) => Promise<void>;
 }
 
-// Sample users for demo purposes
-const DEMO_USERS = [
-  {
-    id: '1',
-    name: 'Student User',
-    email: 'student@example.com',
-    password: 'password123',
-    role: 'student' as UserRole,
-    targetExam: 'IBPS PO',
-    avatar: ''
-  },
-  {
-    id: '2',
-    name: 'Employee User',
-    email: 'employee@example.com',
-    password: 'password123',
-    role: 'employee' as UserRole,
-  },
-  {
-    id: '3',
-    name: 'Admin User',
-    email: 'admin@example.com',
-    password: 'password123',
-    role: 'admin' as UserRole,
-  },
-  {
-    id: '4',
-    name: 'Super Admin',
-    email: 'superadmin@example.com',
-    password: 'password123',
-    role: 'super-admin' as UserRole,
-  },
-  {
-    id: '5',
-    name: 'Owner User',
-    email: 'owner@example.com',
-    password: 'password123',
-    role: 'owner' as UserRole,
-  },
-];
+// No more hardcoded demo users — auth is handled by the backend API
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -69,103 +31,128 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Check if user is stored in localStorage on mount
+  // Rehydrate user from stored JWT token on mount
   useEffect(() => {
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    // Try to restore from cached user object first for instant render
+    const cached = localStorage.getItem('user');
+    if (cached) {
+      try { setUser(JSON.parse(cached)); } catch {}
     }
+    // Then verify with the backend and refresh
+    api.getMe()
+      .then(u => {
+        const userObj: User = {
+          id: u.id,
+          name: u.name,
+          email: u.email,
+          role: u.role as UserRole,
+          targetExam: u.targetExam,
+          avatar: u.avatar,
+        };
+        setUser(userObj);
+        localStorage.setItem('user', JSON.stringify(userObj));
+      })
+      .catch(() => {
+        // Token invalid/expired — clear everything
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        setUser(null);
+      });
   }, []);
 
   const login = async (email: string, password: string) => {
-    // In a real app, this would be an API call
-    const foundUser = DEMO_USERS.find(u => u.email === email && u.password === password);
-    
-    if (foundUser) {
-      // Remove password before storing user
-      const { password, ...userWithoutPassword } = foundUser;
-      setUser(userWithoutPassword);
-      localStorage.setItem('user', JSON.stringify(userWithoutPassword));
-      
+    try {
+      const { token, user: u } = await api.login(email, password);
+
+      const userObj: User = {
+        id: u.id,
+        name: u.name,
+        email: u.email,
+        role: u.role as UserRole,
+        targetExam: u.targetExam,
+        avatar: u.avatar,
+      };
+
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(userObj));
+      setUser(userObj);
+
       toast({
-        title: "Login successful",
-        description: `Welcome back, ${foundUser.name}!`,
+        title: 'Login successful',
+        description: `Welcome back, ${u.name}!`,
       });
 
+      // Mark daily presence on login
+      api.markPresence().catch(() => {});
+
       // Redirect based on role
-      switch (foundUser.role) {
-        case 'student':
-          navigate('/student/dashboard');
-          break;
-        case 'employee':
-          navigate('/employee/dashboard');
-          break;
-        case 'admin':
-          navigate('/admin/dashboard');
-          break;
-        case 'super-admin':
-          navigate('/super-admin/dashboard');
-          break;
-        case 'owner':
-          navigate('/owner/dashboard');
-          break;
-        default:
-          navigate('/');
+      switch (u.role) {
+        case 'student':    navigate('/student/dashboard');    break;
+        case 'employee':   navigate('/employee/dashboard');   break;
+        case 'admin':      navigate('/admin/dashboard');      break;
+        case 'super-admin':navigate('/super-admin/dashboard');break;
+        case 'owner':      navigate('/owner/dashboard');      break;
+        default:           navigate('/');
       }
-    } else {
+    } catch (err: any) {
       toast({
-        title: "Login failed",
-        description: "Invalid email or password",
-        variant: "destructive",
+        title: 'Login failed',
+        description: err.message || 'Invalid email or password',
+        variant: 'destructive',
       });
-      throw new Error("Invalid credentials");
+      throw err;
     }
   };
 
   const logout = () => {
     setUser(null);
+    localStorage.removeItem('token');
     localStorage.removeItem('user');
     toast({
-      title: "Logged out",
-      description: "You have been logged out successfully",
+      title: 'Logged out',
+      description: 'You have been logged out successfully',
     });
     navigate('/');
   };
 
   const register = async (name: string, email: string, password: string, role: UserRole = 'student') => {
-    // Check if email already exists
-    if (DEMO_USERS.some(u => u.email === email)) {
+    try {
+      const { token, user: u } = await api.register(name, email, password, role || 'student');
+
+      const userObj: User = {
+        id: u.id,
+        name: u.name,
+        email: u.email,
+        role: u.role as UserRole,
+        targetExam: u.targetExam,
+        avatar: u.avatar,
+      };
+
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(userObj));
+      setUser(userObj);
+
       toast({
-        title: "Registration failed",
-        description: "Email already in use",
-        variant: "destructive",
+        title: 'Registration successful',
+        description: `Welcome, ${name}!`,
       });
-      throw new Error("Email already in use");
-    }
 
-    // In a real app, this would be an API call to create a user
-    const newUser = {
-      id: String(DEMO_USERS.length + 1),
-      name,
-      email,
-      role,
-    };
+      // Mark daily presence on first login
+      api.markPresence().catch(() => {});
 
-    setUser(newUser);
-    localStorage.setItem('user', JSON.stringify(newUser));
-    
-    toast({
-      title: "Registration successful",
-      description: `Welcome, ${name}!`,
-    });
-
-    // Redirect based on role
-    switch (role) {
-      case 'student':
-        navigate('/student/dashboard');
-        break;
-      default:
-        navigate('/');
+      switch (role) {
+        case 'student': navigate('/student/dashboard'); break;
+        default:        navigate('/');
+      }
+    } catch (err: any) {
+      toast({
+        title: 'Registration failed',
+        description: err.message || 'Could not create account',
+        variant: 'destructive',
+      });
+      throw err;
     }
   };
 

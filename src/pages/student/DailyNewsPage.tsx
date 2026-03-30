@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { ArrowLeft, Clock, Calendar, BookOpen, Share2, Bookmark, CheckCircle2, Download, Search, Filter, X } from 'lucide-react';
-import { allArticles, getRelatedArticles } from '@/components/current-affairs/articlesData';
+import { useCurrentAffairsStore } from '@/hooks/useCurrentAffairsStore';
 import { useReadingProgress } from '@/hooks/useReadingProgress';
 import { generateDailyNewsPDF } from '@/utils/pdfGenerator';
 import {
@@ -19,11 +19,39 @@ import {
 import BackToTopButton from '@/components/global/BackToTopButton';
 import { useSavedArticles } from '@/hooks/useSavedArticles';
 
+/**
+ * Normalize any date string to a comparable YYYY-MM-DD format.
+ * Handles both ISO (2026-03-29) and human-readable (January 22, 2025 / 22 January 2025).
+ */
+const normalizeDateStr = (dateStr: string): string => {
+  if (!dateStr) return '';
+  // Already ISO-like
+  if (/^\d{4}-\d{2}-\d{2}/.test(dateStr)) return dateStr.slice(0, 10);
+  // Parse human-readable
+  try {
+    const d = new Date(dateStr);
+    if (!isNaN(d.getTime())) {
+      return d.toISOString().slice(0, 10);
+    }
+  } catch {}
+  return dateStr;
+};
+
+/** Check if two date strings refer to the same calendar day */
+const sameDate = (a: string, b: string) => normalizeDateStr(a) === normalizeDateStr(b);
+
 const DailyNewsPage = () => {
   const { date } = useParams<{ date: string }>();
   const navigate = useNavigate();
   const { getReadingProgress, markAsRead } = useReadingProgress();
   const { isSaved, toggleSave } = useSavedArticles();
+
+  // Pull from store — includes both static seed articles AND admin-created ones.
+  // For Daily News page: show ALL articles for this date (not just daily-news type),
+  // because admin uses Daily News tab to group by date and users want to read everything
+  // published on that day regardless of type.
+  const { getDailyNewsArticles } = useCurrentAffairsStore();
+  const allDailyArticles = getDailyNewsArticles();
 
   // Search and filter state
   const [searchQuery, setSearchQuery] = useState('');
@@ -33,13 +61,8 @@ const DailyNewsPage = () => {
     readStatus: null as 'read' | 'unread' | null,
   });
 
-  // Get all articles for this date
-  const dateArticles = allArticles.filter(article => {
-    const articleDateStr = article.date;
-    return articleDateStr === date ||
-      articleDateStr.includes(date || '') ||
-      (date && articleDateStr.toLowerCase().includes(date.toLowerCase()));
-  });
+  // Get all articles for this date — robust date comparison handles ISO vs human-readable
+  const dateArticles = allDailyArticles.filter(article => sameDate(article.date, date || ''));
 
   // Apply search and filters
   const filteredArticles = useMemo(() => {
@@ -130,10 +153,10 @@ const DailyNewsPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="max-w-4xl mx-auto">
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-background border-b">
-        <div className="max-w-4xl mx-auto px-4 py-4">
+      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur border-b -mx-4 md:-mx-6 px-4 md:px-6 mb-4">
+        <div className="py-3">
           <div className="flex items-center justify-between">
             <Button variant="ghost" onClick={() => navigate(-1)} size="sm">
               <ArrowLeft className="h-4 w-4 mr-2" />
@@ -162,8 +185,8 @@ const DailyNewsPage = () => {
       </div>
 
       {/* Search and Filter Bar */}
-      <div className="bg-muted/50 border-b sticky top-[104px] z-10">
-        <div className="max-w-4xl mx-auto px-4 py-3">
+      <div className="bg-muted/50 border-b sticky top-[57px] z-10 -mx-4 md:-mx-6 px-4 md:px-6">
+        <div className="py-3">
           <div className="flex flex-col sm:flex-row gap-3">
             {/* Search */}
             <div className="relative flex-1">
@@ -256,8 +279,8 @@ const DailyNewsPage = () => {
 
       {/* Topic Navigation */}
       {topics.length > 0 && (
-        <div className="bg-background border-b sticky top-[160px] z-10">
-          <div className="max-w-4xl mx-auto px-4 py-3">
+        <div className="bg-background border-b sticky top-[109px] z-10 -mx-4 md:-mx-6 px-4 md:px-6">
+          <div className="py-3">
             <div className="flex items-center gap-2 overflow-x-auto pb-1">
               <span className="text-sm text-muted-foreground whitespace-nowrap">Jump to:</span>
               {topics.map(topic => (
@@ -279,7 +302,7 @@ const DailyNewsPage = () => {
       )}
 
       {/* Articles by Topic */}
-      <div className="max-w-4xl mx-auto px-4 py-6">
+      <div className="py-6">
         {filteredArticles.length === 0 ? (
           <Card>
             <CardContent className="pt-6 text-center">

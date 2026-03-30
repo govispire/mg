@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Search, Filter, Edit, Trash2, Eye, Calendar, MoreVertical } from 'lucide-react';
+import { Plus, Search, Filter, Edit, Trash2, Eye, Calendar, MoreVertical, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
@@ -29,6 +29,11 @@ import { BlogArticle, BlogStatus, BlogCategory } from '@/types/blog';
 import { getBlogs, deleteBlog } from '@/data/blogsData';
 import { BlogEditor } from '@/components/superadmin/blog/BlogEditor';
 import { toast } from 'sonner';
+import {
+    AlertDialog, AlertDialogAction, AlertDialogCancel,
+    AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
+    AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 const BlogManager = () => {
     const [blogs, setBlogs] = useState<BlogArticle[]>(getBlogs());
@@ -37,6 +42,7 @@ const BlogManager = () => {
     const [categoryFilter, setCategoryFilter] = useState<string>('All');
     const [isEditorOpen, setIsEditorOpen] = useState(false);
     const [editingBlog, setEditingBlog] = useState<BlogArticle | null>(null);
+    const [deleteTarget, setDeleteTarget] = useState<BlogArticle | null>(null);
 
     const categories: (BlogCategory | 'All')[] = [
         'All',
@@ -70,15 +76,19 @@ const BlogManager = () => {
         setIsEditorOpen(true);
     };
 
-    const handleDelete = (blogId: string) => {
-        if (confirm('Are you sure you want to delete this article?')) {
-            if (deleteBlog(blogId)) {
-                setBlogs(getBlogs());
-                toast.success('Article deleted successfully');
-            } else {
-                toast.error('Failed to delete article');
-            }
+    const handleDelete = (blog: BlogArticle) => {
+        setDeleteTarget(blog);
+    };
+
+    const confirmDelete = () => {
+        if (!deleteTarget) return;
+        if (deleteBlog(deleteTarget.id)) {
+            setBlogs(getBlogs());
+            toast.success('Article deleted successfully');
+        } else {
+            toast.error('Failed to delete article');
         }
+        setDeleteTarget(null);
     };
 
     const handleSave = () => {
@@ -115,6 +125,7 @@ const BlogManager = () => {
     }
 
     return (
+        <>
         <div className="p-6 space-y-6">
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -265,7 +276,7 @@ const BlogManager = () => {
                                                     Preview
                                                 </DropdownMenuItem>
                                                 <DropdownMenuItem
-                                                    onClick={() => handleDelete(blog.id)}
+                                                    onClick={() => handleDelete(blog)}
                                                     className="text-destructive"
                                                 >
                                                     <Trash2 className="h-4 w-4 mr-2" />
@@ -281,6 +292,33 @@ const BlogManager = () => {
                 </Table>
             </Card>
         </div>
+
+        {/* Delete Confirmation Dialog */}
+        <AlertDialog open={!!deleteTarget} onOpenChange={open => !open && setDeleteTarget(null)}>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle className="flex items-center gap-2 text-red-600">
+                        <AlertTriangle className="h-5 w-5" />
+                        Delete Article?
+                    </AlertDialogTitle>
+                    <AlertDialogDescription>
+                        You are about to permanently delete the article:<br />
+                        <strong>&quot;{deleteTarget?.title}&quot;</strong><br /><br />
+                        This action <strong>cannot be undone</strong>. The article will be permanently removed from the platform.
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel onClick={() => setDeleteTarget(null)}>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        onClick={confirmDelete}
+                    >
+                        Yes, Delete Article
+                    </AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
+        </>
     );
 };
 
