@@ -28,6 +28,7 @@ import { differenceInDays } from 'date-fns';
 import { CompulsoryFormModal, WelcomeMessageModal } from '@/components/auth/UpdatedAuthModal';
 import { allArticles } from '@/components/current-affairs/articlesData';
 import { useSavedArticles } from '@/hooks/useSavedArticles';
+import { useCurrentAffairsStore } from '@/hooks/useCurrentAffairsStore';
 import { UpcomingLiveTests } from '@/components/student/dashboard/UpcomingLiveTests';
 import { UpcomingExamsWidget } from '@/components/student/dashboard/UpcomingExamsWidget';
 import { TrendingExams } from '@/components/student/dashboard/TrendingExams';
@@ -310,6 +311,9 @@ const StudentDashboard = () => {
     }
   }, [userProfile?.preparationStartDate, activeQuiz, user?.id]);
 
+  // Live store — picks up admin-created articles + cross-tab sync
+  const { getNewsArticles } = useCurrentAffairsStore();
+
   // Saved Articles Logic for Sheet
   const { savedArticleIds, toggleSave, isSaved } = useSavedArticles();
   const safeAllArticlesList = Array.isArray(allArticles) ? allArticles : [];
@@ -374,24 +378,13 @@ const StudentDashboard = () => {
   // Selected exams (fallback or personalized)
   const selectedExams = [targetExamName, 'SBI Clerk', 'RRB NTPC']; // You could fetch related exams based on category here
 
-  // Current affairs data - taking top sorted latest articles
-  // Sort by date descending
-  // Current affairs data - taking top sorted latest articles
-  // Sort by date descending safely
-  const safeArticles = Array.isArray(allArticles) ? allArticles : [];
-  const sortedArticles = [...safeArticles].sort((a, b) => {
-    try {
-      return new Date(b.date).getTime() - new Date(a.date).getTime();
-    } catch (e) {
-      return 0;
-    }
-  });
+  // Current affairs — sourced from live store (includes admin-created articles)
+  const sortedArticles = getNewsArticles(); // already sorted newest-first
 
   // Get visible articles based on current index (sliding window of 3)
   const visibleArticles = [];
   if (sortedArticles.length > 0) {
     for (let i = 0; i < 3; i++) {
-      // Safe modulo arithmetic
       const index = (currentNewsIndex + i) % sortedArticles.length;
       if (sortedArticles[index]) {
         visibleArticles.push(sortedArticles[index]);
@@ -400,11 +393,11 @@ const StudentDashboard = () => {
   }
 
   const currentAffairsData = visibleArticles
-    .filter(article => article && article.id) // Filter out undefined or invalid
+    .filter(article => article && article.id)
     .map(article => ({
       id: article.id,
       title: article.title,
-      description: article.excerpt || '',
+      description: (article as any).excerpt || '',
       category: article.category || 'General',
       image: article.image || '',
       content: article.content || ''

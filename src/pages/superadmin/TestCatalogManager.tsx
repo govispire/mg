@@ -1,4 +1,4 @@
-import React, { useState, useId } from 'react';
+﻿import React, { useState, useId } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -544,36 +544,35 @@ const TestCatalogManager: React.FC = () => {
     }
 
     return (
-        <div className="p-4 md:p-6 space-y-6 max-w-7xl mx-auto">
-            {/* ── Page Header ──────────────────────────────────────────────────────── */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-2xl font-bold flex items-center gap-2">
-                        <GraduationCap className="h-6 w-6 text-primary" />
-                        Test Catalog Manager
-                    </h1>
-                    <p className="text-sm text-muted-foreground mt-1">
-                        Create and manage exam categories and their sections. Changes reflect instantly in the student portal.
-                    </p>
-                </div>
-                <div className="flex gap-2">
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setResetDialogOpen(true)}
-                        className="gap-2 text-muted-foreground"
-                    >
-                        <RefreshCw className="h-4 w-4" />
-                        Reset
-                    </Button>
-                    <Button onClick={openAddCategory} className="gap-2" size="sm">
-                        <Plus className="h-4 w-4" />
-                        New Category
-                    </Button>
+        <div className="p-4 md:p-6 space-y-5 max-w-7xl mx-auto">
+            {/* ─ Premium Header Banner */}
+            <div className="relative rounded-2xl overflow-hidden bg-gradient-to-r from-primary/90 via-primary to-indigo-600 shadow-lg">
+                <div className="absolute inset-0 opacity-10" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)', backgroundSize: '20px 20px' }} />
+                <div className="relative flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 px-6 py-5">
+                    <div>
+                        <div className="flex items-center gap-2 mb-1">
+                            <GraduationCap className="h-6 w-6 text-white" />
+                            <h1 className="text-2xl font-bold text-white tracking-tight">Test Catalog Manager</h1>
+                            <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-white/20 text-white font-medium ml-1">
+                                <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />Live
+                            </span>
+                        </div>
+                        <p className="text-sm text-white/75">Manage exam categories, sections, and exams. Changes sync instantly to the student portal.</p>
+                    </div>
+                    <div className="flex gap-2 shrink-0">
+                        <Button variant="outline" size="sm" onClick={() => setResetDialogOpen(true)}
+                            className="gap-2 bg-white/10 border-white/30 text-white hover:bg-white/20">
+                            <RefreshCw className="h-4 w-4" /> Reset
+                        </Button>
+                        <Button onClick={openAddCategory} size="sm"
+                            className="gap-2 bg-white text-primary hover:bg-white/90 font-semibold shadow">
+                            <Plus className="h-4 w-4" /> New Category
+                        </Button>
+                    </div>
                 </div>
             </div>
 
-            {/* ── Main Tabs: Catalog | Blog Creation ───────────────────── */}
+            {/* ─ Tabs */}
             <Tabs defaultValue="catalog">
               <TabsList className="mb-4">
                 <TabsTrigger value="catalog" className="gap-2"><GraduationCap size={14} />Test Catalog</TabsTrigger>
@@ -582,269 +581,206 @@ const TestCatalogManager: React.FC = () => {
 
               <TabsContent value="catalog">
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <StatBadge count={catalog.length} label="Categories" color="bg-blue-50" />
-                <StatBadge count={visibleCount} label="Visible" color="bg-green-50" />
-                <StatBadge count={totalSections} label="Sections" color="bg-purple-50" />
-                <StatBadge count={totalExams} label="Exams" color="bg-orange-50" />
+            {/*  Stat Cards */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
+                {[
+                    { count: catalog.length, label: 'Categories', icon: GraduationCap, gradient: 'from-blue-500 to-blue-600', bg: 'bg-blue-50', text: 'text-blue-700' },
+                    { count: visibleCount, label: 'Visible', icon: Eye, gradient: 'from-emerald-500 to-emerald-600', bg: 'bg-emerald-50', text: 'text-emerald-700' },
+                    { count: totalSections, label: 'Sections', icon: Layers, gradient: 'from-violet-500 to-violet-600', bg: 'bg-violet-50', text: 'text-violet-700' },
+                    { count: totalExams, label: 'Exams', icon: BookOpen, gradient: 'from-orange-500 to-orange-600', bg: 'bg-orange-50', text: 'text-orange-700' },
+                ].map(({ count, label, icon: Icon, gradient, bg, text }) => (
+                    <div key={label} className={`group relative overflow-hidden rounded-xl border ${bg} border-transparent hover:shadow-md transition-all`}>
+                        <div className={`absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b ${gradient}`} />
+                        <div className="px-4 py-3 pl-5">
+                            <div className="flex items-center justify-between">
+                                <div className={`text-2xl font-bold ${text}`}>{count}</div>
+                                <div className={`w-8 h-8 rounded-lg bg-gradient-to-br ${gradient} flex items-center justify-center shadow-sm`}>
+                                    <Icon className="h-4 w-4 text-white" />
+                                </div>
+                            </div>
+                            <div className={`text-xs font-medium ${text} opacity-70 uppercase tracking-wide mt-0.5`}>{label}</div>
+                        </div>
+                    </div>
+                ))}
             </div>
 
-            {/* ── Preview note ─────────────────────────────────────────────────────── */}
-            <div className="flex items-center gap-2 bg-primary/5 border border-primary/20 rounded-lg px-4 py-2 text-sm text-primary font-medium">
-                <Eye className="h-4 w-4 shrink-0" />
-                Student view at <span className="font-bold">/student/tests</span> updates live from this catalog.
-                Hidden categories won't appear for students.
-            </div>
-
-            {/* ── Search ───────────────────────────────────────────────────────────── */}
-            <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            {/*  Search */}
+            <div className="relative mb-4">
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                    placeholder="Search categories…"
+                    placeholder="Search categories, exams"
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    className="pl-9"
+                    className="pl-10 h-10 rounded-xl border-gray-200 bg-white shadow-sm"
                 />
             </div>
 
-            {/* ── Category List ─────────────────────────────────────────────────────── */}
+            {/*  Category List */}
             {filteredCatalog.length === 0 ? (
-                <div className="text-center py-16">
-                    <BookOpen className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-                    <p className="text-muted-foreground">No categories found. Create one to get started.</p>
+                <div className="text-center py-16 border-2 border-dashed border-gray-100 rounded-2xl bg-gray-50/50">
+                    <div className="w-16 h-16 rounded-2xl bg-white border border-gray-200 shadow-sm flex items-center justify-center mx-auto mb-4">
+                        <BookOpen className="h-7 w-7 text-gray-300" />
+                    </div>
+                    <p className="font-semibold text-gray-600 mb-1">No categories found</p>
+                    <p className="text-sm text-muted-foreground">Create a new category to get started</p>
+                    <Button onClick={openAddCategory} className="gap-2 mt-4" size="sm"><Plus className="h-4 w-4" /> New Category</Button>
                 </div>
             ) : (
                 <Accordion type="multiple" className="space-y-3">
                     {filteredCatalog.map((cat) => {
                         const sectionCount = cat.sections.length;
                         const examCount = cat.sections.reduce((a, s) => a + s.exams.length, 0);
+                        const accentMap: Record<string, string> = {
+                            'bg-blue-50 border-blue-200': 'from-blue-400 to-blue-600',
+                            'bg-green-50 border-green-200': 'from-emerald-400 to-emerald-600',
+                            'bg-yellow-50 border-yellow-200': 'from-amber-400 to-amber-600',
+                            'bg-red-50 border-red-200': 'from-red-400 to-red-600',
+                            'bg-purple-50 border-purple-200': 'from-violet-400 to-violet-600',
+                            'bg-orange-50 border-orange-200': 'from-orange-400 to-orange-600',
+                            'bg-teal-50 border-teal-200': 'from-teal-400 to-teal-600',
+                            'bg-indigo-50 border-indigo-200': 'from-indigo-400 to-indigo-600',
+                        };
+                        const accent = accentMap[cat.colorClass] ?? 'from-gray-400 to-gray-600';
 
                         return (
                             <AccordionItem
                                 key={cat.id}
                                 value={cat.id}
                                 className={cn(
-                                    'border rounded-xl overflow-hidden shadow-sm transition-all',
+                                    'border border-gray-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all bg-white',
                                     !cat.isVisible && 'opacity-60',
                                 )}
                             >
-                                {/* ── Category Header ───────────────────────── */}
-                                <AccordionTrigger className="px-5 py-4 hover:no-underline hover:bg-gray-50 [&>svg]:hidden">
-                                    <div className="flex items-center gap-4 w-full min-w-0">
-                                        {/* Logo */}
-                                        <div className={`w-10 h-10 rounded-lg border-2 flex items-center justify-center flex-shrink-0 ${cat.colorClass}`}>
-                                            {cat.logo ? (
-                                                <img src={cat.logo} alt={cat.name} className="w-8 h-8 object-contain" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                                            ) : (
-                                                <BookOpen className="h-5 w-5 text-gray-400" />
-                                            )}
-                                        </div>
-
-                                        {/* Name & meta */}
-                                        <div className="flex-1 min-w-0 text-left">
-                                            <div className="flex items-center gap-2 flex-wrap">
-                                                <span className="font-semibold text-sm">{cat.name}</span>
-                                                {cat.isPopular && (
-                                                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0 bg-amber-100 text-amber-700">
-                                                        <Star className="h-2.5 w-2.5 mr-0.5" />Popular
-                                                    </Badge>
-                                                )}
-                                                {!cat.isVisible && (
-                                                    <Badge variant="outline" className="text-[10px] px-1.5 py-0 text-gray-400">Hidden</Badge>
+                                {/* Category Header */}
+                                <AccordionTrigger className="px-0 py-0 hover:no-underline [&>svg]:hidden">
+                                    <div className="flex items-stretch w-full min-w-0">
+                                        <div className={`w-1.5 bg-gradient-to-b ${accent} flex-shrink-0`} />
+                                        <div className="flex items-center gap-4 flex-1 min-w-0 px-5 py-4 hover:bg-gray-50/70 transition-colors">
+                                            <div className={`w-11 h-11 rounded-xl border-2 flex items-center justify-center flex-shrink-0 shadow-sm ${cat.colorClass}`}>
+                                                {cat.logo ? (
+                                                    <img src={cat.logo} alt={cat.name} className="w-8 h-8 object-contain" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                                                ) : (
+                                                    <BookOpen className="h-5 w-5 text-gray-400" />
                                                 )}
                                             </div>
-                                            <p className="text-xs text-muted-foreground truncate mt-0.5">{cat.description}</p>
-                                            <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
-                                                <span><Layers className="inline h-3 w-3 mr-0.5" />{sectionCount} section{sectionCount !== 1 ? 's' : ''}</span>
-                                                <span><BookOpen className="inline h-3 w-3 mr-0.5" />{examCount} exam{examCount !== 1 ? 's' : ''}</span>
+                                            <div className="flex-1 min-w-0 text-left">
+                                                <div className="flex items-center gap-2 flex-wrap">
+                                                    <span className="font-semibold text-[13px] text-gray-800">{cat.name}</span>
+                                                    {cat.isPopular && (
+                                                        <span className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 font-medium">
+                                                            <Star className="h-2.5 w-2.5 fill-amber-400 text-amber-400" />Popular
+                                                        </span>
+                                                    )}
+                                                    {cat.isVisible ? (
+                                                        <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium">
+                                                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />Live
+                                                        </span>
+                                                    ) : (
+                                                        <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500 border border-gray-200 font-medium">
+                                                            <EyeOff className="h-2.5 w-2.5" />Hidden
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <p className="text-xs text-muted-foreground truncate mt-0.5 max-w-xs">{cat.description}</p>
+                                                <div className="flex items-center gap-2 mt-1.5">
+                                                    <span className="text-[11px] bg-violet-50 text-violet-600 border border-violet-100 px-2 py-0.5 rounded-full font-medium">{sectionCount} section{sectionCount !== 1 ? 's' : ''}</span>
+                                                    <span className="text-[11px] bg-blue-50 text-blue-600 border border-blue-100 px-2 py-0.5 rounded-full font-medium">{examCount} exam{examCount !== 1 ? 's' : ''}</span>
+                                                </div>
                                             </div>
-                                        </div>
-
-                                        {/* Actions */}
-                                        <div className="flex items-center gap-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                className="h-8 w-8 p-0 text-muted-foreground hover:text-amber-600"
-                                                onClick={() => setHideTarget({
-                                                    label: cat.name,
-                                                    isCurrentlyVisible: cat.isVisible,
-                                                    onConfirm: () => {
-                                                        toggleCategoryVisibility(cat.id);
-                                                        toast({ title: cat.isVisible ? `"${cat.name}" hidden from students` : `"${cat.name}" shown to students` });
-                                                    },
-                                                })}
-                                                title={cat.isVisible ? 'Hide from students' : 'Show to students'}
-                                            >
-                                                {cat.isVisible ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-                                            </Button>
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                className="h-8 w-8 p-0 text-muted-foreground hover:text-primary"
-                                                onClick={() => setEditConfirmTarget({
-                                                    label: cat.name,
-                                                    type: 'category',
-                                                    onConfirm: () => openEditCategory(cat),
-                                                })}
-                                                title="Edit category"
-                                            >
-                                                <Pencil className="h-4 w-4" />
-                                            </Button>
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
-                                                onClick={() =>
-                                                    setDeleteTarget({
-                                                        type: 'category',
-                                                        label: cat.name,
-                                                        onConfirm: () => deleteCategory(cat.id),
-                                                    })
-                                                }
-                                                title="Delete category"
-                                            >
-                                                <Trash2 className="h-4 w-4" />
-                                            </Button>
-                                            <ChevronRight className="h-4 w-4 text-muted-foreground ml-1 transition-transform accordion-open:rotate-90" />
+                                            <div className="flex items-center gap-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                                                <button className="h-8 w-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-amber-600 hover:bg-amber-50 transition-all"
+                                                    onClick={() => setHideTarget({ label: cat.name, isCurrentlyVisible: cat.isVisible, onConfirm: () => { toggleCategoryVisibility(cat.id); toast({ title: cat.isVisible ? `"${cat.name}" hidden` : `"${cat.name}" now visible` }); } })}
+                                                    title={cat.isVisible ? 'Hide' : 'Show'}>
+                                                    {cat.isVisible ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                                                </button>
+                                                <button className="h-8 w-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-primary hover:bg-primary/10 transition-all"
+                                                    onClick={() => setEditConfirmTarget({ label: cat.name, type: 'category', onConfirm: () => openEditCategory(cat) })}
+                                                    title="Edit"><Pencil className="h-4 w-4" /></button>
+                                                <button className="h-8 w-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-destructive hover:bg-red-50 transition-all"
+                                                    onClick={() => setDeleteTarget({ type: 'category', label: cat.name, onConfirm: () => deleteCategory(cat.id) })}
+                                                    title="Delete"><Trash2 className="h-4 w-4" /></button>
+                                                <div className="w-px h-5 bg-gray-200 mx-1" />
+                                                <ChevronRight className="h-4 w-4 text-gray-400" />
+                                            </div>
                                         </div>
                                     </div>
                                 </AccordionTrigger>
 
-                                {/* ── Category Content: Sections ─────────────── */}
-                                <AccordionContent className="px-5 pb-5">
-                                    <div className="pt-3 border-t space-y-4">
-                                        <div className="flex items-center justify-between">
-                                            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-                                                Sections
-                                            </h3>
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                className="h-7 text-xs gap-1"
-                                                onClick={() => openAddSection(cat.id)}
-                                            >
+                                {/* Sections */}
+                                <AccordionContent className="px-0 pb-0">
+                                    <div className="border-t border-gray-100">
+                                        <div className="flex items-center justify-between px-5 py-3 bg-gray-50/80 border-b border-gray-100">
+                                            <div className="flex items-center gap-2">
+                                                <Layers className="h-3.5 w-3.5 text-violet-500" />
+                                                <span className="text-xs font-semibold text-gray-600 uppercase tracking-wider">Sections</span>
+                                                {sectionCount > 0 && <span className="text-xs bg-violet-100 text-violet-700 px-1.5 py-0.5 rounded-full font-medium">{sectionCount}</span>}
+                                            </div>
+                                            <Button variant="outline" size="sm" className="h-7 text-xs gap-1 border-dashed hover:border-primary hover:text-primary hover:bg-primary/5"
+                                                onClick={() => openAddSection(cat.id)}>
                                                 <Plus className="h-3.5 w-3.5" /> Add Section
                                             </Button>
                                         </div>
-
                                         {cat.sections.length === 0 ? (
-                                            <div className="text-center py-6 border-2 border-dashed rounded-lg">
-                                                <Layers className="h-8 w-8 text-gray-300 mx-auto mb-2" />
-                                                <p className="text-xs text-muted-foreground">No sections yet. Add one above.</p>
+                                            <div className="text-center py-8 m-4 border-2 border-dashed border-gray-200 rounded-xl">
+                                                <Layers className="h-8 w-8 text-gray-200 mx-auto mb-2" />
+                                                <p className="text-xs text-muted-foreground">No sections yet — add one to organize exams</p>
                                             </div>
                                         ) : (
-                                            <div className="space-y-3">
+                                            <div className="p-4 space-y-3">
                                                 {cat.sections.map((section) => (
-                                                    <div key={section.id} className="border rounded-lg overflow-hidden">
-                                                        {/* Section header */}
-                                                        <div className="px-4 py-3 bg-gray-50 flex items-center justify-between gap-3">
-                                                            <div className="flex-1 min-w-0">
-                                                                <p className="text-sm font-semibold">{section.name}</p>
-                                                                {section.description && (
-                                                                    <p className="text-xs text-muted-foreground">{section.description}</p>
-                                                                )}
-                                                                <p className="text-xs text-muted-foreground mt-0.5">
-                                                                    {section.exams.length} exam{section.exams.length !== 1 ? 's' : ''}
-                                                                </p>
+                                                    <div key={section.id} className="rounded-xl border border-gray-100 overflow-hidden bg-white shadow-sm">
+                                                        <div className="px-4 py-2.5 flex items-center justify-between gap-3 bg-gradient-to-r from-gray-50 to-white border-b border-gray-100">
+                                                            <div className="flex items-center gap-2.5 min-w-0">
+                                                                <div className={`w-1 h-7 rounded-full bg-gradient-to-b ${accent} flex-shrink-0`} />
+                                                                <div className="min-w-0">
+                                                                    <p className="text-sm font-semibold text-gray-800">{section.name}</p>
+                                                                    {section.description && <p className="text-xs text-muted-foreground truncate">{section.description}</p>}
+                                                                </div>
+                                                                <span className="text-[11px] bg-violet-50 text-violet-600 border border-violet-100 px-2 py-0.5 rounded-full font-medium flex-shrink-0">{section.exams.length} exam{section.exams.length !== 1 ? 's' : ''}</span>
                                                             </div>
                                                             <div className="flex gap-1 shrink-0">
-                                                                <Button
-                                                                    variant="ghost"
-                                                                    size="sm"
-                                                                    className="h-7 w-7 p-0"
-                                                                    onClick={() => openEditSection(cat.id, section)}
-                                                                >
-                                                                    <Pencil className="h-3.5 w-3.5" />
-                                                                </Button>
-                                                                <Button
-                                                                    variant="ghost"
-                                                                    size="sm"
-                                                                    className="h-7 w-7 p-0 text-destructive hover:text-destructive"
-                                                                    onClick={() =>
-                                                                        setDeleteTarget({
-                                                                            type: 'section',
-                                                                            label: section.name,
-                                                                            onConfirm: () => deleteSection(cat.id, section.id),
-                                                                        })
-                                                                    }
-                                                                >
-                                                                    <Trash2 className="h-3.5 w-3.5" />
-                                                                </Button>
+                                                                <button className="h-7 w-7 flex items-center justify-center rounded-lg text-gray-400 hover:text-primary hover:bg-primary/10 transition-all"
+                                                                    onClick={() => openEditSection(cat.id, section)}><Pencil className="h-3.5 w-3.5" /></button>
+                                                                <button className="h-7 w-7 flex items-center justify-center rounded-lg text-gray-400 hover:text-destructive hover:bg-red-50 transition-all"
+                                                                    onClick={() => setDeleteTarget({ type: 'section', label: section.name, onConfirm: () => deleteSection(cat.id, section.id) })}><Trash2 className="h-3.5 w-3.5" /></button>
                                                             </div>
                                                         </div>
-
-                                                        {/* Exams list */}
                                                         <div className="p-3">
                                                             {section.exams.length === 0 ? (
-                                                                <p className="text-xs text-muted-foreground py-2 text-center">
-                                                                    No exams yet.
-                                                                </p>
+                                                                <p className="text-xs text-muted-foreground py-2 text-center italic">No exams yet.</p>
                                                             ) : (
                                                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 mb-2">
                                                                     {section.exams.map((exam) => (
-                                                                        <div
-                                                                            key={exam.id}
-                                                                            className="flex items-center gap-2 bg-white border rounded-lg px-3 py-2 hover:border-primary hover:shadow-sm transition-all group"
-                                                                        >
-                                                                            {/* Clickable area → exam manager */}
-                                                                            <button
-                                                                                className="flex items-center gap-2 flex-1 min-w-0 text-left"
-                                                                                onClick={() =>
-                                                                                    navigate(`/super-admin/test-catalog/${cat.id}/${section.id}/${exam.id}`)
-                                                                                }
-                                                                                title="Manage tests for this exam"
-                                                                            >
+                                                                        <div key={exam.id} className="group flex items-center gap-2 bg-gray-50/80 border border-gray-100 rounded-lg px-3 py-2 hover:bg-white hover:border-primary/30 hover:shadow-md transition-all">
+                                                                            <button className="flex items-center gap-2 flex-1 min-w-0 text-left"
+                                                                                onClick={() => navigate(`/super-admin/test-catalog/${cat.id}/${section.id}/${exam.id}`)}
+                                                                                title="Manage tests">
                                                                                 {exam.logo ? (
-                                                                                    <img
-                                                                                        src={exam.logo}
-                                                                                        alt={exam.name}
-                                                                                        className="w-7 h-7 object-contain flex-shrink-0"
-                                                                                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                                                                                    />
+                                                                                    <img src={exam.logo} alt={exam.name} className="w-8 h-8 object-contain flex-shrink-0 rounded-lg"
+                                                                                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
                                                                                 ) : (
-                                                                                    <div className="w-7 h-7 rounded bg-gray-100 flex items-center justify-center text-xs flex-shrink-0">📚</div>
+                                                                                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary/10 to-primary/20 flex items-center justify-center text-sm flex-shrink-0"></div>
                                                                                 )}
-                                                                                <div className="min-w-0">
-                                                                                    <p className="text-xs font-semibold truncate group-hover:text-primary transition-colors">{exam.name}</p>
-                                                                                    {exam.isPopular && <p className="text-[10px] text-amber-600 flex items-center gap-0.5"><Star className="h-2.5 w-2.5 fill-amber-400 text-amber-400" />Popular</p>}
-                                                                                    <p className="text-[10px] text-primary opacity-0 group-hover:opacity-100 transition-opacity">Manage Tests →</p>
+                                                                                <div className="min-w-0 flex-1">
+                                                                                    <p className="text-xs font-semibold truncate text-gray-700 group-hover:text-primary transition-colors">{exam.name}</p>
+                                                                                    {exam.isPopular && <p className="text-[10px] text-amber-600 flex items-center gap-0.5 font-medium"><Star className="h-2.5 w-2.5 fill-amber-400 text-amber-400" />Popular</p>}
+                                                                                    <p className="text-[10px] text-primary font-semibold opacity-0 group-hover:opacity-100 transition-opacity">Open Tests </p>
                                                                                 </div>
                                                                             </button>
-                                                                            {/* Edit button */}
-                                                                            <button
-                                                                                className="shrink-0 text-gray-400 hover:text-primary transition-colors p-0.5"
-                                                                                onClick={() => openEditExam(cat.id, section.id, exam)}
-                                                                                title="Edit exam"
-                                                                            >
-                                                                                <Pencil className="h-3.5 w-3.5" />
-                                                                            </button>
-                                                                            {/* Delete button */}
-                                                                            <button
-                                                                                className="shrink-0 text-gray-300 hover:text-destructive transition-colors p-0.5"
-                                                                                onClick={() =>
-                                                                                    setDeleteTarget({
-                                                                                        type: 'exam',
-                                                                                        label: exam.name,
-                                                                                        onConfirm: () => removeExam(cat.id, section.id, exam.id),
-                                                                                    })
-                                                                                }
-                                                                                title="Delete exam"
-                                                                            >
-                                                                                <Trash2 className="h-3.5 w-3.5" />
-                                                                            </button>
+                                                                            <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                                                                                <button className="p-1 text-gray-400 hover:text-primary rounded-md transition-colors"
+                                                                                    onClick={() => openEditExam(cat.id, section.id, exam)} title="Edit"><Pencil className="h-3 w-3" /></button>
+                                                                                <button className="p-1 text-gray-400 hover:text-destructive rounded-md transition-colors"
+                                                                                    onClick={() => setDeleteTarget({ type: 'exam', label: exam.name, onConfirm: () => removeExam(cat.id, section.id, exam.id) })} title="Delete"><Trash2 className="h-3 w-3" /></button>
+                                                                            </div>
                                                                         </div>
                                                                     ))}
                                                                 </div>
                                                             )}
-                                                            <Button
-                                                                variant="ghost"
-                                                                size="sm"
-                                                                className="h-7 text-xs gap-1 text-primary hover:text-primary"
-                                                                onClick={() => openAddExam(cat.id, section.id)}
-                                                            >
+                                                            <button className="w-full mt-1 h-8 flex items-center justify-center gap-1.5 text-xs text-primary font-medium border border-dashed border-primary/30 rounded-lg hover:bg-primary/5 hover:border-primary/50 transition-all"
+                                                                onClick={() => openAddExam(cat.id, section.id)}>
                                                                 <Plus className="h-3 w-3" /> Add Exam
-                                                            </Button>
+                                                            </button>
                                                         </div>
                                                     </div>
                                                 ))}
@@ -857,7 +793,6 @@ const TestCatalogManager: React.FC = () => {
                     })}
                 </Accordion>
             )}
-
               </TabsContent>
 
               {/* ─── Blog Creation Tab ───────────────────────────────────────────── */}

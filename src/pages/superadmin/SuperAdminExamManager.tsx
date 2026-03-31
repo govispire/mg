@@ -7,7 +7,6 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
     Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from '@/components/ui/dialog';
@@ -19,11 +18,13 @@ import { useToast } from '@/hooks/use-toast';
 import {
     ArrowLeft, Plus, Pencil, Trash2, Eye, EyeOff,
     Clock, Target, BarChart2, Star, BookOpen, Zap, Radio, Trophy,
-    Grid3X3, List, CheckCircle, Play, Upload, Tag, Check, X,
+    Grid3X3, List, CheckCircle, Play, Upload, Tag, Check, X, Users, Quote, Save,
 } from 'lucide-react';
+import { useSuccessStoriesStore, type SuccessStory } from '@/hooks/useSuccessStoriesStore';
+import { Textarea } from '@/components/ui/textarea';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
     useExamCatalog,
-    DEFAULT_SLOT_TEMPLATES,
     type CatalogTestItem,
     type TestDifficulty,
     type TestSubject,
@@ -192,21 +193,7 @@ const defaultTestForm = (): Omit<CatalogTestItem, 'createdAt'> => ({
     isVisible: true,
 });
 
-// ─── TAB definitions ──────────────────────────────────────────────────────────
-
-const MAIN_TABS = [
-    { value: 'prelims', label: 'Prelims', icon: <BookOpen className="h-3.5 w-3.5" /> },
-    { value: 'mains', label: 'Mains', icon: <Target className="h-3.5 w-3.5" /> },
-    { value: 'speed', label: 'Speed', icon: <Zap className="h-3.5 w-3.5" /> },
-    { value: 'live', label: 'Live', icon: <Radio className="h-3.5 w-3.5" /> },
-];
-
-const SUB_TABS = [
-    { value: 'full', label: 'Full Test' },
-    { value: 'sectional', label: 'Sectional Test' },
-    { value: 'speed', label: 'Speed Test' },
-    { value: 'pyq', label: 'PYQ Test' },
-];
+// ─── Main Component ───────────────────────────────────────────────────────────
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
@@ -219,23 +206,196 @@ const SuperAdminExamManager: React.FC = () => {
     const navigate = useNavigate();
     const uid = useId();
     const { toast } = useToast();
-    const { catalog, loading, addTest, updateTest, deleteTest, updateTest: toggleTest, addSubject, updateSubject, deleteSubject } = useExamCatalog();
+    const {
+        catalog, loading,
+        addTest, updateTest, deleteTest, updateTest: toggleTest,
+        addSubject, updateSubject, deleteSubject,
+        updateSlotLabel, addSlot, deleteSlot,
+    } = useExamCatalog();
 
-    const [activeTab, setActiveTab] = useState('prelims');
-    const [activeSubTab, setActiveSubTab] = useState('full');
+    // Derived: unique main tabs from this exam's testSlots + always show Success Stories
+    const exam = (() => {
+        const cat = catalog.find(c => c.id === categoryId);
+        const sec = cat?.sections.find(s => s.id === sectionId);
+        return sec?.exams.find(e => e.id === examId);
+    })();
+    const category = catalog.find(c => c.id === categoryId);
+    const section = category?.sections.find(s => s.id === sectionId);
+
+    // Dynamic main tab list from slots (unique tab values) + 'success-stories'
+    const mainTabValues: string[] = React.useMemo(() => {
+        if (!exam) return ['success-stories'];
+        const seen = new Set<string>();
+        const tabs: string[] = [];
+        for (const slot of exam.testSlots) {
+            if (!seen.has(slot.tab)) { seen.add(slot.tab); tabs.push(slot.tab); }
+        }
+        tabs.push('success-stories');
+        return tabs;
+    }, [exam]);
+
+    const [activeTab, setActiveTab] = useState<string>(() => mainTabValues[0] ?? 'success-stories');
+
+    // Reset activeTab when exam changes or tab list changes (e.g. after delete)
+    React.useEffect(() => {
+        if (!mainTabValues.includes(activeTab)) {
+            setActiveTab(mainTabValues[0] ?? 'success-stories');
+        }
+    }, [mainTabValues, activeTab]);
+
+    // Dynamic sub-tabs for a given main tab
+    const getSubTabs = (tab: string) => {
+        if (!exam) return [];
+        return exam.testSlots.filter(s => s.tab === tab && s.subTab !== null);
+    };
+
+    const hasSubTabs = (tab: string) => getSubTabs(tab).length > 0;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    void hasSubTabs;
+
+    // Active sub-tab: derived from slots
+    const [activeSubTabKey, setActiveSubTabKey] = useState<string>('');
+
+    // When switching main tab, set first sub-tab
+    React.useEffect(() => {
+        if (!exam) return;
+        const subs = getSubTabs(activeTab);
+        if (subs.length > 0) {
+            if (!subs.find(s => s.key === activeSubTabKey)) {
+                setActiveSubTabKey(subs[0].key);
+            }
+        } else {
+            setActiveSubTabKey('');
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [activeTab, exam]);
+
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+
+    // ── Tab rename state ──────────────────────────────────────────────────────
+    const [renamingSlotKey, setRenamingSlotKey] = useState<string | null>(null);
+    const [renameValue, setRenameValue] = useState('');
+
+    const startRename = (slotKey: string, currentLabel: string) => {
+        setRenamingSlotKey(slotKey);
+        setRenameValue(currentLabel);
+    };
+    const commitRename = () => {
+        if (!renamingSlotKey || !renameValue.trim()) { setRenamingSlotKey(null); return; }
+        const label = renameValue.trim();
+        if (renamingSlotKey.startsWith('__tab__')) {
+            // Rename the display label encoded in every slot belonging to this tab.
+            // The tab's display label is derived from slot labels, so update all.
+            const tabVal = renamingSlotKey.replace('__tab__', '');
+            const tabSlots = exam?.testSlots.filter(s => s.tab === tabVal) ?? [];
+            for (const sl of tabSlots) {
+                // Rebuild label: for sub-tab slots keep their own sub-part, just update the prefix.
+                const newLabel = sl.subTab
+                    ? `${label} – ${sl.label.split('–').slice(1).join('–').trim() || sl.subTab}`
+                    : label;
+                updateSlotLabel(categoryId!, sectionId!, examId!, sl.key, newLabel);
+            }
+        } else {
+            updateSlotLabel(categoryId!, sectionId!, examId!, renamingSlotKey, label);
+        }
+        toast({ title: 'Label updated' });
+        setRenamingSlotKey(null);
+    };
+
+    // ── Add main tab dialog ───────────────────────────────────────────────────
+    const [addTabOpen, setAddTabOpen] = useState(false);
+    const [newTabLabel, setNewTabLabel] = useState('');
+    const [newTabHasSubs, setNewTabHasSubs] = useState(true);
+
+    const handleAddMainTab = () => {
+        if (!newTabLabel.trim()) { toast({ title: 'Name required', variant: 'destructive' }); return; }
+        const tabKey = newTabLabel.trim().toLowerCase().replace(/\s+/g, '_') + '_' + Date.now();
+        if (newTabHasSubs) {
+            // Add with a default 'Full Test' sub-tab
+            addSlot(categoryId!, sectionId!, examId!, {
+                key: `${tabKey}_full`,
+                tab: tabKey,
+                subTab: 'full',
+                label: `${newTabLabel.trim()} – Full Test`,
+            });
+        } else {
+            addSlot(categoryId!, sectionId!, examId!, {
+                key: tabKey,
+                tab: tabKey,
+                subTab: null,
+                label: newTabLabel.trim(),
+            });
+        }
+        toast({ title: `Tab "${newTabLabel.trim()}" added` });
+        setActiveTab(tabKey);
+        setAddTabOpen(false);
+        setNewTabLabel('');
+        setNewTabHasSubs(true);
+    };
+
+    // ── Add sub-tab dialog ────────────────────────────────────────────────────
+    const [addSubTabOpen, setAddSubTabOpen] = useState(false);
+    const [newSubTabLabel, setNewSubTabLabel] = useState('');
+
+    const handleAddSubTab = () => {
+        if (!newSubTabLabel.trim()) { toast({ title: 'Name required', variant: 'destructive' }); return; }
+        // also check if parent tab has a no-subTab slot (remove it first, since adding subTabs changes semantics)
+        const subKey = newSubTabLabel.trim().toLowerCase().replace(/\s+/g, '_');
+        const slotKey = `${activeTab}_${subKey}_${Date.now()}`;
+        addSlot(categoryId!, sectionId!, examId!, {
+            key: slotKey,
+            tab: activeTab,
+            subTab: subKey,
+            label: newSubTabLabel.trim(),
+        });
+        toast({ title: `Sub-tab "${newSubTabLabel.trim()}" added` });
+        setActiveSubTabKey(slotKey);
+        setAddSubTabOpen(false);
+        setNewSubTabLabel('');
+    };
+
+    // ── Delete slot confirmation ───────────────────────────────────────────────
+    const [deleteSlotTarget, setDeleteSlotTarget] = useState<{ slotKey: string; label: string; isMainTab: boolean } | null>(null);
+
+    const handleDeleteSlot = (slotKey: string, label: string, isMainTab: boolean) => {
+        setDeleteSlotTarget({ slotKey, label, isMainTab });
+    };
+
+    const confirmDeleteSlot = () => {
+        if (!deleteSlotTarget) return;
+        if (deleteSlotTarget.isMainTab) {
+            // Delete ALL slots under this main tab
+            const tabSlots = exam?.testSlots.filter(s => s.tab === activeTab) ?? [];
+            for (const sl of tabSlots) {
+                deleteSlot(categoryId!, sectionId!, examId!, sl.key);
+            }
+            toast({ title: `Tab "${deleteSlotTarget.label}" deleted`, variant: 'destructive' });
+        } else {
+            deleteSlot(categoryId!, sectionId!, examId!, deleteSlotTarget.slotKey);
+            toast({ title: `Sub-tab "${deleteSlotTarget.label}" deleted`, variant: 'destructive' });
+        }
+        setDeleteSlotTarget(null);
+    };
+
+    // ── Success Stories store ─────────────────────────────────────────────────
+    const { examStories, addStory, updateStory, deleteStory } = useSuccessStoriesStore(examId);
+
+    // ── Success Story dialog state ────────────────────────────────────────────
+    const defaultStoryForm = () => ({
+        name: '', air: 1, year: new Date().getFullYear().toString(),
+        avatar: '', score: 0, maxScore: 500,
+        testimonial: '', tips: ['', '', '', ''], isVisible: true,
+    });
+    const [storyDialogOpen, setStoryDialogOpen] = useState(false);
+    const [editingStoryId, setEditingStoryId] = useState<string | null>(null);
+    const [storyForm, setStoryForm] = useState<Omit<SuccessStory, 'id' | 'createdAt'>>(defaultStoryForm());
+    const [deleteStoryTarget, setDeleteStoryTarget] = useState<{ id: string; name: string } | null>(null);
 
     // ── Subject management state ──────────────────────────────────────────────
     const [editingSubjectId, setEditingSubjectId] = useState<string | null>(null);
     const [editingSubjectName, setEditingSubjectName] = useState('');
     const [newSubjectName, setNewSubjectName] = useState('');
     const [showAddSubject, setShowAddSubject] = useState(false);
-
-    // ── Find category / section / exam ────────────────────────────────────────
-
-    const category = catalog.find(c => c.id === categoryId);
-    const section = category?.sections.find(s => s.id === sectionId);
-    const exam = section?.exams.find(e => e.id === examId);
 
     // ── Test dialog ───────────────────────────────────────────────────────────
 
@@ -264,36 +424,14 @@ const SuperAdminExamManager: React.FC = () => {
         );
     }
 
-    // ── Slot helpers ──────────────────────────────────────────────────────────
-
-    const slotKey = (tab: string, sub: string | null) =>
-        sub ? `${tab}_${sub}` : tab;
-
-    const currentSlotKey = () => {
-        if (activeTab === 'speed' || activeTab === 'live') return activeTab;
-        return slotKey(activeTab, activeSubTab);
-    };
-
-    const currentSlot = exam.testSlots.find(s => s.key === currentSlotKey());
-
-    // ── Aggregate stats ───────────────────────────────────────────────────────
-
-    const totalTests = exam.testSlots.reduce((a, s) => a + s.tests.length, 0);
-    const visibleTests = exam.testSlots.reduce((a, s) => a + s.tests.filter(t => t.isVisible).length, 0);
 
     // ── Open test dialog ──────────────────────────────────────────────────────
 
-    const openAddTest = () => {
-        const sk = currentSlotKey();
-        const slot = exam.testSlots.find(s => s.key === sk);
+    const openAddTest = (slotK: string) => {
+        const slot = exam!.testSlots.find(s => s.key === slotK);
         const nextNum = (slot?.tests.length || 0) + 1;
-        const tabLabel = MAIN_TABS.find(t => t.value === activeTab)?.label || activeTab;
-        const subLabel = SUB_TABS.find(t => t.value === activeSubTab)?.label || '';
-        const defaultName = activeTab === 'speed' || activeTab === 'live'
-            ? `${tabLabel} Test ${nextNum}`
-            : `${tabLabel} ${subLabel} ${nextNum}`;
-
-        setActiveSlotKey(sk);
+        const defaultName = `${slot?.label ?? slotK} ${nextNum}`;
+        setActiveSlotKey(slotK);
         setEditingTestId(null);
         setTestForm({ ...defaultTestForm(), name: defaultName });
         setTestDialogOpen(true);
@@ -435,48 +573,8 @@ const SuperAdminExamManager: React.FC = () => {
         );
     };
 
-    // ── Render sub-tabs for Prelims / Mains ───────────────────────────────────
-
-    const renderSubTabContent = (tabValue: string) => {
-        const sk = slotKey(tabValue, activeSubTab);
-        return (
-            <div className="space-y-4">
-                {/* Sub-tab row */}
-                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 justify-between">
-                    <div className="flex gap-2 flex-wrap">
-                        {SUB_TABS.map(st => (
-                            <Button
-                                key={st.value}
-                                size="sm"
-                                variant={activeSubTab === st.value ? 'default' : 'outline'}
-                                onClick={() => setActiveSubTab(st.value)}
-                                className="text-xs h-8"
-                            >
-                                {st.label}
-                            </Button>
-                        ))}
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <div className="flex gap-1 border rounded-lg p-1">
-                            <Button variant={viewMode === 'grid' ? 'default' : 'ghost'} size="sm" className="p-2 h-7 w-7" onClick={() => setViewMode('grid')}>
-                                <Grid3X3 className="h-3.5 w-3.5" />
-                            </Button>
-                            <Button variant={viewMode === 'list' ? 'default' : 'ghost'} size="sm" className="p-2 h-7 w-7" onClick={() => setViewMode('list')}>
-                                <List className="h-3.5 w-3.5" />
-                            </Button>
-                        </div>
-                        <Button size="sm" className="gap-1 h-8" onClick={openAddTest}>
-                            <Plus className="h-3.5 w-3.5" /> Add Test
-                        </Button>
-                    </div>
-                </div>
-                {renderSubjectPanel(sk)}
-                {renderSlotTests(sk)}
-            </div>
-        );
-    };
-
-    const renderSimpleTabContent = (slotK: string, emptyLabel: string) => (
+    // ── renderSlotContent: single unified renderer ─────────────────────────
+    const renderSlotContent = (slotK: string) => (
         <div className="space-y-4">
             <div className="flex justify-between items-center">
                 <div className="flex gap-1 border rounded-lg p-1">
@@ -487,8 +585,8 @@ const SuperAdminExamManager: React.FC = () => {
                         <List className="h-3.5 w-3.5" />
                     </Button>
                 </div>
-                <Button size="sm" className="gap-1 h-8" onClick={openAddTest}>
-                    <Plus className="h-3.5 w-3.5" /> Add {emptyLabel}
+                <Button size="sm" className="gap-1 h-8" onClick={() => openAddTest(slotK)}>
+                    <Plus className="h-3.5 w-3.5" /> Add Test
                 </Button>
             </div>
             {renderSubjectPanel(slotK)}
@@ -508,7 +606,7 @@ const SuperAdminExamManager: React.FC = () => {
                     <p className="text-sm text-muted-foreground mb-4">
                         Click <strong>Add Test</strong> to create the first test in this slot.
                     </p>
-                    <Button size="sm" className="gap-1" onClick={openAddTest}>
+                    <Button size="sm" className="gap-1" onClick={() => openAddTest(slotK)}>
                         <Plus className="h-3.5 w-3.5" /> Add First Test
                     </Button>
                 </div>
@@ -570,118 +668,415 @@ const SuperAdminExamManager: React.FC = () => {
 
     return (
         <div className="p-4 md:p-6 space-y-6 max-w-7xl mx-auto">
-            {/* ── Breadcrumb ──────────────────────────────────────────────────── */}
+            {/* ── Breadcrumb ──────────────────────────────────────────────── */}
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Link
-                    to="/super-admin/test-catalog"
-                    className="hover:text-primary flex items-center gap-1 transition-colors"
-                >
-                    <ArrowLeft className="h-4 w-4" />
-                    Test Catalog
+                <Link to="/super-admin/test-catalog" className="hover:text-primary flex items-center gap-1 transition-colors">
+                    <ArrowLeft className="h-4 w-4" /> Test Catalog
                 </Link>
                 <span>/</span>
-                <span>{category.name}</span>
+                <span>{category!.name}</span>
                 <span>/</span>
-                <span className="text-foreground font-medium">{exam.name}</span>
+                <span className="text-foreground font-medium">{exam!.name}</span>
             </div>
 
-            {/* ── Exam Header (matches ExamDetail student page) ─────────────── */}
+            {/* ── Exam Header ─────────────────────────────────────────────── */}
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 bg-white border rounded-xl p-5 shadow-sm">
                 <div className="flex items-center gap-4 flex-1 min-w-0">
-                    {exam.logo ? (
-                        <img src={exam.logo} alt={exam.name} className="w-14 h-14 object-contain flex-shrink-0" />
+                    {exam!.logo ? (
+                        <img src={exam!.logo} alt={exam!.name} className="w-14 h-14 object-contain flex-shrink-0" />
                     ) : (
                         <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center text-2xl">📚</div>
                     )}
                     <div className="min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
-                            <h1 className="text-2xl font-bold">{exam.name}</h1>
-                            {exam.isPopular && (
+                            <h1 className="text-2xl font-bold">{exam!.name}</h1>
+                            {exam!.isPopular && (
                                 <Badge className="bg-amber-100 text-amber-700 border-amber-200">
                                     <Star className="h-3 w-3 mr-1" />Popular
                                 </Badge>
                             )}
                         </div>
-                        <p className="text-muted-foreground text-sm mt-0.5">
-                            Comprehensive test preparation and progress tracking
-                        </p>
+                        <p className="text-muted-foreground text-sm mt-0.5">Comprehensive test preparation and progress tracking</p>
                         <p className="text-xs text-muted-foreground mt-1">
-                            Category: <span className="font-medium text-foreground">{category.name}</span>
+                            Category: <span className="font-medium text-foreground">{category!.name}</span>
                             {' · '}
-                            Section: <span className="font-medium text-foreground">{section.name}</span>
+                            Section: <span className="font-medium text-foreground">{section!.name}</span>
                         </p>
                     </div>
                 </div>
-
-                {/* Stat tiles */}
                 <div className="flex gap-3 flex-wrap shrink-0">
                     <div className="text-center bg-blue-50 px-4 py-2 rounded-lg border border-blue-100 min-w-[80px]">
-                        <div className="text-xl font-bold text-blue-600">{totalTests}</div>
+                        <div className="text-xl font-bold text-blue-600">{exam!.testSlots.reduce((a, s) => a + s.tests.length, 0)}</div>
                         <div className="text-xs text-gray-600 uppercase tracking-wide">Tests</div>
                     </div>
                     <div className="text-center bg-green-50 px-4 py-2 rounded-lg border border-green-100 min-w-[80px]">
-                        <div className="text-xl font-bold text-green-600">{visibleTests}</div>
+                        <div className="text-xl font-bold text-green-600">{exam!.testSlots.reduce((a, s) => a + s.tests.filter(t => t.isVisible).length, 0)}</div>
                         <div className="text-xs text-gray-600 uppercase tracking-wide">Visible</div>
                     </div>
                     <div className="text-center bg-purple-50 px-4 py-2 rounded-lg border border-purple-100 min-w-[80px]">
-                        <div className="text-xl font-bold text-purple-600">
-                            {exam.testSlots.filter(s => s.tests.length > 0).length}
-                        </div>
-                        <div className="text-xs text-gray-600 uppercase tracking-wide">Slot Types</div>
+                        <div className="text-xl font-bold text-purple-600">{exam!.testSlots.filter(s => s.tests.length > 0).length}</div>
+                        <div className="text-xs text-gray-600 uppercase tracking-wide">Slots</div>
                     </div>
                 </div>
             </div>
 
-            {/* ── Main Tabs (Prelims / Mains / Speed / Live) ───────────────────── */}
+            {/* ── Dynamic Tab Panel ───────────────────────────────────────────── */}
             <Card className="overflow-hidden">
-                <Tabs value={activeTab} onValueChange={v => { setActiveTab(v); setActiveSubTab('full'); }}>
-                    {/* Tab header */}
-                    <div className="bg-gray-50 p-4 border-b">
-                        <div className="overflow-x-auto">
-                            <TabsList className="grid grid-cols-4 min-w-max lg:min-w-0 w-full">
-                                {MAIN_TABS.map(tab => {
-                                    const slotKeys = DEFAULT_SLOT_TEMPLATES
-                                        .filter(t => t.tab === tab.value)
-                                        .map(t => t.key);
-                                    const count = exam.testSlots
-                                        .filter(s => slotKeys.includes(s.key))
-                                        .reduce((a, s) => a + s.tests.length, 0);
-                                    return (
-                                        <TabsTrigger
-                                            key={tab.value}
-                                            value={tab.value}
-                                            className="gap-1.5 text-xs sm:text-sm whitespace-nowrap"
-                                        >
-                                            {tab.icon}
-                                            {tab.label}
-                                            {count > 0 && (
-                                                <Badge variant="secondary" className="ml-1 text-[10px] px-1.5 py-0">
-                                                    {count}
-                                                </Badge>
+                {/* ── Main tab bar ───────────────────────────────────────── */}
+                <div className="bg-gray-50 border-b px-4 pt-4 pb-0">
+                    <div className="flex items-center gap-1 overflow-x-auto pb-0">
+                        {mainTabValues.map((tabVal) => {
+                            const isSuccessStories = tabVal === 'success-stories';
+                            // First slot of this tab gives us the label
+                            const firstSlot = isSuccessStories ? null : exam!.testSlots.find(s => s.tab === tabVal);
+                            // Label to show: for tab with sub-tabs, show the tab value nicely; for simple slot, show its label
+                            const displayLabel = isSuccessStories ? 'Success Stories'
+                                : (exam!.testSlots.filter(s => s.tab === tabVal).some(s => s.subTab)
+                                    ? tabVal.replace(/_\d+$/, '').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
+                                    : firstSlot?.label ?? tabVal);
+                            const tabTestCount = isSuccessStories ? 0
+                                : exam!.testSlots.filter(s => s.tab === tabVal).reduce((a, s) => a + s.tests.length, 0);
+                            const isActive = activeTab === tabVal;
+
+                            // The slot key to use for rename (for simple=direct slots, use firstSlot.key; for sub-tab tabs, no single key—show generic rename)
+                            const simpleSlot = isSuccessStories ? null
+                                : exam!.testSlots.find(s => s.tab === tabVal && s.subTab === null);
+
+                            return (
+                                <div key={tabVal} className="relative flex items-center group shrink-0">
+                                    <button
+                                        onClick={() => setActiveTab(tabVal)}
+                                        className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 transition-all whitespace-nowrap ${
+                                            isActive
+                                                ? 'border-primary text-primary bg-white rounded-t-lg'
+                                                : 'border-transparent text-muted-foreground hover:text-foreground hover:border-gray-300'
+                                        }`}
+                                    >
+                                        {isSuccessStories ? <Users className="h-3.5 w-3.5" /> : <BookOpen className="h-3.5 w-3.5" />}
+                                        {renamingSlotKey === `__tab__${tabVal}` ? (
+                                            <input
+                                                autoFocus
+                                                value={renameValue}
+                                                onChange={e => setRenameValue(e.target.value)}
+                                                onBlur={commitRename}
+                                                onKeyDown={e => { if (e.key === 'Enter') commitRename(); if (e.key === 'Escape') setRenamingSlotKey(null); }}
+                                                className="w-28 text-sm border-b border-primary bg-transparent outline-none"
+                                                onClick={e => e.stopPropagation()}
+                                            />
+                                        ) : (
+                                            <span onDoubleClick={() => !isSuccessStories && (
+                                                setRenamingSlotKey(`__tab__${tabVal}`),
+                                                setRenameValue(displayLabel)
+                                            )} title="Double-click to rename">{displayLabel}</span>
+                                        )}
+                                        {tabTestCount > 0 && (
+                                            <span className="bg-primary/15 text-primary text-[10px] font-bold px-1.5 py-0.5 rounded-full">{tabTestCount}</span>
+                                        )}
+                                        {tabVal === 'success-stories' && examStories.length > 0 && (
+                                            <span className="bg-amber-100 text-amber-700 text-[10px] font-bold px-1.5 py-0.5 rounded-full">{examStories.length}</span>
+                                        )}
+                                    </button>
+                                    {/* Rename + Delete buttons (only on hover, not for success-stories) */}
+                                    {!isSuccessStories && isActive && (
+                                        <div className="flex items-center gap-0.5 ml-0.5 pb-0.5">
+                                            <button
+                                                className="h-5 w-5 rounded text-gray-400 hover:text-primary hover:bg-primary/10 flex items-center justify-center transition-colors"
+                                                title="Rename this tab"
+                                                onClick={() => { setRenamingSlotKey(`__tab__${tabVal}`); setRenameValue(displayLabel); }}
+                                            ><Pencil className="h-2.5 w-2.5" /></button>
+                                            <button
+                                                className="h-5 w-5 rounded text-gray-400 hover:text-destructive hover:bg-destructive/10 flex items-center justify-center transition-colors"
+                                                title="Delete this tab and all its tests"
+                                                onClick={() => handleDeleteSlot('', displayLabel, true)}
+                                            ><Trash2 className="h-2.5 w-2.5" /></button>
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })}
+                        {/* + Add Tab button */}
+                        <button
+                            onClick={() => setAddTabOpen(true)}
+                            className="flex items-center gap-1 px-3 py-2.5 text-xs text-primary border-b-2 border-transparent hover:border-primary/40 hover:bg-primary/5 rounded-t transition-all whitespace-nowrap ml-1"
+                            title="Add a new main tab"
+                        >
+                            <Plus className="h-3 w-3" /> Add Tab
+                        </button>
+                        <div className="flex-1 border-b-2 border-transparent" />
+                    </div>
+                </div>
+
+                {/* ── Tab content ──────────────────────────────────────────── */}
+                <div className="p-4 sm:p-6">
+                    {activeTab === 'success-stories' ? (
+                        // ── Success Stories Panel ─────────────────────────────────────────
+                        <div className="space-y-4">
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <h2 className="font-semibold text-base flex items-center gap-2">
+                                        <Trophy className="h-4 w-4 text-amber-500" />
+                                        Success Stories — {exam!.name}
+                                    </h2>
+                                    <p className="text-xs text-muted-foreground mt-0.5">
+                                        These appear in the student's <strong>Success Stories</strong> tab for this exam.
+                                    </p>
+                                </div>
+                                <Button size="sm" className="gap-1 h-8" onClick={() => {
+                                    setEditingStoryId(null);
+                                    setStoryForm(defaultStoryForm());
+                                    setStoryDialogOpen(true);
+                                }}>
+                                    <Plus className="h-3.5 w-3.5" /> Add Story
+                                </Button>
+                            </div>
+                            {examStories.length === 0 ? (
+                                <div className="text-center py-16 border-2 border-dashed rounded-xl">
+                                    <Trophy className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+                                    <p className="font-medium text-gray-500 mb-1">No success stories yet</p>
+                                    <p className="text-sm text-muted-foreground mb-4">Add toppers to inspire students. They'll appear in the student portal instantly.</p>
+                                    <Button size="sm" className="gap-1" onClick={() => { setEditingStoryId(null); setStoryForm(defaultStoryForm()); setStoryDialogOpen(true); }}>
+                                        <Plus className="h-3.5 w-3.5" /> Add First Story
+                                    </Button>
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    {[...examStories].sort((a, b) => a.air - b.air).map(story => (
+                                        <div key={story.id} className={`border rounded-xl p-4 bg-white hover:shadow-md transition-all space-y-3 ${!story.isVisible ? 'opacity-50' : ''}`}>
+                                            <div className="flex items-start gap-3">
+                                                <div className="relative shrink-0">
+                                                    <Avatar className="h-14 w-14 border-2 border-amber-200">
+                                                        <AvatarImage src={story.avatar} />
+                                                        <AvatarFallback className="bg-amber-100 text-amber-700 font-bold">
+                                                            {story.name.split(' ').map(n => n[0]).join('')}
+                                                        </AvatarFallback>
+                                                    </Avatar>
+                                                    {story.air <= 3 && (<div className="absolute -top-1 -right-1 bg-amber-500 rounded-full p-1"><Trophy className="h-3 w-3 text-white" /></div>)}
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="font-semibold text-sm truncate">{story.name}</p>
+                                                    <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                                                        <Badge variant="default" className="text-xs px-2 py-0">AIR {story.air}</Badge>
+                                                        <Badge variant="outline" className="text-xs px-2 py-0">{story.year}</Badge>
+                                                        {!story.isVisible && <Badge variant="outline" className="text-[10px] text-gray-400">Hidden</Badge>}
+                                                    </div>
+                                                    <p className="text-xs text-muted-foreground mt-0.5">{story.score}/{story.maxScore} marks</p>
+                                                </div>
+                                                <div className="flex gap-0.5 shrink-0">
+                                                    <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-muted-foreground" onClick={() => updateStory(examId!, story.id, { isVisible: !story.isVisible })}>
+                                                        {story.isVisible ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
+                                                    </Button>
+                                                    <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-muted-foreground" onClick={() => {
+                                                        setEditingStoryId(story.id);
+                                                        setStoryForm({ name: story.name, air: story.air, year: story.year, avatar: story.avatar, score: story.score, maxScore: story.maxScore, testimonial: story.testimonial, tips: story.tips.length >= 4 ? story.tips : [...story.tips, ...Array(4 - story.tips.length).fill('')], isVisible: story.isVisible });
+                                                        setStoryDialogOpen(true);
+                                                    }}><Pencil className="h-3 w-3" /></Button>
+                                                    <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-destructive" onClick={() => setDeleteStoryTarget({ id: story.id, name: story.name })}>
+                                                        <Trash2 className="h-3 w-3" />
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                            {story.testimonial && (<p className="text-xs text-muted-foreground italic line-clamp-2 pl-1 border-l-2 border-amber-200">"{story.testimonial}"</p>)}
+                                            {story.tips.filter(Boolean).length > 0 && (
+                                                <div className="flex flex-wrap gap-1">
+                                                    {story.tips.filter(Boolean).slice(0, 3).map((tip, i) => (<span key={i} className="text-[10px] bg-green-50 text-green-700 border border-green-200 rounded-full px-2 py-0.5">{tip}</span>))}
+                                                    {story.tips.filter(Boolean).length > 3 && (<span className="text-[10px] text-muted-foreground">+{story.tips.filter(Boolean).length - 3} more</span>)}
+                                                </div>
                                             )}
-                                        </TabsTrigger>
-                                    );
-                                })}
-                            </TabsList>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    ) : (() => {
+                        // ── Test tab content (with or without sub-tabs) ──────────────────────
+                        const subTabs = getSubTabs(activeTab);
+                        // Simple tab (no sub-tabs): just one slot with subTab===null
+                        const simpleSlot = exam!.testSlots.find(s => s.tab === activeTab && s.subTab === null);
+
+                        if (subTabs.length === 0 && simpleSlot) {
+                            // Simple: no sub-tabs
+                            return (
+                                <div className="space-y-4">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        {/* Slot label editable for simple tabs */}
+                                        {renamingSlotKey === simpleSlot.key ? (
+                                            <div className="flex items-center gap-2">
+                                                <input autoFocus value={renameValue} onChange={e => setRenameValue(e.target.value)}
+                                                    onBlur={commitRename} onKeyDown={e => { if (e.key === 'Enter') commitRename(); if (e.key === 'Escape') setRenamingSlotKey(null); }}
+                                                    className="text-sm border rounded px-2 h-7 outline-none focus:ring-1 ring-primary" />
+                                                <button onClick={commitRename} className="text-green-600"><Check className="h-4 w-4" /></button>
+                                                <button onClick={() => setRenamingSlotKey(null)} className="text-gray-400"><X className="h-4 w-4" /></button>
+                                            </div>
+                                        ) : null}
+                                    </div>
+                                    {renderSlotContent(simpleSlot.key)}
+                                </div>
+                            );
+                        }
+
+                        // Has sub-tabs
+                        const currentSubSlot = exam!.testSlots.find(s => s.key === activeSubTabKey) ?? subTabs[0];
+
+                        return (
+                            <div className="space-y-4">
+                                {/* Sub-tab bar */}
+                                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 justify-between">
+                                    <div className="flex gap-2 flex-wrap items-center">
+                                        {subTabs.map(st => (
+                                            <div key={st.key} className="relative group/sub flex items-center">
+                                                {renamingSlotKey === st.key ? (
+                                                    <div className="flex items-center gap-1">
+                                                        <input autoFocus value={renameValue} onChange={e => setRenameValue(e.target.value)}
+                                                            onBlur={commitRename} onKeyDown={e => { if (e.key === 'Enter') commitRename(); if (e.key === 'Escape') setRenamingSlotKey(null); }}
+                                                            className="text-xs border rounded px-2 h-7 w-28 outline-none focus:ring-1 ring-primary" />
+                                                        <button onClick={commitRename} className="text-green-600"><Check className="h-3.5 w-3.5" /></button>
+                                                        <button onClick={() => setRenamingSlotKey(null)} className="text-gray-400"><X className="h-3.5 w-3.5" /></button>
+                                                    </div>
+                                                ) : (
+                                                    <Button
+                                                        size="sm"
+                                                        variant={activeSubTabKey === st.key ? 'default' : 'outline'}
+                                                        onClick={() => setActiveSubTabKey(st.key)}
+                                                        className="text-xs h-8 pr-1 gap-1"
+                                                    >
+                                                        {st.label}
+                                                        {/* Edit & delete buttons inline */}
+                                                        <span className="flex items-center gap-0.5 ml-0.5 opacity-0 group-hover/sub:opacity-100 transition-opacity">
+                                                            <span className="w-4 h-4 inline-flex items-center justify-center rounded hover:bg-black/10"
+                                                                title="Rename" onClick={e => { e.stopPropagation(); startRename(st.key, st.label); }}>
+                                                                <Pencil className="h-2.5 w-2.5" />
+                                                            </span>
+                                                            <span className="w-4 h-4 inline-flex items-center justify-center rounded hover:bg-destructive/20 text-destructive"
+                                                                title="Delete sub-tab" onClick={e => { e.stopPropagation(); handleDeleteSlot(st.key, st.label, false); }}>
+                                                                <X className="h-2.5 w-2.5" />
+                                                            </span>
+                                                        </span>
+                                                    </Button>
+                                                )}
+                                            </div>
+                                        ))}
+                                        {/* + Add Sub-tab */}
+                                        <button
+                                            onClick={() => setAddSubTabOpen(true)}
+                                            className="flex items-center gap-1 h-8 px-2 text-xs text-primary border border-dashed border-primary/40 rounded hover:bg-primary/5 transition-colors"
+                                        >
+                                            <Plus className="h-3 w-3" /> Sub-tab
+                                        </button>
+                                    </div>
+                                    <div className="flex gap-1 border rounded-lg p-1 shrink-0">
+                                        <Button variant={viewMode === 'grid' ? 'default' : 'ghost'} size="sm" className="p-2 h-7 w-7" onClick={() => setViewMode('grid')}><Grid3X3 className="h-3.5 w-3.5" /></Button>
+                                        <Button variant={viewMode === 'list' ? 'default' : 'ghost'} size="sm" className="p-2 h-7 w-7" onClick={() => setViewMode('list')}><List className="h-3.5 w-3.5" /></Button>
+                                    </div>
+                                </div>
+                                {currentSubSlot && renderSlotContent(currentSubSlot.key)}
+                            </div>
+                        );
+                    })()}
+                </div>
+            </Card>
+
+            {/* ── Add Tab Dialog ─────────────────────────────────────── */}
+            <Dialog open={addTabOpen} onOpenChange={setAddTabOpen}>
+                <DialogContent className="sm:max-w-sm">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <Plus className="h-4 w-4 text-primary" /> Add New Tab
+                        </DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4 py-2">
+                        <div className="space-y-1.5">
+                            <Label>Tab Name *</Label>
+                            <Input
+                                autoFocus
+                                value={newTabLabel}
+                                onChange={e => setNewTabLabel(e.target.value)}
+                                onKeyDown={e => { if (e.key === 'Enter') handleAddMainTab(); }}
+                                placeholder="e.g. Interview, Phase 2, Mains 2025"
+                            />
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <input
+                                type="checkbox"
+                                id="tab-has-subs"
+                                checked={newTabHasSubs}
+                                onChange={e => setNewTabHasSubs(e.target.checked)}
+                                className="h-4 w-4 rounded border-gray-300"
+                            />
+                            <Label htmlFor="tab-has-subs" className="cursor-pointer text-sm">
+                                Has sub-tabs (Full Test, Sectional, etc.)
+                            </Label>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                            {newTabHasSubs
+                                ? 'A default "Full Test" sub-tab will be created. You can add more later.'
+                                : 'Tests go directly into this tab without sub-tabs.'}
+                        </p>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setAddTabOpen(false)}>Cancel</Button>
+                        <Button onClick={handleAddMainTab} disabled={!newTabLabel.trim()}>Add Tab</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* ── Add Sub-Tab Dialog ───────────────────────────────── */}
+            <Dialog open={addSubTabOpen} onOpenChange={setAddSubTabOpen}>
+                <DialogContent className="sm:max-w-sm">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <Plus className="h-4 w-4 text-primary" /> Add Sub-Tab
+                        </DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-3 py-2">
+                        <p className="text-sm text-muted-foreground">
+                            Adding to: <strong className="text-foreground">
+                                {activeTab.replace(/_\d+$/, '').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                            </strong>
+                        </p>
+                        <div className="space-y-1.5">
+                            <Label>Sub-Tab Name *</Label>
+                            <Input
+                                autoFocus
+                                value={newSubTabLabel}
+                                onChange={e => setNewSubTabLabel(e.target.value)}
+                                onKeyDown={e => { if (e.key === 'Enter') handleAddSubTab(); }}
+                                placeholder="e.g. PYQ 2025, Essay, Descriptive"
+                            />
                         </div>
                     </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setAddSubTabOpen(false)}>Cancel</Button>
+                        <Button onClick={handleAddSubTab} disabled={!newSubTabLabel.trim()}>Add Sub-Tab</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
 
-                    <div className="p-4 sm:p-6">
-                        <TabsContent value="prelims" className="mt-0">
-                            {renderSubTabContent('prelims')}
-                        </TabsContent>
-                        <TabsContent value="mains" className="mt-0">
-                            {renderSubTabContent('mains')}
-                        </TabsContent>
-                        <TabsContent value="speed" className="mt-0">
-                            {renderSimpleTabContent('speed', 'Speed Test')}
-                        </TabsContent>
-                        <TabsContent value="live" className="mt-0">
-                            {renderSimpleTabContent('live', 'Live Test')}
-                        </TabsContent>
-                    </div>
-                </Tabs>
-            </Card>
+            {/* ── Delete Tab/Sub-Tab Confirmation ──────────────────────── */}
+            <AlertDialog open={!!deleteSlotTarget} onOpenChange={o => !o && setDeleteSlotTarget(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>
+                            Delete {deleteSlotTarget?.isMainTab ? 'Tab' : 'Sub-Tab'}?
+                        </AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This will permanently delete <strong>"{deleteSlotTarget?.label}"</strong>
+                            {deleteSlotTarget?.isMainTab
+                                ? ' and ALL tests inside all its sub-tabs.'
+                                : ' and all its tests.'}{' '}
+                            This cannot be undone.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            onClick={confirmDeleteSlot}
+                        >
+                            Delete
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
 
             {/* ═══════════════════════════════════ DIALOGS ══════════════════════════ */}
 
@@ -802,6 +1197,134 @@ const SuperAdminExamManager: React.FC = () => {
                                     deleteTest(categoryId!, sectionId!, examId!, deleteTarget.slotKey, deleteTarget.testId);
                                     toast({ title: 'Test deleted', variant: 'destructive' });
                                     setDeleteTarget(null);
+                                }
+                            }}
+                        >
+                            Delete
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            {/* ── Add/Edit Success Story Dialog ─────────────────────────────────── */}
+            <Dialog open={storyDialogOpen} onOpenChange={setStoryDialogOpen}>
+                <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <Trophy className="h-5 w-5 text-amber-500" />
+                            {editingStoryId ? 'Edit Success Story' : 'Add Success Story'}
+                        </DialogTitle>
+                    </DialogHeader>
+
+                    <div className="space-y-4 py-2">
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="space-y-1.5 col-span-2">
+                                <Label>Student Name *</Label>
+                                <Input value={storyForm.name} onChange={e => setStoryForm(f => ({ ...f, name: e.target.value }))} placeholder="e.g. Rahul Sharma" autoFocus />
+                            </div>
+                            <div className="space-y-1.5">
+                                <Label>AIR (All India Rank) *</Label>
+                                <Input type="number" min={1} value={storyForm.air} onChange={e => setStoryForm(f => ({ ...f, air: Number(e.target.value) }))} />
+                            </div>
+                            <div className="space-y-1.5">
+                                <Label>Year *</Label>
+                                <Input value={storyForm.year} onChange={e => setStoryForm(f => ({ ...f, year: e.target.value }))} placeholder="2024" />
+                            </div>
+                            <div className="space-y-1.5">
+                                <Label>Score Obtained</Label>
+                                <Input type="number" min={0} value={storyForm.score} onChange={e => setStoryForm(f => ({ ...f, score: Number(e.target.value) }))} />
+                            </div>
+                            <div className="space-y-1.5">
+                                <Label>Max Score</Label>
+                                <Input type="number" min={1} value={storyForm.maxScore} onChange={e => setStoryForm(f => ({ ...f, maxScore: Number(e.target.value) }))} />
+                            </div>
+                            <div className="space-y-1.5 col-span-2">
+                                <Label>Photo URL (or leave blank for avatar initials)</Label>
+                                <Input value={storyForm.avatar} onChange={e => setStoryForm(f => ({ ...f, avatar: e.target.value }))} placeholder="https://example.com/photo.jpg" />
+                                {storyForm.avatar && (
+                                    <img src={storyForm.avatar} alt="preview" className="h-12 w-12 rounded-full object-cover border mt-1"
+                                        onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="space-y-1.5">
+                            <Label>Testimonial *</Label>
+                            <Textarea
+                                value={storyForm.testimonial}
+                                onChange={e => setStoryForm(f => ({ ...f, testimonial: e.target.value }))}
+                                placeholder="Write the student's success story and journey..."
+                                rows={3}
+                            />
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label>Success Tips (up to 4)</Label>
+                            {[0, 1, 2, 3].map(i => (
+                                <Input
+                                    key={i}
+                                    value={storyForm.tips[i] || ''}
+                                    onChange={e => {
+                                        const tips = [...(storyForm.tips || ['', '', '', ''])];
+                                        tips[i] = e.target.value;
+                                        setStoryForm(f => ({ ...f, tips }));
+                                    }}
+                                    placeholder={`Tip ${i + 1} — e.g. Daily mock tests`}
+                                />
+                            ))}
+                        </div>
+
+                        <div className="flex items-center gap-3">
+                            <Switch
+                                id="story-visible"
+                                checked={storyForm.isVisible}
+                                onCheckedChange={v => setStoryForm(f => ({ ...f, isVisible: v }))}
+                            />
+                            <Label htmlFor="story-visible" className="cursor-pointer">Visible to students</Label>
+                        </div>
+                    </div>
+
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setStoryDialogOpen(false)}>Cancel</Button>
+                        <Button onClick={() => {
+                            if (!storyForm.name.trim()) { toast({ title: 'Name is required', variant: 'destructive' }); return; }
+                            if (!storyForm.testimonial.trim()) { toast({ title: 'Testimonial is required', variant: 'destructive' }); return; }
+                            const tips = storyForm.tips.filter(Boolean);
+                            if (editingStoryId) {
+                                updateStory(examId!, editingStoryId, { ...storyForm, tips });
+                                toast({ title: 'Story updated' });
+                            } else {
+                                addStory(examId!, { ...storyForm, tips });
+                                toast({ title: '✅ Story published!', description: `${storyForm.name}'s story now appears in the student portal.` });
+                            }
+                            setStoryDialogOpen(false);
+                        }} className="gap-2">
+                            <Save className="h-4 w-4" />
+                            {editingStoryId ? 'Save Changes' : 'Publish Story'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* ── Delete Story Confirmation ──────────────────────────────────────── */}
+            <AlertDialog open={!!deleteStoryTarget} onOpenChange={o => !o && setDeleteStoryTarget(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Delete success story?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This will permanently remove <strong>{deleteStoryTarget?.name}</strong>'s success story.
+                            Students will no longer see it. This cannot be undone.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            onClick={() => {
+                                if (deleteStoryTarget) {
+                                    deleteStory(examId!, deleteStoryTarget.id);
+                                    toast({ title: 'Story deleted', variant: 'destructive' });
+                                    setDeleteStoryTarget(null);
                                 }
                             }}
                         >

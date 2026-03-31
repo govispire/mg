@@ -41,9 +41,9 @@ export interface TestSubject {
 
 export interface TestTypeSlot {
     key: string;
-    tab: 'prelims' | 'mains' | 'speed' | 'live';
-    subTab: 'full' | 'sectional' | 'speed' | 'pyq' | null;
-    label: string;
+    tab: string;      // editable: e.g. 'prelims', 'mains', or any custom value
+    subTab: string | null; // editable: 'full', 'sectional', or any custom value
+    label: string;    // display label for the tab/sub-tab
     tests: CatalogTestItem[];
     subjects: TestSubject[]; // subject subsections (Reasoning, English, etc.)
 }
@@ -835,6 +835,94 @@ export const useExamCatalog = () => {
         });
     }, [broadcast]);
 
+    // ── Slot (tab/sub-tab) CRUD ───────────────────────────────────────────────
+
+    /** Rename the label of an existing slot (used when admin renames a tab or sub-tab) */
+    const updateSlotLabel = useCallback((
+        categoryId: string, sectionId: string, examId: string,
+        slotKey: string, newLabel: string,
+    ) => {
+        setCatalog(prev => {
+            const next = prev.map(c =>
+                c.id !== categoryId ? c : {
+                    ...c,
+                    sections: c.sections.map(s =>
+                        s.id !== sectionId ? s : {
+                            ...s,
+                            exams: s.exams.map(e =>
+                                e.id !== examId ? e : {
+                                    ...e,
+                                    testSlots: e.testSlots.map(slot =>
+                                        slot.key !== slotKey ? slot : { ...slot, label: newLabel },
+                                    ),
+                                },
+                            ),
+                        },
+                    ),
+                    updatedAt: new Date().toISOString(),
+                },
+            );
+            broadcast(next);
+            return next;
+        });
+    }, [broadcast]);
+
+    /** Add a brand-new slot (main tab or sub-tab) to an exam */
+    const addSlot = useCallback((
+        categoryId: string, sectionId: string, examId: string,
+        slot: Omit<TestTypeSlot, 'tests' | 'subjects'>,
+    ) => {
+        setCatalog(prev => {
+            const next = prev.map(c =>
+                c.id !== categoryId ? c : {
+                    ...c,
+                    sections: c.sections.map(s =>
+                        s.id !== sectionId ? s : {
+                            ...s,
+                            exams: s.exams.map(e =>
+                                e.id !== examId ? e : {
+                                    ...e,
+                                    testSlots: [...e.testSlots, { ...slot, tests: [], subjects: [] }],
+                                },
+                            ),
+                        },
+                    ),
+                    updatedAt: new Date().toISOString(),
+                },
+            );
+            broadcast(next);
+            return next;
+        });
+    }, [broadcast]);
+
+    /** Delete an entire slot (and all its tests) from an exam */
+    const deleteSlot = useCallback((
+        categoryId: string, sectionId: string, examId: string,
+        slotKey: string,
+    ) => {
+        setCatalog(prev => {
+            const next = prev.map(c =>
+                c.id !== categoryId ? c : {
+                    ...c,
+                    sections: c.sections.map(s =>
+                        s.id !== sectionId ? s : {
+                            ...s,
+                            exams: s.exams.map(e =>
+                                e.id !== examId ? e : {
+                                    ...e,
+                                    testSlots: e.testSlots.filter(slot => slot.key !== slotKey),
+                                },
+                            ),
+                        },
+                    ),
+                    updatedAt: new Date().toISOString(),
+                },
+            );
+            broadcast(next);
+            return next;
+        });
+    }, [broadcast]);
+
     const resetToDefaults = useCallback(() => {
         const seeded = seedFromStatic();
         setCatalog(seeded);
@@ -855,6 +943,7 @@ export const useExamCatalog = () => {
         addExam, updateExam, removeExam,
         addTest, updateTest, deleteTest,
         addSubject, updateSubject, deleteSubject,
+        updateSlotLabel, addSlot, deleteSlot,
         resetToDefaults, findExam,
     };
 };

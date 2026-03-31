@@ -3,81 +3,68 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Trophy, Star, TrendingUp, Quote, Award } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useSuccessStoriesStore, type SuccessStory } from '@/hooks/useSuccessStoriesStore';
 
 interface SuccessStoriesTabProps {
   examId: string;
   examName: string;
 }
 
+// ── Seed / fallback data ──────────────────────────────────────────────────────
+const SEED_STORIES: SuccessStory[] = [
+  {
+    id: 'seed-1', name: 'Rahul Sharma', air: 1, year: '2024',
+    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Rahul',
+    score: 485, maxScore: 500, isVisible: true, createdAt: '',
+    testimonial: 'Consistent practice and strategic preparation helped me achieve my dream rank. The mock tests were incredibly helpful in building my confidence.',
+    tips: ['Daily practice sessions', 'Focus on weak areas', 'Regular revision', 'Mock test analysis'],
+  },
+  {
+    id: 'seed-2', name: 'Priya Patel', air: 5, year: '2024',
+    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Priya',
+    score: 472, maxScore: 500, isVisible: true, createdAt: '',
+    testimonial: 'Time management and sectional tests played a crucial role in my success. Understanding the exam pattern thoroughly gave me an edge.',
+    tips: ['Time-bound practice', 'Previous year papers', 'Subject-wise preparation', 'Mental fitness'],
+  },
+  {
+    id: 'seed-3', name: 'Amit Kumar', air: 12, year: '2023',
+    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Amit',
+    score: 468, maxScore: 500, isVisible: true, createdAt: '',
+    testimonial: 'The detailed analytics helped me identify my strengths and weaknesses. I focused on improving my weak areas while maintaining my strong subjects.',
+    tips: ['Analytics-driven study', 'Consistent schedule', 'Speed & accuracy', 'Group discussions'],
+  },
+  {
+    id: 'seed-4', name: 'Sneha Reddy', air: 18, year: '2023',
+    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sneha',
+    score: 462, maxScore: 500, isVisible: true, createdAt: '',
+    testimonial: 'Believing in myself and staying focused throughout the journey led me to success.',
+    tips: ['Stay positive', 'Mock tests are crucial', 'Learn from mistakes', 'Maintain consistency'],
+  },
+  {
+    id: 'seed-5', name: 'Vikram Singh', air: 23, year: '2024',
+    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Vikram',
+    score: 458, maxScore: 500, isVisible: true, createdAt: '',
+    testimonial: 'Strategic planning and disciplined study routine worked wonders. I analyzed each test thoroughly.',
+    tips: ['Plan your study schedule', 'Focus on accuracy', 'Regular practice', 'Time management'],
+  },
+  {
+    id: 'seed-6', name: 'Anjali Gupta', air: 35, year: '2023',
+    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Anjali',
+    score: 452, maxScore: 500, isVisible: true, createdAt: '',
+    testimonial: 'Dedication and perseverance are the keys to cracking this exam. Never lose hope and keep working hard.',
+    tips: ['Never give up', 'Analyze performance regularly', 'Stay healthy', 'Seek guidance'],
+  },
+];
+
 export const SuccessStoriesTab: React.FC<SuccessStoriesTabProps> = ({ examId, examName }) => {
-  const hallOfFame = [
-    {
-      id: 1,
-      name: 'Rahul Sharma',
-      air: 1,
-      year: '2024',
-      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Rahul',
-      score: 485,
-      maxScore: 500,
-      testimonial: 'Consistent practice and strategic preparation helped me achieve my dream rank. The mock tests were incredibly helpful in building my confidence.',
-      tips: ['Daily practice sessions', 'Focus on weak areas', 'Regular revision', 'Mock test analysis']
-    },
-    {
-      id: 2,
-      name: 'Priya Patel',
-      air: 5,
-      year: '2024',
-      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Priya',
-      score: 472,
-      maxScore: 500,
-      testimonial: 'Time management and sectional tests played a crucial role in my success. Understanding the exam pattern thoroughly gave me an edge.',
-      tips: ['Time-bound practice', 'Previous year papers', 'Subject-wise preparation', 'Mental fitness']
-    },
-    {
-      id: 3,
-      name: 'Amit Kumar',
-      air: 12,
-      year: '2023',
-      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Amit',
-      score: 468,
-      maxScore: 500,
-      testimonial: 'The detailed analytics helped me identify my strengths and weaknesses. I focused on improving my weak areas while maintaining my strong subjects.',
-      tips: ['Analytics-driven study', 'Consistent schedule', 'Speed & accuracy', 'Group discussions']
-    },
-    {
-      id: 4,
-      name: 'Sneha Reddy',
-      air: 18,
-      year: '2023',
-      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sneha',
-      score: 462,
-      maxScore: 500,
-      testimonial: 'Believing in myself and staying focused throughout the journey led me to success. Mock tests helped me understand the exam pattern better.',
-      tips: ['Stay positive', 'Mock tests are crucial', 'Learn from mistakes', 'Maintain consistency']
-    },
-    {
-      id: 5,
-      name: 'Vikram Singh',
-      air: 23,
-      year: '2024',
-      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Vikram',
-      score: 458,
-      maxScore: 500,
-      testimonial: 'Strategic planning and disciplined study routine worked wonders. I made sure to analyze each test thoroughly.',
-      tips: ['Plan your study schedule', 'Focus on accuracy', 'Regular practice', 'Time management']
-    },
-    {
-      id: 6,
-      name: 'Anjali Gupta',
-      air: 35,
-      year: '2023',
-      avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Anjali',
-      score: 452,
-      maxScore: 500,
-      testimonial: 'Dedication and perseverance are the keys to cracking this exam. Never lose hope and keep working hard.',
-      tips: ['Never give up', 'Analyze performance regularly', 'Stay healthy', 'Seek guidance']
-    }
-  ];
+  const { getVisibleStories } = useSuccessStoriesStore();
+
+  // If admin has uploaded stories, use them; else fall back to seeds
+  const adminStories = getVisibleStories(examId);
+  const hallOfFame: SuccessStory[] = adminStories.length > 0 ? adminStories : SEED_STORIES;
+
+  // Sort by AIR ascending
+  const sorted = [...hallOfFame].sort((a, b) => a.air - b.air);
 
   return (
     <div className="space-y-8">
@@ -93,13 +80,18 @@ export const SuccessStoriesTab: React.FC<SuccessStoriesTabProps> = ({ examId, ex
         <p className="text-center text-muted-foreground">
           Celebrating our toppers who successfully cleared {examName}
         </p>
+        {adminStories.length > 0 && (
+          <p className="text-center text-xs text-amber-600/70 mt-2">
+            {adminStories.length} verified success {adminStories.length === 1 ? 'story' : 'stories'} from PrepSmart toppers
+          </p>
+        )}
       </div>
 
       {/* Hall of Fame Photo Frames Grid */}
       <Card className="p-6">
         <h3 className="text-2xl font-bold mb-6 text-center">Top Rankers Photo Gallery</h3>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 mb-4">
-          {hallOfFame.map((story) => (
+          {sorted.map((story) => (
             <div key={story.id} className="group relative">
               <div className="aspect-square rounded-lg overflow-hidden border-4 border-primary/20 group-hover:border-primary/60 transition-all shadow-lg">
                 <Avatar className="w-full h-full">
@@ -122,7 +114,7 @@ export const SuccessStoriesTab: React.FC<SuccessStoriesTabProps> = ({ examId, ex
               </div>
             </div>
           ))}
-          
+
           {/* Waiting Frame */}
           <div className="group relative">
             <div className="aspect-square rounded-lg border-4 border-dashed border-primary/40 flex items-center justify-center bg-gradient-to-br from-primary/5 to-primary/10 hover:from-primary/10 hover:to-primary/20 transition-all">
@@ -139,7 +131,7 @@ export const SuccessStoriesTab: React.FC<SuccessStoriesTabProps> = ({ examId, ex
 
       {/* Hall of Fame Detailed Cards */}
       <div className="grid gap-6">
-        {hallOfFame.map((story) => (
+        {sorted.map((story) => (
           <Card key={story.id} className="p-6 hover:shadow-lg transition-shadow">
             {/* Header */}
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
@@ -160,8 +152,8 @@ export const SuccessStoriesTab: React.FC<SuccessStoriesTabProps> = ({ examId, ex
                 <div>
                   <h3 className="text-2xl font-bold">{story.name}</h3>
                   <div className="flex items-center gap-2 mt-2">
-                    <Badge 
-                      variant={story.air <= 10 ? "default" : "secondary"} 
+                    <Badge
+                      variant={story.air <= 10 ? "default" : "secondary"}
                       className="text-lg px-4 py-1 font-bold flex items-center gap-1"
                     >
                       <Trophy className="h-4 w-4" />
@@ -189,43 +181,24 @@ export const SuccessStoriesTab: React.FC<SuccessStoriesTabProps> = ({ examId, ex
             </div>
 
             {/* Success Tips */}
-            <div>
-              <h4 className="font-semibold mb-3 flex items-center gap-2">
-                <Star className="h-4 w-4 text-amber-500" />
-                Success Tips
-              </h4>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {story.tips.map((tip, index) => (
-                  <div key={index} className="flex items-center gap-2 text-sm">
-                    <div className="h-1.5 w-1.5 rounded-full bg-primary" />
-                    <span>{tip}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </Card>
-        ))}
-      </div>
-
-      {/* Success Videos Section */}
-      <div className="space-y-4">
-        <h3 className="text-2xl font-bold text-center">Success Stories & Interviews</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {[1, 2, 3, 4].map((num) => (
-            <Card key={num} className="p-6 hover:shadow-lg transition-shadow">
-              <div className="aspect-video bg-muted rounded-lg mb-4 flex items-center justify-center">
-                <div className="text-center">
-                  <div className="text-6xl mb-2">🎥</div>
-                  <p className="text-sm text-muted-foreground">Success Video {num}</p>
+            {story.tips && story.tips.length > 0 && (
+              <div>
+                <h4 className="font-semibold mb-3 flex items-center gap-2">
+                  <Star className="h-4 w-4 text-amber-500" />
+                  Success Tips
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {story.tips.map((tip, index) => (
+                    <div key={index} className="flex items-center gap-2 text-sm">
+                      <div className="h-1.5 w-1.5 rounded-full bg-primary" />
+                      <span>{tip}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
-              <h4 className="font-semibold mb-2">Journey to Success - Part {num}</h4>
-              <p className="text-sm text-muted-foreground">
-                Learn from the experiences of toppers who cracked {examName}
-              </p>
-            </Card>
-          ))}
-        </div>
+            )}
+          </Card>
+        ))}
       </div>
 
       {/* Bottom CTA */}
