@@ -179,31 +179,107 @@ const ExamDetail = () => {
   };
 
   // Derive the active test slot's subjects from the catalog
-  const activeSlotSubjects = React.useMemo((): TestSubject[] => {
-    // Build the slot key the same way as DEFAULT_SLOT_TEMPLATES
-    let slotKey = '';
-    if (activeTab === 'speed') slotKey = 'speed';
-    else if (activeTab === 'live') slotKey = 'live';
-    else if (activeTab === 'prelims' || activeTab === 'mains') {
-      slotKey = activeSubTab === 'full' ? `${activeTab}_full`
+  const currentSlotKey = React.useMemo(() => {
+    if (activeTab === 'speed') return 'speed';
+    if (activeTab === 'live') return 'live';
+    if (activeTab === 'prelims' || activeTab === 'mains') {
+      return activeSubTab === 'full' ? `${activeTab}_full`
         : activeSubTab === 'sectional' ? `${activeTab}_sectional`
           : activeSubTab === 'speed' ? `${activeTab}_speed`
             : activeSubTab === 'pyq' ? `${activeTab}_pyq`
               : `${activeTab}_full`;
     }
-    if (!slotKey) return [];
+    return '';
+  }, [activeTab, activeSubTab]);
+
+  const activeSlotSubjects = React.useMemo((): TestSubject[] => {
+    if (!currentSlotKey) return [];
     // Find the current exam in the catalog
     for (const cat of catalog) {
       for (const sec of cat.sections) {
         const found = sec.exams.find(e => e.id === examId);
         if (found) {
-          const slot = found.testSlots?.find(s => s.key === slotKey);
+          const slot = found.testSlots?.find(s => s.key === currentSlotKey);
           return slot?.subjects ?? [];
         }
       }
     }
     return [];
-  }, [catalog, examId, activeTab, activeSubTab]);
+  }, [catalog, examId, currentSlotKey]);
+
+  // Combine SuperAdmin-created Tests with Mock Progress Data
+  const activeSlotTests = React.useMemo((): any[] => {
+    if (!currentSlotKey) return [];
+    
+    // 1. Get tests from catalog
+    let catalogSlot: any = null;
+    for (const cat of catalog) {
+      for (const sec of cat.sections) {
+        const found = sec.exams.find(e => e.id === examId);
+        if (found) {
+          catalogSlot = found.testSlots?.find(s => s.key === currentSlotKey);
+        }
+      }
+    }
+
+    const testTypeKey = getCurrentTestType();
+    const progressTests = testTypeKey ? (progressData.testTypes[testTypeKey as keyof typeof progressData.testTypes] || []) : [];
+
+    // Map catalog tests to TestProgress format
+    const mappedCatalogTests: any[] = (catalogSlot?.tests || []).filter((t: any) => t.isVisible !== false).map((ct: any) => {
+      const prog = progressTests.find((p: any) => p.testId === ct.id);
+      return {
+        testId: ct.id,
+        testName: ct.name,
+        status: prog?.status || 'not-attempted',
+        score: prog?.score,
+        maxScore: ct.maxScore,
+        totalQuestions: ct.totalQuestions,
+        totalMarks: ct.maxScore,
+        totalDuration: ct.durationMinutes,
+        totalStudents: prog?.totalStudents || 45320,
+        timeSpent: prog?.timeSpent,
+        attempts: prog?.attempts || 0,
+        lastAttempted: prog?.lastAttempted,
+        rank: prog?.rank,
+        percentile: prog?.percentile,
+        difficulty: ct.difficulty,
+        subjectId: ct.subjectId // Only present if SuperAdmin UI allows assigning (not implemented yet, defaults undefined)
+      };
+    });
+
+    // 2. Filter Mock Tests specifically for the active subTab to avoid showing "Full Tests" under "Sectional Tests".
+    let filteredMockTests = progressTests;
+    if (currentSlotKey === 'prelims_full') filteredMockTests = progressData.testTypes.prelims;
+    else if (currentSlotKey === 'mains_full') filteredMockTests = progressData.testTypes.mains;
+    else if (currentSlotKey.includes('sectional')) filteredMockTests = progressData.testTypes.sectional;
+    else if (currentSlotKey.includes('speed') || currentSlotKey === 'speed') filteredMockTests = progressData.testTypes.speed;
+    else if (currentSlotKey.includes('pyq')) filteredMockTests = progressData.testTypes.pyq;
+    else if (currentSlotKey === 'live') filteredMockTests = progressData.testTypes.live;
+    else filteredMockTests = [];
+
+    const existingIds = new Set(mappedCatalogTests.map(t => t.testId));
+    const uniqueMockTests = filteredMockTests.filter(t => !existingIds.has(t.testId));
+
+    return [...mappedCatalogTests, ...uniqueMockTests];
+  }, [catalog, examId, currentSlotKey, progressData.testTypes]);
+
+  // Compute stats on the dynamically merged active tests
+  const activeSlotProgress = React.useMemo(() => {
+    const completed = activeSlotTests.filter(t => t.status === 'completed').length;
+    const totalScore = activeSlotTests.reduce((sum, t) => sum + (t.score || 0), 0);
+    const maxPossibleScore = activeSlotTests.reduce((sum, t) => sum + t.maxScore, 0);
+    const averageScore = maxPossibleScore > 0 ? (totalScore / maxPossibleScore) * 100 : 0;
+    
+    return {
+      completed,
+      total: activeSlotTests.length,
+      percentage: activeSlotTests.length > 0 ? Math.round((completed / activeSlotTests.length) * 100) : 0,
+      averageScore: Math.round(averageScore),
+      bestScore: activeSlotTests.length > 0 ? Math.max(...activeSlotTests.map(t => t.score || 0)) : 0,
+      totalAttempts: activeSlotTests.reduce((sum, t) => sum + t.attempts, 0)
+    };
+  }, [activeSlotTests]);
 
   return (
     <div className="space-y-6">
@@ -358,8 +434,8 @@ const ExamDetail = () => {
                 {getCurrentTestType() && (
                   <TestTypeGrid
                     testType={getCurrentTestType()!}
-                    tests={progressData.testTypes[getCurrentTestType()! as keyof typeof progressData.testTypes]}
-                    progress={getTypeProgress(getCurrentTestType()! as keyof typeof progressData.testTypes)}
+                    tests={activeSlotTests}
+                    progress={activeSlotProgress}
                     viewMode={viewMode}
                     subjects={activeSlotSubjects}
                   />

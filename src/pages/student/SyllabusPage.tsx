@@ -13,15 +13,14 @@ import {
   VolumeX, Maximize, SkipBack, SkipForward, Settings,
   Bookmark, ListVideo, ChevronLeft, ChevronRight
 } from 'lucide-react';
-import { useExamCategoryContext } from '@/app/providers';
 import {
   allSyllabusData,
-  getExamsByCategoryForSyllabus,
   getIconByName,
   ExamSyllabusConfig,
   TopicConfig
 } from '@/data/syllabusData';
-import { examCategories } from '@/data/examData';
+import { useExamCatalog } from '@/hooks/useExamCatalog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import ExamComparison from '@/components/student/syllabus/ExamComparison';
 import StudyPlanGenerator from '@/components/student/syllabus/StudyPlanGenerator';
 import {
@@ -34,7 +33,8 @@ import {
 } from '@/utils/syllabusStorage';
 
 const SyllabusPage = () => {
-  const { selectedCategories } = useExamCategoryContext();
+  const { catalog } = useExamCatalog();
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
 
   // Loading state
   const [isLoading, setIsLoading] = useState(true);
@@ -45,21 +45,27 @@ const SyllabusPage = () => {
   // Recently viewed
   const [recentlyViewed, setRecentlyViewed] = useState<RecentlyViewed[]>([]);
 
-  // Get available exams based on selected categories
-  const availableExams = useMemo(() => {
-    if (selectedCategories.length === 0) {
-      // Show ALL exams from allSyllabusData when no category selected
-      return Object.values(allSyllabusData).map(exam => ({
-        id: exam.examId,
-        name: exam.examName,
-        category: exam.category,
-        logo: exam.logo,
-      }));
+  useEffect(() => {
+    if (!selectedCategoryId && catalog.length > 0) {
+      setSelectedCategoryId(catalog.filter(c => c.isVisible)[0]?.id || catalog[0].id);
     }
-    return getExamsByCategoryForSyllabus(selectedCategories);
-  }, [selectedCategories]);
+  }, [catalog, selectedCategoryId]);
 
-  const [selectedExam, setSelectedExam] = useState<string>(availableExams[0]?.id || 'ibps-po');
+  const availableExams = useMemo(() => {
+    const category = catalog.find(c => c.id === selectedCategoryId);
+    if (!category) return [];
+    
+    const uniqueExams = new Map();
+    category.sections.flatMap(s => s.exams).forEach(exam => {
+      if (!uniqueExams.has(exam.id)) {
+        uniqueExams.set(exam.id, exam);
+      }
+    });
+    
+    return Array.from(uniqueExams.values());
+  }, [catalog, selectedCategoryId]);
+
+  const [selectedExam, setSelectedExam] = useState<string>('');
   const [selectedTier, setSelectedTier] = useState<string>('');
   const [expandedSubjects, setExpandedSubjects] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -397,23 +403,26 @@ const SyllabusPage = () => {
     );
   }
 
-  // Get category names for display
-  const categoryNames = selectedCategories.map(catId => {
-    const cat = examCategories.find(c => c.id === catId);
-    return cat?.name || catId;
-  });
-
   return (
     <div className="space-y-4 max-w-7xl mx-auto">
       {/* Header with Category Info */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
+        <div className="flex flex-col gap-2">
           <h1 className="text-2xl font-bold">Know Your Syllabus</h1>
-          {categoryNames.length > 0 && (
-            <p className="text-sm text-muted-foreground mt-1">
-              Showing exams for: {categoryNames.join(', ')}
-            </p>
-          )}
+          <div className="w-64">
+            <Select value={selectedCategoryId} onValueChange={setSelectedCategoryId}>
+              <SelectTrigger className="h-9 bg-white">
+                <SelectValue placeholder="Select Exam Category" />
+              </SelectTrigger>
+              <SelectContent>
+                {catalog.filter(c => c.isVisible).map(cat => (
+                  <SelectItem key={cat.id} value={cat.id}>
+                    {cat.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         <div className="flex items-center gap-2">
@@ -454,39 +463,45 @@ const SyllabusPage = () => {
       </div>
 
       {/* Exam Selector */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-2">
-        {availableExams.map((exam) => (
-          <button
-            key={exam.id}
-            onClick={() => {
-              setSelectedExam(exam.id);
-              setSelectedTier(allSyllabusData[exam.id]?.tiers[0]?.id || '');
-            }}
-            className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap ${selectedExam === exam.id
-              ? 'bg-emerald-500 text-white'
-              : 'bg-muted/50 text-muted-foreground hover:bg-muted'
-              }`}
-          >
-            <img src={exam.logo} alt={exam.name} className="w-5 h-5 object-contain" />
-            {exam.name}
+      <div className="w-full overflow-x-auto pb-2">
+        <Tabs 
+          value={selectedExam} 
+          onValueChange={(val) => {
+            setSelectedExam(val);
+            setSelectedTier(allSyllabusData[val]?.tiers[0]?.id || '');
+          }}
+          className="w-full"
+        >
+          <TabsList className="w-max justify-start bg-transparent p-0 h-auto gap-2">
+            {availableExams.map((exam) => (
+              <TabsTrigger
+                key={exam.id}
+                value={exam.id}
+                className="data-[state=active]:bg-emerald-500 data-[state=active]:text-white bg-white border border-gray-200 shadow-sm rounded-lg px-4 py-2.5 flex items-center gap-3 transition-all"
+              >
+                <img src={exam.logo} alt={exam.name} className="w-5 h-5 object-contain rounded-sm" />
+                <span className="font-medium">{exam.name}</span>
 
-            {/* Compare checkbox */}
-            <div
-              onClick={(e) => {
-                e.stopPropagation();
-                toggleCompare(exam.id);
-              }}
-              className={`ml-1 w-4 h-4 rounded border flex items-center justify-center cursor-pointer ${compareExams.includes(exam.id)
-                ? 'bg-purple-500 border-purple-500'
-                : 'border-current'
-                }`}
-            >
-              {compareExams.includes(exam.id) && (
-                <CheckCircle2 className="h-3 w-3 text-white" />
-              )}
-            </div>
-          </button>
-        ))}
+                {/* Compare checkbox inside Trigger */}
+                <div
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    toggleCompare(exam.id);
+                  }}
+                  className={`ml-1 w-4 h-4 rounded border flex items-center justify-center cursor-pointer transition-colors ${compareExams.includes(exam.id)
+                    ? 'bg-purple-500 border-purple-500'
+                    : 'border-gray-300 bg-white data-[state=active]:border-white/30 data-[state=active]:bg-white/10'
+                    }`}
+                >
+                  {compareExams.includes(exam.id) && (
+                    <CheckCircle2 className="h-3 w-3 text-white flex-shrink-0" />
+                  )}
+                </div>
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </Tabs>
       </div>
 
       {/* Exam Info Card */}

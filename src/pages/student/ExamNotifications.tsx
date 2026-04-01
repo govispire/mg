@@ -1,476 +1,361 @@
 
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { CategorySelector } from '@/components/global/CategorySelector';
-
-import { examNotifications as allExamNotifications, getExamNotificationStats } from '@/data/examNotificationData';
-import { toast } from '@/hooks/use-toast';
+import { Button } from '@/components/ui/button';
 import ExamApplicationDialog from '@/components/student/ExamApplicationDialog';
-import ExamCalendarView from '@/components/exam-notifications/ExamCalendarView';
 import {
-  Calendar,
-  Clock,
-  Bell,
-  FileText,
-  TrendingUp,
-  AlertCircle,
-  ExternalLink,
-  Download,
-  CheckCircle,
-  Search,
-  Building2,
-  GraduationCap,
-  Train,
-  Landmark,
-  Shield,
-  Users,
-  BookOpen,
-  ChevronDown,
-  ChevronUp
+  Search, Bell, ChevronDown, ChevronUp,
+  Calendar, Clock, MapPin, Building2, GraduationCap,
+  ExternalLink, Download, CheckCircle, FileText,
+  Train, Landmark, Shield, TrendingUp, Users, BookOpen,
 } from 'lucide-react';
-import type { ExamNotification } from '@/data/examNotificationData';
+import {
+  ExamAlertEntry, ExamStatusType,
+  getExamAlerts, formatAlertDate,
+} from '@/data/examAlertsStore';
 
-// Logo mappings for exam categories
-const examLogos: Record<string, string> = {
-  'banking': 'https://res.cloudinary.com/dsyxrhbwb/image/upload/v1744125088/sbi.webp',
-  'banking-insurance': 'https://res.cloudinary.com/dsyxrhbwb/image/upload/v1744125088/sbi.webp',
-  'ibps': 'https://res.cloudinary.com/dsyxrhbwb/image/upload/v1744125077/ibps_ygpzwj.webp',
-  'sbi': 'https://res.cloudinary.com/dsyxrhbwb/image/upload/v1744125088/sbi.webp',
-  'rrb': 'https://res.cloudinary.com/dsyxrhbwb/image/upload/v1744125088/RRB-NTPC_scjv3q.webp',
-  'ssc': 'https://res.cloudinary.com/dsyxrhbwb/image/upload/v1744125092/ssc_rrghxu.webp',
-  'railway': 'https://res.cloudinary.com/dsyxrhbwb/image/upload/v1744125088/RRB-NTPC_scjv3q.webp',
-  'railways-rrb': 'https://res.cloudinary.com/dsyxrhbwb/image/upload/v1744125088/RRB-NTPC_scjv3q.webp',
-  'upsc': 'https://res.cloudinary.com/dsyxrhbwb/image/upload/v1744125077/IAS_qk287t.png',
-  'civil-services': 'https://res.cloudinary.com/dsyxrhbwb/image/upload/v1744125077/IAS_qk287t.png',
-  'rbi': 'https://res.cloudinary.com/dsyxrhbwb/image/upload/v1744125087/reservebank_of_india_jlgv5o.webp',
-  'regulatory': 'https://res.cloudinary.com/dsyxrhbwb/image/upload/v1744125087/reservebank_of_india_jlgv5o.webp',
-  'defence': 'https://res.cloudinary.com/dsyxrhbwb/image/upload/v1744125077/IAS_qk287t.png',
+// ── Exam logo helpers ───────────────────────────────────────────────────────
+const EXAM_LOGOS: Record<string, string> = {
+  'banking':          'https://res.cloudinary.com/dsyxrhbwb/image/upload/v1744125088/sbi.webp',
+  'banking-insurance':'https://res.cloudinary.com/dsyxrhbwb/image/upload/v1744125088/sbi.webp',
+  'ibps':             'https://res.cloudinary.com/dsyxrhbwb/image/upload/v1744125077/ibps_ygpzwj.webp',
+  'sbi':              'https://res.cloudinary.com/dsyxrhbwb/image/upload/v1744125088/sbi.webp',
+  'rrb':              'https://res.cloudinary.com/dsyxrhbwb/image/upload/v1744125088/RRB-NTPC_scjv3q.webp',
+  'ssc':              'https://res.cloudinary.com/dsyxrhbwb/image/upload/v1744125092/ssc_rrghxu.webp',
+  'railway':          'https://res.cloudinary.com/dsyxrhbwb/image/upload/v1744125088/RRB-NTPC_scjv3q.webp',
+  'railways-rrb':     'https://res.cloudinary.com/dsyxrhbwb/image/upload/v1744125088/RRB-NTPC_scjv3q.webp',
+  'upsc':             'https://res.cloudinary.com/dsyxrhbwb/image/upload/v1744125077/IAS_qk287t.png',
+  'civil-services':   'https://res.cloudinary.com/dsyxrhbwb/image/upload/v1744125077/IAS_qk287t.png',
+  'rbi':              'https://res.cloudinary.com/dsyxrhbwb/image/upload/v1744125087/reservebank_of_india_jlgv5o.webp',
+  'regulatory':       'https://res.cloudinary.com/dsyxrhbwb/image/upload/v1744125087/reservebank_of_india_jlgv5o.webp',
+  'defence':          'https://res.cloudinary.com/dsyxrhbwb/image/upload/v1744125077/IAS_qk287t.png',
 };
 
-const getExamLogo = (exam: ExamNotification): string => {
-  const examNameLower = exam.examName.toLowerCase();
-
-  // Match specific exam names first
-  if (examNameLower.includes('ibps')) return examLogos['ibps'];
-  if (examNameLower.includes('sbi')) return examLogos['sbi'];
-  if (examNameLower.includes('rrb') || examNameLower.includes('railway')) return examLogos['railway'];
-  if (examNameLower.includes('ssc')) return examLogos['ssc'];
-  if (examNameLower.includes('upsc')) return examLogos['upsc'];
-  if (examNameLower.includes('rbi')) return examLogos['rbi'];
-
-  // Fall back to category
-  for (const categoryId of exam.categoryIds) {
-    if (examLogos[categoryId]) return examLogos[categoryId];
+function getExamLogo(entry: ExamAlertEntry): string {
+  const n = entry.examName.toLowerCase();
+  if (n.includes('ibps')) return EXAM_LOGOS['ibps'];
+  if (n.includes('sbi')) return EXAM_LOGOS['sbi'];
+  if (n.includes('rrb') || n.includes('railway')) return EXAM_LOGOS['railway'];
+  if (n.includes('ssc')) return EXAM_LOGOS['ssc'];
+  if (n.includes('upsc')) return EXAM_LOGOS['upsc'];
+  if (n.includes('rbi')) return EXAM_LOGOS['rbi'];
+  for (const cat of entry.categoryIds) {
+    if (EXAM_LOGOS[cat]) return EXAM_LOGOS[cat];
   }
+  return EXAM_LOGOS['banking'];
+}
 
-  return examLogos['banking']; // default
+// ── Category helpers ─────────────────────────────────────────────────────────
+function getCategoryLabel(categoryIds: string[]): string {
+  const p = categoryIds[0] || '';
+  if (p.includes('banking')) return 'Banking Exam';
+  if (p.includes('ssc')) return 'SSC Exam';
+  if (p.includes('railway') || p.includes('rrb')) return 'Railway Exam';
+  if (p.includes('upsc') || p.includes('civil')) return 'UPSC Exam';
+  if (p.includes('defence')) return 'Defence Exam';
+  if (p.includes('insurance')) return 'Insurance Exam';
+  if (p.includes('regulatory')) return 'Regulatory Exam';
+  return 'Gov. Exam';
+}
+
+function getCategoryIcon(categoryIds: string[]) {
+  const p = categoryIds[0] || '';
+  if (p.includes('banking') || p.includes('insurance')) return <Building2 className="h-3.5 w-3.5" />;
+  if (p.includes('ssc')) return <GraduationCap className="h-3.5 w-3.5" />;
+  if (p.includes('railway') || p.includes('rrb')) return <Train className="h-3.5 w-3.5" />;
+  if (p.includes('upsc') || p.includes('civil')) return <Landmark className="h-3.5 w-3.5" />;
+  if (p.includes('defence')) return <Shield className="h-3.5 w-3.5" />;
+  if (p.includes('regulatory')) return <TrendingUp className="h-3.5 w-3.5" />;
+  return <BookOpen className="h-3.5 w-3.5" />;
+}
+
+// ── Status config ────────────────────────────────────────────────────────────
+interface StatusConfig {
+  label: string;
+  dot: string;
+  text: string;
+  bg: string;
+  border: string;
+  actionLabel: string | null;
+  actionBg: string | null;
+  actionKey: keyof ExamAlertEntry['urls'] | null;
+}
+
+const STATUS_CONFIG: Record<ExamStatusType, StatusConfig> = {
+  'application-open':    { label: 'Applications Open',    dot: 'bg-emerald-500', text: 'text-emerald-700', bg: 'bg-emerald-50',  border: 'border-emerald-200', actionLabel: 'Apply',    actionBg: 'bg-emerald-600 hover:bg-emerald-700 text-white', actionKey: 'applicationForm' },
+  'notification-released':{ label: 'Notification Released', dot: 'bg-blue-500',    text: 'text-blue-700',    bg: 'bg-blue-50',     border: 'border-blue-200',    actionLabel: 'View',     actionBg: 'bg-blue-600 hover:bg-blue-700 text-white',     actionKey: 'notificationPdf' },
+  'hall-ticket-out':     { label: 'Hall Ticket',           dot: 'bg-violet-500',  text: 'text-violet-700',  bg: 'bg-violet-50',   border: 'border-violet-200',  actionLabel: 'Download', actionBg: 'bg-violet-600 hover:bg-violet-700 text-white', actionKey: 'admitCardDownload' },
+  'prelims-result-out':  { label: 'Prelims Result',        dot: 'bg-amber-500',   text: 'text-amber-700',   bg: 'bg-amber-50',    border: 'border-amber-200',   actionLabel: 'Result',   actionBg: 'bg-amber-500 hover:bg-amber-600 text-white',   actionKey: 'resultPage' },
+  'mains-result-out':    { label: 'Mains Result',          dot: 'bg-amber-500',   text: 'text-amber-700',   bg: 'bg-amber-50',    border: 'border-amber-200',   actionLabel: 'Result',   actionBg: 'bg-amber-500 hover:bg-amber-600 text-white',   actionKey: 'resultPage' },
+  'overall-result-out':  { label: 'Result Out',            dot: 'bg-orange-500',  text: 'text-orange-700',  bg: 'bg-orange-50',   border: 'border-orange-200',  actionLabel: 'Result',   actionBg: 'bg-orange-500 hover:bg-orange-600 text-white', actionKey: 'resultPage' },
+  'waiting-list-out':    { label: 'Waiting List',          dot: 'bg-slate-500',   text: 'text-slate-600',   bg: 'bg-slate-50',    border: 'border-slate-200',   actionLabel: 'Check',    actionBg: 'bg-slate-600 hover:bg-slate-700 text-white',   actionKey: 'resultPage' },
+  'upcoming':            { label: 'Upcoming',              dot: 'bg-sky-500',     text: 'text-sky-700',     bg: 'bg-sky-50',      border: 'border-sky-200',     actionLabel: null,       actionBg: null,                                           actionKey: null },
 };
 
-const getCategoryIcon = (categoryIds: string[]) => {
-  const primary = categoryIds[0] || '';
-  if (primary.includes('banking') || primary.includes('insurance')) return <Building2 className="h-4 w-4" />;
-  if (primary.includes('ssc')) return <GraduationCap className="h-4 w-4" />;
-  if (primary.includes('railway') || primary.includes('rrb')) return <Train className="h-4 w-4" />;
-  if (primary.includes('upsc') || primary.includes('civil')) return <Landmark className="h-4 w-4" />;
-  if (primary.includes('defence')) return <Shield className="h-4 w-4" />;
-  if (primary.includes('regulatory')) return <TrendingUp className="h-4 w-4" />;
-  if (primary.includes('mba')) return <Users className="h-4 w-4" />;
-  return <BookOpen className="h-4 w-4" />;
-};
+// ── Tabs ─────────────────────────────────────────────────────────────────────
+const TABS = [
+  { key: 'all',               label: 'All',               icon: Bell,        filter: (_e: ExamAlertEntry) => true },
+  { key: 'application-open',  label: 'Applications Open', icon: FileText,    filter: (e: ExamAlertEntry) => e.statusType === 'application-open' },
+  { key: 'upcoming',          label: 'Upcoming',          icon: Calendar,    filter: (e: ExamAlertEntry) => e.statusType === 'upcoming' || e.statusType === 'notification-released' },
+  { key: 'admit-card',        label: 'Admit Card',        icon: Download,    filter: (e: ExamAlertEntry) => e.statusType === 'hall-ticket-out' },
+  { key: 'result-out',        label: 'Result Out',        icon: CheckCircle, filter: (e: ExamAlertEntry) => ['prelims-result-out','mains-result-out','overall-result-out','waiting-list-out'].includes(e.statusType) },
+];
 
-const getCategoryName = (categoryIds: string[]): string => {
-  const primary = categoryIds[0] || '';
-  if (primary.includes('banking')) return 'Banking Exam';
-  if (primary.includes('ssc')) return 'SSC Exam';
-  if (primary.includes('railway') || primary.includes('rrb')) return 'Railway Exam';
-  if (primary.includes('upsc') || primary.includes('civil')) return 'UPSC Exam';
-  if (primary.includes('defence')) return 'Defence Exam';
-  if (primary.includes('regulatory')) return 'Regulatory Exam';
-  return 'Government Exam';
-};
-
-const ExamNotifications = () => {
-  const examNotifications = allExamNotifications; // always show ALL exams, no category filter
-  const stats = getExamNotificationStats([]);     // stats across all exams
-  const hasFilters = true;                         // always show the list
+// ── Main component ───────────────────────────────────────────────────────────
+const ExamNotifications: React.FC = () => {
+  const [alerts, setAlerts] = useState<ExamAlertEntry[]>([]);
   const [activeTab, setActiveTab] = useState('all');
-  const [viewMode, setViewMode] = useState<'list' | 'calendar'>('list');
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [dialogState, setDialogState] = useState<{
-    isOpen: boolean;
-    examName: string;
-    actionType: 'notification' | 'apply' | 'result';
-    url: string;
-  }>({
-    isOpen: false,
-    examName: '',
-    actionType: 'notification',
-    url: ''
-  });
+    isOpen: boolean; examName: string;
+    actionType: 'notification' | 'apply' | 'result'; url: string;
+  }>({ isOpen: false, examName: '', actionType: 'apply', url: '' });
 
-  const getFilteredNotifications = () => {
-    let filtered = examNotifications;
+  useEffect(() => { setAlerts(getExamAlerts().filter(e => e.isActive)); }, []);
 
-    // Filter by tab
-    if (activeTab === 'upcoming') {
-      filtered = filtered.filter(exam => exam.isUpcoming);
-    } else if (activeTab === 'new') {
-      filtered = filtered.filter(exam => exam.notificationStatus === 'new');
-    } else if (activeTab === 'admit-card') {
-      filtered = filtered.filter(exam => exam.admitCardStatus === 'released');
-    }
+  // Listen for changes from superadmin (same tab storage event)
+  useEffect(() => {
+    const onStorage = () => setAlerts(getExamAlerts().filter(e => e.isActive));
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, []);
 
-    // Filter by search
-    if (searchQuery) {
-      filtered = filtered.filter(exam =>
-        exam.examName.toLowerCase().includes(searchQuery.toLowerCase())
+  const activeTabObj = TABS.find(t => t.key === activeTab)!;
+
+  const filtered = useMemo(() => {
+    let list = alerts.filter(activeTabObj.filter);
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      list = list.filter(e =>
+        e.examName.toLowerCase().includes(q) ||
+        e.organisation.toLowerCase().includes(q) ||
+        getCategoryLabel(e.categoryIds).toLowerCase().includes(q)
       );
     }
+    return list;
+  }, [alerts, activeTab, searchQuery]);
 
-    return filtered;
+  const tabCounts = useMemo(() =>
+    Object.fromEntries(TABS.map(t => [t.key, alerts.filter(t.filter).length]))
+  , [alerts]);
+
+  const openLink = (entry: ExamAlertEntry, key: keyof ExamAlertEntry['urls'], actionType: 'notification' | 'apply' | 'result') => {
+    const url = entry.urls[key] || '';
+    if (!url) return;
+    setDialogState({ isOpen: true, examName: entry.examName, actionType, url });
   };
 
-  const filteredNotifications = getFilteredNotifications();
-
-  const handleExternalLink = (exam: ExamNotification, actionType: 'notification' | 'apply' | 'result' | 'admitCard') => {
-    let url = '';
-
-    switch (actionType) {
-      case 'notification':
-        url = exam.urls.notificationPdf || '';
-        break;
-      case 'apply':
-        url = exam.urls.applicationForm || '';
-        break;
-      case 'result':
-        url = exam.urls.resultPage || '';
-        break;
-      case 'admitCard':
-        url = exam.urls.admitCardDownload || '';
-        break;
-    }
-
-    if (!url) {
-      toast({
-        title: "Link Not Available",
-        description: `The ${actionType === 'admitCard' ? 'admit card' : actionType} link for ${exam.examName} is not available yet.`,
-        variant: "destructive"
-      });
-      return;
-    }
-
-    setDialogState({
-      isOpen: true,
-      examName: exam.examName,
-      actionType: actionType === 'admitCard' ? 'notification' : actionType as any,
-      url
-    });
-  };
-
-  const confirmExternalLink = () => {
+  const confirmLink = () => {
     window.open(dialogState.url, '_blank', 'noopener,noreferrer');
     setDialogState(prev => ({ ...prev, isOpen: false }));
-
-    if (dialogState.actionType === 'apply') {
-      toast({
-        title: "Application Started",
-        description: `You've been redirected to apply for ${dialogState.examName}. Complete your application on the official website.`,
-      });
-    }
-  };
-
-  const closeDialog = () => {
-    setDialogState(prev => ({ ...prev, isOpen: false }));
-  };
-
-  const getStatusBadge = (exam: ExamNotification) => {
-    if (exam.resultStatus === 'declared') {
-      return <Badge className="bg-amber-500/20 text-amber-600 border-amber-500/30 gap-1"><CheckCircle className="h-3 w-3" />Result Out</Badge>;
-    }
-    if (exam.applyStatus === 'new' || exam.applyStatus === 'apply') {
-      return <Badge className="bg-emerald-500/20 text-emerald-600 border-emerald-500/30 gap-1 animate-pulse"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />Applications Open</Badge>;
-    }
-    if (exam.isUpcoming) {
-      return <Badge className="bg-sky-500/20 text-sky-600 border-sky-500/30 gap-1"><Clock className="h-3 w-3" />Upcoming</Badge>;
-    }
-    return null;
   };
 
   return (
-    <div className="space-y-2 max-w-7xl mx-auto">
+    <div className="space-y-4 max-w-5xl mx-auto">
 
-
-      {/* Filters Section */}
-      <div className="flex flex-col md:flex-row gap-4 items-center justify-between py-2 border-y border-border/50">
-        {/* Search */}
-        <div className="relative w-full md:w-96">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search exams..."
+      {/* ── Search Bar ── */}
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm px-4 py-3">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <input
+            type="text"
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 bg-background"
+            onChange={e => setSearchQuery(e.target.value)}
+            placeholder="Search exams by name or organisation..."
+            className="w-full pl-10 pr-4 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all"
           />
-        </div>
-
-        {/* View Toggle */}
-        <div className="flex gap-2">
-          <Button
-            variant={viewMode === 'list' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setViewMode('list')}
-            className="gap-2"
-          >
-            <FileText className="h-4 w-4" />
-            List View
-          </Button>
-          <Button
-            variant={viewMode === 'calendar' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setViewMode('calendar')}
-            className="gap-2"
-          >
-            <Calendar className="h-4 w-4" />
-            Calendar View
-          </Button>
         </div>
       </div>
 
-      {/* Content Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-5 max-w-3xl mx-auto">
-          <TabsTrigger value="all">All ({examNotifications.length})</TabsTrigger>
-          <TabsTrigger value="upcoming">Upcoming ({stats.upcoming})</TabsTrigger>
-          <TabsTrigger value="new">New ({stats.newNotifications})</TabsTrigger>
-          <TabsTrigger value="admit-card">Admit Card ({examNotifications.filter(e => e.admitCardStatus === 'released').length})</TabsTrigger>
-          <TabsTrigger value="results">Result ({examNotifications.filter(e => e.resultStatus === 'declared').length})</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value={activeTab} className="space-y-4 mt-6">
-          {!hasFilters ? (
-            <Card>
-              <CardContent className="pt-6 text-center">
-                <Bell className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-foreground mb-2">Select Your Categories</h3>
-                <p className="text-muted-foreground mb-4">
-                  Please select your exam categories using the Category Selector above to see relevant exam notifications.
-                </p>
-                <div className="flex justify-center">
-                  <CategorySelector />
-                </div>
-              </CardContent>
-            </Card>
-          ) : filteredNotifications.length === 0 ? (
-            <Card>
-              <CardContent className="pt-6 text-center">
-                <Bell className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-foreground mb-2">No exam notifications found</h3>
-                <p className="text-muted-foreground">
-                  {searchQuery
-                    ? 'Try adjusting your search query.'
-                    : `No ${activeTab === 'all' ? '' : activeTab} exam notifications match your selected categories.`
-                  }
-                </p>
-              </CardContent>
-            </Card>
-          ) : viewMode === 'calendar' ? (
-            <ExamCalendarView notifications={filteredNotifications.map(exam => ({
-              id: exam.id,
-              examName: exam.examName,
-              category: exam.categoryIds[0] || 'other',
-              categoryIcon: getCategoryIcon(exam.categoryIds),
-              applicationStart: exam.applicationPeriod.startDate,
-              applicationEnd: exam.applicationPeriod.endDate,
-              examDate: exam.examDate,
-              status: exam.resultStatus === 'declared' ? 'result-declared' as const :
-                exam.applyStatus === 'apply' || exam.applyStatus === 'new' ? 'ongoing' as const :
-                  'upcoming' as const,
-              eligibility: 'As per notification',
-              officialLink: exam.urls.applicationForm || '#',
-              lastUpdated: 'Recently',
-              isNew: exam.notificationStatus === 'new',
-              isHot: exam.applyStatus === 'new'
-            }))} />
-          ) : (
-            <div className="divide-y divide-border/60 border-2 border-border/60 rounded-xl overflow-hidden bg-card shadow-sm">
-              {filteredNotifications.map((exam) => {
-                const isOpen = expandedId === exam.id;
-                return (
-                  <div key={exam.id}>
-                    <div className="flex items-center gap-4 px-4 py-4 hover:bg-muted/50 transition-colors">
-                      {/* Logo */}
-                      <div className="w-10 h-10 rounded-lg bg-muted/50 flex items-center justify-center shrink-0 overflow-hidden border border-border/50">
-                        <img
-                          src={getExamLogo(exam)}
-                          alt={exam.examName}
-                          className="w-8 h-8 object-contain"
-                          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                        />
-                      </div>
-
-                      {/* Name + category + qualification + vacancies */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className="text-sm font-semibold text-foreground truncate">{exam.examName}</span>
-                          {exam.notificationStatus === 'new' && <Badge className="bg-red-500 text-white text-[10px] px-1.5 py-0 h-4">NEW</Badge>}
-                          {exam.applyStatus === 'new' && <Badge className="bg-orange-500 text-white text-[10px] px-1.5 py-0 h-4">HOT</Badge>}
-                        </div>
-                        <p className="text-[11px] text-muted-foreground flex items-center gap-2">
-                          <span className="flex items-center gap-1">{getCategoryIcon(exam.categoryIds)}{getCategoryName(exam.categoryIds)}</span>
-                          <span className="text-gray-300">•</span>
-                          <span>{exam.qualification}</span>
-                          <span className="text-gray-300">•</span>
-                          <span className="font-medium text-gray-600">Posts: {exam.vacancies.toLocaleString()}</span>
-                        </p>
-                      </div>
-
-                      {/* Status badge */}
-                      <div className="hidden sm:block shrink-0">
-                        {getStatusBadge(exam)}
-                      </div>
-
-                      {/* Quick Apply/Result button */}
-                      {exam.resultStatus === 'declared' ? (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="h-7 text-xs px-3 shrink-0 border-amber-400 text-amber-600 hover:bg-amber-50"
-                          onClick={(e) => { e.stopPropagation(); handleExternalLink(exam, 'result'); }}
-                        >Result</Button>
-                      ) : exam.applyStatus !== 'applied' ? (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="h-7 text-xs px-3 shrink-0"
-                          onClick={(e) => { e.stopPropagation(); handleExternalLink(exam, 'apply'); }}
-                        >Apply</Button>
-                      ) : null}
-
-                      {/* Expand chevron */}
-                      <button
-                        onClick={() => setExpandedId(isOpen ? null : exam.id)}
-                        className="h-7 w-7 flex items-center justify-center rounded-md hover:bg-muted transition-colors shrink-0 text-muted-foreground"
-                        aria-label={isOpen ? 'Collapse' : 'Expand'}
-                      >
-                        {isOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                      </button>
-                    </div>
-
-                    {/* ── Expanded details panel ── */}
-                    {isOpen && (
-                      <div className="bg-muted/20 border-t border-border/50 px-4 py-3">
-                        {/* Dates row */}
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
-                          {[
-                            { icon: <Calendar className="h-3.5 w-3.5 text-emerald-500" />, label: 'Apply Start', value: exam.applicationPeriod.startDate },
-                            { icon: <AlertCircle className="h-3.5 w-3.5 text-red-400" />, label: 'Apply End', value: exam.applicationPeriod.endDate },
-                            { icon: <FileText className="h-3.5 w-3.5 text-blue-400" />, label: 'Exam Date', value: exam.examDate },
-                            { icon: <CheckCircle className="h-3.5 w-3.5 text-amber-400" />, label: 'Admit Card', value: exam.paymentLastDate },
-                          ].map(({ icon, label, value }) => (
-                            <div key={label} className="text-center bg-background rounded-lg py-2 px-1 border border-border/40">
-                              <div className="flex justify-center mb-0.5">{icon}</div>
-                              <div className="text-[10px] text-muted-foreground">{label}</div>
-                              <div className="text-xs font-semibold text-foreground">{value}</div>
-                            </div>
-                          ))}
-                        </div>
-
-                        {/* Action buttons */}
-                        <div className="flex flex-wrap gap-2">
-                          <Button size="sm" className="h-7 text-xs gap-1.5 bg-indigo-600 hover:bg-indigo-700 text-white"
-                            onClick={() => handleExternalLink(exam, 'notification')}>
-                            <Download className="h-3 w-3" /> Notification
-                          </Button>
-                          {exam.admitCardStatus === 'released' && (
-                            <Button size="sm" className="h-7 text-xs gap-1.5 bg-violet-600 hover:bg-violet-700 text-white"
-                              onClick={() => handleExternalLink(exam, 'admitCard')}>
-                              <FileText className="h-3 w-3" /> Admit Card
-                            </Button>
-                          )}
-                          {exam.applyStatus !== 'applied' && (
-                            <Button size="sm" className="h-7 text-xs gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white"
-                              onClick={() => handleExternalLink(exam, 'apply')}>
-                              <ExternalLink className="h-3 w-3" /> Apply Now
-                            </Button>
-                          )}
-                          {exam.resultStatus === 'declared' && (
-                            <Button size="sm" className="h-7 text-xs gap-1.5 bg-amber-500 hover:bg-amber-600 text-white"
-                              onClick={() => handleExternalLink(exam, 'result')}>
-                              <CheckCircle className="h-3 w-3" /> View Result
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </TabsContent>
-      </Tabs>
-
-      {/* Important Deadlines Section */}
-      {hasFilters && filteredNotifications.some(e => e.applyStatus === 'apply' || e.applyStatus === 'new') && (
-        <div className="py-8">
-          <div className="text-center mb-6">
-            <h2 className="text-2xl font-bold text-foreground mb-2">⚠️ Upcoming Deadlines</h2>
-            <p className="text-muted-foreground">Don't miss these important application deadlines</p>
-          </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredNotifications
-              .filter(e => e.applyStatus === 'apply' || e.applyStatus === 'new')
-              .slice(0, 6)
-              .map((exam) => (
-                <Card key={exam.id} className="bg-card border-2 border-red-500/30 hover:border-red-500/60 hover:shadow-lg transition-all duration-200">
-                  <CardContent className="p-5">
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className="w-10 h-10 rounded-lg bg-red-500/10 flex items-center justify-center">
-                        <img
-                          src={getExamLogo(exam)}
-                          alt={exam.examName}
-                          className="w-8 h-8 object-contain"
-                        />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h4 className="font-semibold text-foreground truncate">{exam.examName}</h4>
-                        <p className="text-sm text-muted-foreground">{getCategoryName(exam.categoryIds)}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <div className="text-xs text-muted-foreground">Last Date to Apply</div>
-                        <div className="text-lg font-bold text-red-500">{exam.applicationPeriod.endDate}</div>
-                      </div>
-                      <Button
-                        size="sm"
-                        variant="destructive"
-                        onClick={() => handleExternalLink(exam, 'apply')}
-                      >
-                        Apply Now
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-          </div>
+      {/* ── Tab Bar ── */}
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
+        <div className="flex items-center overflow-x-auto scrollbar-hide border-b border-gray-100">
+          {TABS.map(tab => {
+            const Icon = tab.icon;
+            const count = tabCounts[tab.key] ?? 0;
+            const active = activeTab === tab.key;
+            return (
+              <button
+                key={tab.key}
+                onClick={() => setActiveTab(tab.key)}
+                className={`flex items-center gap-2 px-4 py-3.5 text-sm font-medium whitespace-nowrap transition-colors border-b-2 -mb-px flex-shrink-0 ${
+                  active
+                    ? 'border-emerald-500 text-emerald-700'
+                    : 'border-transparent text-gray-500 hover:text-gray-800 hover:border-gray-200'
+                }`}
+              >
+                <Icon className="h-4 w-4" />
+                <span>{tab.label}</span>
+                <span className={`inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[11px] font-bold rounded-full ${
+                  active ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-600'
+                }`}>{count}</span>
+              </button>
+            );
+          })}
         </div>
-      )}
 
-      {/* Confirmation Dialog */}
+        {/* ── Exam List ── */}
+        {filtered.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-16 text-center">
+            <Bell className="h-12 w-12 text-gray-300 mb-3" />
+            <p className="font-medium text-gray-500">No exams found</p>
+            <p className="text-sm text-gray-400 mt-1">{searchQuery ? 'Try a different search term.' : 'No exams in this category yet.'}</p>
+          </div>
+        ) : (
+          <div className="divide-y divide-gray-100">
+            {filtered.map(entry => {
+              const cfg = STATUS_CONFIG[entry.statusType];
+              const isOpen = expandedId === entry.id;
+
+              return (
+                <div key={entry.id}>
+                  {/* Collapsed Row */}
+                  <div className={`flex items-center gap-4 px-5 py-4 hover:bg-gray-50 transition-colors ${isOpen ? 'bg-gray-50' : ''}`}>
+
+                    {/* Exam Logo */}
+                    <div className="w-10 h-10 rounded-lg bg-gray-50 flex items-center justify-center flex-shrink-0 overflow-hidden border border-gray-200">
+                      <img
+                        src={getExamLogo(entry)}
+                        alt={entry.examName}
+                        className="w-8 h-8 object-contain"
+                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                      />
+                    </div>
+
+                    {/* Info */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap mb-1">
+                        <span className="text-sm font-bold text-gray-900">{entry.examName}</span>
+                        {entry.isNew && <Badge className="bg-red-500 text-white text-[10px] px-1.5 py-0 h-4 rounded">NEW</Badge>}
+                        {entry.isHot && <Badge className="bg-orange-500 text-white text-[10px] px-1.5 py-0 h-4 rounded">HOT</Badge>}
+                      </div>
+                      <div className="flex items-center gap-4 text-[12px] text-gray-500">
+                        <span className="flex items-center gap-1">
+                          {getCategoryIcon(entry.categoryIds)}
+                          {getCategoryLabel(entry.categoryIds)}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <GraduationCap className="h-3.5 w-3.5" />
+                          {entry.qualification}
+                        </span>
+                        <span className="font-medium text-gray-600">Posts: {entry.vacancies.toLocaleString()}</span>
+                      </div>
+                    </div>
+
+                    {/* Status Badge */}
+                    <div className={`hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-full border text-[12px] font-medium flex-shrink-0 ${cfg.bg} ${cfg.border} ${cfg.text}`}>
+                      <span className={`w-2 h-2 rounded-full flex-shrink-0 ${cfg.dot}`} />
+                      {cfg.label}
+                    </div>
+
+                    {/* Action Button */}
+                    {cfg.actionLabel && cfg.actionKey && (
+                      <button
+                        onClick={e => { e.stopPropagation(); openLink(entry, cfg.actionKey!, cfg.actionKey === 'applicationForm' ? 'apply' : cfg.actionKey === 'resultPage' ? 'result' : 'notification'); }}
+                        className={`hidden sm:inline-flex items-center justify-center px-4 py-1.5 text-xs font-semibold rounded-full flex-shrink-0 transition-colors ${cfg.actionBg}`}
+                      >
+                        {cfg.actionLabel}
+                      </button>
+                    )}
+
+                    {/* Chevron */}
+                    <button
+                      onClick={() => setExpandedId(isOpen ? null : entry.id)}
+                      className="p-1.5 rounded-full hover:bg-gray-200 transition-colors flex-shrink-0 text-gray-400"
+                    >
+                      {isOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                    </button>
+                  </div>
+
+                  {/* Expanded Details */}
+                  {isOpen && (
+                    <div className="px-5 py-4 bg-gray-50 border-t border-gray-100">
+                      {/* Info Chips */}
+                      <div className="flex flex-wrap gap-2 mb-4">
+                        {(entry.applicationStartDate !== 'TBA') && (
+                          <div className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs text-gray-600 shadow-sm">
+                            <Calendar className="h-3.5 w-3.5 text-gray-400" />
+                            <span className="text-gray-400">Apply Window:</span>
+                            <span className="font-semibold">{formatAlertDate(entry.applicationStartDate)} – {formatAlertDate(entry.applicationEndDate)}</span>
+                          </div>
+                        )}
+                        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs text-gray-600 shadow-sm">
+                          <Clock className="h-3.5 w-3.5 text-gray-400" />
+                          <span className="text-gray-400">Exam Date:</span>
+                          <span className="font-semibold">{entry.examDate}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs text-gray-600 shadow-sm">
+                          <MapPin className="h-3.5 w-3.5 text-gray-400" />
+                          <span className="text-gray-400">Location:</span>
+                          <span className="font-semibold">{entry.location}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs text-gray-600 shadow-sm">
+                          <Building2 className="h-3.5 w-3.5 text-gray-400" />
+                          <span className="text-gray-400">Organisation:</span>
+                          <span className="font-semibold">{entry.organisation}</span>
+                        </div>
+                      </div>
+
+                      {/* Description */}
+                      {entry.description && (
+                        <div className="border-l-4 border-emerald-500 pl-4 mb-4 bg-white rounded-r-lg py-2.5 pr-3">
+                          <p className="text-sm text-gray-700 leading-relaxed">{entry.description}</p>
+                        </div>
+                      )}
+
+                      {/* Action Buttons */}
+                      <div className="flex flex-wrap gap-2">
+                        {entry.urls.applicationForm && (
+                          <button
+                            onClick={() => openLink(entry, 'applicationForm', 'apply')}
+                            className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg transition-colors"
+                          >
+                            <CheckCircle className="h-3.5 w-3.5" /> Apply Now
+                          </button>
+                        )}
+                        {entry.urls.notificationPdf && (
+                          <button
+                            onClick={() => openLink(entry, 'notificationPdf', 'notification')}
+                            className="flex items-center gap-1.5 px-4 py-2 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-semibold rounded-lg transition-colors"
+                          >
+                            <ExternalLink className="h-3.5 w-3.5" /> Official Notification
+                          </button>
+                        )}
+                        {entry.urls.admitCardDownload && (
+                          <button
+                            onClick={() => openLink(entry, 'admitCardDownload', 'notification')}
+                            className="flex items-center gap-1.5 px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white text-xs font-semibold rounded-lg transition-colors"
+                          >
+                            <Download className="h-3.5 w-3.5" /> Download Admit Card
+                          </button>
+                        )}
+                        {entry.urls.resultPage && (
+                          <button
+                            onClick={() => openLink(entry, 'resultPage', 'result')}
+                            className="flex items-center gap-1.5 px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold rounded-lg transition-colors"
+                          >
+                            <FileText className="h-3.5 w-3.5" /> View Result
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Dialog */}
       <ExamApplicationDialog
         isOpen={dialogState.isOpen}
-        onClose={closeDialog}
+        onClose={() => setDialogState(p => ({ ...p, isOpen: false }))}
         examName={dialogState.examName}
         actionType={dialogState.actionType}
         url={dialogState.url}
-        onConfirm={confirmExternalLink}
+        onConfirm={confirmLink}
       />
     </div>
   );

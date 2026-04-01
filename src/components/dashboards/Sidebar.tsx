@@ -242,6 +242,7 @@ const Sidebar: React.FC<SidebarProps> = ({ role, basePath, collapsed }) => {
           { icon: <BookOpen size={18} />, label: 'Syllabus Manager', to: `${basePath}/syllabus-manager`, highlight: true },
           { icon: <Bell size={18} />, label: 'Upcoming Exams', to: `${basePath}/upcoming-exams`, highlight: true },
           { icon: <BookOpen size={18} />, label: 'Vocabulary', to: `${basePath}/vocabulary` },
+          { icon: <Bell size={18} />, label: 'Exam Alerts', to: `${basePath}/exam-alerts`, highlight: true },
         ];
       case 'owner':
         return [

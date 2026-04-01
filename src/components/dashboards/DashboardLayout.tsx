@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
-import { Bell, Menu, X, Search } from 'lucide-react';
+import { Bell, Menu, X } from 'lucide-react';
 import { useAuth } from '@/app/providers';
 import { CategorySelector } from '@/components/global/CategorySelector';
 import ProfileButton from '@/components/student/ProfileButton';
@@ -37,7 +37,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ role, basePath }) => 
         {/* Header */}
         <header className="bg-white shadow border-b-2 border-gray-200 px-3 sm:px-4 lg:px-6 py-2 sm:py-3 h-[72px] flex items-center">
           <div className="flex items-center justify-between w-full gap-4">
-            {/* Left: Mobile menu + Global Search Bar */}
+            {/* Left: Mobile menu + Category Selector */}
             <div className="flex items-center gap-2 sm:gap-3 flex-1 lg:w-1/2">
               <Button
                 variant="ghost"
@@ -48,22 +48,12 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ role, basePath }) => 
                 {sidebarOpen ? <X className="h-4 w-4 sm:h-5 sm:w-5" /> : <Menu className="h-4 w-4 sm:h-5 sm:w-5" />}
               </Button>
               
-              <div className="hidden md:block w-full max-w-2xl">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
-                  <input
-                    type="text"
-                    placeholder="Search exams, topics..."
-                    className="w-full pl-9 pr-4 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all font-medium"
-                  />
-                </div>
+              <div className="hidden md:block">
+                {role === 'student' && <CategorySelector />}
               </div>
             </div>
 
-            {/* Center/Right: Category Selector */}
-            <div className="hidden lg:flex justify-end pr-4">
-              {role === 'student' && <CategorySelector />}
-            </div>
+
 
             {/* Right: Bell + Profile */}
             <div className="flex items-center justify-end gap-2 sm:gap-3 flex-1 lg:flex-none lg:w-1/3">
