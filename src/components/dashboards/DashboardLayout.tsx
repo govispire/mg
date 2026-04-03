@@ -35,7 +35,10 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ role, basePath }) => 
       {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0 w-full">
         {/* Header */}
-        <header className="bg-white shadow border-b-2 border-gray-200 px-3 sm:px-4 lg:px-6 py-2 sm:py-3 h-[72px] flex items-center">
+        <header
+          className="bg-white border-b border-slate-200 px-3 sm:px-4 lg:px-6 py-2 sm:py-3 h-[64px] flex items-center"
+          style={{ boxShadow: '0 1px 12px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.03)' }}
+        >
           <div className="flex items-center justify-between w-full gap-4">
             {/* Left: Mobile menu + Category Selector */}
             <div className="flex items-center gap-2 sm:gap-3 flex-1 lg:w-1/2">
@@ -57,7 +60,11 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ role, basePath }) => 
 
             {/* Right: Bell + Profile */}
             <div className="flex items-center justify-end gap-2 sm:gap-3 flex-1 lg:flex-none lg:w-1/3">
-              <Button variant="ghost" size="sm" className="h-8 w-8 sm:h-9 sm:w-9 p-0">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 sm:h-9 sm:w-9 p-0 rounded-full hover:bg-emerald-50 hover:text-emerald-600 transition-colors"
+              >
                 <Bell className="h-4 w-4 sm:h-5 sm:w-5" />
 
               </Button>

@@ -5,6 +5,7 @@ import {
   BookOpen, Landmark, Train, Target, Shield, GraduationCap, Scale, Folder,
   Globe, Play, Clock, CheckCircle, Mail, Bell, Zap, Trophy, Layers
 } from 'lucide-react';
+import { StepBreadcrumb } from '@/components/ui/step-breadcrumb';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -177,14 +178,14 @@ const Downloads = () => {
 
       <main className="max-w-[1600px] w-full mx-auto px-4 md:px-8 pt-2 pb-8 relative z-10">
         {/* Breadcrumb */}
-        <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
-          <Link to="/" className="flex items-center gap-1 hover:text-primary transition-colors">
-            <Home className="h-4 w-4" />
-            PrepSmart Home
-          </Link>
-          <ChevronRight className="h-4 w-4" />
-          <span className="text-foreground">Downloads</span>
-        </nav>
+        <div className="mb-4">
+          <StepBreadcrumb
+            items={[
+              { label: 'Home', icon: <Home className="h-4 w-4" />, href: '/' },
+              { label: 'Downloads', isActive: true },
+            ]}
+          />
+        </div>
 
         {/* Header Section with Glassmorphism */}
         <header className="relative mb-6 p-8 rounded-[2rem] border border-white/20 bg-white/5 backdrop-blur-xl overflow-hidden group">

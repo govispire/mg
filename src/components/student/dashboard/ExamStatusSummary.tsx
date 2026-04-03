@@ -44,7 +44,7 @@ export const ExamStatusSummary = () => {
 
     return (
         <TooltipProvider delayDuration={0}>
-            <Card className="p-4 sm:p-5 bg-gradient-to-br from-card via-card to-primary/5 border-2 shadow-lg relative overflow-visible">
+            <Card className="p-4 sm:p-5 bg-white border border-slate-200 shadow-md rounded-2xl relative overflow-visible">
                 {/* Decorative Background Elements */}
                 <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -z-0" />
                 <div className="absolute bottom-0 left-0 w-48 h-48 bg-primary/5 rounded-full blur-3xl -z-0" />

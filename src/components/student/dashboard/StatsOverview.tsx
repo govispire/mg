@@ -24,7 +24,10 @@ export const StatsOverview: React.FC<StatsOverviewProps> = ({
             value: Math.max(0, journeyDays),
             subtext: 'Since start of prep',
             icon: Map,
-            iconColor: 'text-blue-500',
+            iconBg: 'bg-blue-100',
+            iconColor: 'text-blue-600',
+            accentColor: '#3b82f6',
+            emptyPrompt: journeyDays === 0 ? 'Set your start date →' : null,
         },
         {
             id: 'hours',
@@ -32,7 +35,10 @@ export const StatsOverview: React.FC<StatsOverviewProps> = ({
             value: studyHours,
             subtext: studyHours > 0 ? 'From completed quizzes' : 'Complete quizzes to track',
             icon: Hourglass,
-            iconColor: 'text-violet-500',
+            iconBg: 'bg-violet-100',
+            iconColor: 'text-violet-600',
+            accentColor: '#8b5cf6',
+            emptyPrompt: studyHours === 0 ? 'Start your first quiz →' : null,
         },
         {
             id: 'active',
@@ -40,7 +46,10 @@ export const StatsOverview: React.FC<StatsOverviewProps> = ({
             value: activeStreak,
             subtext: activeStreak > 0 ? `${activeStreak} day${activeStreak !== 1 ? 's' : ''} in a row 🔥` : 'Complete 2 quizzes today',
             icon: Flame,
-            iconColor: 'text-emerald-500',
+            iconBg: 'bg-emerald-100',
+            iconColor: 'text-emerald-600',
+            accentColor: '#10b981',
+            emptyPrompt: activeStreak === 0 ? 'Do 2 quizzes to start 🔥' : null,
         },
         {
             id: 'tests',
@@ -48,27 +57,51 @@ export const StatsOverview: React.FC<StatsOverviewProps> = ({
             value: mockTestsTaken,
             subtext: mockTestsTaken > 0 ? `${mockTestsTaken} quiz${mockTestsTaken !== 1 ? 'zes' : ''} finished` : 'Start your first quiz!',
             icon: ClipboardCheck,
-            iconColor: 'text-orange-500',
+            iconBg: 'bg-orange-100',
+            iconColor: 'text-orange-600',
+            accentColor: '#f97316',
+            emptyPrompt: mockTestsTaken === 0 ? 'Try a free quiz →' : null,
         },
     ];
 
     return (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-[1px] bg-border/60 border border-border/60 rounded-2xl overflow-hidden shadow-sm mb-6">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-[1px] bg-slate-200 border border-slate-200 rounded-2xl overflow-hidden shadow-md mb-6">
             {stats.map((stat) => (
                 <button
                     key={stat.id}
                     onClick={() => onCardClick(stat.id as any)}
-                    className="flex flex-col gap-2 px-3 sm:px-5 py-4 text-left bg-white dark:bg-card hover:bg-muted/40 transition-colors duration-200 group relative"
+                    className="flex flex-col gap-2 px-3 sm:px-5 py-4 text-left bg-white relative group overflow-hidden"
+                    style={{
+                        transition: 'transform 0.18s ease, box-shadow 0.18s ease',
+                    }}
+                    onMouseEnter={e => {
+                        const el = e.currentTarget as HTMLElement;
+                        el.style.transform = 'translateY(-2px)';
+                        el.style.boxShadow = '0 4px 16px rgba(0,0,0,0.07)';
+                        el.style.zIndex = '10';
+                    }}
+                    onMouseLeave={e => {
+                        const el = e.currentTarget as HTMLElement;
+                        el.style.transform = 'translateY(0)';
+                        el.style.boxShadow = 'none';
+                        el.style.zIndex = '1';
+                    }}
                 >
+                    {/* Colored bottom accent bar (shows on hover) */}
+                    <span
+                        className="absolute bottom-0 left-0 right-0 h-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                        style={{ background: stat.accentColor }}
+                    />
+
                     {/* Icon + label row */}
                     <div className="flex items-center justify-between gap-2">
                         <div className="flex items-center gap-2">
-                            <span className={`${stat.iconColor} opacity-80 group-hover:opacity-100 transition-opacity`}>
-                                <stat.icon className="h-4 w-4" />
+                            <span className={`${stat.iconBg} ${stat.iconColor} flex items-center justify-center w-7 h-7 rounded-lg transition-transform duration-200 group-hover:scale-110`}>
+                                <stat.icon className="h-3.5 w-3.5" />
                             </span>
                             <span className="text-xs font-medium text-muted-foreground truncate">{stat.label}</span>
                         </div>
-                        <div className="p-1.5 rounded-full bg-primary text-white shadow-sm group-hover:scale-110 transition-transform duration-300 flex-shrink-0">
+                        <div className="p-1.5 rounded-full bg-primary text-white shadow-sm group-hover:scale-110 group-hover:rotate-12 transition-transform duration-300 flex-shrink-0">
                             <ArrowUpRight className="h-3.5 w-3.5" />
                         </div>
                     </div>
@@ -78,9 +111,9 @@ export const StatsOverview: React.FC<StatsOverviewProps> = ({
                         {stat.value}
                     </div>
 
-                    {/* Subtext */}
-                    <div className="text-[11px] text-muted-foreground leading-tight">
-                        {stat.subtext}
+                    {/* Subtext / CTA */}
+                    <div className={`text-[11px] leading-tight ${stat.value === 0 && stat.emptyPrompt ? 'text-primary font-semibold' : 'text-muted-foreground'}`}>
+                        {stat.value === 0 && stat.emptyPrompt ? stat.emptyPrompt : stat.subtext}
                     </div>
                 </button>
             ))}

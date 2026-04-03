@@ -107,19 +107,45 @@ const StreakTooltipContent: React.FC<{ streak: number; longestStreak: number }> 
 
 const SidebarItem: React.FC<SidebarItemProps> = ({ icon, label, to, active, collapsed, badge, highlight, streak, longestStreak, showStreak }) => {
   return (
-    <li className="mb-2">
+    <li className="mb-1">
       <Link
         to={to}
         className={cn(
-          "flex items-center justify-between gap-2 rounded-lg px-2.5 py-2.5 text-sm transition-all hover:bg-gray-100",
-          active ? "bg-brand-blue/10 text-brand-blue font-semibold" : "text-gray-700 font-medium",
-          highlight && !active && "bg-primary/5 border border-primary/20"
+          "flex items-center justify-between gap-2 rounded-xl px-3 py-2.5 text-sm transition-all duration-200 group",
+          "hover:bg-emerald-50 hover:text-emerald-700",
+          active
+            ? "bg-emerald-50 text-emerald-700 font-semibold shadow-sm ring-1 ring-emerald-100"
+            : "text-slate-600 font-medium",
+          highlight && !active && "bg-primary/5 border border-primary/10"
         )}
         title={label}
+        style={{ transform: 'translateX(0)', transition: 'transform 0.15s ease, background 0.15s ease, box-shadow 0.15s ease' }}
+        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = 'translateX(2px)'; }}
+        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = 'translateX(0)'; }}
       >
         <div className="flex items-center gap-3">
-          <span className={cn(highlight && "text-primary")}>{icon}</span>
-          {!collapsed && <span className={cn("font-semibold", highlight && "text-primary")}>{label}</span>}
+          <span
+            className={cn(
+              "flex items-center justify-center w-7 h-7 rounded-lg transition-all duration-200",
+              active
+                ? "bg-emerald-100 text-emerald-600"
+                : "text-slate-400 group-hover:text-emerald-600 group-hover:bg-emerald-50",
+              highlight && !active && "text-primary group-hover:text-primary"
+            )}
+          >
+            {icon}
+          </span>
+          {!collapsed && (
+            <span
+              className={cn(
+                "font-semibold text-[13px]",
+                active ? "text-emerald-700" : "group-hover:text-emerald-700",
+                highlight && !active && "text-primary"
+              )}
+            >
+              {label}
+            </span>
+          )}
         </div>
         {!collapsed && (
           <div className="flex items-center gap-1.5">
@@ -142,6 +168,11 @@ const SidebarItem: React.FC<SidebarItemProps> = ({ icon, label, to, active, coll
               </Badge>
             )}
           </div>
+        )}
+
+        {/* Active indicator dot */}
+        {active && (
+          <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-emerald-500 rounded-r-full" />
         )}
       </Link>
     </li>
@@ -263,24 +294,41 @@ const Sidebar: React.FC<SidebarProps> = ({ role, basePath, collapsed }) => {
   const navItems = getNavItems();
 
   return (
-    <div className={`h-full bg-white border-r flex flex-col ${collapsed ? 'items-center' : ''}`}>
-      <div className={`p-4 border-b flex ${collapsed ? 'justify-center' : 'items-center gap-2'}`}>
-        <div className="w-7 h-7 rounded-full bg-brand-blue flex items-center justify-center text-white text-sm font-bold">P</div>
-        {!collapsed && <span className="text-base font-bold">PrepSmart</span>}
+    <div
+      className={`h-full flex flex-col border-r border-slate-100 ${collapsed ? 'items-center' : ''}`}
+      style={{ background: 'linear-gradient(180deg, #f8fffe 0%, #ffffff 100%)' }}
+    >
+      {/* Brand Logo Area */}
+      <div
+        className={`px-4 py-4 border-b border-slate-100 flex ${collapsed ? 'justify-center' : 'items-center gap-2.5'}`}
+        style={{ background: 'linear-gradient(135deg, #f0fdf8 0%, #ecfdf5 100%)' }}
+      >
+        <div
+          className="w-8 h-8 rounded-xl flex items-center justify-center text-white text-sm font-bold shadow-sm"
+          style={{ background: 'linear-gradient(135deg, #059669, #10b981)' }}
+        >
+          P
+        </div>
+        {!collapsed && (
+          <div>
+            <span className="text-[15px] font-bold text-slate-800 tracking-tight">PrepSmart</span>
+            <div className="text-[10px] text-emerald-600 font-medium -mt-0.5">Exam Preparation</div>
+          </div>
+        )}
       </div>
 
       {collapsed && (
-        <div className="py-4 border-b flex justify-center">
+        <div className="py-4 border-b border-slate-100 flex justify-center">
           <Avatar>
-            <AvatarFallback className="bg-brand-blue text-white">
+            <AvatarFallback className="bg-emerald-600 text-white text-sm">
               {user?.name?.charAt(0) || 'U'}
             </AvatarFallback>
           </Avatar>
         </div>
       )}
 
-      <nav className="flex-1 overflow-y-auto p-4">
-        <ul className={`space-y-1 ${collapsed ? 'items-center' : ''}`}>
+      <nav className="flex-1 overflow-y-auto px-3 py-3">
+        <ul className={`space-y-0.5 relative ${collapsed ? 'items-center' : ''}`}>
           {navItems.map((item: NavItem) => (
             <SidebarItem
               key={item.to}
@@ -298,6 +346,15 @@ const Sidebar: React.FC<SidebarProps> = ({ role, basePath, collapsed }) => {
           ))}
         </ul>
       </nav>
+
+      {/* Footer hint */}
+      {!collapsed && (
+        <div className="px-4 py-3 border-t border-slate-100">
+          <div className="text-[10px] text-slate-400 text-center">
+            PrepSmart © {new Date().getFullYear()}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

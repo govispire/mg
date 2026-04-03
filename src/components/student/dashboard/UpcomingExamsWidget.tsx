@@ -10,7 +10,6 @@ import {
   formatDisplayDate,
 } from '@/data/upcomingExamsStore';
 
-// Urgency colour for countdown badge
 const urgencyClass = (days: number) => {
   if (days < 0) return 'bg-slate-100 text-slate-500';
   if (days <= 30) return 'bg-red-50 text-red-600 border-red-200';
@@ -25,15 +24,53 @@ const urgencyDot = (days: number) => {
   return 'bg-emerald-500';
 };
 
+const urgencyAccentBar = (days: number) => {
+  if (days < 0) return '#94a3b8';
+  if (days <= 30) return '#ef4444';
+  if (days <= 90) return '#f59e0b';
+  return '#10b981';
+};
+
+/** Resolve logo: prefer stored logo, fall back to catalog logo by exam name/id */
+const resolveLogo = (exam: UpcomingExamEntry): string => {
+  if (exam.logo) return exam.logo;
+  try {
+    const raw = localStorage.getItem('superadmin_exam_catalog');
+    if (!raw) return '';
+    const catalog: { sections: { exams: { id: string; name: string; logo: string }[] }[] }[] = JSON.parse(raw);
+    const nameLower = exam.examName.toLowerCase();
+    for (const cat of catalog) {
+      for (const sec of cat.sections) {
+        for (const e of sec.exams) {
+          if (e.name.toLowerCase() === nameLower || e.id === nameLower.replace(/\s+/g, '-')) {
+            return e.logo || '';
+          }
+        }
+      }
+    }
+  } catch { /* ignore */ }
+  return '';
+};
+
 export const UpcomingExamsWidget: React.FC = () => {
   const [exams, setExams] = useState<UpcomingExamEntry[]>([]);
 
-  useEffect(() => {
+  const loadExams = () => {
     const all = getUpcomingExams();
     const active = all
       .filter(e => e.isActive)
       .sort((a, b) => new Date(a.examDate).getTime() - new Date(b.examDate).getTime());
     setExams(active);
+  };
+
+  useEffect(() => {
+    loadExams();
+    // Re-fetch when admin updates storage
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === 'superadmin_upcoming_exams' || e.key === 'superadmin_exam_catalog') loadExams();
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
   }, []);
 
   return (
@@ -56,23 +93,43 @@ export const UpcomingExamsWidget: React.FC = () => {
       {/* Exam rows */}
       <div className="space-y-2.5 flex-1">
         {exams.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-8 text-muted-foreground text-sm">
-            <Bell className="h-8 w-8 mb-2 opacity-30" />
-            <p>No upcoming exams scheduled</p>
+          <div className="flex flex-col items-center justify-center py-8 text-center">
+            <div className="w-14 h-14 rounded-2xl bg-primary/5 border border-primary/10 flex items-center justify-center text-2xl mb-3 shadow-sm">
+              📅
+            </div>
+            <p className="text-[13px] font-bold text-slate-600">No upcoming exams</p>
+            <p className="text-[11px] text-slate-400 mt-1">Check back after admin updates</p>
           </div>
         )}
         {exams.slice(0, 5).map((exam) => {
           const days = daysUntil(exam.examDate);
+          const logo = resolveLogo(exam);
           return (
             <div
               key={exam.id}
-              className="flex items-center justify-between px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-100 hover:border-primary/30 hover:bg-primary/5 transition-all group"
+              className="relative flex items-center justify-between px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-100 hover:border-primary/30 hover:bg-primary/5 overflow-hidden group cursor-pointer"
+              style={{ transition: 'transform 0.15s ease, box-shadow 0.15s ease' }}
+              onMouseEnter={e => {
+                const el = e.currentTarget as HTMLElement;
+                el.style.transform = 'translateY(-1px)';
+                el.style.boxShadow = '0 4px 14px rgba(0,0,0,0.07)';
+              }}
+              onMouseLeave={e => {
+                const el = e.currentTarget as HTMLElement;
+                el.style.transform = 'translateY(0)';
+                el.style.boxShadow = 'none';
+              }}
             >
+              {/* Left urgency accent bar */}
+              <span
+                className="absolute left-0 top-0 bottom-0 w-1 rounded-l-xl"
+                style={{ background: urgencyAccentBar(days) }}
+              />
               <div className="flex items-center gap-3 min-w-0 flex-1">
                 {/* Logo or icon */}
                 <div className="shrink-0 w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center overflow-hidden">
-                  {exam.logo ? (
-                    <img src={exam.logo} alt={exam.examName} className="w-6 h-6 object-contain" />
+                  {logo ? (
+                    <img src={logo} alt={exam.examName} className="w-6 h-6 object-contain" />
                   ) : (
                     <Calendar className="h-4 w-4 text-primary" />
                   )}

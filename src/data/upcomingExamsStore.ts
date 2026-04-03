@@ -62,7 +62,7 @@ const DEFAULT_ENTRIES: UpcomingExamEntry[] = [
     stage: 'Tier I',
     examDate: '2026-09-01',
     registrationDeadline: '2026-07-20',
-    logo: '',
+    logo: 'https://res.cloudinary.com/dsyxrhbwb/image/upload/v1744125092/ssc_rrghxu.webp',
     category: 'ssc',
     isActive: true,
     note: '',
@@ -72,7 +72,30 @@ const DEFAULT_ENTRIES: UpcomingExamEntry[] = [
 export const getUpcomingExams = (): UpcomingExamEntry[] => {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return JSON.parse(raw) as UpcomingExamEntry[];
+    if (raw) {
+      const entries = JSON.parse(raw) as UpcomingExamEntry[];
+      // Auto-patch missing logos from exam catalog
+      let patched = false;
+      const catalogRaw = localStorage.getItem('superadmin_exam_catalog');
+      const catalog = catalogRaw ? JSON.parse(catalogRaw) : null;
+      const result = entries.map(entry => {
+        if (entry.logo) return entry;
+        if (!catalog) return entry;
+        for (const cat of catalog) {
+          for (const sec of cat.sections) {
+            for (const exam of sec.exams) {
+              if (exam.name?.toLowerCase() === entry.examName?.toLowerCase() && exam.logo) {
+                patched = true;
+                return { ...entry, logo: exam.logo };
+              }
+            }
+          }
+        }
+        return entry;
+      });
+      if (patched) localStorage.setItem(STORAGE_KEY, JSON.stringify(result));
+      return result;
+    }
   } catch { /* ignore */ }
   return DEFAULT_ENTRIES;
 };

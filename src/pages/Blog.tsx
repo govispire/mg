@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Calendar, Clock, User, Search, Home, Tag, ChevronRight, Mail } from 'lucide-react';
+import { ArrowRight, Calendar, Clock, Search, Home, Tag, Mail } from 'lucide-react';
+import { StepBreadcrumb } from '@/components/ui/step-breadcrumb';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -161,14 +162,14 @@ const Blog = () => {
       
       <main className="container mx-auto px-4 py-8">
         {/* Breadcrumb */}
-        <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-8">
-          <Link to="/" className="flex items-center gap-1 hover:text-primary transition-colors">
-            <Home className="h-4 w-4" />
-            PrepSmart Home
-          </Link>
-          <ChevronRight className="h-4 w-4" />
-          <span className="text-foreground">Blog</span>
-        </nav>
+        <div className="mb-8">
+          <StepBreadcrumb
+            items={[
+              { label: 'Home', icon: <Home className="h-4 w-4" />, href: '/' },
+              { label: 'Blog', isActive: true },
+            ]}
+          />
+        </div>
 
         {/* Header Section */}
         <header className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 mb-12">

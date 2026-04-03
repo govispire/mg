@@ -9,7 +9,7 @@ interface PerformanceGraphProps {
 
 export const PerformanceGraph: React.FC<PerformanceGraphProps> = ({ data }) => {
     return (
-        <Card className="p-4 bg-card flex-1 shadow-sm h-full min-h-[350px]">
+        <Card className="p-4 bg-white border border-slate-200 shadow-md rounded-2xl flex-1 h-full min-h-[350px]">
             <div className="flex items-center justify-between mb-5">
                 <div className="flex items-center gap-2">
                     <div className="p-1.5 bg-primary/10 rounded-lg">

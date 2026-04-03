@@ -377,6 +377,30 @@ const ExamDetail = () => {
                 </div>
               </div>
             )}
+
+            {/* View Mode Toggle for Live tab */}
+            {activeTab === "live" && (
+              <div className="mt-4 flex justify-end">
+                <div className="flex gap-1 border rounded-lg p-1">
+                  <Button
+                    variant={viewMode === 'grid' ? "default" : "ghost"}
+                    size="sm"
+                    onClick={() => setViewMode('grid')}
+                    className="p-2"
+                  >
+                    <Grid3X3 className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant={viewMode === 'list' ? "default" : "ghost"}
+                    size="sm"
+                    onClick={() => setViewMode('list')}
+                    className="p-2"
+                  >
+                    <List className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="p-4 sm:p-6">

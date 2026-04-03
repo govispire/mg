@@ -115,7 +115,7 @@ export default function WordOfTheDayCard() {
     }
 
     return (
-        <div className="rounded-2xl overflow-hidden border border-border shadow-md bg-card w-full">
+        <div className="rounded-2xl overflow-hidden border border-slate-200 shadow-md bg-white w-full">
             {/* ── Header bar ── */}
             <div className="flex items-center justify-between px-4 py-2.5 bg-muted/50 border-b border-border">
                 <div className="flex items-center gap-1.5">
@@ -169,11 +169,11 @@ export default function WordOfTheDayCard() {
                 </span>
 
                 {/* Wave-like bottom cut */}
-                <div className="absolute bottom-0 left-0 right-0 h-3 bg-card" style={{ borderRadius: '50% 50% 0 0 / 100% 100% 0 0', transform: 'scaleX(1.02)' }} />
+                <div className="absolute bottom-0 left-0 right-0 h-3 bg-white" style={{ borderRadius: '50% 50% 0 0 / 100% 100% 0 0', transform: 'scaleX(1.02)' }} />
             </div>
 
             {/* ── Content area ── */}
-            <div className="px-4 pt-4 pb-3 space-y-3 bg-card flex-1">
+            <div className="px-4 pt-4 pb-3 space-y-3 bg-white flex-1">
                 {/* Meaning */}
                 <div className="space-y-0.5">
                     <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Meaning</p>

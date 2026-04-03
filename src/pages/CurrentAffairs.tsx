@@ -28,6 +28,7 @@ import { TopicViewDialog } from '@/components/current-affairs/TopicViewDialog';
 import { ContinueReadingSection } from '@/components/current-affairs/ContinueReadingSection';
 import DailyNewsView from '@/components/current-affairs/DailyNewsView';
 import AllInOneView from '@/components/current-affairs/AllInOneView';
+import { StepBreadcrumb } from '@/components/ui/step-breadcrumb';
 import ArticleQuiz from '@/components/current-affairs/ArticleQuiz';
 import { allArticles, getArticleById } from '@/components/current-affairs/articlesData';
 import { dailyQuizzes } from '@/data/dailyQuizzesData';
@@ -929,14 +930,14 @@ const CurrentAffairs = () => {
 
       <main className="max-w-[1600px] w-full mx-auto px-4 md:px-8 pt-2 pb-8 relative z-10">
         {/* Breadcrumb */}
-        <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
-          <Link to="/" className="flex items-center gap-1 hover:text-primary transition-colors">
-            <Home className="h-4 w-4" />
-            PrepSmart Home
-          </Link>
-          <ChevronRight className="h-4 w-4" />
-          <span className="text-foreground">Current Affairs</span>
-        </nav>
+        <div className="mb-4">
+          <StepBreadcrumb
+            items={[
+              { label: 'Home', icon: <Home className="h-4 w-4" />, href: '/' },
+              { label: 'Current Affairs', isActive: true },
+            ]}
+          />
+        </div>
 
         {/* Header Section with Glassmorphism */}
         <header className="relative mb-4 p-8 rounded-[2rem] border border-white/20 bg-white/5 backdrop-blur-xl overflow-hidden group">

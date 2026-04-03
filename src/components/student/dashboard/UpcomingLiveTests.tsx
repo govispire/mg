@@ -49,7 +49,7 @@ export const UpcomingLiveTests = () => {
     ];
 
     return (
-        <Card className="p-5 bg-white border border-slate-200 shadow-sm rounded-2xl flex flex-col h-full">
+        <Card className="p-5 bg-white border border-slate-200 shadow-md rounded-2xl flex flex-col h-full">
             {/* Header */}
             <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">

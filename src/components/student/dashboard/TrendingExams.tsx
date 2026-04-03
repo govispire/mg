@@ -47,7 +47,7 @@ export const TrendingExams: React.FC = () => {
   if (exams.length === 0) return null;
 
   return (
-    <Card className="p-4 bg-card">
+    <Card className="p-4 bg-white border border-slate-200 shadow-md rounded-2xl">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">

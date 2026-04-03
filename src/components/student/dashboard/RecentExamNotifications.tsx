@@ -52,7 +52,7 @@ const RecentExamNotifications: React.FC = () => {
   const visible = sorted.slice(0, 5);
 
   return (
-    <div className="bg-white rounded-2xl border border-border/60 shadow-sm overflow-hidden flex flex-col">
+    <div className="bg-white rounded-2xl border border-slate-200 shadow-md overflow-hidden flex flex-col">
       {/* Header */}
       <div className="flex items-center justify-between p-5 pb-4">
         <div className="flex items-center gap-2">

@@ -142,152 +142,180 @@ export const TestTypeGrid: React.FC<TestTypeGridProps> = ({
               <p className="text-sm text-gray-600">Average Score</p>
               <p className="font-bold text-lg">{progress.averageScore}</p>
             </div>
-            <div className="w-32">
-              <Progress value={progress.percentage} className="h-3" />
-              <p className="text-xs text-gray-500 mt-1">{Math.round(progress.percentage)}% Complete</p>
-            </div>
           </div>
         </div>
 
         {SubjectChips}
 
         {/* Tests List View */}
-        <div className="space-y-3">
+        <div className="space-y-2">
           {filteredTests.map((test, idx) => {
             const totalStudents = test.totalStudents ?? 45320;
             const totalQuestions = test.totalQuestions ?? test.maxScore;
             const totalMarks = test.totalMarks ?? test.maxScore;
             const totalDuration = test.totalDuration ?? 60;
-            return (
-              <Card key={test.testId} className={`p-4 transition-all duration-200 hover:shadow-md ${getStatusBackgroundColor(test.status, test.score, test.maxScore)}`}>
-                <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-                  <div className="flex items-center gap-3 flex-1">
-                    {getStatusIcon(test.status)}
-                    <div>
-                      <h3 className="font-medium">{test.testName}</h3>
-                      <div className="flex items-center gap-2 mt-1">
-                        <Badge variant="outline" className={`text-xs ${getDifficultyColor(test.difficulty)}`}>
-                          {test.difficulty}
-                        </Badge>
-                        {test.lastAttempted && (
-                          <span className="text-xs text-gray-500 flex items-center gap-1">
-                            <Calendar className="h-3 w-3" />
-                            {formatDate(test.lastAttempted)}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
+            const isCompleted = test.status === 'completed';
+            const isInProgress = test.status === 'in-progress';
 
-                  <div className="flex items-center gap-6 text-sm">
-                    {test.status === 'completed' ? (
-                      <>
-                        <div className="text-center">
-                          <p className="text-gray-500 text-xs">Your Score</p>
-                          <p className="font-medium text-green-600">{test.score ?? 0}/{test.maxScore}</p>
-                        </div>
-                        {test.timeSpent && (
-                          <div className="text-center">
-                            <p className="text-gray-500 text-xs">Time Spent</p>
-                            <p className="font-medium">{Math.floor(test.timeSpent / 60)}m</p>
-                          </div>
-                        )}
-                        {test.rank && (
-                          <div className="text-center">
-                            <p className="text-gray-500 text-xs">Rank</p>
-                            <p className="font-medium text-yellow-600">#{test.rank}/{totalStudents.toLocaleString()}</p>
-                          </div>
-                        )}
-                        <div className="text-center">
-                          <p className="text-gray-500 text-xs">Attempts</p>
-                          <p className="font-medium">{test.attempts}</p>
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <div className="text-center">
-                          <p className="text-gray-500 text-xs">Questions</p>
-                          <p className="font-medium">{totalQuestions}</p>
-                        </div>
-                        <div className="text-center">
-                          <p className="text-gray-500 text-xs">Marks</p>
-                          <p className="font-medium">{totalMarks}</p>
-                        </div>
-                        <div className="text-center">
-                          <p className="text-gray-500 text-xs">Time</p>
-                          <p className="font-medium">{totalDuration} min</p>
-                        </div>
-                        <div className="text-center">
-                          <p className="text-gray-500 text-xs">Students</p>
-                          <p className="font-medium">{totalStudents.toLocaleString()}</p>
-                        </div>
-                      </>
+            return (
+              <div
+                key={test.testId}
+                className={`flex items-center gap-4 px-5 py-4 bg-white border border-gray-200 rounded-xl transition-all duration-200 hover:shadow-md hover:border-gray-300 ${
+                  isCompleted
+                    ? (test.score !== undefined && test.maxScore > 0 && (test.score / test.maxScore) >= 0.5
+                      ? 'border-l-4 border-l-green-400'
+                      : 'border-l-4 border-l-red-400')
+                    : isInProgress
+                    ? 'border-l-4 border-l-orange-400'
+                    : 'border-l-4 border-l-gray-200'
+                }`}
+              >
+                {/* Status icon */}
+                <div className="shrink-0 mt-0.5">
+                  {getStatusIcon(test.status)}
+                </div>
+
+                {/* Test Name + meta — fixed width */}
+                <div className="w-52 shrink-0 min-w-0">
+                  <h3 className="font-semibold text-sm text-gray-800 leading-snug truncate">
+                    {test.testName}
+                  </h3>
+                  <div className="flex items-center gap-2 mt-1 flex-wrap">
+                    <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${getDifficultyColor(test.difficulty)}`}>
+                      {test.difficulty}
+                    </Badge>
+                    {test.lastAttempted && (
+                      <span className="text-[10px] text-gray-400 flex items-center gap-0.5">
+                        <Calendar className="h-2.5 w-2.5" />
+                        {formatDate(test.lastAttempted)}
+                      </span>
                     )}
                   </div>
+                </div>
 
-                  <div className="flex gap-2">
-                    {test.status === 'completed' ? (
-                      <>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleSolutionClick(test)}
-                          className="flex items-center gap-1"
-                        >
-                          <BookOpen className="h-3 w-3" />
-                          Solution
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleAnalysisClick(test)}
-                          className="flex items-center gap-1"
-                        >
-                          <BarChart3 className="h-3 w-3" />
-                          Analysis
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => {
-                            const currentPath = window.location.pathname;
-                            const url = `/student/test-window?category=${category}&examId=${examId}&testId=${test.testId}&returnUrl=${encodeURIComponent(currentPath)}`;
-                            window.open(url, '_blank', 'width=1920,height=1080,menubar=no,toolbar=no,location=no,status=no');
-                          }}
-                        >
-                          Reattempt
-                        </Button>
-                      </>
-                    ) : (
+                {/* ── Stat Columns (fixed widths, always 4 columns) ── */}
+                <div className="flex items-center flex-1 min-w-0">
+                  {isCompleted ? (
+                    <>
+                      {/* Col 1: Score */}
+                      <div className="w-28 text-center shrink-0">
+                        <p className="text-[10px] text-gray-400 uppercase tracking-wide font-medium">Your Score</p>
+                        <p className="text-sm font-bold text-green-600 mt-0.5">{test.score ?? 0}/{test.maxScore}</p>
+                      </div>
+                      {/* Col 2: Time Spent */}
+                      <div className="w-24 text-center shrink-0">
+                        <p className="text-[10px] text-gray-400 uppercase tracking-wide font-medium">Time Spent</p>
+                        <p className="text-sm font-semibold text-gray-700 mt-0.5">
+                          {test.timeSpent ? `${Math.floor(test.timeSpent / 60)}m` : '—'}
+                        </p>
+                      </div>
+                      {/* Col 3: Rank */}
+                      <div className="w-36 text-center shrink-0">
+                        <p className="text-[10px] text-gray-400 uppercase tracking-wide font-medium">Rank</p>
+                        <p className="text-sm font-semibold text-yellow-600 mt-0.5 flex items-center justify-center gap-1">
+                          <Trophy className="h-3 w-3" />
+                          {test.rank ? `#${test.rank}/${totalStudents.toLocaleString()}` : '—'}
+                        </p>
+                      </div>
+
+                      {/* Col 5: Percentile */}
+                      <div className="flex-1 px-4">
+                        <p className="text-[10px] text-gray-400 uppercase tracking-wide font-medium mb-1">Percentile</p>
+                        <div className="flex items-center gap-2">
+                          <div className="flex-1 bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                            <div
+                              className="h-full rounded-full bg-gradient-to-r from-blue-400 to-blue-600"
+                              style={{ width: `${test.percentile ?? 0}%` }}
+                            />
+                          </div>
+                          <span className="text-xs font-bold text-blue-600 shrink-0">
+                            {test.percentile !== undefined ? `${test.percentile}%` : '—'}
+                          </span>
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      {/* Col 1: Questions */}
+                      <div className="w-28 text-center shrink-0">
+                        <p className="text-[10px] text-gray-400 uppercase tracking-wide font-medium">Questions</p>
+                        <p className="text-sm font-semibold text-gray-700 mt-0.5">{totalQuestions}</p>
+                      </div>
+                      {/* Col 2: Marks */}
+                      <div className="w-24 text-center shrink-0">
+                        <p className="text-[10px] text-gray-400 uppercase tracking-wide font-medium">Marks</p>
+                        <p className="text-sm font-semibold text-gray-700 mt-0.5">{totalMarks}</p>
+                      </div>
+                      {/* Col 3: Time */}
+                      <div className="w-36 text-center shrink-0">
+                        <p className="text-[10px] text-gray-400 uppercase tracking-wide font-medium">Time</p>
+                        <p className="text-sm font-semibold text-gray-700 mt-0.5">{totalDuration} min</p>
+                      </div>
+                      {/* Col 4: Students */}
+                      <div className="w-24 text-center shrink-0">
+                        <p className="text-[10px] text-gray-400 uppercase tracking-wide font-medium">Students</p>
+                        <p className="text-sm font-semibold text-gray-700 mt-0.5">{totalStudents.toLocaleString()}</p>
+                      </div>
+                      {/* Col 5: empty spacer to match completed layout */}
+                      <div className="flex-1" />
+                    </>
+                  )}
+                </div>
+
+                {/* ── Action Buttons — fixed width right side ── */}
+                <div className="flex items-center gap-2 shrink-0">
+                  {isCompleted ? (
+                    <>
                       <Button
                         size="sm"
+                        variant="outline"
+                        onClick={() => handleSolutionClick(test)}
+                        className="h-8 text-xs flex items-center gap-1 border-gray-200 hover:border-primary hover:text-primary"
+                      >
+                        <BookOpen className="h-3 w-3" />
+                        Solution
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleAnalysisClick(test)}
+                        className="h-8 text-xs flex items-center gap-1 border-gray-200 hover:border-primary hover:text-primary"
+                      >
+                        <BarChart3 className="h-3 w-3" />
+                        Analysis
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-8 text-xs border-gray-200 hover:border-primary hover:text-primary"
                         onClick={() => {
                           const currentPath = window.location.pathname;
                           const url = `/student/test-window?category=${category}&examId=${examId}&testId=${test.testId}&returnUrl=${encodeURIComponent(currentPath)}`;
                           window.open(url, '_blank', 'width=1920,height=1080,menubar=no,toolbar=no,location=no,status=no');
                         }}
                       >
-                        {test.status === 'in-progress' ? 'Continue' : 'Start Test'}
+                        Reattempt
                       </Button>
-                    )}
-                  </div>
+                    </>
+                  ) : (
+                    <Button
+                      size="sm"
+                      className="h-8 text-xs font-semibold min-w-[96px]"
+                      onClick={() => {
+                        const currentPath = window.location.pathname;
+                        const url = `/student/test-window?category=${category}&examId=${examId}&testId=${test.testId}&returnUrl=${encodeURIComponent(currentPath)}`;
+                        window.open(url, '_blank', 'width=1920,height=1080,menubar=no,toolbar=no,location=no,status=no');
+                      }}
+                    >
+                      {isInProgress ? 'Continue' : 'Start Test'}
+                    </Button>
+                  )}
                 </div>
-
-                {test.score !== undefined && (
-                  <div className="mt-3 pt-3 border-t">
-                    <Progress value={test.percentile ?? (test.score / test.maxScore) * 100} className="h-2" />
-                    <div className="flex justify-between text-xs mt-1">
-                      <span className="text-gray-500">Percentile</span>
-                      <span className="font-medium text-blue-600">
-                        {test.percentile !== undefined ? `${test.percentile}%` : `${Math.round((test.score / test.maxScore) * 100)}%`}
-                      </span>
-                    </div>
-                  </div>
-                )}
-              </Card>
+              </div>
             );
           })}
         </div>
+
 
         {/* Solutions Modal */}
         {selectedTestForSolutions && (() => {
@@ -331,15 +359,9 @@ export const TestTypeGrid: React.FC<TestTypeGridProps> = ({
           <h2 className="text-xl font-bold capitalize">{testType} Tests</h2>
           <p className="text-gray-600">{progress.completed} of {progress.total} tests completed</p>
         </div>
-        <div className="flex items-center gap-4">
-          <div className="text-right">
-            <p className="text-sm text-gray-600">Average Score</p>
-            <p className="font-bold text-lg">{progress.averageScore}</p>
-          </div>
-          <div className="w-32">
-            <Progress value={progress.percentage} className="h-3" />
-            <p className="text-xs text-gray-500 mt-1">{Math.round(progress.percentage)}% Complete</p>
-          </div>
+        <div className="text-right">
+          <p className="text-sm text-gray-600">Average Score</p>
+          <p className="font-bold text-lg">{progress.averageScore}</p>
         </div>
       </div>
 
@@ -347,7 +369,7 @@ export const TestTypeGrid: React.FC<TestTypeGridProps> = ({
       {SubjectChips}
 
       {/* Tests Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-5">
         {filteredTests.map((test, idx) => {
           // Safe fallbacks for backward-compat with old localStorage cache
           const totalQuestions = test.totalQuestions ?? test.maxScore;
@@ -408,10 +430,7 @@ export const TestTypeGrid: React.FC<TestTypeGridProps> = ({
                           </div>
                         </div>
                       )}
-                      <div className="flex justify-between">
-                        <span>Attempts:</span>
-                        <span className="font-medium">{test.attempts}</span>
-                      </div>
+
                     </>
                   ) : (
                     // ── FRESH / IN-PROGRESS: show test meta ──

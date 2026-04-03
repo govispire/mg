@@ -15,7 +15,7 @@ const RecentMockTestPerformance: React.FC = () => {
   const navigate = useNavigate();
 
   return (
-    <Card className="flex flex-col overflow-hidden bg-white border-border/60 shadow-sm w-full">
+    <Card className="flex flex-col overflow-hidden bg-white border border-slate-200 shadow-md rounded-2xl w-full">
       {/* Header */}
       <div className="flex justify-between items-center p-5 pb-4">
         <div className="flex items-center gap-2">

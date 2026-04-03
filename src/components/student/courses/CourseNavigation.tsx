@@ -1,15 +1,7 @@
-
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { ChevronLeft, Home } from 'lucide-react';
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from '@/components/ui/breadcrumb';
+import { StepBreadcrumb, StepBreadcrumbItem } from '@/components/ui/step-breadcrumb';
 import { Button } from '@/components/ui/button';
 
 interface CourseNavigationProps {
@@ -25,10 +17,19 @@ interface CourseNavigationProps {
 export const CourseNavigation: React.FC<CourseNavigationProps> = ({
   items,
   showBackButton = false,
-  backHref
+  backHref,
 }) => {
+  const breadcrumbItems: StepBreadcrumbItem[] = [
+    { label: 'Home', icon: <Home className="h-4 w-4" />, href: '/student/dashboard' },
+    ...items.map((item) => ({
+      label: item.label,
+      href: item.href,
+      isActive: item.isActive,
+    })),
+  ];
+
   return (
-    <div className="flex items-center space-x-4 mb-4">
+    <div className="flex items-center gap-4 mb-4 flex-wrap">
       {showBackButton && backHref && (
         <Link to={backHref}>
           <Button variant="outline" size="sm">
@@ -37,35 +38,7 @@ export const CourseNavigation: React.FC<CourseNavigationProps> = ({
           </Button>
         </Link>
       )}
-      
-      <Breadcrumb>
-        <BreadcrumbList>
-          <BreadcrumbItem>
-            <BreadcrumbLink asChild>
-              <Link to="/student/dashboard">
-                <Home className="h-4 w-4" />
-              </Link>
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          
-          {items.map((item, index) => (
-            <React.Fragment key={index}>
-              <BreadcrumbSeparator />
-              <BreadcrumbItem>
-                {item.isActive ? (
-                  <BreadcrumbPage>{item.label}</BreadcrumbPage>
-                ) : item.href ? (
-                  <BreadcrumbLink asChild>
-                    <Link to={item.href}>{item.label}</Link>
-                  </BreadcrumbLink>
-                ) : (
-                  <span>{item.label}</span>
-                )}
-              </BreadcrumbItem>
-            </React.Fragment>
-          ))}
-        </BreadcrumbList>
-      </Breadcrumb>
+      <StepBreadcrumb items={breadcrumbItems} />
     </div>
   );
 };

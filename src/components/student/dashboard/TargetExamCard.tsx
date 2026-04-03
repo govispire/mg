@@ -4,12 +4,8 @@ import { Button } from '@/components/ui/button';
 import {
   Play,
   BookOpen,
-  Calendar,
-  MapPin,
-  Clock,
   Target,
   TrendingUp,
-  Bell
 } from 'lucide-react';
 import { getTargetExamRoute } from '@/utils/targetExamRoute';
 import { differenceInDays } from 'date-fns';
@@ -324,6 +320,78 @@ const getExamMeta = (exam: string): ExamMeta => {
   };
 };
 
+/* ─── Circular Donut Ring Component ─── */
+const DonutRing: React.FC<{
+  pct: number;
+  color: string;
+  label: string;
+  size?: number;
+  stroke?: number;
+}> = ({ pct, color, label, size = 72, stroke = 7 }) => {
+  const r = (size - stroke * 2) / 2;
+  const circ = 2 * Math.PI * r;
+  const offset = circ - (pct / 100) * circ;
+
+  return (
+    <div className="flex flex-col items-center gap-1.5">
+      <div className="relative" style={{ width: size, height: size }}>
+        {/* Track */}
+        <svg width={size} height={size} className="-rotate-90" style={{ position: 'absolute', top: 0, left: 0 }}>
+          <circle
+            cx={size / 2} cy={size / 2} r={r}
+            fill="none" stroke="#e2e8f0" strokeWidth={stroke}
+          />
+        </svg>
+        {/* Progress */}
+        <svg width={size} height={size} className="-rotate-90" style={{ position: 'absolute', top: 0, left: 0 }}>
+          <circle
+            cx={size / 2} cy={size / 2} r={r}
+            fill="none"
+            stroke={color}
+            strokeWidth={stroke}
+            strokeLinecap="round"
+            strokeDasharray={circ}
+            strokeDashoffset={offset}
+            style={{ transition: `stroke-dashoffset 1.2s cubic-bezier(0.16,1,0.3,1)` }}
+          />
+        </svg>
+        {/* Label inside */}
+        <div
+          className="absolute inset-0 flex items-center justify-center"
+          style={{ fontWeight: 700, fontSize: 15, color: '#1e293b' }}
+        >
+          {pct}%
+        </div>
+      </div>
+      <span className="text-[11px] text-slate-500 font-medium text-center leading-tight">{label}</span>
+    </div>
+  );
+};
+
+/* ─── Segmented Progress Bar ─── */
+const SegmentedBar: React.FC<{ pct: number; color?: string }> = ({ pct, color = '#2563eb' }) => {
+  const totalSegments = 18;
+  const filledSegments = Math.round((pct / 100) * totalSegments);
+
+  return (
+    <div className="flex gap-1 items-center w-full">
+      {Array.from({ length: totalSegments }).map((_, i) => (
+        <div
+          key={i}
+          className="h-2.5 flex-1 rounded-sm"
+          style={{
+            background: i < filledSegments ? color : '#e2e8f0',
+            transition: `background 0.05s ease ${i * 40}ms`,
+          }}
+        />
+      ))}
+    </div>
+  );
+};
+
+/* ─── Section-color mapping (SVG-safe hex colors) ─── */
+const SECTION_COLORS = ['#38bdf8', '#a78bfa', '#fb923c', '#34d399'];
+
 const TargetExamCard: React.FC<TargetExamCardProps> = ({
   targetExam,
   examCategory,
@@ -343,78 +411,54 @@ const TargetExamCard: React.FC<TargetExamCardProps> = ({
     }
   })();
 
-  const journeyDays = preparationStartDate
-    ? Math.max(0, differenceInDays(new Date(), new Date(preparationStartDate)))
-    : 0;
-
   return (
     <div
-      className={`relative rounded-xl overflow-hidden bg-white text-slate-900 border border-slate-200 shadow-sm h-full flex flex-col md:flex-row`}
+      className="relative rounded-2xl overflow-hidden bg-white text-slate-900 border border-slate-200 shadow-sm h-full flex flex-col md:flex-row"
       style={{ minHeight: 220 }}
     >
-      {/* Left Content Area */}
-      <div className="relative z-10 p-5 md:p-7 flex-1 flex flex-col justify-between">
+      {/* ── Left Content ── */}
+      <div className="relative z-10 p-5 md:p-6 flex-1 flex flex-col gap-4">
+
+        {/* Header row */}
         <div>
-          {/* Top Header Label */}
           <div className="flex items-center gap-2 mb-1">
-            <Target className="h-4 w-4 text-emerald-600 shrink-0" strokeWidth={2.5} />
-            <span className="text-[11px] font-bold text-emerald-600 uppercase tracking-widest">
+            <Target className="h-3.5 w-3.5 text-emerald-600 shrink-0" strokeWidth={2.5} />
+            <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">
               Target Examination
             </span>
           </div>
-          
-          {/* Title & Subtitle */}
-          <h2 className="text-3xl md:text-[34px] font-bold leading-tight tracking-tight mb-8 text-slate-900">
+          <h2 className="text-2xl md:text-[28px] font-bold leading-tight tracking-tight text-slate-900">
             {targetExam.toUpperCase()}
           </h2>
+        </div>
 
-          {/* Progress Bars Section */}
-          <div className="space-y-4 pr-0 lg:pr-6">
-            {/* Overall */}
-            <div>
-              <div className="flex items-center justify-between text-xs text-slate-600 font-medium mb-2">
-                <span>Overall Preparation</span>
-                <span className="font-bold text-slate-900">{meta.overallPct}%</span>
-              </div>
-              <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-emerald-500 rounded-full transition-all duration-1000"
-                  style={{ width: `${meta.overallPct}%` }}
-                />
-              </div>
-            </div>
 
-            {/* Section-wise Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3 pt-2">
-              {meta.sections.map((s, idx) => {
-                // Determine exact colors matching screenshot
-                const colors = ['bg-sky-400', 'bg-violet-400', 'bg-orange-400', 'bg-emerald-400'];
-                const barColor = colors[idx % colors.length];
-
-                return (
-                  <div key={s.name}>
-                    <div className="flex items-center justify-between text-[11px] text-slate-600 font-medium mb-1.5">
-                      <span>{s.name}</span>
-                      <span className="font-bold text-slate-900">{s.pct}%</span>
-                    </div>
-                    <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                      <div
-                        className={`h-full ${barColor} rounded-full`}
-                        style={{ width: `${s.pct}%` }}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+        {/* Overall Preparation segmented bar */}
+        <div>
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-[12px] font-semibold text-slate-700">Overall Preparation</span>
+            <span className="text-[14px] font-bold text-emerald-600">{meta.overallPct}%</span>
           </div>
+          <SegmentedBar pct={meta.overallPct} color="#10b981" />
+        </div>
+
+        {/* Circular donut rings for each subject */}
+        <div className="flex gap-6 flex-wrap">
+          {meta.sections.map((s, idx) => (
+            <DonutRing
+              key={s.name}
+              pct={s.pct}
+              color={SECTION_COLORS[idx % SECTION_COLORS.length]}
+              label={s.name}
+            />
+          ))}
         </div>
 
         {/* Action buttons */}
-        <div className="flex flex-wrap items-center gap-3 mt-6">
+        <div className="flex flex-wrap items-center gap-2.5 mt-auto pt-1">
           <Button
             size="sm"
-            className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-4 py-4 gap-2 rounded-lg shadow-sm"
+            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 gap-2 rounded-lg shadow-sm"
             onClick={() => navigate(mockRoute)}
           >
             <Play className="h-3.5 w-3.5" />
@@ -423,7 +467,8 @@ const TargetExamCard: React.FC<TargetExamCardProps> = ({
 
           <Button
             size="sm"
-            className="bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 font-medium px-4 py-4 gap-2 rounded-lg shadow-sm"
+            variant="outline"
+            className="text-slate-700 border-slate-200 font-medium px-4 py-2 gap-2 rounded-lg hover:bg-slate-50"
             onClick={() => navigate('/student/syllabus')}
           >
             <BookOpen className="h-3.5 w-3.5" />
@@ -432,7 +477,8 @@ const TargetExamCard: React.FC<TargetExamCardProps> = ({
 
           <Button
             size="sm"
-            className="bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 font-medium px-4 py-4 gap-2 rounded-lg shadow-sm"
+            variant="outline"
+            className="text-slate-700 border-slate-200 font-medium px-4 py-2 gap-2 rounded-lg hover:bg-slate-50"
             onClick={() => navigate('/student/performance-analytics')}
           >
             <TrendingUp className="h-3.5 w-3.5" />
@@ -441,22 +487,28 @@ const TargetExamCard: React.FC<TargetExamCardProps> = ({
         </div>
       </div>
 
-      {/* Right Side Days Left Panel */}
-      <div className="hidden md:flex flex-col items-center justify-center p-6 bg-slate-50 border border-slate-200 rounded-[16px] m-6 min-w-[130px] shadow-sm h-fit self-start shrink-0">
-        <div className="text-center">
-          <div className="text-[44px] font-bold leading-none text-emerald-600 tracking-tight mb-0.5">
-            {daysLeft !== null ? daysLeft : '—'}
-          </div>
-          <div className="text-[11px] font-medium text-slate-500 mb-3 tracking-wide">
-            {daysLeft !== null ? 'Days Left' : 'TBA'}
-          </div>
-          <div className="w-12 h-px bg-slate-200 mx-auto mb-3" />
-          <div className="text-[10px] text-slate-500 font-medium mb-0.5">
-            Exam Date
-          </div>
-          <div className="text-xs font-bold text-slate-900">
-            {new Date(meta.examDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
-          </div>
+      {/* ── Right: Days Left Panel ── */}
+      <div className="hidden md:flex flex-col items-center justify-center bg-slate-50 border-l border-slate-200 px-8 py-6 min-w-[148px] shrink-0 text-center rounded-r-2xl">
+        {/* Giant day number */}
+        <div
+          className="font-black leading-none tracking-tight"
+          style={{ fontSize: 64, color: '#10b981', lineHeight: 1 }}
+        >
+          {daysLeft !== null ? daysLeft : '—'}
+        </div>
+        <div className="text-[13px] font-semibold text-slate-500 mt-2 mb-4 tracking-wide">
+          {daysLeft !== null ? 'Days Left' : 'TBA'}
+        </div>
+        <div className="w-10 h-px bg-slate-200 mb-4" />
+        <div className="text-[9px] font-bold uppercase tracking-widest text-slate-400 mb-1">
+          Exam Date
+        </div>
+        <div className="text-[13px] font-bold text-slate-900">
+          {new Date(meta.examDate).toLocaleDateString('en-GB', {
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric',
+          })}
         </div>
       </div>
     </div>
@@ -464,3 +516,4 @@ const TargetExamCard: React.FC<TargetExamCardProps> = ({
 };
 
 export default TargetExamCard;
+

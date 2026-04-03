@@ -120,7 +120,25 @@ export const ExamInterface: React.FC<ExamInterfaceProps> = ({
     const isLastSection = currentSectionIdx === examConfig.sections.length - 1;
     const isSectionLocked = sessionState.submittedSections.includes(currentSectionId);
 
-    // ── Sync local answer on question change ───────────────────────────
+    // ── Safety net: if we ever land on a submitted section (e.g. stale
+    //    localStorage, race condition, or timer auto-submit), immediately
+    //    redirect to the first open section. Runs reactively whenever
+    //    submittedSections grows or the current section changes.
+    const submittedCount = sessionState.submittedSections.length;
+    useEffect(() => {
+        if (!currentSectionId || sessionState.isPaused) return;
+        if (sessionState.submittedSections.includes(currentSectionId)) {
+            const firstOpen = examConfig.sections.findIndex(
+                (s) => !sessionState.submittedSections.includes(s.id)
+            );
+            if (firstOpen !== -1) {
+                navigateToSection(firstOpen);
+            }
+            // If firstOpen === -1 all sections are done; the submit flow handles final submit.
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [currentSectionId, submittedCount]);
+
     useEffect(() => {
         const saved = currentQuestion
             ? sessionState.questionStates[currentQuestion.id]?.selectedAnswer ?? null
@@ -176,9 +194,13 @@ export const ExamInterface: React.FC<ExamInterfaceProps> = ({
 
         submitSection(currentSectionId);
 
-        const nextIdx = currentSectionIdx + 1;
-        if (nextIdx < examConfig.sections.length) {
-            // Navigate to next section silently
+        // Build alreadySubmitted set (same stale-state fix as in handleSectionSubmitConfirm)
+        const alreadySubmitted = new Set([...sessionState.submittedSections, currentSectionId]);
+        const nextIdx = examConfig.sections.findIndex(
+            (s, i) => i > currentSectionIdx && !alreadySubmitted.has(s.id)
+        );
+        if (nextIdx !== -1) {
+            // Navigate to next unsubmitted section silently
             navigateToSection(nextIdx);
             toast.info(`"${currentSection?.name}" submitted — moving to next section.`, { duration: 4000 });
         } else {
@@ -322,6 +344,17 @@ export const ExamInterface: React.FC<ExamInterfaceProps> = ({
             return;
         }
 
+        // LOCKED MODE: find the first unsubmitted section index
+        const firstUnsubmittedIdx = examConfig.sections.findIndex(
+            (s) => !sessionState.submittedSections.includes(s.id)
+        );
+
+        // Block jumping ahead — students can only go to the very next section
+        if (targetIdx > firstUnsubmittedIdx) {
+            toast.warning('Complete the current section before moving to the next one.');
+            return;
+        }
+
         // LOCKED MODE: debounce rapid clicks, show confirm modal
         const now = Date.now();
         if (now - lastModalAtRef.current < 1500) {
@@ -343,16 +376,20 @@ export const ExamInterface: React.FC<ExamInterfaceProps> = ({
         // Lock the current section
         submitSection(currentSectionId);
 
+        // Build the full set of submitted IDs, including the one we JUST submitted
+        // (because submitSection state update is async and won't be in sessionState yet)
+        const alreadySubmitted = new Set([...sessionState.submittedSections, currentSectionId]);
+
         if (pendingSectionIndex !== null && pendingSectionIndex !== currentSectionIdx) {
-            // Going to a different (next) section
+            // Going to a specific (next) section — make sure it's not already submitted
             const targetId = examConfig.sections[pendingSectionIndex]?.id;
-            if (!targetId || !sessionState.submittedSections.includes(targetId)) {
+            if (targetId && !alreadySubmitted.has(targetId)) {
                 navigateToSection(pendingSectionIndex);
             }
         } else {
-            // Advance to next unsubmitted section
+            // Advance to the very next unsubmitted section after the current one
             const nextUnsubmitted = examConfig.sections.findIndex(
-                (s, i) => i > currentSectionIdx && !sessionState.submittedSections.includes(s.id) && s.id !== currentSectionId
+                (s, i) => i > currentSectionIdx && !alreadySubmitted.has(s.id)
             );
             if (nextUnsubmitted !== -1) {
                 navigateToSection(nextUnsubmitted);
@@ -370,6 +407,7 @@ export const ExamInterface: React.FC<ExamInterfaceProps> = ({
         submitSection, navigateToSection, examConfig.sections,
         sessionState.submittedSections, handleFinalSubmit,
     ]);
+
 
     const handleSectionSummaryCancel = () => {
         setShowSectionSummary(false);
@@ -436,10 +474,10 @@ export const ExamInterface: React.FC<ExamInterfaceProps> = ({
                 </DialogContent>
             </Dialog>
 
-            {/* ── Section Summary Modal (full-screen overlay) ── */}
             <SectionSummaryModal
                 open={showSectionSummary}
                 sectionName={modalSectionName}
+                sectionNumber={modalSectionIdx + 1}
                 stats={modalStats}
                 onConfirm={handleSectionSubmitConfirm}
                 onCancel={handleSectionSummaryCancel}
@@ -513,6 +551,7 @@ export const ExamInterface: React.FC<ExamInterfaceProps> = ({
                 onSectionChange={handleSectionTabClick}
                 sectionStats={sectionStats}
                 submittedSections={sessionState.submittedSections}
+                sectionLockEnabled={sectionLockEnabled}
             />
 
             {/* ── Section info row: Sections label + Time Left + Pause ── */}

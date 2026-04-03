@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import {
   Plus, Trash2, Edit2, Save, X, Check, Eye, EyeOff,
-  Calendar, Bell, AlertCircle, GraduationCap, AlertTriangle,
+  Calendar, Bell, AlertCircle, GraduationCap, AlertTriangle, Loader2,
 } from 'lucide-react';
 import {
   UpcomingExamEntry,
@@ -18,7 +18,7 @@ import {
   daysUntil,
   formatDisplayDate,
 } from '@/data/upcomingExamsStore';
-import { allSyllabusData } from '@/data/syllabusData';
+import { useExamCatalog } from '@/hooks/useExamCatalog';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 const urgencyClass = (days: number) => {
@@ -28,18 +28,6 @@ const urgencyClass = (days: number) => {
   return 'bg-emerald-100 text-emerald-700';
 };
 
-// ─── All exam categories from syllabusData ────────────────────────────────────
-const EXAM_CATEGORIES = [
-  { value: 'all',             label: '— All Categories —' },
-  { value: 'banking',         label: '🏦 Banking' },
-  { value: 'ssc',             label: '📋 SSC' },
-  { value: 'railways-rrb',    label: '🚂 Railways / RRB' },
-  { value: 'civil-services',  label: '🏛️ Civil Services (UPSC)' },
-  { value: 'insurance',       label: '🛡️ Insurance' },
-  { value: 'state-psc',       label: '📜 State PSC' },
-  { value: 'defence',         label: '⚔️ Defence' },
-];
-
 const BLANK_ENTRY: Omit<UpcomingExamEntry, 'id'> = {
   examName: '',
   fullName: '',
@@ -47,7 +35,7 @@ const BLANK_ENTRY: Omit<UpcomingExamEntry, 'id'> = {
   examDate: '',
   registrationDeadline: '',
   logo: '',
-  category: 'banking',
+  category: '',
   isActive: true,
   note: '',
 };
@@ -60,16 +48,42 @@ const UpcomingExamsManager: React.FC = () => {
   const [form, setForm] = useState<Omit<UpcomingExamEntry, 'id'>>(BLANK_ENTRY);
   const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
   const [availableTiers, setAvailableTiers] = useState<string[]>([]);
-  const [formCategory, setFormCategory] = useState<string>('all');   // category filter for catalog picker
-  const [deleteTarget, setDeleteTarget] = useState<UpcomingExamEntry | null>(null); // for delete confirmation
+  const [selectedCategory, setSelectedCategory] = useState<string>(''); // category id from catalog
+  const [deleteTarget, setDeleteTarget] = useState<UpcomingExamEntry | null>(null);
 
-  // All exams from catalog
-  const catalogExams = Object.values(allSyllabusData);
+  // ── Live catalog from Test Catalog Manager ───────────────────────────────
+  const { catalog, loading: catalogLoading } = useExamCatalog();
 
-  // Filtered exams based on selected category in the form
-  const filteredCatalogExams = formCategory === 'all'
-    ? catalogExams
-    : catalogExams.filter(e => e.category === formCategory);
+  // All visible categories from the catalog
+  const catalogCategories = useMemo(
+    () => catalog.filter(c => c.isVisible !== false),
+    [catalog]
+  );
+
+  // All exams in the selected category (flattened from all sections)
+  const catalogExamsInCategory = useMemo(() => {
+    if (!selectedCategory) return [];
+    const cat = catalogCategories.find(c => c.id === selectedCategory);
+    if (!cat) return [];
+    // Flatten all sections → exams, deduplicate by id
+    const seen = new Set<string>();
+    const result: { id: string; name: string; logo: string; tiers: string[] }[] = [];
+    cat.sections.forEach(sec => {
+      sec.exams.forEach(exam => {
+        if (!seen.has(exam.id)) {
+          seen.add(exam.id);
+          // Derive tiers from testSlots (e.g. 'prelims', 'mains')
+          const tierSet = new Set<string>();
+          (exam.testSlots ?? []).forEach(slot => {
+            if (slot.tests.length > 0 && slot.tab) tierSet.add(slot.tab);
+          });
+          const tiers = Array.from(tierSet).map(t => t.charAt(0).toUpperCase() + t.slice(1));
+          result.push({ id: exam.id, name: exam.name, logo: exam.logo, tiers });
+        }
+      });
+    });
+    return result;
+  }, [catalogCategories, selectedCategory]);
 
   useEffect(() => {
     setEntries(getUpcomingExams());
@@ -89,8 +103,7 @@ const UpcomingExamsManager: React.FC = () => {
   const startEdit = (entry: UpcomingExamEntry) => {
     setEditingId(entry.id);
     setAvailableTiers([]);
-    // Pre-set category filter to the exam's category
-    setFormCategory(entry.category || 'all');
+    setSelectedCategory(entry.category || '');
     setForm({
       examName: entry.examName,
       fullName: entry.fullName,
@@ -129,11 +142,10 @@ const UpcomingExamsManager: React.FC = () => {
     persist([...entries, newEntry]);
     setAdding(false);
     setForm(BLANK_ENTRY);
-    setFormCategory('all');
+    setSelectedCategory('');
     showToast(`"${form.examName}" added to dashboard`);
   };
 
-  // Called after user CONFIRMS deletion in the AlertDialog
   const confirmDelete = () => {
     if (!deleteTarget) return;
     persist(entries.filter(e => e.id !== deleteTarget.id));
@@ -148,30 +160,24 @@ const UpcomingExamsManager: React.FC = () => {
     persist(updated);
   };
 
-  // Auto-fill form from catalog when an exam is selected
-  const onCatalogSelect = (examId: string) => {
-    const exam = allSyllabusData[examId];
+  // Auto-fill from catalog exam selection
+  const onCatalogExamSelect = (examId: string) => {
+    const exam = catalogExamsInCategory.find(e => e.id === examId);
     if (!exam) return;
-    const tiers = exam.tiers.map(t => t.name);
-    setAvailableTiers(tiers);
+    setAvailableTiers(exam.tiers.length > 0 ? exam.tiers : ['Prelims', 'Mains']);
     setForm(prev => ({
       ...prev,
-      examName: exam.examName,
-      fullName: exam.fullName,
+      examName: exam.name,
       logo: exam.logo || '',
-      category: exam.category,
-      stage: tiers[0] || 'Prelims',
+      category: selectedCategory,
+      stage: exam.tiers[0] || 'Prelims',
     }));
   };
 
-  // When category filter changes in form, reset catalog selection
-  const onFormCategoryChange = (cat: string) => {
-    setFormCategory(cat);
-    // Update the form category too (if not 'all')
-    if (cat !== 'all') {
-      setForm(prev => ({ ...prev, category: cat }));
-    }
+  const onCategoryChange = (catId: string) => {
+    setSelectedCategory(catId);
     setAvailableTiers([]);
+    setForm(prev => ({ ...prev, category: catId, examName: '', logo: '', stage: 'Prelims' }));
   };
 
   // ── Form panel ────────────────────────────────────────────────────────────
@@ -182,51 +188,61 @@ const UpcomingExamsManager: React.FC = () => {
           {adding ? 'Add New Upcoming Exam' : 'Edit Exam Entry'}
         </CardTitle>
 
-        {/* Step 1: Category filter */}
+        {/* Step 1: Category filter from live catalog */}
         <div className="mt-3 space-y-1">
           <label className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wide">
             Step 1 — Select Exam Category
           </label>
-          <div className="flex flex-wrap gap-1.5">
-            {EXAM_CATEGORIES.map(cat => (
-              <button
-                key={cat.value}
-                onClick={() => onFormCategoryChange(cat.value)}
-                className={`text-[11px] font-medium px-2.5 py-1 rounded-full border transition-all ${
-                  formCategory === cat.value
-                    ? 'bg-[#003366] text-white border-[#003366]'
-                    : 'bg-white text-slate-600 border-slate-200 hover:border-[#003366]/40 hover:bg-[#003366]/5'
-                }`}
-              >
-                {cat.label}
-              </button>
-            ))}
-          </div>
+          {catalogLoading ? (
+            <div className="flex items-center gap-2 text-xs text-muted-foreground py-2">
+              <Loader2 className="w-3 h-3 animate-spin" /> Loading categories from catalog…
+            </div>
+          ) : (
+            <div className="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto pr-1">
+              {catalogCategories.map(cat => (
+                <button
+                  key={cat.id}
+                  onClick={() => onCategoryChange(cat.id)}
+                  className={`text-[11px] font-medium px-2.5 py-1 rounded-full border transition-all flex items-center gap-1 ${
+                    selectedCategory === cat.id
+                      ? 'bg-[#003366] text-white border-[#003366]'
+                      : 'bg-white text-slate-600 border-slate-200 hover:border-[#003366]/40 hover:bg-[#003366]/5'
+                  }`}
+                >
+                  {cat.logo ? (
+                    <img src={cat.logo} alt="" className="w-3.5 h-3.5 object-contain rounded-sm" />
+                  ) : null}
+                  {cat.name}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
-        {/* Step 2: Catalog picker filtered by category */}
+        {/* Step 2: Exam picker from catalog */}
         <div className="mt-3">
           <label className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wide">
-            Step 2 — Quick-fill from Exam Catalog
+            Step 2 — Pick Exam from Catalog
           </label>
-          <select
-            className="mt-1 w-full text-xs border rounded-md px-2 py-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-[#003366]"
-            defaultValue=""
-            onChange={e => onCatalogSelect(e.target.value)}
-          >
-            <option value="" disabled>
-              {filteredCatalogExams.length === 0
-                ? 'No exams in this category…'
-                : `Select from ${filteredCatalogExams.length} exam(s)…`}
-            </option>
-            {filteredCatalogExams.map(e => (
-              <option key={e.examId} value={e.examId}>{e.examName} — {e.fullName}</option>
-            ))}
-          </select>
-          {filteredCatalogExams.length === 0 && formCategory !== 'all' && (
-            <p className="text-[10px] text-amber-600 mt-1">
-              ⚠ No catalog exams found for this category. You can still fill manually below.
-            </p>
+          {!selectedCategory ? (
+            <p className="text-[10px] text-slate-400 mt-1 italic">Select a category above to see available exams.</p>
+          ) : catalogExamsInCategory.length === 0 ? (
+            <div className="mt-1 p-2.5 rounded-lg bg-amber-50 border border-amber-200 text-[10px] text-amber-700">
+              ⚠ No exams found in the "<strong>{catalogCategories.find(c => c.id === selectedCategory)?.name}</strong>" category yet.
+              Please add exams in <strong>Test Catalog</strong> first, or fill the details manually below.
+            </div>
+          ) : (
+            <select
+              className="mt-1 w-full text-xs border rounded-md px-2 py-1.5 bg-white focus:outline-none focus:ring-1 focus:ring-[#003366]"
+              defaultValue=""
+              key={selectedCategory} // reset on category change
+              onChange={e => onCatalogExamSelect(e.target.value)}
+            >
+              <option value="" disabled>Select from {catalogExamsInCategory.length} exam(s)…</option>
+              {catalogExamsInCategory.map(e => (
+                <option key={e.id} value={e.id}>{e.name}</option>
+              ))}
+            </select>
           )}
         </div>
       </CardHeader>
@@ -281,8 +297,9 @@ const UpcomingExamsManager: React.FC = () => {
             value={form.category}
             onChange={e => setForm(p => ({ ...p, category: e.target.value }))}
           >
-            {EXAM_CATEGORIES.filter(c => c.value !== 'all').map(cat => (
-              <option key={cat.value} value={cat.value}>{cat.label}</option>
+            <option value="">— select —</option>
+            {catalogCategories.map(cat => (
+              <option key={cat.id} value={cat.id}>{cat.name}</option>
             ))}
           </select>
         </div>
@@ -325,7 +342,7 @@ const UpcomingExamsManager: React.FC = () => {
             <Save size={12} />{adding ? 'Add to Dashboard' : 'Save Changes'}
           </Button>
           <Button size="sm" variant="outline" className="h-8 text-xs gap-1"
-            onClick={() => { setAdding(false); setEditingId(null); setForm(BLANK_ENTRY); setAvailableTiers([]); setFormCategory('all'); }}>
+            onClick={() => { setAdding(false); setEditingId(null); setForm(BLANK_ENTRY); setAvailableTiers([]); setSelectedCategory(''); }}>
             <X size={12} />Cancel
           </Button>
         </div>
@@ -357,7 +374,7 @@ const UpcomingExamsManager: React.FC = () => {
           </Badge>
           {!adding && !editingId && (
             <Button size="sm" className="h-8 text-xs bg-[#003366] gap-1"
-              onClick={() => { setAdding(true); setForm(BLANK_ENTRY); setFormCategory('all'); }}>
+              onClick={() => { setAdding(true); setForm(BLANK_ENTRY); setSelectedCategory(''); }}>
               <Plus size={13} />Add Exam
             </Button>
           )}
@@ -391,6 +408,18 @@ const UpcomingExamsManager: React.FC = () => {
           const days = daysUntil(entry.examDate);
           const isEditing = editingId === entry.id;
 
+          // Resolve logo: prefer stored logo, fall back to catalog logo
+          const catalogLogo = (() => {
+            for (const cat of catalog) {
+              for (const sec of cat.sections) {
+                const exam = sec.exams.find(e => e.name === entry.examName || e.id === entry.examName.toLowerCase().replace(/\s+/g, '-'));
+                if (exam?.logo) return exam.logo;
+              }
+            }
+            return '';
+          })();
+          const displayLogo = entry.logo || catalogLogo;
+
           return (
             <div key={entry.id}>
               {isEditing ? (
@@ -402,8 +431,8 @@ const UpcomingExamsManager: React.FC = () => {
                       {/* Left: logo + info */}
                       <div className="flex items-center gap-3 min-w-0">
                         <div className="w-10 h-10 rounded-lg bg-muted/50 flex items-center justify-center shrink-0 overflow-hidden border">
-                          {entry.logo ? (
-                            <img src={entry.logo} alt={entry.examName} className="w-8 h-8 object-contain" />
+                          {displayLogo ? (
+                            <img src={displayLogo} alt={entry.examName} className="w-8 h-8 object-contain" />
                           ) : (
                             <GraduationCap size={18} className="text-muted-foreground" />
                           )}
@@ -413,7 +442,7 @@ const UpcomingExamsManager: React.FC = () => {
                             <p className="font-bold text-sm">{entry.examName}</p>
                             <span className="text-[10px] text-muted-foreground border rounded-full px-1.5 py-0.5">{entry.stage}</span>
                             <span className="text-[10px] bg-blue-50 text-blue-600 border border-blue-100 rounded-full px-1.5 py-0.5 capitalize">
-                              {entry.category}
+                              {catalogCategories.find(c => c.id === entry.category)?.name || entry.category}
                             </span>
                             {!entry.isActive && (
                               <span className="text-[10px] bg-slate-100 text-slate-500 rounded-full px-1.5 py-0.5">Hidden</span>
@@ -448,7 +477,6 @@ const UpcomingExamsManager: React.FC = () => {
                           </span>
                         </div>
 
-                        {/* Toggle visibility */}
                         <button
                           onClick={() => toggleActive(entry.id)}
                           title={entry.isActive ? 'Hide from students' : 'Show to students'}
@@ -457,7 +485,6 @@ const UpcomingExamsManager: React.FC = () => {
                           {entry.isActive ? <Eye size={14} /> : <EyeOff size={14} />}
                         </button>
 
-                        {/* Edit */}
                         <button
                           onClick={() => startEdit(entry)}
                           className="p-1.5 rounded-md hover:bg-muted/50 text-muted-foreground transition-colors"
@@ -465,7 +492,6 @@ const UpcomingExamsManager: React.FC = () => {
                           <Edit2 size={14} />
                         </button>
 
-                        {/* Delete — opens confirmation dialog */}
                         <button
                           onClick={() => setDeleteTarget(entry)}
                           className="p-1.5 rounded-md hover:bg-red-50 text-muted-foreground hover:text-red-600 transition-colors"
@@ -490,6 +516,8 @@ const UpcomingExamsManager: React.FC = () => {
           <strong>Live changes</strong> — All edits are immediately reflected on the student dashboard.
           Use <strong>Eye icon</strong> to temporarily hide an exam without deleting it.
           Exams are automatically sorted by exam date on the student widget.
+          <br />
+          <strong>Tip:</strong> Categories and exams are fetched live from the <strong>Test Catalog</strong> page.
         </div>
       </div>
 

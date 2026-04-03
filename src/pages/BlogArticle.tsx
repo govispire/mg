@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { ArrowLeft, Calendar, Clock, User, Share2, Facebook, Twitter, Linkedin, Copy, BookOpen, ChevronRight, Home, Tag } from 'lucide-react';
+import { ArrowLeft, Calendar, Clock, User, Share2, Facebook, Twitter, Linkedin, Copy, BookOpen, Home, Tag } from 'lucide-react';
+import { StepBreadcrumb } from '@/components/ui/step-breadcrumb';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -209,16 +210,15 @@ const BlogArticle = () => {
       
       <main className="container mx-auto px-4 py-8">
         {/* Breadcrumb */}
-        <nav className="flex items-center gap-2 text-sm text-muted-foreground mb-8">
-          <Link to="/" className="flex items-center gap-1 hover:text-primary transition-colors">
-            <Home className="h-4 w-4" />
-            PrepSmart Home
-          </Link>
-          <ChevronRight className="h-4 w-4" />
-          <Link to="/blog" className="hover:text-primary transition-colors">Blog</Link>
-          <ChevronRight className="h-4 w-4" />
-          <span className="text-foreground line-clamp-1 max-w-[200px]">{article.title}</span>
-        </nav>
+        <div className="mb-8">
+          <StepBreadcrumb
+            items={[
+              { label: 'Home', icon: <Home className="h-4 w-4" />, href: '/' },
+              { label: 'Blog', href: '/blog' },
+              { label: article.category, isActive: true },
+            ]}
+          />
+        </div>
 
         {/* Back Button */}
         <Link to="/blog" className="inline-flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors mb-8">

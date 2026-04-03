@@ -1,6 +1,5 @@
 import React from 'react';
-import { Clock, Flag, CheckCircle2, XCircle, Eye, AlertTriangle } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { X } from 'lucide-react';
 
 export interface SectionSummaryStats {
     total: number;
@@ -13,19 +12,19 @@ export interface SectionSummaryStats {
 interface SectionSummaryModalProps {
     open: boolean;
     sectionName: string;
-    /** e.g. "18:30" — omit if no per-section timer */
+    /** 1-based section number */
+    sectionNumber?: number;
     sectionTimeLeft?: string;
     stats: SectionSummaryStats;
     onConfirm: () => void;
     onCancel: () => void;
-    /** If true, cancel button is hidden (timer-triggered auto-confirm flow) */
     autoSubmitting?: boolean;
 }
 
 export const SectionSummaryModal: React.FC<SectionSummaryModalProps> = ({
     open,
     sectionName,
-    sectionTimeLeft,
+    sectionNumber = 1,
     stats,
     onConfirm,
     onCancel,
@@ -34,98 +33,82 @@ export const SectionSummaryModal: React.FC<SectionSummaryModalProps> = ({
     if (!open) return null;
 
     return (
-        /* ── Full-viewport overlay ── */
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
-            <div className="bg-white w-full max-w-2xl mx-4 rounded-2xl shadow-2xl overflow-hidden flex flex-col">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+            {/* Card — wide enough to show all 6 columns */}
+            <div className="bg-white w-full max-w-2xl rounded-xl shadow-2xl flex flex-col">
 
-                {/* ── Header bar ── */}
-                <div className="bg-[#1976d2] px-8 py-5 flex items-center justify-between">
-                    <h2 className="text-xl font-bold text-white tracking-wide">Section Summary</h2>
-                    {sectionTimeLeft && (
-                        <span className="flex items-center gap-2 bg-white/20 text-white text-sm font-semibold px-3 py-1.5 rounded-full">
-                            <Clock className="w-4 h-4" />
-                            Time Left: {sectionTimeLeft}
-                        </span>
+                {/* ── Header ── */}
+                <div className="relative flex flex-col items-center pt-7 pb-4 px-8">
+                    {!autoSubmitting && (
+                        <button
+                            onClick={onCancel}
+                            className="absolute right-5 top-5 w-7 h-7 rounded-full border border-gray-300 flex items-center justify-center text-gray-500 hover:bg-gray-100 transition-colors"
+                        >
+                            <X className="w-4 h-4" />
+                        </button>
                     )}
+                    <h2 className="text-xl font-bold text-gray-900">Test Summary</h2>
+                    <p className="text-sm text-gray-500 mt-1">Do you want to Submit this Section?</p>
                 </div>
 
-                {/* ── Body ── */}
-                <div className="px-8 py-6 space-y-6">
-                    <p className="text-base text-gray-700 text-center font-medium">
-                        Do you want to submit this section?
-                    </p>
-
-                    {/* ── Section label ── */}
-                    <div className="bg-gray-100 rounded-lg px-5 py-3">
-                        <span className="text-xs text-gray-500 uppercase tracking-widest font-semibold">Section</span>
-                        <p className="text-lg font-bold text-gray-900 mt-0.5">{sectionName}</p>
-                    </div>
-
-                    {/* ── Stats grid ── */}
-                    <div className="grid grid-cols-4 gap-3">
-                        <div className="flex flex-col items-center bg-green-50 border border-green-200 rounded-xl py-4 gap-1">
-                            <CheckCircle2 className="w-6 h-6 text-green-600" />
-                            <span className="text-2xl font-bold text-green-700">{stats.answered}</span>
-                            <span className="text-xs text-green-600 font-medium text-center">Answered</span>
-                        </div>
-                        <div className="flex flex-col items-center bg-red-50 border border-red-200 rounded-xl py-4 gap-1">
-                            <XCircle className="w-6 h-6 text-red-500" />
-                            <span className="text-2xl font-bold text-red-600">{stats.notAnswered}</span>
-                            <span className="text-xs text-red-500 font-medium text-center">Not Answered</span>
-                        </div>
-                        <div className="flex flex-col items-center bg-gray-50 border border-gray-200 rounded-xl py-4 gap-1">
-                            <Eye className="w-6 h-6 text-gray-400" />
-                            <span className="text-2xl font-bold text-gray-600">{stats.notVisited}</span>
-                            <span className="text-xs text-gray-500 font-medium text-center">Not Visited</span>
-                        </div>
-                        <div className="flex flex-col items-center bg-purple-50 border border-purple-200 rounded-xl py-4 gap-1">
-                            <Flag className="w-6 h-6 text-purple-600 fill-purple-200" />
-                            <span className="text-2xl font-bold text-purple-700">{stats.marked}</span>
-                            <span className="text-xs text-purple-600 font-medium text-center">Marked</span>
-                        </div>
-                    </div>
-
-                    {/* ── Total row ── */}
-                    <div className="flex items-center justify-between px-5 py-3 bg-blue-50 border border-blue-200 rounded-lg">
-                        <span className="text-sm font-semibold text-blue-800">Total Questions</span>
-                        <span className="text-xl font-bold text-blue-900">{stats.total}</span>
-                    </div>
-
-                    {/* ── Warning ── */}
-                    {(stats.notAnswered > 0 || stats.notVisited > 0) && (
-                        <div className="flex items-start gap-2 bg-amber-50 border border-amber-300 rounded-lg px-4 py-3">
-                            <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
-                            <p className="text-sm text-amber-800">
-                                You have <strong>{stats.notAnswered}</strong> unanswered and <strong>{stats.notVisited}</strong> unvisited questions.
-                                Once submitted, this section <strong>cannot be re-opened</strong>.
-                            </p>
-                        </div>
-                    )}
-
-                    <p className="text-sm text-gray-700 text-center font-medium">
-                        Are you sure you want to submit this section?
-                    </p>
+                {/* ── Table — use real <table> so browser handles column sizing ── */}
+                <div className="px-6 pb-5">
+                    <table className="w-full border-collapse border border-gray-300 text-sm rounded-lg overflow-hidden">
+                        <thead>
+                            <tr className="bg-gray-50">
+                                <th className="border border-gray-300 px-3 py-3 text-center text-xs font-semibold text-gray-600 whitespace-nowrap w-12">
+                                    S.<br />No.
+                                </th>
+                                <th className="border border-gray-300 px-4 py-3 text-center text-xs font-semibold text-gray-600">
+                                    Section Name
+                                </th>
+                                <th className="border border-gray-300 px-3 py-3 text-center text-xs font-semibold text-gray-600 whitespace-nowrap">
+                                    No. of<br />Questions
+                                </th>
+                                <th className="border border-gray-300 px-3 py-3 text-center text-xs font-semibold text-gray-600 whitespace-nowrap">
+                                    Answered
+                                </th>
+                                <th className="border border-gray-300 px-3 py-3 text-center text-xs font-semibold text-gray-600 whitespace-nowrap">
+                                    Not<br />Answered
+                                </th>
+                                <th className="border border-gray-300 px-3 py-3 text-center text-xs font-semibold text-gray-600 whitespace-nowrap">
+                                    Not<br />Visited
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr className="bg-white">
+                                <td className="border border-gray-200 px-3 py-4 text-center text-sm text-gray-700">
+                                    {sectionNumber}
+                                </td>
+                                <td className="border border-gray-200 px-4 py-4 text-center text-sm font-medium text-gray-700 leading-snug">
+                                    {sectionName}
+                                </td>
+                                <td className="border border-gray-200 px-3 py-4 text-center text-sm text-gray-700">
+                                    {stats.total}
+                                </td>
+                                <td className="border border-gray-200 px-3 py-4 text-center text-sm font-semibold text-gray-800">
+                                    {stats.answered}
+                                </td>
+                                <td className="border border-gray-200 px-3 py-4 text-center text-sm font-semibold text-blue-600">
+                                    {stats.notAnswered}
+                                </td>
+                                <td className="border border-gray-200 px-3 py-4 text-center text-sm font-semibold text-gray-800">
+                                    {stats.notVisited}
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
 
                 {/* ── Footer ── */}
-                <div className="px-8 pb-7 flex items-center justify-center gap-4">
-                    <Button
+                <div className="px-6 pb-7 flex justify-center">
+                    <button
                         onClick={onConfirm}
-                        size="lg"
-                        className="bg-[#1976d2] hover:bg-[#1565c0] text-white px-10 text-base font-semibold"
+                        className="bg-[#1565c0] hover:bg-[#0d47a1] active:bg-[#0a2d6e] text-white text-sm font-semibold px-12 py-2.5 rounded transition-colors"
                     >
                         Submit Section
-                    </Button>
-                    {!autoSubmitting && (
-                        <Button
-                            variant="outline"
-                            size="lg"
-                            onClick={onCancel}
-                            className="border-gray-300 text-gray-700 px-10 text-base"
-                        >
-                            Cancel
-                        </Button>
-                    )}
+                    </button>
                 </div>
             </div>
         </div>

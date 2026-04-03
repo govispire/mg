@@ -752,28 +752,70 @@ const TestBuilderPage: React.FC = () => {
                             </div>
                         </div>
 
-                        {/* Section Order */}
+        {/* Section Order */}
                         <div className="border rounded-xl p-5 space-y-3">
-                            <h3 className="text-sm font-semibold flex items-center gap-2"><Layers className="w-4 h-4 text-primary" />Section Order</h3>
-                            <p className="text-xs text-muted-foreground">Students will see sections in this order. Use the ▲▼ arrows in the Builder tab to reorder.</p>
+                            <h3 className="text-sm font-semibold flex items-center gap-2"><Layers className="w-4 h-4 text-primary" />Section Order &amp; Lock Preview</h3>
+                            <p className="text-xs text-muted-foreground">
+                                {data.sectionLockEnabled
+                                    ? 'Students will unlock sections sequentially in this order. Use the ▲▼ arrows in the Builder tab to reorder.'
+                                    : 'Students will see sections in this order. Use the ▲▼ arrows in the Builder tab to reorder.'}
+                            </p>
+                            {data.sectionLockEnabled && data.sections.length > 1 && (
+                                <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-50 border border-red-100 text-xs text-red-700">
+                                    <Lock className="w-3.5 h-3.5 shrink-0" />
+                                    <span>Sections are sequential — students must submit each section before the next one unlocks. They cannot go back.</span>
+                                </div>
+                            )}
                             {data.sections.length === 0
                                 ? <p className="text-xs text-gray-400 italic">No sections added yet.</p>
                                 : (
                                     <div className="space-y-2">
                                         {data.sections.map((s, i) => (
-                                            <div key={s.id} className="flex items-center gap-3 bg-gray-50 border rounded-lg px-3 py-2">
-                                                <span className="text-xs font-bold text-primary w-6 text-center">{i + 1}</span>
-                                                <div className="flex items-center gap-2 flex-1">
-                                                    <span className="text-xs font-medium">{s.name}</span>
-                                                    <span className="text-[10px] text-muted-foreground">· {s.questions.length} Qs · {s.durationMinutes}min</span>
+                                            <div key={s.id} className="flex items-center gap-3 bg-gray-50 border rounded-lg px-3 py-2.5">
+                                                {/* Order number */}
+                                                <span className="text-xs font-bold text-primary w-6 text-center shrink-0">{i + 1}</span>
+
+                                                {/* Lock state icon */}
+                                                {data.sectionLockEnabled ? (
+                                                    i === 0
+                                                        ? <Unlock className="w-3.5 h-3.5 text-green-500 shrink-0" />
+                                                        : <Lock className="w-3.5 h-3.5 text-red-400 shrink-0" />
+                                                ) : (
+                                                    <Unlock className="w-3.5 h-3.5 text-green-400 shrink-0" />
+                                                )}
+
+                                                {/* Section info */}
+                                                <div className="flex items-center gap-2 flex-1 min-w-0">
+                                                    <span className="text-xs font-medium truncate">{s.name}</span>
+                                                    <span className="text-[10px] text-muted-foreground shrink-0">· {s.questions.length} Qs · {s.durationMinutes}min</span>
                                                 </div>
-                                                <div className="flex gap-1">
+
+                                                {/* Lock badge */}
+                                                {data.sectionLockEnabled && (
+                                                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0 ${
+                                                        i === 0
+                                                            ? 'bg-green-50 text-green-700 border border-green-200'
+                                                            : 'bg-red-50 text-red-600 border border-red-100'
+                                                    }`}>
+                                                        {i === 0
+                                                            ? '🔓 Opens First'
+                                                            : `🔒 Unlocks after §${i}`}
+                                                    </span>
+                                                )}
+
+                                                {/* Reorder */}
+                                                <div className="flex gap-1 shrink-0">
                                                     <button onClick={() => moveSectionUp(i)} disabled={i === 0} className="p-1 text-gray-300 hover:text-primary disabled:opacity-20 rounded"><ArrowUp className="w-3 h-3" /></button>
                                                     <button onClick={() => moveSectionDown(i)} disabled={i === data.sections.length - 1} className="p-1 text-gray-300 hover:text-primary disabled:opacity-20 rounded"><ArrowDown className="w-3 h-3" /></button>
                                                 </div>
                                             </div>
                                         ))}
-                                        <p className="text-[11px] text-muted-foreground pt-1">Student will start from: <strong>{data.sections[0]?.name ?? '—'}</strong></p>
+                                        <p className="text-[11px] text-muted-foreground pt-1">
+                                            Student starts from: <strong>{data.sections[0]?.name ?? '—'}</strong>
+                                            {data.sectionLockEnabled && data.sections.length > 1 && (
+                                                <span className="ml-1 text-red-500">· cannot go back once submitted</span>
+                                            )}
+                                        </p>
                                     </div>
                                 )}
                         </div>

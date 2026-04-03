@@ -107,7 +107,7 @@ const FeaturedCoursesSection = ({ navigate }: { navigate: (path: string) => void
   ];
 
   return (
-    <div className="space-y-0 bg-white border border-border/60 rounded-2xl shadow-sm overflow-visible">
+    <div className="space-y-0 bg-white border border-border/60 rounded-2xl shadow-sm" style={{ overflow: 'visible' }}>
 
       {/* Header */}
       <div className="px-5 pt-5 pb-3">
@@ -118,7 +118,7 @@ const FeaturedCoursesSection = ({ navigate }: { navigate: (path: string) => void
       </div>
 
       {/* Scrollable Cards Row */}
-      <div className="relative px-3 py-4">
+      <div className="relative px-3 py-4" style={{ overflow: 'visible' }}>
         {/* Left arrow */}
         <button
           onClick={() => scroll('left')}
@@ -130,8 +130,8 @@ const FeaturedCoursesSection = ({ navigate }: { navigate: (path: string) => void
         {/* Card scroll container */}
         <div
           ref={scrollRef}
-          className="flex gap-4 overflow-x-auto scroll-smooth px-6"
-          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' } as React.CSSProperties}
+          className="flex gap-4 overflow-x-auto scroll-smooth px-6 pb-2"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', overflowY: 'visible' } as React.CSSProperties}
         >
           {filteredCourses.map((course) => {
             const isEnrolled = !!course.progress || enrolledIds.includes(course.id);
@@ -184,11 +184,13 @@ const FeaturedCoursesSection = ({ navigate }: { navigate: (path: string) => void
                   </div>
                 </div>
 
-                {/* Hover Popout */}
+                {/* Hover Popout — vertically centered on the card so all content is visible */}
                 {hoveredCourse === course.id && (
                   <div
-                    className="absolute top-0 left-full ml-2 z-50 w-64 bg-white border border-slate-200 rounded-xl shadow-2xl p-4 pointer-events-none"
-                    style={{ minWidth: '240px' }}
+                    className="absolute top-1/2 left-full ml-2 z-50 w-64 bg-white border border-slate-200 rounded-xl shadow-2xl p-4"
+                    style={{ minWidth: '240px', pointerEvents: 'auto', transform: 'translateY(-50%)' }}
+                    onMouseEnter={() => setHoveredCourse(course.id)}
+                    onMouseLeave={() => setHoveredCourse(null)}
                   >
                     <h4 className="font-bold text-sm text-slate-900 mb-2 leading-snug">{course.title}</h4>
 
@@ -223,6 +225,7 @@ const FeaturedCoursesSection = ({ navigate }: { navigate: (path: string) => void
                     {/* CTA */}
                     <button
                       className="w-full bg-primary text-white text-xs font-semibold py-2 rounded-lg hover:bg-primary/90 transition-colors"
+                      onClick={(e) => { e.stopPropagation(); }}
                     >
                       {isEnrolled ? 'Continue Course' : 'Enroll Now'}
                     </button>
@@ -550,8 +553,8 @@ const StudentDashboard = () => {
   const firstName = (userProfile?.username || user?.name || 'Student').split(' ')[0];
 
   return (
-    <div className="space-y-4 max-w-7xl mx-auto">
-
+    <div className="min-h-screen bg-slate-50">
+    <div className="space-y-6 max-w-7xl mx-auto px-1 py-2">
 
         {/* ── TOP ROW: Target Exam Card — full width ── */}
         <div className="w-full">
@@ -566,7 +569,7 @@ const StudentDashboard = () => {
         {/* ── MAIN 2-COLUMN LAYOUT: Stats + Content | Sidebar ── */}
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Main Content */}
-          <div className="flex-1 min-w-0 space-y-4 w-full lg:w-auto bg-card/50 border border-border/60 rounded-xl p-4 shadow-sm">
+          <div className="flex-1 min-w-0 space-y-5 w-full lg:w-auto">
 
           {/* 1. Stats Cards */}
           <StatsOverview
@@ -590,7 +593,7 @@ const StudentDashboard = () => {
 
             {/* Percentile Speedometer */}
             <div className="w-full xl:w-1/4 flex flex-col">
-              <Card className="p-6 bg-card flex flex-col items-center relative overflow-hidden shadow-sm h-full w-full">
+              <Card className="p-6 bg-white border border-slate-200 shadow-sm flex flex-col items-center relative overflow-hidden rounded-2xl h-full w-full">
                 <h3 className="text-sm font-semibold text-muted-foreground mb-4 w-full text-left">Your Bank Exam Percentile</h3>
 
                 {/* Speedometer Gauge */}
@@ -731,7 +734,7 @@ const StudentDashboard = () => {
           {/* 8. Free Test/Quiz + Upcoming Live Tests */}
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-5 items-stretch">
             {/* Free Test/Quiz */}
-            <Card className="p-5 bg-white border border-slate-200 shadow-sm rounded-2xl flex flex-col h-full">
+            <Card className="p-5 bg-white border border-slate-200 shadow-md rounded-2xl flex flex-col h-full">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
                   <div className="w-1 h-5 bg-primary rounded-full" />
@@ -787,7 +790,7 @@ const StudentDashboard = () => {
           </div>
 
           {/* 9. Your Current Affairs Section */}
-          <Card className="p-4 bg-card group/card">
+          <Card className="p-4 bg-white border border-slate-200 shadow-md rounded-2xl group/card">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <Newspaper className="h-4 w-4 text-primary" />
@@ -918,7 +921,7 @@ const StudentDashboard = () => {
           {/* Mobile Right Sidebar Content */}
           <div className="lg:hidden space-y-4">
             {/* Your Presence - Mobile */}
-            <Card className="p-4 bg-card">
+            <Card className="p-4 bg-white border border-slate-200 shadow-md rounded-2xl">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="font-semibold text-sm">Your presence</h3>
                 <div className="flex gap-1">
@@ -1061,7 +1064,10 @@ const StudentDashboard = () => {
         userAvatar={userProfile?.avatar}
       />
     </div>
+    </div>
   );
 };
+
+
 
 export default StudentDashboard;

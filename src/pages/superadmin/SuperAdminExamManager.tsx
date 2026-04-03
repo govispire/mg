@@ -23,6 +23,7 @@ import {
 import { useSuccessStoriesStore, type SuccessStory } from '@/hooks/useSuccessStoriesStore';
 import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { StepBreadcrumb } from '@/components/ui/step-breadcrumb';
 import {
     useExamCatalog,
     type CatalogTestItem,
@@ -669,15 +670,13 @@ const SuperAdminExamManager: React.FC = () => {
     return (
         <div className="p-4 md:p-6 space-y-6 max-w-7xl mx-auto">
             {/* ── Breadcrumb ──────────────────────────────────────────────── */}
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Link to="/super-admin/test-catalog" className="hover:text-primary flex items-center gap-1 transition-colors">
-                    <ArrowLeft className="h-4 w-4" /> Test Catalog
-                </Link>
-                <span>/</span>
-                <span>{category!.name}</span>
-                <span>/</span>
-                <span className="text-foreground font-medium">{exam!.name}</span>
-            </div>
+            <StepBreadcrumb
+                items={[
+                    { label: 'Test Catalog', href: '/super-admin/test-catalog' },
+                    { label: category!.name },
+                    { label: exam!.name, isActive: true },
+                ]}
+            />
 
             {/* ── Exam Header ─────────────────────────────────────────────── */}
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 bg-white border rounded-xl p-5 shadow-sm">

@@ -2,10 +2,11 @@ import * as React from 'react';
 const { useState, useEffect, useRef } = React;
 import { useParams, useNavigate, Link, useLocation } from 'react-router-dom';
 import { 
-  Calendar, Clock, ChevronRight, Home, Moon, Sun, Minus, Plus, 
+  Calendar, Clock, Home, Moon, Sun, Minus, Plus, 
   Bookmark, BookmarkCheck, Share2, Volume2, VolumeX, Check, X, Zap,
   ArrowLeft, ChevronLeft, ChevronDown
 } from 'lucide-react';
+import { StepBreadcrumb } from '@/components/ui/step-breadcrumb';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
@@ -283,18 +284,15 @@ const CurrentAffairsReader = () => {
       {/* Main Content */}
       <main ref={contentRef} className="container mx-auto px-4 py-8 max-w-4xl">
         {/* Breadcrumb */}
-        <nav className={`flex items-center gap-2 text-sm mb-8 ${readingSettings.isDarkMode ? 'text-gray-400' : 'text-muted-foreground'}`}>
-          <Link to="/" className="flex items-center gap-1 hover:text-primary transition-colors">
-            <Home className="h-4 w-4" />
-            Home
-          </Link>
-          <ChevronRight className="h-4 w-4" />
-          <Link to="/current-affairs" className="hover:text-primary transition-colors">
-            Current Affairs
-          </Link>
-          <ChevronRight className="h-4 w-4" />
-          <span className={readingSettings.isDarkMode ? 'text-gray-100' : 'text-foreground'}>{article.category}</span>
-        </nav>
+        <div className="mb-8">
+          <StepBreadcrumb
+            items={[
+              { label: 'Home', icon: <Home className="h-4 w-4" />, href: '/' },
+              { label: 'Current Affairs', href: '/current-affairs' },
+              { label: article.category, isActive: true },
+            ]}
+          />
+        </div>
         
         {/* Article Header */}
         <header className="mb-8">
