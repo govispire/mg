@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Card } from '@/components/ui/card';
-import { Calendar, Award, FileCheck, Clock, BarChart, Grid3X3, TrendingUp, TrendingDown, Minus, Flame, Target, Zap, BookOpen } from 'lucide-react';
+import { Calendar, Award, FileCheck, Clock, BarChart, Grid3X3, TrendingUp, TrendingDown, Minus, Flame, Target, Zap, BookOpen, ListChecks, CheckCircle2, Circle, AlertCircle } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { addDays, format, startOfWeek } from 'date-fns';
@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/tooltip';
 
 interface StatCardDialogProps {
-  type: 'journey' | 'hours' | 'active' | 'tests';
+  type: 'journey' | 'hours' | 'active' | 'tests' | 'tasks';
   open: boolean;
   onOpenChange: (open: boolean) => void;
   preparationStartDate?: Date | string | null;
@@ -832,6 +832,196 @@ const StatCardDialog = ({ type, open, onOpenChange, preparationStartDate }: Stat
           </ScrollArea>
         );
 
+      case 'tasks': {
+        // Read today's goals from localStorage
+        const getISTDateStr = () => {
+          const now = new Date();
+          const ist = new Date(now.getTime() + 5.5 * 60 * 60 * 1000);
+          return `${ist.getUTCFullYear()}-${String(ist.getUTCMonth() + 1).padStart(2, '0')}-${String(ist.getUTCDate()).padStart(2, '0')}`;
+        };
+        let allGoals: any[] = [];
+        try { allGoals = JSON.parse(localStorage.getItem('dailyGoals_v2') || '[]'); } catch { /* */ }
+        const today = getISTDateStr();
+        const todayGoals = allGoals.filter((g: any) => g.createdAt === today);
+        const MAX = 5;
+        const added = todayGoals.length;
+        const completedGoals = todayGoals.filter((g: any) => g.status === 'completed');
+        const pendingGoals = todayGoals.filter((g: any) => g.status !== 'completed');
+        const completedCount = completedGoals.length;
+        const pct = added === 0 ? 0 : Math.round((completedCount / added) * 100);
+        const slotsLeft = MAX - added;
+
+        // Last 7 days history
+        const last7: { date: string; label: string; added: number; completed: number }[] = [];
+        for (let i = 6; i >= 0; i--) {
+          const d = new Date(new Date().getTime() + 5.5 * 60 * 60 * 1000);
+          d.setUTCDate(d.getUTCDate() - i);
+          const key = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`;
+          const dayGoals = allGoals.filter((g: any) => g.createdAt === key);
+          last7.push({
+            date: key,
+            label: i === 0 ? 'Today' : ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][new Date(key).getDay()],
+            added: dayGoals.length,
+            completed: dayGoals.filter((g: any) => g.status === 'completed').length,
+          });
+        }
+
+        return (
+          <ScrollArea className="h-[580px] pr-2">
+            <div className="space-y-5">
+
+              {/* Hero summary card */}
+              <div
+                className="rounded-2xl p-5 text-white"
+                style={{ background: pct === 100 ? 'linear-gradient(135deg,#059669,#10b981)' : 'linear-gradient(135deg,#d97706,#f59e0b)' }}
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-xs font-semibold uppercase tracking-widest opacity-80 mb-1">Today's Tasks</div>
+                    <div className="text-5xl font-extrabold" style={{ fontFamily: "'Outfit',sans-serif" }}>
+                      {completedCount}<span className="text-3xl opacity-70">/{added}</span>
+                    </div>
+                    <div className="text-sm opacity-90 mt-1">
+                      {added === 0 ? 'No tasks set yet today' : pct === 100 ? '🎉 All tasks done!' : `${pct}% complete · ${pendingGoals.length} remaining`}
+                    </div>
+                  </div>
+                  {/* Ring */}
+                  <div className="relative" style={{ width: 72, height: 72 }}>
+                    <svg width={72} height={72} className="-rotate-90 absolute inset-0">
+                      <circle cx={36} cy={36} r={30} fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth={6} />
+                      <circle
+                        cx={36} cy={36} r={30} fill="none" stroke="white"
+                        strokeWidth={6} strokeLinecap="round"
+                        strokeDasharray={2 * Math.PI * 30}
+                        strokeDashoffset={2 * Math.PI * 30 * (1 - pct / 100)}
+                      />
+                    </svg>
+                    <div className="absolute inset-0 flex items-center justify-center text-white font-bold text-sm">{pct}%</div>
+                  </div>
+                </div>
+
+                {/* 5 slot bar */}
+                <div className="flex gap-1.5 mt-4">
+                  {Array.from({ length: MAX }).map((_, i) => {
+                    const isDone = i < completedCount;
+                    const isUsed = i < added;
+                    return (
+                      <div key={i} className="flex-1 h-2 rounded-full"
+                        style={{ background: isDone ? 'rgba(255,255,255,0.9)' : isUsed ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.15)' }}
+                      />
+                    );
+                  })}
+                </div>
+                <div className="text-[11px] opacity-70 mt-1.5">{MAX - added} slot{MAX - added !== 1 ? 's' : ''} remaining (max {MAX} per day)</div>
+              </div>
+
+              {/* Stats row */}
+              <div className="grid grid-cols-3 gap-3">
+                <Card className="p-3 text-center border-slate-200">
+                  <div className="text-2xl font-bold text-amber-600" style={{ fontFamily: "'Outfit',sans-serif" }}>{added}</div>
+                  <div className="text-[11px] text-muted-foreground mt-0.5">Tasks Added</div>
+                </Card>
+                <Card className="p-3 text-center border-slate-200">
+                  <div className="text-2xl font-bold text-emerald-600" style={{ fontFamily: "'Outfit',sans-serif" }}>{completedCount}</div>
+                  <div className="text-[11px] text-muted-foreground mt-0.5">Completed</div>
+                </Card>
+                <Card className="p-3 text-center border-slate-200">
+                  <div className="text-2xl font-bold text-slate-500" style={{ fontFamily: "'Outfit',sans-serif" }}>{slotsLeft}</div>
+                  <div className="text-[11px] text-muted-foreground mt-0.5">Slots Left</div>
+                </Card>
+              </div>
+
+              {/* Today's task list */}
+              <div>
+                <h4 className="font-semibold text-sm text-slate-700 mb-2 flex items-center gap-2">
+                  <ListChecks className="h-4 w-4 text-amber-500" />
+                  Today's Task List
+                </h4>
+                {added === 0 ? (
+                  <div className="flex flex-col items-center py-8 text-center text-muted-foreground">
+                    <AlertCircle className="h-10 w-10 opacity-20 mb-3" />
+                    <p className="text-sm font-medium">No tasks set for today</p>
+                    <p className="text-xs mt-1">Go to Daily Goals to add your tasks</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {/* Completed */}
+                    {completedGoals.map((g: any, i: number) => (
+                      <div key={i} className="flex items-center gap-3 p-3 bg-emerald-50 border border-emerald-100 rounded-xl">
+                        <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
+                        <span className="text-sm text-slate-600 line-through">{g.text || g.title || `Task ${i + 1}`}</span>
+                        <span className="ml-auto text-[10px] font-semibold text-emerald-600 bg-emerald-100 px-1.5 py-0.5 rounded-full">Done</span>
+                      </div>
+                    ))}
+                    {/* Pending */}
+                    {pendingGoals.map((g: any, i: number) => (
+                      <div key={i} className="flex items-center gap-3 p-3 bg-amber-50 border border-amber-100 rounded-xl">
+                        <Circle className="h-4 w-4 text-amber-400 shrink-0" />
+                        <span className="text-sm text-slate-700">{g.text || g.title || `Task ${completedCount + i + 1}`}</span>
+                        <span className="ml-auto text-[10px] font-semibold text-amber-600 bg-amber-100 px-1.5 py-0.5 rounded-full">Pending</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* 7-day history */}
+              <div>
+                <h4 className="font-semibold text-sm text-slate-700 mb-3 flex items-center gap-2">
+                  <BarChart className="h-4 w-4 text-amber-500" />
+                  Last 7 Days
+                </h4>
+                <div className="grid grid-cols-7 gap-1">
+                  {last7.map((day, i) => {
+                    const dayPct = day.added === 0 ? 0 : Math.round((day.completed / day.added) * 100);
+                    const isToday = i === 6;
+                    return (
+                      <div key={i} className="flex flex-col items-center gap-1.5">
+                        {/* Bar */}
+                        <div className="relative w-full flex flex-col justify-end" style={{ height: 48 }}>
+                          {day.added > 0 && (
+                            <div
+                              className="w-full rounded-t-sm"
+                              style={{
+                                height: `${Math.max(20, dayPct)}%`,
+                                background: dayPct === 100 ? '#10b981' : dayPct > 0 ? '#f59e0b' : '#e2e8f0',
+                              }}
+                            />
+                          )}
+                          {day.added === 0 && (
+                            <div className="w-full rounded-t-sm bg-slate-100" style={{ height: '20%' }} />
+                          )}
+                        </div>
+                        {/* Label */}
+                        <span className={`text-[9px] font-medium ${isToday ? 'text-amber-600 font-bold' : 'text-slate-400'}`}>
+                          {day.label}
+                        </span>
+                        {/* Score */}
+                        {day.added > 0 && (
+                          <span className="text-[9px] text-slate-500">{day.completed}/{day.added}</span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Tip */}
+              <div className="bg-amber-50 border border-amber-100 rounded-xl p-4">
+                <div className="flex items-start gap-2">
+                  <Target className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-xs font-semibold text-amber-800">Pro tip</p>
+                    <p className="text-xs text-amber-700 mt-0.5">You can add up to <strong>5 tasks</strong> per day in the Daily Goals section. Set them before 9 AM for best results!</p>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </ScrollArea>
+        );
+      }
+
       case 'tests':
         return (
           <ScrollArea className="h-[600px] pr-4">
@@ -964,21 +1154,23 @@ const StatCardDialog = ({ type, open, onOpenChange, preparationStartDate }: Stat
     }
   };
 
-  const titles = {
+  const titles: Record<string, string> = {
     journey: 'Total Journey Days',
     hours: 'Total Study Hours',
     active: 'Total Active Days',
-    tests: 'Total Mock Tests'
+    tests: 'Total Mock Tests',
+    tasks: "Today's Tasks",
   };
 
-  const icons = {
+  const icons: Record<string, React.ElementType> = {
     journey: Calendar,
     hours: Clock,
     active: Award,
-    tests: FileCheck
+    tests: FileCheck,
+    tasks: ListChecks,
   };
 
-  const Icon = icons[type];
+  const Icon = icons[type] ?? ListChecks;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

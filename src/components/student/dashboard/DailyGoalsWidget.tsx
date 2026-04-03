@@ -367,7 +367,7 @@ export const DailyGoalsWidget: React.FC = () => {
 
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
-    <Card className="bg-white border border-slate-200 shadow-md rounded-2xl overflow-hidden">
+    <Card className="bg-white border border-slate-200/80 rounded-2xl overflow-hidden" style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.05), 0 6px 20px rgba(0,0,0,0.06)' }}>
       <div className="flex min-h-0">
 
         {/* ════════════════════════════════════════════════

@@ -4,44 +4,44 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --background: 213 27% 96%;        /* slate-100 tinted — not harsh white */
+    --foreground: 222.2 47% 11%;      /* richer dark text */
 
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 222.2 47% 11%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 222.2 47% 11%;
 
-    --primary: 146 79% 26%;
+    --primary: 160 84% 30%;           /* rich emerald */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 40% 96.1%;
+    --secondary: 213 27% 92%;
     --secondary-foreground: 222.2 47.4% 11.2%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 213 27% 92%;
+    --muted-foreground: 215 20% 50%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 160 60% 92%;
+    --accent-foreground: 160 84% 22%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 146 79% 26%;
+    --border: 213 27% 88%;
+    --input: 213 27% 88%;
+    --ring: 160 84% 30%;
 
-    --radius: 0.5rem;
+    --radius: 0.625rem;
 
-    --sidebar-background: 0 0% 98%;
+    --sidebar-background: 0 0% 99%;
     --sidebar-foreground: 240 5.3% 26.1%;
     --sidebar-primary: 240 5.9% 10%;
     --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-accent: 160 60% 95%;
+    --sidebar-accent-foreground: 160 84% 22%;
+    --sidebar-border: 213 27% 90%;
+    --sidebar-ring: 160 84% 30%;
   }
 
   .dark {
@@ -88,9 +88,10 @@
     width: 100%;
     overflow-x: hidden;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
-    /* Slightly increased from 14px for better readability while staying compact */
     font-size: 15px;
-    line-height: 1.45;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   #root {

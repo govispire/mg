@@ -111,10 +111,10 @@ const SidebarItem: React.FC<SidebarItemProps> = ({ icon, label, to, active, coll
       <Link
         to={to}
         className={cn(
-          "flex items-center justify-between gap-2 rounded-xl px-3 py-2.5 text-sm transition-all duration-200 group",
+          "flex items-center justify-between gap-2 rounded-xl px-3 py-2.5 text-sm transition-all duration-200 group relative",
           "hover:bg-emerald-50 hover:text-emerald-700",
           active
-            ? "bg-emerald-50 text-emerald-700 font-semibold shadow-sm ring-1 ring-emerald-100"
+            ? "bg-gradient-to-r from-emerald-50 to-emerald-50/40 text-emerald-700 font-semibold shadow-sm ring-1 ring-emerald-100"
             : "text-slate-600 font-medium",
           highlight && !active && "bg-primary/5 border border-primary/10"
         )}
@@ -128,7 +128,7 @@ const SidebarItem: React.FC<SidebarItemProps> = ({ icon, label, to, active, coll
             className={cn(
               "flex items-center justify-center w-7 h-7 rounded-lg transition-all duration-200",
               active
-                ? "bg-emerald-100 text-emerald-600"
+                ? "bg-emerald-500 text-white shadow-sm"
                 : "text-slate-400 group-hover:text-emerald-600 group-hover:bg-emerald-50",
               highlight && !active && "text-primary group-hover:text-primary"
             )}
@@ -170,9 +170,9 @@ const SidebarItem: React.FC<SidebarItemProps> = ({ icon, label, to, active, coll
           </div>
         )}
 
-        {/* Active indicator dot */}
+        {/* Active left indicator bar */}
         {active && (
-          <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-emerald-500 rounded-r-full" />
+          <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-6 bg-emerald-500 rounded-r-full shadow-[0_0_6px_rgba(16,185,129,0.5)]" />
         )}
       </Link>
     </li>
@@ -295,17 +295,20 @@ const Sidebar: React.FC<SidebarProps> = ({ role, basePath, collapsed }) => {
 
   return (
     <div
-      className={`h-full flex flex-col border-r border-slate-100 ${collapsed ? 'items-center' : ''}`}
-      style={{ background: 'linear-gradient(180deg, #f8fffe 0%, #ffffff 100%)' }}
+      className={`h-full flex flex-col border-r border-slate-100/80 ${collapsed ? 'items-center' : ''}`}
+      style={{ background: 'linear-gradient(180deg, #fafffe 0%, #ffffff 40%, #fafffe 100%)' }}
     >
       {/* Brand Logo Area */}
       <div
         className={`px-4 py-4 border-b border-slate-100 flex ${collapsed ? 'justify-center' : 'items-center gap-2.5'}`}
-        style={{ background: 'linear-gradient(135deg, #f0fdf8 0%, #ecfdf5 100%)' }}
+        style={{ background: 'linear-gradient(135deg, #ecfdf5 0%, #f0fdf8 50%, #ffffff 100%)' }}
       >
         <div
-          className="w-8 h-8 rounded-xl flex items-center justify-center text-white text-sm font-bold shadow-sm"
-          style={{ background: 'linear-gradient(135deg, #059669, #10b981)' }}
+          className="w-8 h-8 rounded-xl flex items-center justify-center text-white text-sm font-bold"
+          style={{
+            background: 'linear-gradient(135deg, #059669, #10b981)',
+            boxShadow: '0 2px 8px rgba(16,185,129,0.35), 0 1px 2px rgba(0,0,0,0.1)',
+          }}
         >
           P
         </div>

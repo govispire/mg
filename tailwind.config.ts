@@ -20,6 +20,7 @@ export default {
 		},
 		fontFamily: {
 			sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+			display: ['Outfit', 'Inter', 'system-ui', 'sans-serif'],
 		},
 		extend: {
 			colors: {

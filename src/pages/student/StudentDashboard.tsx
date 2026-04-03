@@ -256,7 +256,7 @@ const StudentDashboard = () => {
   const [currentNewsIndex, setCurrentNewsIndex] = useState(0);
   const [selectedNews, setSelectedNews] = useState<any>(null);
   const [newsDialogOpen, setNewsDialogOpen] = useState(false);
-  const [statDialogType, setStatDialogType] = useState<'journey' | 'hours' | 'active' | 'tests' | null>(null);
+  const [statDialogType, setStatDialogType] = useState<'journey' | 'hours' | 'active' | 'tests' | 'tasks' | null>(null);
   const [activeQuiz, setActiveQuiz] = useState<any | null>(null);
   const [isAutoSlide, setIsAutoSlide] = useState(true);
 

@@ -413,8 +413,8 @@ const TargetExamCard: React.FC<TargetExamCardProps> = ({
 
   return (
     <div
-      className="relative rounded-2xl overflow-hidden bg-white text-slate-900 border border-slate-200 shadow-sm h-full flex flex-col md:flex-row"
-      style={{ minHeight: 220 }}
+      className="relative rounded-2xl overflow-hidden bg-white text-slate-900 border border-slate-200/80 h-full flex flex-col md:flex-row"
+      style={{ minHeight: 220, boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 8px 24px rgba(0,0,0,0.07)' }}
     >
       {/* ── Left Content ── */}
       <div className="relative z-10 p-5 md:p-6 flex-1 flex flex-col gap-4">
@@ -488,22 +488,46 @@ const TargetExamCard: React.FC<TargetExamCardProps> = ({
       </div>
 
       {/* ── Right: Days Left Panel ── */}
-      <div className="hidden md:flex flex-col items-center justify-center bg-slate-50 border-l border-slate-200 px-8 py-6 min-w-[148px] shrink-0 text-center rounded-r-2xl">
+      <div
+        className="hidden md:flex flex-col items-center justify-center px-8 py-6 min-w-[160px] shrink-0 text-center rounded-r-2xl relative overflow-hidden"
+        style={{
+          background: 'linear-gradient(160deg, #ecfdf5 0%, #d1fae5 60%, #a7f3d0 100%)',
+          borderLeft: '1px solid rgba(16,185,129,0.15)',
+        }}
+      >
+        {/* Subtle glow circle behind the number */}
+        <div
+          className="absolute rounded-full pointer-events-none"
+          style={{
+            width: 120, height: 120,
+            background: 'radial-gradient(circle, rgba(16,185,129,0.18) 0%, transparent 70%)',
+            top: '50%', left: '50%',
+            transform: 'translate(-50%, -60%)',
+          }}
+        />
         {/* Giant day number */}
         <div
-          className="font-black leading-none tracking-tight"
-          style={{ fontSize: 64, color: '#10b981', lineHeight: 1 }}
+          className="font-black leading-none tracking-tight relative z-10"
+          style={{
+            fontSize: 68,
+            fontFamily: "'Outfit', 'Inter', sans-serif",
+            background: 'linear-gradient(135deg, #059669 0%, #10b981 60%, #34d399 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            lineHeight: 1,
+            filter: 'drop-shadow(0 2px 8px rgba(16,185,129,0.25))',
+          }}
         >
           {daysLeft !== null ? daysLeft : '—'}
         </div>
-        <div className="text-[13px] font-semibold text-slate-500 mt-2 mb-4 tracking-wide">
+        <div className="text-[12px] font-bold text-emerald-700 mt-2 mb-4 tracking-widest uppercase relative z-10">
           {daysLeft !== null ? 'Days Left' : 'TBA'}
         </div>
-        <div className="w-10 h-px bg-slate-200 mb-4" />
-        <div className="text-[9px] font-bold uppercase tracking-widest text-slate-400 mb-1">
+        <div className="w-8 h-px bg-emerald-200 mb-4 relative z-10" />
+        <div className="text-[9px] font-bold uppercase tracking-widest text-emerald-500 mb-1 relative z-10">
           Exam Date
         </div>
-        <div className="text-[13px] font-bold text-slate-900">
+        <div className="text-[13px] font-bold text-slate-700 relative z-10">
           {new Date(meta.examDate).toLocaleDateString('en-GB', {
             day: 'numeric',
             month: 'short',
