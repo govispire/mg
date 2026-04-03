@@ -152,7 +152,7 @@ const ExamNotifications: React.FC = () => {
   };
 
   return (
-    <div className="space-y-4 max-w-5xl mx-auto">
+    <div className="space-y-6 max-w-7xl mx-auto">
 
       {/* ── Search Bar ── */}
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm px-4 py-3">

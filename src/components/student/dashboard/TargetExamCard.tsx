@@ -349,7 +349,7 @@ const TargetExamCard: React.FC<TargetExamCardProps> = ({
 
   return (
     <div
-      className={`relative rounded-xl overflow-hidden bg-[#163654] text-white shadow-xl h-full flex flex-col md:flex-row`}
+      className={`relative rounded-xl overflow-hidden bg-white text-slate-900 border border-slate-200 shadow-sm h-full flex flex-col md:flex-row`}
       style={{ minHeight: 220 }}
     >
       {/* Left Content Area */}
@@ -357,53 +357,28 @@ const TargetExamCard: React.FC<TargetExamCardProps> = ({
         <div>
           {/* Top Header Label */}
           <div className="flex items-center gap-2 mb-1">
-            <Target className="h-4 w-4 text-sky-400 shrink-0" strokeWidth={2.5} />
-            <span className="text-[11px] font-bold text-sky-400 uppercase tracking-widest">
+            <Target className="h-4 w-4 text-emerald-600 shrink-0" strokeWidth={2.5} />
+            <span className="text-[11px] font-bold text-emerald-600 uppercase tracking-widest">
               Target Examination
             </span>
           </div>
           
           {/* Title & Subtitle */}
-          <h2 className="text-3xl md:text-[34px] font-bold leading-tight tracking-tight mb-1 text-white">
+          <h2 className="text-3xl md:text-[34px] font-bold leading-tight tracking-tight mb-8 text-slate-900">
             {targetExam.toUpperCase()}
           </h2>
-          <p className="text-[13px] md:text-sm font-medium text-slate-300 mb-5">
-            {meta.subtitle} · {meta.vacancies}
-          </p>
-
-          {/* Meta chips */}
-          <div className="flex flex-wrap items-center gap-2 mb-6">
-            <span className="flex items-center gap-1.5 text-xs bg-[#224467] border border-white/5 px-2.5 py-1.5 rounded-md text-slate-200 font-medium font-sans">
-              <Bell className="h-3.5 w-3.5 text-slate-300" />
-              Notified: {meta.notification}
-            </span>
-            <span className="flex items-center gap-1.5 text-xs bg-[#224467] border border-white/5 px-2.5 py-1.5 rounded-md text-slate-200 font-medium font-sans">
-              <MapPin className="h-3.5 w-3.5 text-slate-300" />
-              Pan India
-            </span>
-            <span className="flex items-center gap-1.5 text-xs bg-[#224467] border border-white/5 px-2.5 py-1.5 rounded-md text-slate-200 font-medium font-sans">
-              <Clock className="h-3.5 w-3.5 text-slate-300" />
-              {meta.duration} - {meta.marks}
-            </span>
-            {journeyDays > 0 && (
-              <span className="flex items-center gap-1.5 text-xs bg-[#224467] border border-white/5 px-2.5 py-1.5 rounded-md text-slate-200 font-medium font-sans">
-                <Calendar className="h-3.5 w-3.5 text-slate-300" />
-                Day {journeyDays} of Prep
-              </span>
-            )}
-          </div>
 
           {/* Progress Bars Section */}
           <div className="space-y-4 pr-0 lg:pr-6">
             {/* Overall */}
             <div>
-              <div className="flex items-center justify-between text-xs text-slate-200 font-medium mb-2">
+              <div className="flex items-center justify-between text-xs text-slate-600 font-medium mb-2">
                 <span>Overall Preparation</span>
-                <span className="font-bold">{meta.overallPct}%</span>
+                <span className="font-bold text-slate-900">{meta.overallPct}%</span>
               </div>
-              <div className="w-full h-2 bg-[#1b4369] rounded-full overflow-hidden">
+              <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-sky-500 rounded-full transition-all duration-1000"
+                  className="h-full bg-emerald-500 rounded-full transition-all duration-1000"
                   style={{ width: `${meta.overallPct}%` }}
                 />
               </div>
@@ -418,11 +393,11 @@ const TargetExamCard: React.FC<TargetExamCardProps> = ({
 
                 return (
                   <div key={s.name}>
-                    <div className="flex items-center justify-between text-[11px] text-slate-300 font-medium mb-1.5">
+                    <div className="flex items-center justify-between text-[11px] text-slate-600 font-medium mb-1.5">
                       <span>{s.name}</span>
-                      <span className="font-bold text-slate-100">{s.pct}%</span>
+                      <span className="font-bold text-slate-900">{s.pct}%</span>
                     </div>
-                    <div className="w-full h-1.5 bg-[#1b4369] rounded-full overflow-hidden">
+                    <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
                       <div
                         className={`h-full ${barColor} rounded-full`}
                         style={{ width: `${s.pct}%` }}
@@ -439,7 +414,7 @@ const TargetExamCard: React.FC<TargetExamCardProps> = ({
         <div className="flex flex-wrap items-center gap-3 mt-6">
           <Button
             size="sm"
-            className="bg-[#244b6c] hover:bg-[#2c587c] text-white border border-[#3e6686] font-medium px-4 py-4 gap-2 rounded-lg"
+            className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-4 py-4 gap-2 rounded-lg shadow-sm"
             onClick={() => navigate(mockRoute)}
           >
             <Play className="h-3.5 w-3.5" />
@@ -448,7 +423,7 @@ const TargetExamCard: React.FC<TargetExamCardProps> = ({
 
           <Button
             size="sm"
-            className="bg-[#244b6c] hover:bg-[#2c587c] text-white border border-[#3e6686] font-medium px-4 py-4 gap-2 rounded-lg"
+            className="bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 font-medium px-4 py-4 gap-2 rounded-lg shadow-sm"
             onClick={() => navigate('/student/syllabus')}
           >
             <BookOpen className="h-3.5 w-3.5" />
@@ -457,7 +432,7 @@ const TargetExamCard: React.FC<TargetExamCardProps> = ({
 
           <Button
             size="sm"
-            className="bg-[#244b6c] hover:bg-[#2c587c] text-white border border-[#3e6686] font-medium px-4 py-4 gap-2 rounded-lg"
+            className="bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 font-medium px-4 py-4 gap-2 rounded-lg shadow-sm"
             onClick={() => navigate('/student/performance-analytics')}
           >
             <TrendingUp className="h-3.5 w-3.5" />
@@ -467,19 +442,19 @@ const TargetExamCard: React.FC<TargetExamCardProps> = ({
       </div>
 
       {/* Right Side Days Left Panel */}
-      <div className="hidden md:flex flex-col items-center justify-center p-6 bg-[#1a4466] border border-[#2b5a82] rounded-[16px] m-6 min-w-[130px] shadow-lg h-fit self-start shrink-0">
+      <div className="hidden md:flex flex-col items-center justify-center p-6 bg-slate-50 border border-slate-200 rounded-[16px] m-6 min-w-[130px] shadow-sm h-fit self-start shrink-0">
         <div className="text-center">
-          <div className="text-[44px] font-bold leading-none text-white tracking-tight mb-0.5">
+          <div className="text-[44px] font-bold leading-none text-emerald-600 tracking-tight mb-0.5">
             {daysLeft !== null ? daysLeft : '—'}
           </div>
-          <div className="text-[11px] font-medium text-sky-200 mb-3 tracking-wide">
+          <div className="text-[11px] font-medium text-slate-500 mb-3 tracking-wide">
             {daysLeft !== null ? 'Days Left' : 'TBA'}
           </div>
-          <div className="w-12 h-px bg-[#3e6686] mx-auto mb-3" />
-          <div className="text-[10px] text-slate-400 font-medium mb-0.5">
+          <div className="w-12 h-px bg-slate-200 mx-auto mb-3" />
+          <div className="text-[10px] text-slate-500 font-medium mb-0.5">
             Exam Date
           </div>
-          <div className="text-xs font-bold text-slate-200">
+          <div className="text-xs font-bold text-slate-900">
             {new Date(meta.examDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
           </div>
         </div>
