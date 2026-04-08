@@ -367,7 +367,7 @@ export const DailyGoalsWidget: React.FC = () => {
 
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
-    <Card className="bg-white border border-slate-200/80 rounded-2xl overflow-hidden" style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.05), 0 6px 20px rgba(0,0,0,0.06)' }}>
+    <Card className="bg-white border border-slate-200 rounded-2xl overflow-hidden" style={{ boxShadow: '0 1px 2px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.08), 0 12px 32px rgba(0,0,0,0.07)' }}>
       <div className="flex min-h-0">
 
         {/* ════════════════════════════════════════════════
@@ -377,16 +377,18 @@ export const DailyGoalsWidget: React.FC = () => {
 
           {/* ── Header ── */}
           <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <div className="w-1 h-5 bg-primary rounded-full" />
-              <h3 className="font-bold text-[15px] text-slate-800">Today's Goals</h3>
-              {totalCount > 0 && (
-                <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full border ${
-                  allDone ? 'text-emerald-600 bg-emerald-50 border-emerald-100'
-                          : 'text-primary bg-primary/10 border-primary/20'
-                }`}>
-                  {completedCount}/{totalCount} done
-                </span>
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-sm">
+                <Target className="h-4 w-4 text-white" />
+              </div>
+              <div>
+                <h3 className="font-bold text-[15px] text-slate-800 leading-none">Today's Goals</h3>
+                {totalCount > 0 && (
+                  <p className="text-[10px] text-slate-400 mt-0.5">{completedCount} of {totalCount} completed</p>
+                )}
+              </div>
+              {allDone && (
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700">🎉 All done!</span>
               )}
             </div>
 
@@ -402,10 +404,10 @@ export const DailyGoalsWidget: React.FC = () => {
               {canAdd ? (
                 <button
                   onClick={() => { setShowAdd(!showAdd); }}
-                  className="flex items-center gap-1 text-[11px] font-semibold text-primary bg-primary/10 hover:bg-primary/20 border border-primary/20 px-2.5 py-1 rounded-full transition-colors"
+                  className="flex items-center gap-1 text-[11px] font-bold text-white bg-primary hover:bg-primary/90 px-3 py-1.5 rounded-full shadow-sm transition-all hover:shadow-md"
                 >
                   <Plus className="h-3 w-3" />
-                  Add {totalCount}/{MAX_GOALS}
+                  Add Goal
                 </button>
               ) : (
                 <span className="flex items-center gap-1 text-[10px] font-semibold text-slate-400 bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-full">
@@ -481,24 +483,34 @@ export const DailyGoalsWidget: React.FC = () => {
             </div>
           )}
 
-          {/* ── Progress Bar ── */}
+          {/* ── Segmented Progress ── */}
           {totalCount > 0 && (
-            <div className="mb-4">
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[11px] font-semibold text-slate-500">{completedCount} of {totalCount} goals done</span>
-                <span className={`text-[11px] font-bold ${ allDone ? 'text-emerald-600' : progressPct >= 50 ? 'text-primary' : 'text-amber-600'}`}>{progressPct}%</span>
+            <div className="mb-4 p-3 rounded-xl bg-slate-50 border border-slate-100">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[11px] font-semibold text-slate-600">{completedCount}/{totalCount} tasks complete</span>
+                <span className={`text-[12px] font-black tabular-nums ${ allDone ? 'text-emerald-600' : progressPct >= 50 ? 'text-primary' : 'text-amber-600'}`}>{progressPct}%</span>
               </div>
-              <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
-                <div
-                  className={`h-full rounded-full transition-all duration-700 ${allDone ? 'bg-emerald-500' : 'bg-primary'}`}
-                  style={{ width: `${progressPct}%` }}
-                />
+              {/* 5 slot bar */}
+              <div className="flex gap-1">
+                {Array.from({ length: MAX_GOALS }).map((_, i) => {
+                  const isDone = i < completedCount;
+                  const isAdded = i < totalCount;
+                  return (
+                    <div key={i} className="flex-1 h-2 rounded-full transition-all duration-500"
+                      style={{
+                        background: isDone ? '#10b981' : isAdded ? 'var(--color-primary, #6366f1)' : '#e2e8f0',
+                        opacity: isAdded ? 1 : 0.4,
+                        transitionDelay: `${i * 80}ms`,
+                      }}
+                    />
+                  );
+                })}
               </div>
-              {allDone && (
-                <p className="text-[12px] text-emerald-600 font-bold mt-2 text-center animate-pulse">
-                  🎉 All goals completed! Amazing discipline today!
-                </p>
-              )}
+              <div className="flex justify-between mt-1.5">
+                {Array.from({ length: MAX_GOALS }).map((_, i) => (
+                  <span key={i} className="text-[9px] text-slate-300 font-bold">{i + 1}</span>
+                ))}
+              </div>
             </div>
           )}
 
@@ -524,23 +536,35 @@ export const DailyGoalsWidget: React.FC = () => {
             <div className="space-y-2 mb-4">
               {todayGoals.map((goal, idx) => {
                 const typeInfo = goal.quizType ? TYPE_LABELS[goal.quizType] : null;
+                const isDone = goal.status === 'completed';
+                const isMissed = goal.status === 'missed';
+                const isInProgress = goal.status === 'in_progress';
                 return (
                   <div
                     key={goal.id}
-                    className={`flex items-center gap-3 px-3 py-2.5 rounded-xl border transition-all ${rowClass(goal.status)}`}
+                    className={`flex items-center gap-3 px-3 py-3 rounded-xl border transition-all relative overflow-hidden ${
+                      isDone ? 'bg-emerald-50/60 border-emerald-100' :
+                      isMissed ? 'bg-red-50/50 border-red-100 opacity-60' :
+                      isInProgress ? 'bg-amber-50/60 border-amber-200' :
+                      'bg-white border-slate-100 hover:border-primary/30 hover:shadow-sm'
+                    }`}
                   >
-                    <span className="shrink-0 w-5 text-center text-[11px] font-bold text-slate-400">{idx + 1}</span>
+                    {/* Left accent strip */}
+                    <div className="absolute left-0 top-0 bottom-0 w-0.5 rounded-l-xl"
+                      style={{ background: isDone ? '#10b981' : isMissed ? '#f87171' : isInProgress ? '#f59e0b' : 'var(--color-primary,#6366f1)' }}
+                    />
+                    <span className="shrink-0 w-5 text-center text-[10px] font-black text-slate-300">{idx + 1}</span>
                     <button
-                      onClick={() => goal.type === 'manual' && goal.status !== 'missed' && toggleManualGoal(goal.id)}
-                      disabled={goal.type === 'test' || goal.status === 'missed'}
-                      className="shrink-0"
+                      onClick={() => goal.type === 'manual' && !isMissed && toggleManualGoal(goal.id)}
+                      disabled={goal.type === 'test' || isMissed}
+                      className="shrink-0 transition-transform hover:scale-110"
                     >
                       {statusIcon(goal.status)}
                     </button>
                     <div className="flex-1 min-w-0">
-                      <p className={`text-[12.5px] font-semibold leading-snug ${
-                        goal.status === 'completed' ? 'line-through text-slate-400' :
-                        goal.status === 'missed' ? 'text-slate-400' : 'text-slate-800'
+                      <p className={`text-[13px] font-semibold leading-snug ${
+                        isDone ? 'line-through text-slate-400' :
+                        isMissed ? 'text-slate-400' : 'text-slate-800'
                       }`}>
                         {goal.label}
                       </p>
@@ -555,11 +579,11 @@ export const DailyGoalsWidget: React.FC = () => {
                             <Clock className="h-2.5 w-2.5" />{goal.estimatedMins} min
                           </span>
                         )}
-                        {goal.status === 'completed' && goal.score !== undefined && (
-                          <span className="text-[10px] font-bold text-emerald-600">Score: {goal.score}%</span>
+                        {isDone && goal.score !== undefined && (
+                          <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 rounded-full">Score: {goal.score}%</span>
                         )}
                         {goal.type === 'test' && goal.status === 'pending' && (
-                          <span className="text-[9px] text-primary font-medium">Auto-completes on submit</span>
+                          <span className="text-[9px] text-primary/70 font-medium">Auto-completes on submit</span>
                         )}
                       </div>
                     </div>
@@ -573,16 +597,16 @@ export const DailyGoalsWidget: React.FC = () => {
                             );
                             updateGoals(updated);
                           }}
-                          className="flex items-center gap-1 text-[11px] font-bold text-primary bg-primary/10 hover:bg-primary/20 border border-primary/20 px-2 py-1 rounded-lg transition-colors"
+                          className="flex items-center gap-1 text-[11px] font-bold text-white bg-primary hover:bg-primary/90 px-2.5 py-1 rounded-lg shadow-sm transition-all"
                         >
                           <Play className="h-3 w-3" strokeWidth={3} />
                           Start
                         </Link>
                       )}
-                      {goal.status !== 'missed' && (
+                      {!isMissed && (
                         <button
                           onClick={() => requestDelete(goal.id)}
-                          className="p-1 text-slate-300 hover:text-red-400 transition-colors rounded"
+                          className="p-1.5 text-slate-200 hover:text-red-400 hover:bg-red-50 transition-colors rounded-lg"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
                         </button>
@@ -781,154 +805,7 @@ export const DailyGoalsWidget: React.FC = () => {
           )}
         </div>
 
-        {/* ════════════════════════════════════════════════
-             VERTICAL DIVIDER
-            ════════════════════════════════════════════════ */}
-        <div className="w-px bg-slate-100 self-stretch" />
-
-        {/* ════════════════════════════════════════════════
-             RIGHT COLUMN — 30% — Study Timer
-            ════════════════════════════════════════════════ */}
-        <div className="flex-[3] min-w-0 p-5 flex flex-col">
-          {/* Timer Header */}
-          <div className="flex items-center gap-2 mb-4">
-            <div className="w-1 h-5 bg-amber-400 rounded-full" />
-            <Timer className="h-4 w-4 text-amber-500" />
-            <h3 className="font-bold text-[14px] text-slate-800">Study Timer</h3>
-            {timerRunning && (
-              <span className="flex items-center gap-1 text-[9px] font-bold text-amber-600 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded-full animate-pulse">
-                <span className="w-1.5 h-1.5 bg-amber-500 rounded-full inline-block" />
-                Live
-              </span>
-            )}
-            {timerDone && (
-              <span className="text-[9px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded-full">
-                ✓ Done
-              </span>
-            )}
-          </div>
-
-          {/* Preset Pills */}
-          <div className="flex flex-wrap gap-1.5 mb-4">
-            {TIMER_PRESETS.map(preset => (
-              <button
-                key={preset.secs}
-                onClick={() => startTimer(preset.secs)}
-                className={`text-[10px] font-bold px-2.5 py-1 rounded-full border transition-all duration-150 ${
-                  timerSelected === preset.secs
-                    ? 'bg-amber-500 text-white border-amber-500 shadow-md scale-105'
-                    : 'bg-white text-slate-500 border-slate-200 hover:border-amber-400 hover:text-amber-600 hover:bg-amber-50 hover:shadow-sm hover:scale-105'
-                }`}
-              >
-                {preset.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Timer Display */}
-          {timerSelected !== null ? (
-            <div className="flex-1 flex flex-col">
-              {/* SVG Ring + Time */}
-              <div className="flex flex-col items-center justify-center flex-1 gap-2">
-                <div className="relative w-24 h-24">
-                  <svg className="w-full h-full -rotate-90" viewBox="0 0 80 80">
-                    <circle cx="40" cy="40" r="34" fill="none" stroke="#f1f5f9" strokeWidth="6" />
-                    <circle
-                      cx="40" cy="40" r="34" fill="none"
-                      stroke={timerDone ? '#10b981' : timerRemaining < 60 ? '#ef4444' : '#f59e0b'}
-                      strokeWidth="6"
-                      strokeLinecap="round"
-                      strokeDasharray={`${2 * Math.PI * 34}`}
-                      strokeDashoffset={`${2 * Math.PI * 34 * (1 - timerProgress / 100)}`}
-                      className="transition-all duration-1000"
-                    />
-                  </svg>
-                  <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    {timerDone ? (
-                      <span className="text-2xl">🎉</span>
-                    ) : (
-                      <>
-                        <p className={`text-lg font-black tabular-nums leading-none ${
-                          timerRemaining < 60 ? 'text-red-500' : timerRunning ? 'text-amber-600' : 'text-slate-700'
-                        }`}>
-                          {formatTimer(timerRemaining)}
-                        </p>
-                        <p className="text-[8px] text-slate-400 mt-0.5 font-medium">
-                          {timerRunning ? '▶ running' : 'paused'}
-                        </p>
-                      </>
-                    )}
-                  </div>
-                </div>
-
-                {/* Goal label */}
-                <p className="text-[11px] text-slate-500 font-medium">
-                  {timerDone ? 'Session complete!' : `Goal: ${TIMER_PRESETS.find(p => p.secs === timerSelected)?.label}`}
-                </p>
-              </div>
-
-              {/* Progress bar */}
-              <div className="w-full h-1 bg-slate-100 rounded-full overflow-hidden mb-3">
-                <div
-                  className={`h-full rounded-full transition-all duration-1000 ${timerDone ? 'bg-emerald-400' : 'bg-amber-400'}`}
-                  style={{ width: `${timerProgress}%` }}
-                />
-              </div>
-
-              {/* Controls */}
-              <div className="flex gap-2">
-                {!timerDone && (
-                  <button
-                    onClick={pauseResumeTimer}
-                    className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-[11px] font-bold transition-all ${
-                      timerRunning
-                        ? 'bg-amber-100 text-amber-700 border border-amber-200 hover:bg-amber-200'
-                        : 'bg-amber-500 text-white border border-amber-500 hover:bg-amber-600'
-                    }`}
-                  >
-                    {timerRunning ? <Pause className="h-3 w-3" /> : <Play className="h-3 w-3" />}
-                    {timerRunning ? 'Pause' : 'Resume'}
-                  </button>
-                )}
-                <button
-                  onClick={resetTimer}
-                  className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-[11px] font-bold bg-white text-slate-500 border border-slate-200 hover:border-slate-300 hover:text-slate-700 transition-all"
-                >
-                  <RotateCcw className="h-3 w-3" />
-                  Reset
-                </button>
-              </div>
-            </div>
-          ) : (
-            /* Placeholder before a preset is picked */
-            <div className="flex-1 flex flex-col items-center justify-center gap-3 text-center">
-              <div className="relative w-20 h-20">
-                {/* Outer pulsing ring */}
-                <svg className="w-full h-full animate-spin" style={{ animationDuration: '8s' }} viewBox="0 0 80 80">
-                  <circle cx="40" cy="40" r="34" fill="none"
-                    stroke="#fcd34d" strokeWidth="3"
-                    strokeDasharray="8 6" strokeLinecap="round"
-                  />
-                </svg>
-                {/* Inner static ring */}
-                <svg className="absolute inset-0 w-full h-full" viewBox="0 0 80 80">
-                  <circle cx="40" cy="40" r="26" fill="none" stroke="#f1f5f9" strokeWidth="3" />
-                </svg>
-                {/* Center icon */}
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <Timer className="h-7 w-7 text-amber-400" />
-                </div>
-              </div>
-              <div>
-                <p className="text-[12px] font-bold text-slate-600">Ready when you are</p>
-                <p className="text-[10px] text-slate-400 mt-0.5">Pick a duration above to start</p>
-              </div>
-            </div>
-          )}
-        </div>
-
       </div>
     </Card>
   );
 };
-

@@ -437,3 +437,87 @@
     min-height: 40px;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════
+   DASHBOARD 3-LAYER VISUAL HIERARCHY SYSTEM
+   L0  →  Page background
+   L1  →  Zone / Section containers
+   L2  →  Cards (primary / secondary / passive)
+═══════════════════════════════════════════════════════════ */
+
+/* L0 — Page background */
+.db-bg {
+  background-color: #EDF1F7;          /* cool blue-gray, not harsh white */
+  min-height: 100vh;
+}
+
+/* Zone wrappers — now invisible pass-throughs (no border, no bg, no shadow) */
+.db-zone        { all: unset; display: block; }
+.db-zone-focus  { all: unset; display: block; }
+.db-zone-action { all: unset; display: block; }
+.db-zone-explore{ all: unset; display: block; }
+.db-zone-label  { display: none; }           /* hide all zone labels */
+
+/* ─── Card shadows ────────────────────────────────────────────────────────── */
+/* PRIMARY card — strong pop, clearly lifted off page */
+.db-card-primary {
+  background: #FFFFFF;
+  border: 1px solid #D8E0ED;
+  border-radius: 16px;
+  box-shadow:
+    0 1px 2px rgba(0,0,0,0.04),
+    0 4px 12px rgba(0,0,0,0.08),
+    0 12px 32px rgba(0,0,0,0.07);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.db-card-primary:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 2px 4px rgba(0,0,0,0.04),
+    0 8px 20px rgba(0,0,0,0.10),
+    0 20px 40px rgba(0,0,0,0.08);
+}
+
+/* SECONDARY card */
+.db-card-secondary {
+  background: #FBFCFE;
+  border: 1px solid #E2E8F2;
+  border-radius: 14px;
+  box-shadow:
+    0 1px 2px rgba(0,0,0,0.03),
+    0 3px 8px rgba(0,0,0,0.06),
+    0 8px 20px rgba(0,0,0,0.05);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.db-card-secondary:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    0 2px 4px rgba(0,0,0,0.04),
+    0 6px 14px rgba(0,0,0,0.08);
+}
+
+/* PASSIVE card */
+.db-card-passive {
+  background: #F4F7FB;
+  border: 1px solid transparent;
+  border-radius: 14px;
+  opacity: 0.85;
+}
+
+/* Left accent strips */
+.db-accent-green  { border-left: 4px solid #22C55E; }
+.db-accent-blue   { border-left: 4px solid #3B82F6; }
+.db-accent-amber  { border-left: 4px solid #F59E0B; }
+.db-accent-violet { border-left: 4px solid #8B5CF6; }
+.db-accent-red    { border-left: 4px solid #EF4444; }
+
+/* Icon pill bg colors */
+.db-icon-success { background: #DCFCE7; color: #16A34A; border-radius: 8px; padding: 6px; }
+.db-icon-info    { background: #DBEAFE; color: #2563EB; border-radius: 8px; padding: 6px; }
+.db-icon-warning { background: #FEF3C7; color: #D97706; border-radius: 8px; padding: 6px; }
+.db-icon-danger  { background: #FEE2E2; color: #DC2626; border-radius: 8px; padding: 6px; }
+
+/* Spacing helpers */
+.db-section-gap { gap: 24px; }
+.db-card-gap    { gap: 16px; }
+.db-inner-pad   { padding: 20px; }

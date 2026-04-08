@@ -122,16 +122,16 @@ export const StatsOverview: React.FC<StatsOverviewProps> = ({
 
     return (
         <div
-          className="grid grid-cols-2 lg:grid-cols-5 gap-[1px] bg-slate-200/80 border border-slate-200/80 rounded-2xl overflow-hidden mb-6"
-          style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.05), 0 6px 20px rgba(0,0,0,0.06)' }}
+          className="grid grid-cols-2 lg:grid-cols-5 gap-3"
+          style={{ marginBottom: '0' }}
         >
             {/* ── Standard 4 stat cards ── */}
             {stats.map((stat) => (
                 <button
                     key={stat.id}
                     onClick={() => onCardClick(stat.id as any)}
-                    className="flex flex-col gap-2 px-3 sm:px-4 py-4 text-left bg-white relative group overflow-hidden"
-                    style={{ transition: 'transform 0.18s ease, box-shadow 0.18s ease' }}
+                    className="flex flex-col gap-2 px-3 sm:px-4 py-4 text-left bg-white relative group overflow-hidden rounded-2xl border border-slate-200"
+                    style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.05)', transition: 'transform 0.18s ease, box-shadow 0.18s ease' }}
                     onMouseEnter={e => {
                         const el = e.currentTarget as HTMLElement;
                         el.style.transform = 'translateY(-2px)';
@@ -179,8 +179,8 @@ export const StatsOverview: React.FC<StatsOverviewProps> = ({
             {/* ── 5th card: Today's Tasks ── */}
             <button
                 onClick={() => onCardClick('tasks')}
-                className="flex flex-col gap-2 px-3 sm:px-4 py-4 text-left bg-white relative group overflow-hidden col-span-2 lg:col-span-1"
-                style={{ transition: 'transform 0.18s ease, box-shadow 0.18s ease' }}
+                className="flex flex-col gap-2 px-3 sm:px-4 py-4 text-left bg-white relative group overflow-hidden col-span-2 lg:col-span-1 rounded-2xl border border-slate-200"
+                style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.05)', transition: 'transform 0.18s ease, box-shadow 0.18s ease' }}
                 onMouseEnter={e => {
                     const el = e.currentTarget as HTMLElement;
                     el.style.transform = 'translateY(-2px)';

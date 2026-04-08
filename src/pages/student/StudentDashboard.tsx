@@ -43,6 +43,7 @@ import TargetExamCard from '@/components/student/dashboard/TargetExamCard';
 import RecentExamNotifications from '@/components/student/dashboard/RecentExamNotifications';
 import { courses as allCourses } from '@/data/courseData';
 import { DailyGoalsWidget } from '@/components/student/dashboard/DailyGoalsWidget';
+import { StudyTimerWidget } from '@/components/student/dashboard/StudyTimerWidget';
 import { useDashboardStats } from '@/hooks/useDashboardStats';
 
 interface UserProfile {
@@ -553,25 +554,22 @@ const StudentDashboard = () => {
   const firstName = (userProfile?.username || user?.name || 'Student').split(' ')[0];
 
   return (
-    <div className="min-h-screen bg-slate-50">
-    <div className="space-y-6 max-w-7xl mx-auto px-1 py-2">
+    <div className="min-h-screen db-bg">
+    <div className="space-y-6 max-w-7xl mx-auto px-3 py-4">
 
-        {/* ── TOP ROW: Target Exam Card — full width ── */}
-        <div className="w-full">
-          <TargetExamCard
-            targetExam={targetExamName}
-            examCategory={examCategoryName}
-            userName={userProfile?.username || user?.name || 'Student'}
-            preparationStartDate={userProfile?.preparationStartDate || null}
-          />
-        </div>
+        <TargetExamCard
+          targetExam={targetExamName}
+          examCategory={examCategoryName}
+          userName={userProfile?.username || user?.name || 'Student'}
+          preparationStartDate={userProfile?.preparationStartDate || null}
+        />
 
         {/* ── MAIN 2-COLUMN LAYOUT: Stats + Content | Sidebar ── */}
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Main Content */}
-          <div className="flex-1 min-w-0 space-y-5 w-full lg:w-auto">
+          <div className="flex-1 min-w-0 space-y-6 w-full lg:w-auto">
 
-          {/* 1. Stats Cards */}
+          {/* ZONE 2: STATS ROW — full-width, no zone wrapper */}
           <StatsOverview
             journeyDays={journeyDays}
             userName={userProfile?.username || user?.name || 'Student'}
@@ -581,142 +579,87 @@ const StudentDashboard = () => {
             onCardClick={setStatDialogType}
           />
 
-          {/* 2. Daily Goals — most important, shown first */}
-          <DailyGoalsWidget />
+          {/* ── Goals + Timer: 2 independent sections side by side ── */}
+          <div className="flex flex-col xl:flex-row gap-4 items-stretch">
 
-          {/* 3. Performance Graph + Percentile + Word of the Day */}
-          <div className="flex flex-col xl:flex-row gap-4">
-            {/* Performance Graph */}
-            <div className="w-full xl:w-1/2 flex flex-col">
+            {/* Today's Goals card */}
+            <div className="db-zone-action w-full xl:w-[70%]" style={{ margin: 0 }}>
+              <DailyGoalsWidget />
+            </div>
+
+            {/* Study Timer card */}
+            <div className="w-full xl:w-[30%] bg-white rounded-2xl border border-slate-200 p-5" style={{ boxShadow: '0 1px 2px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.08), 0 12px 32px rgba(0,0,0,0.07)', borderLeft: '4px solid #F59E0B' }}>
+              <StudyTimerWidget />
+            </div>
+
+          </div>
+
+          {/* ── 3 independent sections side by side ── */}
+          <div className="flex flex-col xl:flex-row gap-4 items-stretch">
+
+            {/* Performance Graph card */}
+            <div className="w-full xl:w-1/2 bg-white rounded-2xl border border-slate-200 p-5" style={{ boxShadow: '0 1px 2px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.08), 0 12px 32px rgba(0,0,0,0.07)', borderLeft: '4px solid #8B5CF6' }}>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-violet-400 mb-3">📈 Performance Graph</p>
               <PerformanceGraph data={performanceData} />
             </div>
 
-            {/* Percentile Speedometer */}
-            <div className="w-full xl:w-1/4 flex flex-col">
-              <Card className="p-6 bg-white border border-slate-200 shadow-sm flex flex-col items-center relative overflow-hidden rounded-2xl h-full w-full">
-                <h3 className="text-sm font-semibold text-muted-foreground mb-4 w-full text-left">Your Bank Exam Percentile</h3>
-
-                {/* Speedometer Gauge */}
-                <div className="relative w-48 h-24 mb-4">
-                  <svg className="w-full h-full" viewBox="0 0 200 100">
-                    {/* Background Arc */}
-                    <path
-                      d="M 20 90 A 80 80 0 0 1 180 90"
-                      fill="none"
-                      stroke="hsl(var(--muted))"
-                      strokeWidth="12"
-                      strokeLinecap="round"
-                    />
-
-                    {/* Colored Segments */}
-                    {/* Red segment (0-40) */}
-                    <path
-                      d="M 20 90 A 80 80 0 0 1 68 24"
-                      fill="none"
-                      stroke="#ef4444"
-                      strokeWidth="12"
-                      strokeLinecap="round"
-                      opacity="0.3"
-                    />
-
-                    {/* Orange segment (40-70) */}
-                    <path
-                      d="M 68 24 A 80 80 0 0 1 132 24"
-                      fill="none"
-                      stroke="#f97316"
-                      strokeWidth="12"
-                      strokeLinecap="round"
-                      opacity="0.3"
-                    />
-
-                    {/* Green segment (70-100) */}
-                    <path
-                      d="M 132 24 A 80 80 0 0 1 180 90"
-                      fill="none"
-                      stroke="#22c55e"
-                      strokeWidth="12"
-                      strokeLinecap="round"
-                      opacity="0.3"
-                    />
-
-                    {/* Active Progress - 87.5% (example) */}
-                    <path
-                      d="M 20 90 A 80 80 0 0 1 164 38"
-                      fill="none"
-                      stroke="hsl(var(--primary))"
-                      strokeWidth="12"
-                      strokeLinecap="round"
-                      className="drop-shadow-lg"
-                    />
-
-                    {/* Needle - pointing to 87.5 */}
-                    <g transform="translate(100, 90)">
-                      <line
-                        x1="0"
-                        y1="0"
-                        x2="0"
-                        y2="-65"
-                        stroke="hsl(var(--foreground))"
-                        strokeWidth="3"
-                        strokeLinecap="round"
-                        transform="rotate(-43)"
-                        className="drop-shadow-md"
-                      />
-                      <circle
-                        cx="0"
-                        cy="0"
-                        r="6"
-                        fill="hsl(var(--primary))"
-                        className="drop-shadow-lg"
-                      />
-                    </g>
-
-                    {/* Scale markers */}
-                    <text x="10" y="95" className="text-xs fill-muted-foreground" fontSize="10">0</text>
-                    <text x="90" y="15" className="text-xs fill-muted-foreground" fontSize="10">50</text>
-                    <text x="185" y="95" className="text-xs fill-muted-foreground" fontSize="10" textAnchor="end">100</text>
-                  </svg>
-
-                  {/* Center Value */}
-                  <div className="absolute bottom-0 left-1/2 -translate-x-1/2 text-center">
-                    <div className="text-3xl font-bold text-primary">{dashStats.percentile > 0 ? dashStats.percentile.toFixed(1) : '—'}</div>
-                    <div className="text-xs text-muted-foreground">{dashStats.percentile > 0 ? 'Percentile' : 'No data yet'}</div>
+            {/* Exam Percentile card */}
+            <div className="w-full xl:w-1/4 bg-white rounded-2xl border border-slate-200 p-5 flex flex-col" style={{ boxShadow: '0 1px 2px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.08), 0 12px 32px rgba(0,0,0,0.07)', borderLeft: '4px solid #F59E0B' }}>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-amber-400 mb-4">🎯 Exam Percentile</p>
+              <div className="relative w-48 h-24 mx-auto mb-4">
+                <svg className="w-full h-full" viewBox="0 0 200 100">
+                  <path d="M 20 90 A 80 80 0 0 1 180 90" fill="none" stroke="hsl(var(--muted))" strokeWidth="12" strokeLinecap="round" />
+                  <path d="M 20 90 A 80 80 0 0 1 68 24"  fill="none" stroke="#ef4444" strokeWidth="12" strokeLinecap="round" opacity="0.3" />
+                  <path d="M 68 24 A 80 80 0 0 1 132 24" fill="none" stroke="#f97316" strokeWidth="12" strokeLinecap="round" opacity="0.3" />
+                  <path d="M 132 24 A 80 80 0 0 1 180 90" fill="none" stroke="#22c55e" strokeWidth="12" strokeLinecap="round" opacity="0.3" />
+                  <path d="M 20 90 A 80 80 0 0 1 164 38" fill="none" stroke="hsl(var(--primary))" strokeWidth="12" strokeLinecap="round" className="drop-shadow-lg" />
+                  <g transform="translate(100, 90)">
+                    <line x1="0" y1="0" x2="0" y2="-65" stroke="hsl(var(--foreground))" strokeWidth="3" strokeLinecap="round" transform="rotate(-43)" className="drop-shadow-md" />
+                    <circle cx="0" cy="0" r="6" fill="hsl(var(--primary))" className="drop-shadow-lg" />
+                  </g>
+                  <text x="10" y="95" fontSize="10">0</text>
+                  <text x="90" y="15" fontSize="10">50</text>
+                  <text x="185" y="95" fontSize="10" textAnchor="end">100</text>
+                </svg>
+                <div className="absolute bottom-0 left-1/2 -translate-x-1/2 text-center">
+                  <div className="text-3xl font-bold text-primary">{dashStats.percentile > 0 ? dashStats.percentile.toFixed(1) : '—'}</div>
+                  <div className="text-xs text-muted-foreground">{dashStats.percentile > 0 ? 'Percentile' : 'No data yet'}</div>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm py-1.5 border-b border-slate-100">
+                  <span className="text-muted-foreground">Student</span>
+                  <span className="font-semibold truncate ml-2">{userProfile?.username || user?.name || 'Student'}</span>
+                </div>
+                <div className="flex justify-between text-sm py-1.5 border-b border-slate-100">
+                  <span className="text-muted-foreground">Target</span>
+                  <span className="font-semibold text-primary">{targetExamName}</span>
+                </div>
+                <div className="flex justify-between text-sm py-1.5 border-b border-slate-100">
+                  <span className="text-muted-foreground">Percentile</span>
+                  <span className={`font-bold ${dashStats.percentile > 0 ? 'text-green-600' : 'text-slate-400'}`}>{dashStats.percentile > 0 ? dashStats.percentile : 'N/A'}</span>
+                </div>
+                <div className="bg-green-50 border border-green-200 rounded-lg px-3 py-2 flex items-center gap-2 mt-1">
+                  <span className="text-lg">🏆</span>
+                  <div>
+                    <div className="text-[11px] text-green-700 font-bold">Excellent</div>
+                    <div className="text-[10px] text-green-600">Top 12.5%</div>
                   </div>
                 </div>
-
-                {/* Student Info */}
-                <div className="w-full space-y-2 mt-2">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Student:</span>
-                    <span className="font-semibold">{userProfile?.username || user?.name || 'Student User'}</span>
-                  </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Target:</span>
-                    <span className="font-semibold text-primary">{targetExamName}</span>
-                  </div>
-                  <div className="flex items-center justify-between text-sm pt-2 border-t">
-                    <span className="text-muted-foreground">Avg Percentile:</span>
-                    <span className={`font-bold ${dashStats.percentile > 0 ? 'text-green-600' : 'text-slate-400'}`}>
-                      {dashStats.percentile > 0 ? `${dashStats.percentile}` : 'N/A'}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Performance Badge */}
-                <div className="mt-4 w-full">
-                  <div className="bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded-lg px-3 py-2 text-center">
-                    <div className="text-xs text-green-700 dark:text-green-300 font-semibold">🎯 Excellent Performance</div>
-                    <div className="text-xs text-green-600 dark:text-green-400 mt-0.5">Top 12.5% of all students</div>
-                  </div>
-                </div>
-              </Card>
+              </div>
             </div>
 
-            {/* Word of the Day */}
-            <div className="w-full xl:w-1/4 flex flex-col">
+            {/* Word of the Day card */}
+            <div className="w-full xl:w-1/4 bg-white rounded-2xl border border-slate-200 p-5" style={{ boxShadow: '0 1px 2px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.08), 0 12px 32px rgba(0,0,0,0.07)', borderLeft: '4px solid #3B82F6' }}>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-blue-400 mb-3">📖 Word of the Day</p>
               <WordOfTheDayCard />
             </div>
+
           </div>
+
+
+          {/* Exploration — no section wrapper */}
+          <div className="space-y-5">
 
           {/* 4. Featured Courses — Udemy-style */}
           <FeaturedCoursesSection navigate={navigate} />
@@ -733,8 +676,8 @@ const StudentDashboard = () => {
 
           {/* 8. Free Test/Quiz + Upcoming Live Tests */}
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-5 items-stretch">
-            {/* Free Test/Quiz */}
-            <Card className="p-5 bg-white border border-slate-200 shadow-md rounded-2xl flex flex-col h-full">
+            {/* Free Test/Quiz — PRIMARY action card */}
+            <Card className="p-5 db-card-primary border-none flex flex-col h-full" style={{ borderLeft: '4px solid #22C55E' }}>
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
                   <div className="w-1 h-5 bg-primary rounded-full" />
@@ -744,21 +687,30 @@ const StudentDashboard = () => {
                   {freeTests.length} tests today
                 </span>
               </div>
-              <div className="space-y-2.5 flex-1">
+              <div className="space-y-2 flex-1">
                 {freeTests.slice(0, 5).map((test, idx) => {
                   const isCompleted = !!quizCompletions[test.id];
                   return (
-                    <div key={idx} className="flex items-center justify-between px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-100 hover:border-primary/30 hover:bg-primary/5 transition-all group">
+                    <div
+                      key={idx}
+                      className={`flex items-center justify-between px-3 py-2.5 rounded-xl border transition-all group ${
+                        isCompleted
+                          ? 'bg-slate-50 border-slate-100 opacity-70'       /* PASSIVE — muted/done */
+                          : 'bg-white border-slate-200 hover:border-green-300 hover:shadow-sm hover:bg-green-50/30' /* PRIMARY — actionable */
+                      }`}
+                    >
                       <div className="flex items-center gap-3 min-w-0 flex-1">
-                        <div className="shrink-0 w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                          <FileText className="h-4 w-4 text-primary" />
+                        <div className={`shrink-0 w-8 h-8 rounded-lg flex items-center justify-center ${
+                          isCompleted ? 'bg-slate-100' : 'bg-green-50 border border-green-100'
+                        }`}>
+                          <FileText className={`h-4 w-4 ${isCompleted ? 'text-slate-400' : 'text-green-600'}`} />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="font-semibold text-[12.5px] text-slate-800 truncate group-hover:text-primary transition-colors">{test.title}</p>
-                          <div className="text-[10px] text-slate-500 flex items-center gap-2 mt-0.5">
+                          <p className={`font-semibold text-[12.5px] truncate ${isCompleted ? 'line-through text-slate-400' : 'text-slate-800 group-hover:text-green-700 transition-colors'}`}>{test.title}</p>
+                          <div className="text-[10px] text-slate-400 flex items-center gap-2 mt-0.5">
                             <span>{test.questions} Questions</span>
                             <span className="text-slate-300">•</span>
-                            <Clock className="h-2.5 w-2.5 text-slate-400" />
+                            <Clock className="h-2.5 w-2.5 text-slate-300" />
                             <span>{test.duration} mins</span>
                           </div>
                         </div>
@@ -770,7 +722,7 @@ const StudentDashboard = () => {
                             Done
                           </div>
                         ) : (
-                          <Button size="sm" className="h-7 px-3 bg-primary hover:bg-primary/90 text-white rounded-lg text-[11px] font-semibold shadow-sm" onClick={() => handleStartTest(test)}>
+                          <Button size="sm" className="h-7 px-3 bg-green-600 hover:bg-green-700 text-white rounded-lg text-[11px] font-semibold shadow-sm" onClick={() => handleStartTest(test)}>
                             <Play className="h-2.5 w-2.5 mr-1" strokeWidth={3} />
                             Start
                           </Button>
@@ -789,8 +741,8 @@ const StudentDashboard = () => {
             <UpcomingLiveTests />
           </div>
 
-          {/* 9. Your Current Affairs Section */}
-          <Card className="p-4 bg-white border border-slate-200 shadow-md rounded-2xl group/card">
+          {/* 9. Current Affairs Section */}
+          <Card className="p-4 db-card-secondary border-none group/card">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <Newspaper className="h-4 w-4 text-primary" />
@@ -917,6 +869,8 @@ const StudentDashboard = () => {
               </div>
             )}
           </Card>
+
+          </div>{/* /space-y-5 (exploration) */}
 
           {/* Mobile Right Sidebar Content */}
           <div className="lg:hidden space-y-4">
