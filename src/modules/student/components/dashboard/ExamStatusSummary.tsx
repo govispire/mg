@@ -52,15 +52,15 @@ export const ExamStatusSummary = () => {
                 <div className="relative z-10">
                     <div className="flex items-center justify-between mb-5">
                         <div className="flex items-center gap-3">
-                            <div className="p-2.5 bg-gradient-to-br from-primary to-primary/80 text-white rounded-xl shadow-lg shadow-primary/20">
+                            <div className="p-2.5 bg-gradient-to-br from-emerald-500 to-emerald-600 text-white rounded-xl shadow-lg shadow-emerald-500/20">
                                 <Trophy className="h-5 w-5" />
                             </div>
                             <div>
-                                <h3 className="font-bold text-lg tracking-tight bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">Your Current Exams Status</h3>
-                                <p className="text-xs text-muted-foreground font-medium">Tracking <span className="text-primary font-bold">{activeExams.length}</span> active applications</p>
+                                <h3 className="font-bold text-lg tracking-tight text-emerald-600">Your Current Exams Status</h3>
+                                <p className="text-xs text-muted-foreground font-medium">Tracking <span className="text-emerald-600 font-bold">{activeExams.length}</span> active applications</p>
                             </div>
                         </div>
-                        <Button variant="outline" size="sm" className="text-xs gap-1 h-8 shadow-md hover:shadow-lg hover:bg-primary hover:text-primary-foreground transition-all" asChild>
+                        <Button variant="outline" size="sm" className="text-xs gap-1 h-8 shadow-md hover:shadow-lg hover:bg-emerald-500 hover:border-emerald-500 hover:text-white transition-all text-emerald-600 border-emerald-300" asChild>
                             <Link to="/student/self-care">
                                 <span>View All</span> <ArrowRight className="h-3 w-3" />
                             </Link>
@@ -86,7 +86,7 @@ export const ExamStatusSummary = () => {
                                             <p className="text-[10px] text-muted-foreground/80 font-bold uppercase tracking-wider bg-muted/50 px-2 py-0.5 rounded-md inline-block">{exam.category}</p>
                                         </div>
                                         <span className={`text-[10px] px-2.5 py-1.5 rounded-lg font-bold border-2 shadow-sm ml-2 ${isSelected ? 'bg-gradient-to-br from-green-50 to-green-100 text-green-700 border-green-300' :
-                                            isNotSelected ? 'bg-gradient-to-br from-amber-50 to-amber-100 text-amber-700 border-amber-300' : 'bg-gradient-to-br from-primary/10 to-primary/20 text-primary border-primary/30'
+                                            isNotSelected ? 'bg-gradient-to-br from-amber-50 to-amber-100 text-amber-700 border-amber-300' : 'bg-emerald-500 text-white border-emerald-400'
                                             }`}>
                                             {exam.finalStatus === 'pending' ? '🔥 Active' : exam.finalStatus}
                                         </span>

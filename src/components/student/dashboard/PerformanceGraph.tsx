@@ -1,5 +1,4 @@
 import React from 'react';
-import { Card } from '@/components/ui/card';
 import { Target } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Label, ReferenceLine } from 'recharts';
 
@@ -9,26 +8,14 @@ interface PerformanceGraphProps {
 
 export const PerformanceGraph: React.FC<PerformanceGraphProps> = ({ data }) => {
     return (
-        <Card className="p-4 bg-white border border-slate-200 shadow-md rounded-2xl flex-1 h-full min-h-[350px]">
-            <div className="flex items-center justify-between mb-5">
-                <div className="flex items-center gap-2">
-                    <div className="p-1.5 bg-primary/10 rounded-lg">
-                        <Target className="h-4 w-4 text-primary" />
-                    </div>
-                    <div>
-                        <h3 className="font-semibold text-sm">Performance Graph</h3>
-                        <p className="text-xs text-muted-foreground">Weekly average scores</p>
-                    </div>
+        <div className="bg-white border border-slate-200 rounded-xl p-4 h-full min-h-[350px]">
+            <div className="flex items-center gap-2 mb-4">
+                <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-600 to-purple-500 flex items-center justify-center shadow-sm">
+                    <Target className="h-3.5 w-3.5 text-white" />
                 </div>
-                <div className="flex items-center gap-4 text-xs">
-                    <div className="flex items-center gap-1.5">
-                        <div className="w-2.5 h-2.5 rounded-full bg-primary"></div>
-                        <span className="text-muted-foreground">Tests</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                        <div className="w-2.5 h-2.5 rounded-full bg-violet-400"></div>
-                        <span className="text-muted-foreground">Quizzes</span>
-                    </div>
+                <div>
+                    <h3 className="font-bold text-[13px] text-slate-800">Performance Graph</h3>
+                    <p className="text-[10px] text-slate-400">Weekly average scores</p>
                 </div>
             </div>
 
@@ -115,6 +102,6 @@ export const PerformanceGraph: React.FC<PerformanceGraphProps> = ({ data }) => {
                     </AreaChart>
                 </ResponsiveContainer>
             </div>
-        </Card>
+        </div>
     );
 };

@@ -9,14 +9,12 @@ import {
   formatDisplayDate,
 } from '@/data/upcomingExamsStore';
 
-// ── Urgency styling for days-left badge ───────────────────────────────────────
-const getDaysColor = (days: number) => {
-  if (days < 0)  return { bg: 'bg-slate-100', text: 'text-slate-500', dot: 'bg-slate-400' };
-  if (days <= 7)  return { bg: 'bg-red-50',     text: 'text-red-600',   dot: 'bg-red-500 animate-pulse' };
-  if (days <= 30) return { bg: 'bg-amber-50',   text: 'text-amber-700', dot: 'bg-amber-500' };
-  if (days <= 90) return { bg: 'bg-primary/10', text: 'text-primary',   dot: 'bg-primary' };
-  return           { bg: 'bg-emerald-50',  text: 'text-emerald-700', dot: 'bg-emerald-500' };
-};
+// ── Days-left badge — always solid emerald-500 to match Upcoming Exams cards ──
+const getDaysColor = (_days: number) => ({
+  bg: 'bg-emerald-500',
+  text: 'text-white',
+  dot: 'bg-white',
+});
 
 // Tag badge for exams based on urgency
 const getTagLabel = (days: number): { label: string; className: string } | null => {
@@ -51,14 +49,14 @@ export const TrendingExams: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <div className="p-1.5 bg-primary/10 rounded-lg">
-            <TrendingUp className="h-4 w-4 text-primary" />
+          <div className="p-1.5 bg-emerald-500 rounded-lg">
+            <TrendingUp className="h-4 w-4 text-white" />
           </div>
           <h3 className="font-semibold text-base">Upcoming Exams</h3>
         </div>
         <button
           onClick={() => navigate('/student/exam-alerts')}
-          className="flex items-center gap-1 text-xs text-primary font-medium hover:underline"
+          className="flex items-center gap-1 text-xs text-emerald-600 font-semibold hover:text-emerald-700 hover:underline"
         >
           View All
           <ChevronRight className="h-3.5 w-3.5" />
@@ -113,12 +111,10 @@ export const TrendingExams: React.FC = () => {
 
               {/* ── Days left counter (LARGER) ── */}
               {days >= 0 ? (
-                <div className={`w-full rounded-lg py-1.5 px-2 ${color.bg} flex flex-col items-center`}>
-                  <span className={`text-2xl font-black leading-none ${color.text}`}>
-                    {days === 0 ? '🎯' : days}
-                  </span>
-                  <span className={`text-[9px] font-semibold uppercase tracking-wide ${color.text} opacity-80`}>
-                    {days === 0 ? 'Today!' : 'days left'}
+                <div className="w-full bg-emerald-500 hover:bg-emerald-600 transition-colors rounded-full px-3 py-2 flex items-center justify-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-white opacity-90 shrink-0" />
+                  <span className="text-white font-black text-[12px] tracking-wide uppercase whitespace-nowrap">
+                    {days === 0 ? 'Today!' : `${days} DAYS LEFT`}
                   </span>
                 </div>
               ) : tag ? (

@@ -21,6 +21,7 @@ import SyllabusManager from '@/pages/superadmin/SyllabusManager';
 import UpcomingExamsManager from '@/pages/superadmin/UpcomingExamsManager';
 import CurrentAffairsManager from '@/pages/superadmin/CurrentAffairsManager';
 import ExamAlertsManager from '@/pages/superadmin/ExamAlertsManager';
+import AdsManager from '@/pages/superadmin/AdsManager';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import NotFound from '@/pages/NotFound';
 
@@ -48,6 +49,7 @@ const SuperAdminRoutes = () => {
           <Route path="/upcoming-exams" element={<UpcomingExamsManager />} />
           <Route path="/current-affairs" element={<CurrentAffairsManager />} />
           <Route path="/exam-alerts" element={<ExamAlertsManager />} />
+          <Route path="/ads-manager" element={<AdsManager />} />
           <Route path="*" element={<NotFound />} />
         </Route>
       </Route>

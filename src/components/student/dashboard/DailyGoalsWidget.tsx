@@ -5,8 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
   CheckCircle2, Circle, Plus, X, Target, ListChecks,
-  FileText, Play, Trash2, Clock, Lock, RotateCcw,
-  ChevronDown, AlertTriangle, TrendingUp, Zap, Pause, Timer
+  FileText, Play, Trash2, Clock, RotateCcw,
+  AlertTriangle, TrendingUp, Zap, Calendar, Edit2, Pencil
 } from 'lucide-react';
 
 // ─── Timer Presets ────────────────────────────────────────────────────────────
@@ -20,12 +20,12 @@ const TIMER_PRESETS = [
   { label: '5 hr',   secs: 5 * 60 * 60 },
 ];
 import { dailyQuizzes } from '@/data/dailyQuizzesData';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Badge } from '@/components/ui/badge';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const MAX_GOALS = 5;
-const GOAL_WINDOW_HOUR = 9;        // 9 AM IST
-const ONBOARDING_GRACE_HOUR = 12;  // 12 PM IST for first 3 days
-const ONBOARDING_DAYS = 3;
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 export type GoalStatus = 'pending' | 'in_progress' | 'completed' | 'missed';
@@ -55,11 +55,6 @@ const getISTDateStr = (): string => {
   return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`;
 };
 
-const getISTHourDecimal = (): number => {
-  const d = getISTDate();
-  return d.getUTCHours() + d.getUTCMinutes() / 60;
-};
-
 const getYesterdayISTStr = (): string => {
   const d = getISTDate();
   d.setUTCDate(d.getUTCDate() - 1);
@@ -82,23 +77,6 @@ const saveAllGoals = (goals: Goal[]) => {
 const getTodayGoals = (all: Goal[]): Goal[] =>
   all.filter(g => g.createdAt === getISTDateStr());
 
-const getYesterdayGoals = (all: Goal[]): Goal[] =>
-  all.filter(g => g.createdAt === getYesterdayISTStr());
-
-// Determine cutoff hour based on preparation start date
-const getCutoffHour = (): number => {
-  try {
-    const profile = JSON.parse(localStorage.getItem('userProfile') || '{}');
-    if (profile?.preparationStartDate) {
-      const daysSinceStart = Math.floor(
-        (Date.now() - new Date(profile.preparationStartDate).getTime()) / (1000 * 60 * 60 * 24)
-      );
-      if (daysSinceStart < ONBOARDING_DAYS) return ONBOARDING_GRACE_HOUR;
-    }
-  } catch { /* ignore */ }
-  return GOAL_WINDOW_HOUR;
-};
-
 // ─── Quiz Type Labels ──────────────────────────────────────────────────────────
 const TYPE_LABELS: Record<string, { label: string; icon: string; color: string }> = {
   'daily':           { label: 'Daily Practice', icon: '📅', color: 'text-primary bg-primary/10' },
@@ -113,9 +91,6 @@ const TYPE_LABELS: Record<string, { label: string; icon: string; color: string }
 // ─── Main Component ────────────────────────────────────────────────────────────
 export const DailyGoalsWidget: React.FC = () => {
   const today = getISTDateStr();
-  const cutoffHour = getCutoffHour();
-  const istHour = getISTHourDecimal();
-  const windowOpen = istHour < cutoffHour;
 
   const [allGoals, setAllGoals] = useState<Goal[]>(loadAllGoals);
   const [showAdd, setShowAdd] = useState(false);
@@ -125,8 +100,9 @@ export const DailyGoalsWidget: React.FC = () => {
   const [testSearch, setTestSearch] = useState('');
   const [testTypeFilter, setTestTypeFilter] = useState<string>('all');
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [timeLeft, setTimeLeft] = useState('');
-  const [showMissedRecovery, setShowMissedRecovery] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editText, setEditText] = useState('');
 
   // ── Study Timer State ──────────────────────────────────────────────────────
   const [timerSelected, setTimerSelected] = useState<number | null>(null); // secs
@@ -179,45 +155,35 @@ export const DailyGoalsWidget: React.FC = () => {
   const timerProgress = timerSelected ? ((timerSelected - timerRemaining) / timerSelected) * 100 : 0;
 
   const todayGoals = useMemo(() => getTodayGoals(allGoals), [allGoals]);
-  const yesterdayMissed = useMemo(
-    () => getYesterdayGoals(allGoals).filter(g => g.status === 'missed'),
-    [allGoals]
-  );
+
+  // Get completed goals count for today to determine if user can add more batches
+  const completedToday = useMemo(() =>
+    todayGoals.filter(g => g.status === 'completed').length
+  , [todayGoals]);
+
+  // Calculate batch: every 5 completed goals unlocks a new batch
+  const batchNumber = Math.floor(completedToday / MAX_GOALS) + 1;
+  const goalsInCurrentBatch = todayGoals.length - (batchNumber - 1) * MAX_GOALS;
+  const canAdd = goalsInCurrentBatch < MAX_GOALS;
+
+  // Get past goals (not today)
+  const pastGoals = useMemo(() =>
+    allGoals
+      .filter(g => g.createdAt !== today)
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+      .slice(0, 20) // Show last 20 goals
+  , [allGoals, today]);
+
+  // Get target exam from localStorage for filtering tests
+  const targetExam = useMemo(() => {
+    try {
+      const profile = JSON.parse(localStorage.getItem('userProfile') || '{}');
+      return (profile?.targetExam || profile?.customTargetExam || '').toLowerCase();
+    } catch { return ''; }
+  }, []);
 
   // Persist whenever goals change
   useEffect(() => { saveAllGoals(allGoals); }, [allGoals]);
-
-  // Countdown timer to 9 AM
-  useEffect(() => {
-    const tick = () => {
-      const now = getISTDate();
-      const cutoff = new Date(now);
-      cutoff.setUTCHours(cutoffHour, 0, 0, 0);
-      if (now >= cutoff) { setTimeLeft(''); return; }
-      const diffMs = cutoff.getTime() - now.getTime();
-      const h = Math.floor(diffMs / 3600000);
-      const m = Math.floor((diffMs % 3600000) / 60000);
-      const s = Math.floor((diffMs % 60000) / 1000);
-      setTimeLeft(h > 0 ? `${h}h ${m}m` : `${m}m ${s}s`);
-    };
-    tick();
-    const id = setInterval(tick, 1000);
-    return () => clearInterval(id);
-  }, [cutoffHour]);
-
-  // Midnight: mark unfinished as MISSED
-  useEffect(() => {
-    const allUpdated = allGoals.map(g => {
-      if (g.createdAt < today && g.status === 'pending') {
-        return { ...g, status: 'missed' as GoalStatus };
-      }
-      return g;
-    });
-    if (JSON.stringify(allUpdated) !== JSON.stringify(allGoals)) {
-      setAllGoals(allUpdated);
-    }
-    if (yesterdayMissed.length > 0) setShowMissedRecovery(true);
-  }, [today]);
 
   // Auto-complete test goals when quiz is submitted
   const syncCompletions = useCallback(() => {
@@ -254,15 +220,55 @@ export const DailyGoalsWidget: React.FC = () => {
   const progressPct = totalCount === 0 ? 0 : Math.round((completedCount / totalCount) * 100);
   const allDone = totalCount > 0 && completedCount === totalCount;
   const totalEstMins = todayGoals.reduce((acc, g) => acc + (g.estimatedMins ?? 0), 0);
-  const canAdd = windowOpen && totalCount < MAX_GOALS;
 
-  // ── Test picker data ───────────────────────────────────────────────────────
-  const todayTestList = useMemo(() => dailyQuizzes.filter(q => q.scheduledDate === today), [today]);
+  // Helper to check if test is related to target exam
+  const isTestRelatedToTargetExam = (quiz: typeof dailyQuizzes[0]): boolean => {
+    if (!targetExam) return true; // Show all if no target exam set
+
+    const title = (quiz.title || '').toLowerCase();
+    const subject = (quiz.subject || '').toLowerCase();
+    const type = (quiz.type || '').toLowerCase();
+    const examText = `${title} ${subject} ${type}`;
+
+    // Map target exam keywords to filter tests
+    const examKeywords: Record<string, string[]> = {
+      'sbi clerk': ['sbi', 'clerk'],
+      'sbi po': ['sbi', 'po'],
+      'ibps clerk': ['ibps', 'clerk'],
+      'ibps po': ['ibps', 'po'],
+      'ibps rrb': ['rrb', 'ibps'],
+      'rrb po': ['rrb', 'po'],
+      'rrb clerk': ['rrb', 'clerk'],
+      'lic ado': ['lic', 'ado'],
+      'lic aao': ['lic', 'aao'],
+      'rbi grade b': ['rbi', 'grade'],
+      'ssc cgl': ['ssc', 'cgl'],
+      'ssc chsl': ['ssc', 'chsl'],
+      'ssc mts': ['ssc', 'mts'],
+      'upsc': ['upsc'],
+      'rrb ntpc': ['rrb', 'ntpc'],
+      'rrb group d': ['rrb', 'group'],
+    };
+
+    const keywords = examKeywords[targetExam] || [];
+    return keywords.some(kw => examText.includes(kw));
+  };
+
+  // ── Test picker data — filtered by target exam ────────────────────────────
+  const todayTestList = useMemo(() =>
+    dailyQuizzes.filter(q => q.scheduledDate === today && isTestRelatedToTargetExam(q))
+  , [today, targetExam]);
+
   const allTestList = useMemo(() => {
     const unique = new Map<string, typeof dailyQuizzes[0]>();
-    dailyQuizzes.forEach(q => { if (!unique.has(q.type + q.title)) unique.set(q.type + q.title, q); });
+    dailyQuizzes.forEach(q => {
+      const key = q.type + q.title;
+      if (!unique.has(key) && isTestRelatedToTargetExam(q)) {
+        unique.set(key, q);
+      }
+    });
     return [...unique.values()].slice(0, 150);
-  }, []);
+  }, [targetExam]);
 
   const filteredTests = useMemo(() => {
     let list = todayTestList.length > 0 ? todayTestList : allTestList;
@@ -275,7 +281,8 @@ export const DailyGoalsWidget: React.FC = () => {
   }, [todayTestList, allTestList, testTypeFilter, testSearch]);
 
   const availableTypes = useMemo(() => {
-    const s = new Set((todayTestList.length > 0 ? todayTestList : allTestList).map(q => q.type));
+    const list = todayTestList.length > 0 ? todayTestList : allTestList;
+    const s = new Set(list.map(q => q.type));
     return ['all', ...Array.from(s)];
   }, [todayTestList, allTestList]);
 
@@ -326,22 +333,28 @@ export const DailyGoalsWidget: React.FC = () => {
   };
 
   const requestDelete = (id: string) => {
-    if (windowOpen) {
-      // Before cutoff — delete freely
-      updateGoals(todayGoals.filter(g => g.id !== id));
-    } else {
-      setDeletingId(id);
-    }
+    setDeletingId(id);
   };
 
   const confirmDelete = () => {
     if (!deletingId) return;
-    // Mark as missed then remove
-    const updated = todayGoals.map(g =>
-      g.id === deletingId ? { ...g, status: 'missed' as GoalStatus } : g
-    ).filter(g => g.id !== deletingId);
-    updateGoals(updated);
+    updateGoals(todayGoals.filter(g => g.id !== deletingId));
     setDeletingId(null);
+  };
+
+  const startEdit = (goal: Goal) => {
+    setEditingId(goal.id);
+    setEditText(goal.label);
+  };
+
+  const saveEditGoal = (id: string) => {
+    if (!editText.trim()) return;
+    const updated = todayGoals.map(g =>
+      g.id === id ? { ...g, label: editText.trim() } : g
+    );
+    updateGoals(updated);
+    setEditingId(null);
+    setEditText('');
   };
 
   const reAddMissed = (g: Goal) => {
@@ -367,34 +380,32 @@ export const DailyGoalsWidget: React.FC = () => {
 
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
-    <Card className="bg-white border border-slate-200 rounded-2xl overflow-hidden" style={{ boxShadow: '0 1px 2px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.08), 0 12px 32px rgba(0,0,0,0.07)' }}>
-      <div className="flex min-h-0">
+    <Card className="bg-white border border-slate-200 rounded-xl overflow-hidden h-full flex flex-col" style={{ boxShadow: '0 1px 2px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.08), 0 12px 32px rgba(0,0,0,0.07)' }}>
+      <div className="flex flex-col min-h-0 flex-1">
 
         {/* ════════════════════════════════════════════════
-             LEFT COLUMN — 70% — Goals
+             HEADER
             ════════════════════════════════════════════════ */}
-        <div className="flex-[7] min-w-0 p-5">
-
-          {/* ── Header ── */}
-          <div className="flex items-center justify-between mb-4">
+        <div className="px-5 pt-4 pb-3">
+          <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-sm">
-                <Target className="h-4 w-4 text-white" />
+              <div className="w-7 h-7 rounded-lg flex items-center justify-center shadow-sm" style={{ background: 'linear-gradient(135deg,#059669,#10b981)' }}>
+                <Target className="h-3.5 w-3.5 text-white" />
               </div>
               <div>
-                <h3 className="font-bold text-[15px] text-slate-800 leading-none">Today's Goals</h3>
+                <h3 className="font-bold text-[14px] text-slate-800 leading-none">Today's Goals</h3>
                 {totalCount > 0 && (
-                  <p className="text-[10px] text-slate-400 mt-0.5">{completedCount} of {totalCount} completed</p>
+                  <p className="text-[9px] text-slate-400 mt-0.5">Batch #{batchNumber} · {completedCount} of {totalCount} completed</p>
                 )}
               </div>
               {allDone && (
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700">🎉 All done!</span>
+                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700">🎉 Done!</span>
               )}
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
               {totalEstMins > 0 && (
-                <span className="text-[11px] text-slate-400 font-medium flex items-center gap-1">
+                <span className="text-[10px] text-slate-400 font-medium flex items-center gap-0.5">
                   <Clock className="h-3 w-3" />
                   ~{totalEstMins >= 60
                     ? `${Math.floor(totalEstMins / 60)}h ${totalEstMins % 60 > 0 ? `${totalEstMins % 60}m` : ''}`
@@ -403,100 +414,44 @@ export const DailyGoalsWidget: React.FC = () => {
               )}
               {canAdd ? (
                 <button
-                  onClick={() => { setShowAdd(!showAdd); }}
-                  className="flex items-center gap-1 text-[11px] font-bold text-white bg-primary hover:bg-primary/90 px-3 py-1.5 rounded-full shadow-sm transition-all hover:shadow-md"
+                  onClick={() => { setShowAdd(!showAdd); setShowHistory(false); }}
+                  className="flex items-center gap-1 text-[10px] font-bold text-white px-2.5 py-1 rounded-full shadow-sm transition-all hover:shadow-md"
+                  style={{ background: '#10b981' }}
                 >
                   <Plus className="h-3 w-3" />
                   Add Goal
                 </button>
               ) : (
-                <span className="flex items-center gap-1 text-[10px] font-semibold text-slate-400 bg-slate-50 border border-slate-200 px-2.5 py-1 rounded-full">
-                  <Lock className="h-3 w-3" />
-                  Window closed
+                <span className="text-[9px] font-semibold text-slate-400 bg-slate-50 border border-slate-200 px-2 py-0.5 rounded-full">
+                  Complete current goals to add more
                 </span>
+              )}
+              {/* History button */}
+              {pastGoals.length > 0 && (
+                <button
+                  onClick={() => setShowHistory(true)}
+                  className="flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-full shadow-sm bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all"
+                >
+                  <Calendar className="h-3 w-3" />
+                  History
+                </button>
               )}
             </div>
           </div>
 
-          {/* ── Window Countdown ── */}
-          {windowOpen && timeLeft && (
-            <div className={`mb-3 flex items-center justify-between gap-2 rounded-xl px-3 py-2.5 border ${
-              timeLeft.includes('m') && !timeLeft.includes('h')
-                ? 'bg-red-50 border-red-200 text-red-700'
-                : 'bg-amber-50 border-amber-200 text-amber-800'
-            }`}>
-              <div className="flex items-center gap-2">
-                <Clock className="h-4 w-4 shrink-0 animate-pulse" />
-                <span className="text-[12px] font-semibold">
-                  Goal window closes at <strong>{cutoffHour}:00 AM IST</strong>
-                </span>
-              </div>
-              <span className={`text-[13px] font-black tabular-nums shrink-0 ${
-                timeLeft.includes('m') && !timeLeft.includes('h') ? 'text-red-600' : 'text-amber-700'
-              }`}>{timeLeft}</span>
-            </div>
-          )}
-
-          {/* ── Closed Window Message ── */}
-          {!windowOpen && totalCount === 0 && (
-            <div className="mb-3 flex flex-col items-center justify-center gap-2 text-center py-2">
-              <div className="w-12 h-12 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center text-2xl shadow-sm">
-                🌙
-              </div>
-              <div>
-                <p className="text-[12px] font-bold text-slate-700">Goal window is closed</p>
-                <p className="text-[11px] text-slate-400 mt-0.5">
-                  Come back <strong>tomorrow before {cutoffHour}:00 AM IST</strong>
-                  <br/>to set goals & build your streak.
-                </p>
-              </div>
-            </div>
-          )}
-
-          {/* ── Missed Recovery Banner ── */}
-          {showMissedRecovery && yesterdayMissed.length > 0 && canAdd && (
-            <div className="mb-3 p-3 bg-orange-50 border border-orange-200 rounded-xl">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-[12px] font-bold text-orange-700 flex items-center gap-1.5">
-                  <RotateCcw className="h-3.5 w-3.5" />
-                  Yesterday you missed {yesterdayMissed.length} goal{yesterdayMissed.length > 1 ? 's' : ''}
-                </span>
-                <button onClick={() => setShowMissedRecovery(false)} className="text-orange-400 hover:text-orange-600">
-                  <X className="h-3.5 w-3.5" />
-                </button>
-              </div>
-              <div className="space-y-1">
-                {yesterdayMissed.slice(0, 3).map(g => (
-                  <div key={g.id} className="flex items-center justify-between">
-                    <span className="text-[11px] text-orange-700 truncate flex-1 mr-2">{g.label}</span>
-                    {totalCount < MAX_GOALS && (
-                      <button
-                        onClick={() => reAddMissed(g)}
-                        className="shrink-0 text-[10px] font-bold text-orange-600 bg-orange-100 hover:bg-orange-200 border border-orange-200 px-2 py-0.5 rounded-full transition-colors"
-                      >
-                        + Add Today
-                      </button>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
           {/* ── Segmented Progress ── */}
-          {totalCount > 0 && (
-            <div className="mb-4 p-3 rounded-xl bg-slate-50 border border-slate-100">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-[11px] font-semibold text-slate-600">{completedCount}/{totalCount} tasks complete</span>
-                <span className={`text-[12px] font-black tabular-nums ${ allDone ? 'text-emerald-600' : progressPct >= 50 ? 'text-primary' : 'text-amber-600'}`}>{progressPct}%</span>
+          {totalCount > 0 && !showHistory && (
+            <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-100">
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-[10px] font-semibold text-slate-600">{completedCount}/{totalCount} tasks complete</span>
+                <span className={`text-[11px] font-black tabular-nums ${ allDone ? 'text-emerald-600' : progressPct >= 50 ? 'text-primary' : 'text-amber-600'}`}>{progressPct}%</span>
               </div>
-              {/* 5 slot bar */}
               <div className="flex gap-1">
                 {Array.from({ length: MAX_GOALS }).map((_, i) => {
                   const isDone = i < completedCount;
                   const isAdded = i < totalCount;
                   return (
-                    <div key={i} className="flex-1 h-2 rounded-full transition-all duration-500"
+                    <div key={i} className="flex-1 h-1.5 rounded-full transition-all duration-500"
                       style={{
                         background: isDone ? '#10b981' : isAdded ? 'var(--color-primary, #6366f1)' : '#e2e8f0',
                         opacity: isAdded ? 1 : 0.4,
@@ -506,25 +461,27 @@ export const DailyGoalsWidget: React.FC = () => {
                   );
                 })}
               </div>
-              <div className="flex justify-between mt-1.5">
-                {Array.from({ length: MAX_GOALS }).map((_, i) => (
-                  <span key={i} className="text-[9px] text-slate-300 font-bold">{i + 1}</span>
-                ))}
-              </div>
             </div>
           )}
+        </div>
+
+        {/* ════════════════════════════════════════════════
+             CONTENT AREA — scrollable
+            ════════════════════════════════════════════════ */}
+        <div className="flex-1 overflow-y-auto px-5 pb-4">
 
           {/* ── Empty State ── */}
-          {totalCount === 0 && !showAdd && windowOpen && (
+          {totalCount === 0 && !showAdd && (
             <div className="flex flex-col items-center justify-center py-5 text-center">
               <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-3">
                 <Target className="h-5 w-5 text-primary" />
               </div>
               <p className="text-[13px] font-bold text-slate-700 mb-1">No goals set for today</p>
-              <p className="text-[11px] text-slate-400 mb-3">Set up to 5 goals before {cutoffHour}:00 AM IST</p>
+              <p className="text-[11px] text-slate-400 mb-3">Set up to 5 goals to get started</p>
               <button
                 onClick={() => setShowAdd(true)}
-                className="text-[12px] font-bold text-primary hover:text-primary/80 bg-primary/10 hover:bg-primary/20 border border-primary/20 px-4 py-1.5 rounded-full transition-colors"
+              className="text-[12px] font-bold hover:opacity-80 border px-4 py-1.5 rounded-full transition-colors"
+                style={{ color: '#10b981', background: 'rgba(16,185,129,0.1)', borderColor: 'rgba(16,185,129,0.25)' }}
               >
                 + Set your goals for today
               </button>
@@ -562,12 +519,23 @@ export const DailyGoalsWidget: React.FC = () => {
                       {statusIcon(goal.status)}
                     </button>
                     <div className="flex-1 min-w-0">
-                      <p className={`text-[13px] font-semibold leading-snug ${
-                        isDone ? 'line-through text-slate-400' :
-                        isMissed ? 'text-slate-400' : 'text-slate-800'
-                      }`}>
-                        {goal.label}
-                      </p>
+                      {editingId === goal.id ? (
+                        <Input
+                          value={editText}
+                          onChange={(e) => setEditText(e.target.value)}
+                          onKeyDown={(e) => e.key === 'Enter' && saveEditGoal(goal.id)}
+                          className="text-[13px] h-7 px-2 py-1 border-slate-200 bg-white"
+                          autoFocus
+                          maxLength={80}
+                        />
+                      ) : (
+                        <p className={`text-[13px] font-semibold leading-snug ${
+                          isDone ? 'line-through text-slate-400' :
+                          isMissed ? 'text-slate-400' : 'text-slate-800'
+                        }`}>
+                          {goal.label}
+                        </p>
+                      )}
                       <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                         {typeInfo && (
                           <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-sm ${typeInfo.color}`}>
@@ -587,7 +555,7 @@ export const DailyGoalsWidget: React.FC = () => {
                         )}
                       </div>
                     </div>
-                    <div className="flex items-center gap-1.5 shrink-0">
+                    <div className="flex items-center gap-1 shrink-0">
                       {goal.type === 'test' && goal.status === 'pending' && (
                         <Link
                           to="/student/daily-quizzes"
@@ -597,20 +565,35 @@ export const DailyGoalsWidget: React.FC = () => {
                             );
                             updateGoals(updated);
                           }}
-                          className="flex items-center gap-1 text-[11px] font-bold text-white bg-primary hover:bg-primary/90 px-2.5 py-1 rounded-lg shadow-sm transition-all"
+                          className="flex items-center gap-1 text-[10px] font-bold text-white bg-primary hover:bg-primary/90 px-2 py-1 rounded-lg shadow-sm transition-all"
                         >
                           <Play className="h-3 w-3" strokeWidth={3} />
                           Start
                         </Link>
                       )}
-                      {!isMissed && (
+                      {/* Edit button - always visible */}
+                      {editingId === goal.id ? (
                         <button
-                          onClick={() => requestDelete(goal.id)}
-                          className="p-1.5 text-slate-200 hover:text-red-400 hover:bg-red-50 transition-colors rounded-lg"
+                          onClick={() => saveEditGoal(goal.id)}
+                          className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
                         >
-                          <Trash2 className="h-3.5 w-3.5" />
+                          <CheckCircle2 className="h-3.5 w-3.5" />
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => startEdit(goal)}
+                          className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                        >
+                          <Edit2 className="h-3.5 w-3.5" />
                         </button>
                       )}
+                      {/* Delete button - always visible */}
+                      <button
+                        onClick={() => requestDelete(goal.id)}
+                        className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
                     </div>
                   </div>
                 );
@@ -623,23 +606,20 @@ export const DailyGoalsWidget: React.FC = () => {
             <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded-xl">
               <div className="flex items-center gap-2 mb-2">
                 <AlertTriangle className="h-4 w-4 text-red-500 shrink-0" />
-                <p className="text-[12px] font-bold text-red-700">Delete after window closed?</p>
+                <p className="text-[12px] font-bold text-red-700">Delete this goal?</p>
               </div>
-              <p className="text-[11px] text-red-600 mb-3">
-                Deleting a goal after 9 AM will count it as <strong>missed</strong>. This affects your completion rate.
-              </p>
               <div className="flex gap-2">
                 <button
                   onClick={confirmDelete}
                   className="flex-1 text-[12px] font-bold text-white bg-red-500 hover:bg-red-600 py-1.5 rounded-lg transition-colors"
                 >
-                  Delete (mark as missed)
+                  Yes, Delete
                 </button>
                 <button
                   onClick={() => setDeletingId(null)}
                   className="flex-1 text-[12px] font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 py-1.5 rounded-lg transition-colors"
                 >
-                  Keep it
+                  Cancel
                 </button>
               </div>
             </div>
@@ -696,7 +676,8 @@ export const DailyGoalsWidget: React.FC = () => {
                     </div>
                     <Button
                       size="sm"
-                      className="h-9 px-4 bg-primary hover:bg-primary/90 text-white rounded-lg font-bold shrink-0"
+                      className="h-9 px-4 text-white rounded-lg font-bold shrink-0"
+                      style={{ background: '#10b981' }}
                       onClick={addManualGoal}
                       disabled={!textInput.trim()}
                     >
@@ -786,26 +767,104 @@ export const DailyGoalsWidget: React.FC = () => {
 
           {/* ── Stats Footer ── */}
           {totalCount > 0 && (
-            <div className="flex items-center justify-between pt-3 border-t border-slate-100">
+            <div className="flex items-center justify-between pt-3 border-t border-slate-100 mt-3">
               <div className="flex items-center gap-1 text-[11px] text-slate-400">
                 <TrendingUp className="h-3 w-3" />
                 <span>
                   {completedCount === 0 && 'Get started on your goals!'}
                   {completedCount > 0 && completedCount < totalCount && `${totalCount - completedCount} goal${totalCount - completedCount > 1 ? 's' : ''} remaining`}
-                  {allDone && 'Excellent work today!'}
+                  {allDone && 'Excellent work today! 🎉'}
                 </span>
               </div>
-              {!windowOpen && (
-                <span className="text-[10px] text-slate-400 flex items-center gap-1">
-                  <Lock className="h-3 w-3" />
-                  New goals from 3–{cutoffHour} AM
-                </span>
+              {batchNumber > 1 && (
+                <span className="text-[10px] text-primary font-semibold">Batch #{batchNumber}</span>
               )}
             </div>
           )}
         </div>
 
       </div>
+
+      {/* ── History Dialog ── */}
+      <Dialog open={showHistory} onOpenChange={setShowHistory}>
+        <DialogContent className="max-w-md max-h-[80vh]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Calendar className="h-4 w-4 text-slate-500" />
+              Past Goals History
+            </DialogTitle>
+          </DialogHeader>
+          <ScrollArea className="h-[60vh] pr-4">
+            {pastGoals.length === 0 ? (
+              <p className="text-sm text-slate-400 text-center py-8">No past goals to show</p>
+            ) : (
+              <div className="space-y-2">
+                {pastGoals.map((goal, idx) => {
+                  const isDone = goal.status === 'completed';
+                  return (
+                    <div
+                      key={`${goal.id}-${idx}`}
+                      className={`flex items-start gap-3 px-3 py-2.5 rounded-lg border ${
+                        isDone ? 'bg-emerald-50/60 border-emerald-100' :
+                        goal.status === 'missed' ? 'bg-red-50/50 border-red-100 opacity-60' :
+                        'bg-slate-50 border-slate-100'
+                      }`}
+                    >
+                      <span className="shrink-0 mt-0.5">
+                        {isDone ? <CheckCircle2 className="h-4 w-4 text-emerald-500" /> :
+                         goal.status === 'missed' ? <X className="h-4 w-4 text-red-400" /> :
+                         <Circle className="h-4 w-4 text-slate-300" />}
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <p className={`text-[13px] font-semibold leading-snug ${isDone ? 'text-slate-600' : goal.status === 'missed' ? 'text-slate-400' : 'text-slate-700'}`}>
+                          {goal.label}
+                        </p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="text-[10px] text-slate-400">{goal.createdAt}</span>
+                          {goal.score !== undefined && (
+                            <Badge variant="secondary" className="text-[9px] px-1.5 py-0">Score: {goal.score}%</Badge>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Delete Confirmation Dialog ── */}
+      <Dialog open={!!deletingId} onOpenChange={(open) => !open && setDeletingId(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-600">
+              <AlertTriangle className="h-4 w-4" />
+              Delete Goal?
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="text-sm text-slate-600">This goal will be permanently removed from your list.</p>
+          </div>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              className="flex-1"
+              onClick={() => setDeletingId(null)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              className="flex-1"
+              onClick={confirmDelete}
+            >
+              Delete
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 };

@@ -6,15 +6,20 @@ import {
   BookOpen,
   Target,
   TrendingUp,
+  Calendar,
+  Award,
 } from 'lucide-react';
 import { getTargetExamRoute } from '@/utils/targetExamRoute';
 import { differenceInDays } from 'date-fns';
+import { AdsBanner } from '@/components/student/dashboard/AdsBanner';
 
 interface TargetExamCardProps {
   targetExam: string;
   examCategory: string;
   userName: string;
   preparationStartDate: Date | null;
+  /** Live overall % from real quiz scores; overrides the static default when provided */
+  liveOverallPct?: number;
 }
 
 interface ExamMeta {
@@ -30,47 +35,8 @@ interface ExamMeta {
   examDate: string;
 }
 
-/** Map exam name patterns to metadata */
 const getExamMeta = (exam: string): ExamMeta => {
   const n = exam.toLowerCase();
-
-  if (n.includes('lic ado') || n.includes('lic-ado'))
-    return {
-      subtitle: 'Apprentice Development Officer',
-      vacancies: '5,000+ Vacancies',
-      notification: 'Mar 2026',
-      region: 'All India',
-      duration: '60 min',
-      marks: '300 Marks',
-      sections: [
-        { name: 'Reasoning', color: 'bg-sky-500', pct: 68 },
-        { name: 'Numeracy', color: 'bg-violet-500', pct: 72 },
-        { name: 'English', color: 'bg-emerald-500', pct: 76 },
-        { name: 'Gen. Knowledge', color: 'bg-amber-500', pct: 60 },
-      ],
-      overallPct: 69,
-      gradient: 'from-[#0f2b5b] via-[#1a4080] to-[#1d5c9e]',
-      examDate: '2026-06-15',
-    };
-
-  if (n.includes('lic aao') || n.includes('lic-aao'))
-    return {
-      subtitle: 'Assistant Administrative Officer',
-      vacancies: '300 Vacancies',
-      notification: 'Jun 2026',
-      region: 'All India',
-      duration: '120 min',
-      marks: '300 Marks',
-      sections: [
-        { name: 'Reasoning', color: 'bg-sky-500', pct: 70 },
-        { name: 'Quantitative', color: 'bg-violet-500', pct: 65 },
-        { name: 'English', color: 'bg-emerald-500', pct: 78 },
-        { name: 'Gen. Knowledge', color: 'bg-amber-500', pct: 55 },
-      ],
-      overallPct: 67,
-      gradient: 'from-[#0f2b5b] via-[#1a4080] to-[#1d5c9e]',
-      examDate: '2026-09-01',
-    };
 
   if (n.includes('sbi clerk') || n.includes('sbi-clerk'))
     return {
@@ -81,10 +47,10 @@ const getExamMeta = (exam: string): ExamMeta => {
       duration: '60 min',
       marks: '100 Marks',
       sections: [
-        { name: 'Quantitative', color: 'bg-sky-500', pct: 62 },
-        { name: 'Reasoning', color: 'bg-violet-500', pct: 74 },
-        { name: 'English', color: 'bg-emerald-500', pct: 78 },
-        { name: 'Gen. Awareness', color: 'bg-amber-500', pct: 55 },
+        { name: 'Quantitative', color: '#38bdf8', pct: 62 },
+        { name: 'Reasoning', color: '#a78bfa', pct: 74 },
+        { name: 'English', color: '#34d399', pct: 78 },
+        { name: 'Gen. Awareness', color: '#fb923c', pct: 55 },
       ],
       overallPct: 64,
       gradient: 'from-[#1a3a6e] via-[#1e4fa0] to-[#2563eb]',
@@ -100,10 +66,10 @@ const getExamMeta = (exam: string): ExamMeta => {
       duration: '60 min',
       marks: '100 Marks',
       sections: [
-        { name: 'Quantitative', color: 'bg-sky-500', pct: 58 },
-        { name: 'Reasoning', color: 'bg-violet-500', pct: 70 },
-        { name: 'English', color: 'bg-emerald-500', pct: 72 },
-        { name: 'Gen. Awareness', color: 'bg-amber-500', pct: 48 },
+        { name: 'Quantitative', color: '#38bdf8', pct: 58 },
+        { name: 'Reasoning', color: '#a78bfa', pct: 70 },
+        { name: 'English', color: '#34d399', pct: 72 },
+        { name: 'Gen. Awareness', color: '#fb923c', pct: 48 },
       ],
       overallPct: 60,
       gradient: 'from-[#1e3a5f] via-[#1d4e89] to-[#1e6a9f]',
@@ -119,10 +85,10 @@ const getExamMeta = (exam: string): ExamMeta => {
       duration: '60 min',
       marks: '100 Marks',
       sections: [
-        { name: 'Quantitative', color: 'bg-sky-500', pct: 60 },
-        { name: 'Reasoning', color: 'bg-violet-500', pct: 72 },
-        { name: 'English', color: 'bg-emerald-500', pct: 76 },
-        { name: 'Gen. Awareness', color: 'bg-amber-500', pct: 50 },
+        { name: 'Quantitative', color: '#38bdf8', pct: 60 },
+        { name: 'Reasoning', color: '#a78bfa', pct: 72 },
+        { name: 'English', color: '#34d399', pct: 76 },
+        { name: 'Gen. Awareness', color: '#fb923c', pct: 50 },
       ],
       overallPct: 64,
       gradient: 'from-[#1a2e5e] via-[#1e3f8c] to-[#2855c4]',
@@ -138,10 +104,10 @@ const getExamMeta = (exam: string): ExamMeta => {
       duration: '60 min',
       marks: '100 Marks',
       sections: [
-        { name: 'Quantitative', color: 'bg-sky-500', pct: 65 },
-        { name: 'Reasoning', color: 'bg-violet-500', pct: 76 },
-        { name: 'English', color: 'bg-emerald-500', pct: 80 },
-        { name: 'Gen. Awareness', color: 'bg-amber-500', pct: 52 },
+        { name: 'Quantitative', color: '#38bdf8', pct: 65 },
+        { name: 'Reasoning', color: '#a78bfa', pct: 76 },
+        { name: 'English', color: '#34d399', pct: 80 },
+        { name: 'Gen. Awareness', color: '#fb923c', pct: 52 },
       ],
       overallPct: 68,
       gradient: 'from-[#1a2e5e] via-[#1e3f8c] to-[#2855c4]',
@@ -157,14 +123,52 @@ const getExamMeta = (exam: string): ExamMeta => {
       duration: '45 min',
       marks: '80 Marks',
       sections: [
-        { name: 'Quantitative', color: 'bg-sky-500', pct: 62 },
-        { name: 'Reasoning', color: 'bg-violet-500', pct: 70 },
-        { name: 'English', color: 'bg-emerald-500', pct: 65 },
-        { name: 'Gen. Awareness', color: 'bg-amber-500', pct: 58 },
+        { name: 'Quantitative', color: '#38bdf8', pct: 62 },
+        { name: 'Reasoning', color: '#a78bfa', pct: 70 },
+        { name: 'English', color: '#34d399', pct: 65 },
+        { name: 'Gen. Awareness', color: '#fb923c', pct: 58 },
       ],
       overallPct: 64,
       gradient: 'from-[#1a2e5e] via-[#1e3f8c] to-[#2855c4]',
       examDate: '2026-10-05',
+    };
+
+  if (n.includes('lic ado') || n.includes('lic-ado'))
+    return {
+      subtitle: 'Apprentice Development Officer',
+      vacancies: '5,000+ Vacancies',
+      notification: 'Mar 2026',
+      region: 'All India',
+      duration: '60 min',
+      marks: '300 Marks',
+      sections: [
+        { name: 'Reasoning', color: '#38bdf8', pct: 68 },
+        { name: 'Numeracy', color: '#a78bfa', pct: 72 },
+        { name: 'English', color: '#34d399', pct: 76 },
+        { name: 'Gen. Knowledge', color: '#fb923c', pct: 60 },
+      ],
+      overallPct: 69,
+      gradient: 'from-[#0f2b5b] via-[#1a4080] to-[#1d5c9e]',
+      examDate: '2026-06-15',
+    };
+
+  if (n.includes('lic aao') || n.includes('lic-aao'))
+    return {
+      subtitle: 'Assistant Administrative Officer',
+      vacancies: '300 Vacancies',
+      notification: 'Jun 2026',
+      region: 'All India',
+      duration: '120 min',
+      marks: '300 Marks',
+      sections: [
+        { name: 'Reasoning', color: '#38bdf8', pct: 70 },
+        { name: 'Quantitative', color: '#a78bfa', pct: 65 },
+        { name: 'English', color: '#34d399', pct: 78 },
+        { name: 'Gen. Knowledge', color: '#fb923c', pct: 55 },
+      ],
+      overallPct: 67,
+      gradient: 'from-[#0f2b5b] via-[#1a4080] to-[#1d5c9e]',
+      examDate: '2026-09-01',
     };
 
   if (n.includes('rbi grade b') || n.includes('rbi-grade-b'))
@@ -176,10 +180,10 @@ const getExamMeta = (exam: string): ExamMeta => {
       duration: '120 min',
       marks: '200 Marks',
       sections: [
-        { name: 'Economics', color: 'bg-sky-500', pct: 58 },
-        { name: 'Reasoning', color: 'bg-violet-500', pct: 72 },
-        { name: 'English', color: 'bg-emerald-500', pct: 75 },
-        { name: 'Gen. Awareness', color: 'bg-amber-500', pct: 62 },
+        { name: 'Economics', color: '#38bdf8', pct: 58 },
+        { name: 'Reasoning', color: '#a78bfa', pct: 72 },
+        { name: 'English', color: '#34d399', pct: 75 },
+        { name: 'Gen. Awareness', color: '#fb923c', pct: 62 },
       ],
       overallPct: 66,
       gradient: 'from-[#4a1508] via-[#7c2210] to-[#c0392b]',
@@ -195,10 +199,10 @@ const getExamMeta = (exam: string): ExamMeta => {
       duration: '90 min',
       marks: '100 Marks',
       sections: [
-        { name: 'Mathematics', color: 'bg-sky-500', pct: 60 },
-        { name: 'Reasoning', color: 'bg-violet-500', pct: 72 },
-        { name: 'Gen. Awareness', color: 'bg-emerald-500', pct: 65 },
-        { name: 'Gen. Science', color: 'bg-amber-500', pct: 50 },
+        { name: 'Mathematics', color: '#38bdf8', pct: 60 },
+        { name: 'Reasoning', color: '#a78bfa', pct: 72 },
+        { name: 'Gen. Awareness', color: '#34d399', pct: 65 },
+        { name: 'Gen. Science', color: '#fb923c', pct: 50 },
       ],
       overallPct: 62,
       gradient: 'from-[#2d1b69] via-[#4a2d9c] to-[#6d3fd6]',
@@ -214,10 +218,10 @@ const getExamMeta = (exam: string): ExamMeta => {
       duration: '90 min',
       marks: '100 Marks',
       sections: [
-        { name: 'Mathematics', color: 'bg-sky-500', pct: 55 },
-        { name: 'Reasoning', color: 'bg-violet-500', pct: 68 },
-        { name: 'Gen. Awareness', color: 'bg-emerald-500', pct: 62 },
-        { name: 'Gen. Science', color: 'bg-amber-500', pct: 58 },
+        { name: 'Mathematics', color: '#38bdf8', pct: 55 },
+        { name: 'Reasoning', color: '#a78bfa', pct: 68 },
+        { name: 'Gen. Awareness', color: '#34d399', pct: 62 },
+        { name: 'Gen. Science', color: '#fb923c', pct: 58 },
       ],
       overallPct: 60,
       gradient: 'from-[#2d1b69] via-[#4a2d9c] to-[#6d3fd6]',
@@ -233,10 +237,10 @@ const getExamMeta = (exam: string): ExamMeta => {
       duration: '60 min',
       marks: '200 Marks',
       sections: [
-        { name: 'Quantitative', color: 'bg-sky-500', pct: 58 },
-        { name: 'Reasoning', color: 'bg-violet-500', pct: 68 },
-        { name: 'English', color: 'bg-emerald-500', pct: 75 },
-        { name: 'Gen. Studies', color: 'bg-amber-500', pct: 55 },
+        { name: 'Quantitative', color: '#38bdf8', pct: 58 },
+        { name: 'Reasoning', color: '#a78bfa', pct: 68 },
+        { name: 'English', color: '#34d399', pct: 75 },
+        { name: 'Gen. Studies', color: '#fb923c', pct: 55 },
       ],
       overallPct: 63,
       gradient: 'from-[#1a4d2e] via-[#1e6b3c] to-[#22c55e]',
@@ -252,10 +256,10 @@ const getExamMeta = (exam: string): ExamMeta => {
       duration: '60 min',
       marks: '200 Marks',
       sections: [
-        { name: 'Quantitative', color: 'bg-sky-500', pct: 56 },
-        { name: 'Reasoning', color: 'bg-violet-500', pct: 65 },
-        { name: 'English', color: 'bg-emerald-500', pct: 72 },
-        { name: 'Gen. Studies', color: 'bg-amber-500', pct: 52 },
+        { name: 'Quantitative', color: '#38bdf8', pct: 56 },
+        { name: 'Reasoning', color: '#a78bfa', pct: 65 },
+        { name: 'English', color: '#34d399', pct: 72 },
+        { name: 'Gen. Studies', color: '#fb923c', pct: 52 },
       ],
       overallPct: 61,
       gradient: 'from-[#1a4d2e] via-[#1e6b3c] to-[#22c55e]',
@@ -271,10 +275,10 @@ const getExamMeta = (exam: string): ExamMeta => {
       duration: '90 min',
       marks: '150 Marks',
       sections: [
-        { name: 'Quantitative', color: 'bg-sky-500', pct: 55 },
-        { name: 'Reasoning', color: 'bg-violet-500', pct: 62 },
-        { name: 'English', color: 'bg-emerald-500', pct: 68 },
-        { name: 'Gen. Studies', color: 'bg-amber-500', pct: 50 },
+        { name: 'Quantitative', color: '#38bdf8', pct: 55 },
+        { name: 'Reasoning', color: '#a78bfa', pct: 62 },
+        { name: 'English', color: '#34d399', pct: 68 },
+        { name: 'Gen. Studies', color: '#fb923c', pct: 50 },
       ],
       overallPct: 58,
       gradient: 'from-[#1a4d2e] via-[#1e6b3c] to-[#22c55e]',
@@ -290,17 +294,16 @@ const getExamMeta = (exam: string): ExamMeta => {
       duration: '120 min',
       marks: '200 Marks',
       sections: [
-        { name: 'History', color: 'bg-sky-500', pct: 55 },
-        { name: 'Geography', color: 'bg-violet-500', pct: 62 },
-        { name: 'Polity', color: 'bg-emerald-500', pct: 70 },
-        { name: 'Current Affairs', color: 'bg-amber-500', pct: 48 },
+        { name: 'History', color: '#38bdf8', pct: 55 },
+        { name: 'Geography', color: '#a78bfa', pct: 62 },
+        { name: 'Polity', color: '#34d399', pct: 70 },
+        { name: 'Current Affairs', color: '#fb923c', pct: 48 },
       ],
       overallPct: 58,
       gradient: 'from-[#4a1942] via-[#7b1f6e] to-[#c026d3]',
       examDate: '2026-08-20',
     };
 
-  // Default — always future so days left is always a real number
   return {
     subtitle: 'Upcoming Examination',
     vacancies: 'Multiple Vacancies',
@@ -309,10 +312,10 @@ const getExamMeta = (exam: string): ExamMeta => {
     duration: '60 min',
     marks: '100 Marks',
     sections: [
-      { name: 'Quantitative', color: 'bg-sky-500', pct: 60 },
-      { name: 'Reasoning', color: 'bg-violet-500', pct: 65 },
-      { name: 'English', color: 'bg-emerald-500', pct: 72 },
-      { name: 'Gen. Awareness', color: 'bg-amber-500', pct: 52 },
+      { name: 'Quantitative', color: '#38bdf8', pct: 60 },
+      { name: 'Reasoning', color: '#a78bfa', pct: 65 },
+      { name: 'English', color: '#34d399', pct: 72 },
+      { name: 'Gen. Awareness', color: '#fb923c', pct: 52 },
     ],
     overallPct: 62,
     gradient: 'from-[#1a3a6e] via-[#1e4fa0] to-[#2563eb]',
@@ -320,26 +323,25 @@ const getExamMeta = (exam: string): ExamMeta => {
   };
 };
 
-/* ─── Circular Donut Ring Component ─── */
-const DonutRing: React.FC<{
+const CircularProgress: React.FC<{
   pct: number;
   color: string;
   label: string;
   size?: number;
-  stroke?: number;
-}> = ({ pct, color, label, size = 72, stroke = 7 }) => {
-  const r = (size - stroke * 2) / 2;
+  strokeWidth?: number;
+}> = ({ pct, color, label, size = 90, strokeWidth = 7 }) => {
+  const r = (size - strokeWidth * 2) / 2;
   const circ = 2 * Math.PI * r;
   const offset = circ - (pct / 100) * circ;
 
   return (
-    <div className="flex flex-col items-center gap-1.5">
+    <div className="flex flex-col items-center gap-2">
       <div className="relative" style={{ width: size, height: size }}>
         {/* Track */}
         <svg width={size} height={size} className="-rotate-90" style={{ position: 'absolute', top: 0, left: 0 }}>
           <circle
             cx={size / 2} cy={size / 2} r={r}
-            fill="none" stroke="#e2e8f0" strokeWidth={stroke}
+            fill="none" stroke="#e2e8f0" strokeWidth={strokeWidth + 1}
           />
         </svg>
         {/* Progress */}
@@ -348,55 +350,29 @@ const DonutRing: React.FC<{
             cx={size / 2} cy={size / 2} r={r}
             fill="none"
             stroke={color}
-            strokeWidth={stroke}
+            strokeWidth={strokeWidth}
             strokeLinecap="round"
             strokeDasharray={circ}
             strokeDashoffset={offset}
             style={{ transition: `stroke-dashoffset 1.2s cubic-bezier(0.16,1,0.3,1)` }}
           />
         </svg>
-        {/* Label inside */}
-        <div
-          className="absolute inset-0 flex items-center justify-center"
-          style={{ fontWeight: 700, fontSize: 15, color: '#1e293b' }}
-        >
-          {pct}%
+        {/* Percentage inside */}
+        <div className="absolute inset-0 flex items-center justify-center">
+          <span className="text-sm font-bold text-slate-800">{pct}%</span>
         </div>
       </div>
-      <span className="text-[11px] text-slate-500 font-medium text-center leading-tight">{label}</span>
+      <span className="text-[10px] font-medium text-slate-600 text-center leading-tight">{label}</span>
     </div>
   );
 };
-
-/* ─── Segmented Progress Bar ─── */
-const SegmentedBar: React.FC<{ pct: number; color?: string }> = ({ pct, color = '#2563eb' }) => {
-  const totalSegments = 18;
-  const filledSegments = Math.round((pct / 100) * totalSegments);
-
-  return (
-    <div className="flex gap-1 items-center w-full">
-      {Array.from({ length: totalSegments }).map((_, i) => (
-        <div
-          key={i}
-          className="h-2.5 flex-1 rounded-sm"
-          style={{
-            background: i < filledSegments ? color : '#e2e8f0',
-            transition: `background 0.05s ease ${i * 40}ms`,
-          }}
-        />
-      ))}
-    </div>
-  );
-};
-
-/* ─── Section-color mapping (SVG-safe hex colors) ─── */
-const SECTION_COLORS = ['#38bdf8', '#a78bfa', '#fb923c', '#34d399'];
 
 const TargetExamCard: React.FC<TargetExamCardProps> = ({
   targetExam,
   examCategory,
   userName,
   preparationStartDate,
+  liveOverallPct,
 }) => {
   const navigate = useNavigate();
   const meta = getExamMeta(targetExam);
@@ -412,132 +388,138 @@ const TargetExamCard: React.FC<TargetExamCardProps> = ({
   })();
 
   return (
-    <div
-      className="relative rounded-2xl overflow-hidden bg-white text-slate-900 border border-slate-200/80 h-full flex flex-col md:flex-row"
-      style={{ minHeight: 220, boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 8px 24px rgba(0,0,0,0.07)' }}
-    >
-      {/* ── Left Content ── */}
-      <div className="relative z-10 p-5 md:p-6 flex-1 flex flex-col gap-4">
+    <div className="rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+      {/* ── Main card row ── */}
+      <div className="bg-white flex">
+        {/* Top gradient accent */}
+        <div className={`h-1.5 bg-gradient-to-r ${meta.gradient}`} />
 
-        {/* Header row */}
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <Target className="h-3.5 w-3.5 text-emerald-600 shrink-0" strokeWidth={2.5} />
-            <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">
-              Target Examination
-            </span>
+        <div className="p-5 sm:p-6">
+
+          {/* Header: icon + exam name */}
+          <div className="flex items-start gap-3 mb-4">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-sm flex-shrink-0">
+              <Target className="h-5 w-5 text-white" />
+            </div>
+            <div>
+              <span className="text-[10px] font-bold text-primary uppercase tracking-wider">Target Examination</span>
+              <h2 className="text-2xl font-bold text-slate-900 leading-tight">
+                {targetExam.toUpperCase()}
+              </h2>
+              <p className="text-xs text-slate-500 mt-0.5">{meta.subtitle} • {meta.vacancies}</p>
+            </div>
           </div>
-          <h2 className="text-2xl md:text-[28px] font-bold leading-tight tracking-tight text-slate-900">
-            {targetExam.toUpperCase()}
-          </h2>
-        </div>
 
-
-        {/* Overall Preparation segmented bar */}
-        <div>
-          <div className="flex items-center gap-2 mb-2">
-            <span className="text-[12px] font-semibold text-slate-700">Overall Preparation</span>
-            <span className="text-[14px] font-bold text-emerald-600">{meta.overallPct}%</span>
+          {/* Exam meta pills */}
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mb-5 text-xs text-slate-600">
+            <div className="flex items-center gap-1.5">
+              <Calendar className="h-3.5 w-3.5 text-slate-400" />
+              <span className="font-medium">{new Date(meta.examDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <Award className="h-3.5 w-3.5 text-slate-400" />
+              <span className="font-medium">{meta.duration} • {meta.marks}</span>
+            </div>
           </div>
-          <SegmentedBar pct={meta.overallPct} color="#10b981" />
-        </div>
 
-        {/* Circular donut rings for each subject */}
-        <div className="flex gap-6 flex-wrap">
-          {meta.sections.map((s, idx) => (
-            <DonutRing
-              key={s.name}
-              pct={s.pct}
-              color={SECTION_COLORS[idx % SECTION_COLORS.length]}
-              label={s.name}
+          {/* ── Circles Row: Overall (big) + Subject circles ── */}
+          <div className="flex flex-wrap items-end gap-5 mb-5">
+
+            {/* Overall — bigger */}
+            <CircularProgress
+              pct={liveOverallPct !== undefined && liveOverallPct > 0 ? liveOverallPct : meta.overallPct}
+              color="#10b981"
+              label={liveOverallPct !== undefined && liveOverallPct > 0 ? 'Your Score' : 'Overall'}
+              size={112}
+              strokeWidth={9}
             />
-          ))}
-        </div>
 
-        {/* Action buttons */}
-        <div className="flex flex-wrap items-center gap-2.5 mt-auto pt-1">
-          <Button
-            size="sm"
-            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 gap-2 rounded-lg shadow-sm"
-            onClick={() => navigate(mockRoute)}
-          >
-            <Play className="h-3.5 w-3.5" />
-            Start Full Mock
-          </Button>
+            {/* Divider */}
+            <div className="h-20 w-px bg-slate-200 hidden sm:block self-center" />
 
-          <Button
-            size="sm"
-            variant="outline"
-            className="text-slate-700 border-slate-200 font-medium px-4 py-2 gap-2 rounded-lg hover:bg-slate-50"
-            onClick={() => navigate('/student/syllabus')}
-          >
-            <BookOpen className="h-3.5 w-3.5" />
-            View Syllabus
-          </Button>
+            {/* Subject circles */}
+            {meta.sections.map((s) => (
+              <CircularProgress
+                key={s.name}
+                pct={s.pct}
+                color={s.color}
+                label={s.name}
+                size={88}
+                strokeWidth={7}
+              />
+            ))}
+          </div>
 
-          <Button
-            size="sm"
-            variant="outline"
-            className="text-slate-700 border-slate-200 font-medium px-4 py-2 gap-2 rounded-lg hover:bg-slate-50"
-            onClick={() => navigate('/student/performance-analytics')}
-          >
-            <TrendingUp className="h-3.5 w-3.5" />
-            Score Prediction
-          </Button>
+          {/* Action Buttons */}
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              size="sm"
+              className="bg-primary hover:bg-primary/90 text-white font-semibold px-5 py-2 gap-2 rounded-xl text-xs shadow-sm"
+              onClick={() => navigate(mockRoute)}
+            >
+              <Play className="h-3.5 w-3.5" />
+              Start Full Mock
+            </Button>
+
+            <Button
+              size="sm"
+              variant="outline"
+              className="text-slate-700 border-slate-200 font-medium px-5 py-2 gap-2 rounded-xl text-xs hover:bg-slate-50"
+              onClick={() => navigate('/student/syllabus')}
+            >
+              <BookOpen className="h-3.5 w-3.5" />
+              View Syllabus
+            </Button>
+
+            <Button
+              size="sm"
+              variant="outline"
+              className="text-slate-700 border-slate-200 font-medium px-5 py-2 gap-2 rounded-xl text-xs hover:bg-slate-50"
+              onClick={() => navigate('/student/performance-analytics')}
+            >
+              <TrendingUp className="h-3.5 w-3.5" />
+              Score Prediction
+            </Button>
+          </div>
         </div>
       </div>
 
-      {/* ── Right: Days Left Panel ── */}
+      {/* ── RIGHT: Full-height Days Left sidebar ── */}
       <div
-        className="hidden md:flex flex-col items-center justify-center px-8 py-6 min-w-[160px] shrink-0 text-center rounded-r-2xl relative overflow-hidden"
+        className="flex-shrink-0 w-32 sm:w-44 flex flex-col items-center justify-center text-white relative overflow-hidden"
         style={{
-          background: 'linear-gradient(160deg, #ecfdf5 0%, #d1fae5 60%, #a7f3d0 100%)',
-          borderLeft: '1px solid rgba(16,185,129,0.15)',
+          background: 'linear-gradient(160deg, #1e40af 0%, #0ea5e9 35%, #10b981 100%)'
         }}
       >
-        {/* Subtle glow circle behind the number */}
-        <div
-          className="absolute rounded-full pointer-events-none"
-          style={{
-            width: 120, height: 120,
-            background: 'radial-gradient(circle, rgba(16,185,129,0.18) 0%, transparent 70%)',
-            top: '50%', left: '50%',
-            transform: 'translate(-50%, -60%)',
-          }}
-        />
-        {/* Giant day number */}
-        <div
-          className="font-black leading-none tracking-tight relative z-10"
-          style={{
-            fontSize: 68,
-            fontFamily: "'Outfit', 'Inter', sans-serif",
-            background: 'linear-gradient(135deg, #059669 0%, #10b981 60%, #34d399 100%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            lineHeight: 1,
-            filter: 'drop-shadow(0 2px 8px rgba(16,185,129,0.25))',
-          }}
-        >
-          {daysLeft !== null ? daysLeft : '—'}
-        </div>
-        <div className="text-[12px] font-bold text-emerald-700 mt-2 mb-4 tracking-widest uppercase relative z-10">
-          {daysLeft !== null ? 'Days Left' : 'TBA'}
-        </div>
-        <div className="w-8 h-px bg-emerald-200 mb-4 relative z-10" />
-        <div className="text-[9px] font-bold uppercase tracking-widest text-emerald-500 mb-1 relative z-10">
-          Exam Date
-        </div>
-        <div className="text-[13px] font-bold text-slate-700 relative z-10">
-          {new Date(meta.examDate).toLocaleDateString('en-GB', {
-            day: 'numeric',
-            month: 'short',
-            year: 'numeric',
-          })}
+        {/* Decorative blobs */}
+        <div className="absolute -top-6 -right-6 w-24 h-24 bg-white/10 rounded-full" />
+        <div className="absolute -bottom-6 -left-6 w-20 h-20 bg-white/10 rounded-full" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-28 h-28 border border-white/10 rounded-full" />
+        {/* Content */}
+        <div className="relative z-10 flex flex-col items-center">
+          <div
+            className="text-5xl sm:text-7xl font-black leading-none mb-1.5 drop-shadow-md"
+            style={{ fontFamily: "'Outfit', sans-serif", textShadow: '0 2px 12px rgba(0,0,0,0.2)' }}
+          >
+            {daysLeft !== null ? daysLeft : '—'}
+          </div>
+          <div className="text-[11px] sm:text-[13px] font-bold uppercase tracking-widest opacity-90 text-center px-2">
+            {daysLeft !== null ? 'Days Left' : 'TBA'}
+          </div>
+          <div className="mt-2 w-10 h-0.5 bg-white/40 rounded-full" />
+          <div className="mt-1.5 text-[9px] sm:text-[10px] opacity-70 tracking-wide font-medium">
+            to exam day
+          </div>
         </div>
       </div>
+
+      </div>{/* end main card row */}
+
+      {/* ── ADS BANNER strip — only renders when SuperAdmin has active ads ── */}
+      <AdsBanner category={examCategory.toLowerCase()} />
+
     </div>
   );
 };
 
 export default TargetExamCard;
-

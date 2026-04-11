@@ -16,6 +16,10 @@ import {
   Zap,
   ArrowRight,
   Target,
+  LayoutDashboard,
+  BookOpen,
+  TrendingUp,
+  Library,
 } from 'lucide-react';
 import NewsArticleDialog from '@/components/student/NewsArticleDialog';
 import StatCardDialog from '@/components/student/StatCardDialog';
@@ -44,6 +48,7 @@ import RecentExamNotifications from '@/components/student/dashboard/RecentExamNo
 import { courses as allCourses } from '@/data/courseData';
 import { DailyGoalsWidget } from '@/components/student/dashboard/DailyGoalsWidget';
 import { StudyTimerWidget } from '@/components/student/dashboard/StudyTimerWidget';
+import { AdsBanner } from '@/components/student/dashboard/AdsBanner';
 import { useDashboardStats } from '@/hooks/useDashboardStats';
 
 interface UserProfile {
@@ -553,178 +558,158 @@ const StudentDashboard = () => {
 
   const firstName = (userProfile?.username || user?.name || 'Student').split(' ')[0];
 
+  // ── Tab state ────────────────────────────────────────────────────────────
+  const [activeTab, setActiveTab] = useState<'overview' | 'practice' | 'performance' | 'resources'>('overview');
+
+  const tabs = [
+    { id: 'overview' as const, label: 'Overview', icon: LayoutDashboard, description: 'Goals, stats & today\'s focus' },
+    { id: 'practice' as const, label: 'Practice', icon: BookOpen, description: 'Tests, quizzes & study timer' },
+    { id: 'performance' as const, label: 'Performance', icon: TrendingUp, description: 'Analytics & progress tracking' },
+    { id: 'resources' as const, label: 'Resources', icon: Library, description: 'Courses, news & exam updates' },
+  ] as const;
+
   return (
     <div className="min-h-screen db-bg">
-    <div className="space-y-6 max-w-7xl mx-auto px-3 py-4">
+    <div className="max-w-7xl mx-auto px-3 py-4">
 
+      {/* ═══════════════════════════════════════════════════════
+          TARGET EXAM BANNER — always visible
+         ═══════════════════════════════════════════════════════ */}
+      <div className="mb-6">
         <TargetExamCard
           targetExam={targetExamName}
           examCategory={examCategoryName}
           userName={userProfile?.username || user?.name || 'Student'}
           preparationStartDate={userProfile?.preparationStartDate || null}
+          liveOverallPct={dashStats.avgScore}
         />
+      </div>
 
-        {/* ── MAIN 2-COLUMN LAYOUT: Stats + Content | Sidebar ── */}
-        <div className="flex flex-col lg:flex-row gap-6">
-          {/* Main Content */}
-          <div className="flex-1 min-w-0 space-y-6 w-full lg:w-auto">
+      {/* ADS BANNER is now embedded inside TargetExamCard above */}
 
-          {/* ZONE 2: STATS ROW — full-width, no zone wrapper */}
-          <StatsOverview
-            journeyDays={journeyDays}
-            userName={userProfile?.username || user?.name || 'Student'}
-            studyHours={dashStats.studyHours}
-            activeStreak={dashStats.activeStreak}
-            mockTestsTaken={dashStats.mockTestsTaken}
-            onCardClick={setStatDialogType}
-          />
+      {/* ═══════════════════════════════════════════════════════
+          TAB NAVIGATION — sticky header
+         ═══════════════════════════════════════════════════════ */}
+      <div className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-slate-200 rounded-t-xl -mx-3 px-3 pt-0 pb-0 mb-6">
+        <div className="flex items-center justify-center">
+          {tabs.map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex items-center justify-center gap-2 flex-1 py-3.5 transition-all border-b-2 ${
+                  isActive
+                    ? 'border-emerald-500 text-emerald-600 bg-emerald-50/60 font-semibold'
+                    : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+                }`}
+              >
+                <Icon className={`h-4 w-4 ${isActive ? 'text-emerald-500' : 'text-slate-400'}`} />
+                <span className="text-sm font-medium whitespace-nowrap">{tab.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
 
-          {/* ── Goals + Timer: 2 independent sections side by side ── */}
-          <div className="flex flex-col xl:flex-row gap-4 items-stretch">
+      {/* ═══════════════════════════════════════════════════════
+          TAB CONTENT — only active tab renders
+         ═══════════════════════════════════════════════════════ */}
+      <div className="space-y-8">
 
-            {/* Today's Goals card */}
-            <div className="db-zone-action w-full xl:w-[70%]" style={{ margin: 0 }}>
-              <DailyGoalsWidget />
-            </div>
+        {/* ──────────────────────────────────────────────────────
+            OVERVIEW TAB — Daily focus & quick stats
+           ────────────────────────────────────────────────────── */}
+        {activeTab === 'overview' && (
+          <div className="space-y-8 animate-in fade-in duration-200">
 
-            {/* Study Timer card */}
-            <div className="w-full xl:w-[30%] bg-white rounded-2xl border border-slate-200 p-5" style={{ boxShadow: '0 1px 2px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.08), 0 12px 32px rgba(0,0,0,0.07)', borderLeft: '4px solid #F59E0B' }}>
-              <StudyTimerWidget />
-            </div>
+            {/* Stats Row */}
+            <StatsOverview
+              journeyDays={journeyDays}
+              userName={userProfile?.username || user?.name || 'Student'}
+              studyHours={dashStats.studyHours}
+              activeStreak={dashStats.activeStreak}
+              mockTestsTaken={dashStats.mockTestsTaken}
+              onCardClick={setStatDialogType}
+            />
 
-          </div>
-
-          {/* ── 3 independent sections side by side ── */}
-          <div className="flex flex-col xl:flex-row gap-4 items-stretch">
-
-            {/* Performance Graph card */}
-            <div className="w-full xl:w-1/2 bg-white rounded-2xl border border-slate-200 p-5" style={{ boxShadow: '0 1px 2px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.08), 0 12px 32px rgba(0,0,0,0.07)', borderLeft: '4px solid #8B5CF6' }}>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-violet-400 mb-3">📈 Performance Graph</p>
-              <PerformanceGraph data={performanceData} />
-            </div>
-
-            {/* Exam Percentile card */}
-            <div className="w-full xl:w-1/4 bg-white rounded-2xl border border-slate-200 p-5 flex flex-col" style={{ boxShadow: '0 1px 2px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.08), 0 12px 32px rgba(0,0,0,0.07)', borderLeft: '4px solid #F59E0B' }}>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-amber-400 mb-4">🎯 Exam Percentile</p>
-              <div className="relative w-48 h-24 mx-auto mb-4">
-                <svg className="w-full h-full" viewBox="0 0 200 100">
-                  <path d="M 20 90 A 80 80 0 0 1 180 90" fill="none" stroke="hsl(var(--muted))" strokeWidth="12" strokeLinecap="round" />
-                  <path d="M 20 90 A 80 80 0 0 1 68 24"  fill="none" stroke="#ef4444" strokeWidth="12" strokeLinecap="round" opacity="0.3" />
-                  <path d="M 68 24 A 80 80 0 0 1 132 24" fill="none" stroke="#f97316" strokeWidth="12" strokeLinecap="round" opacity="0.3" />
-                  <path d="M 132 24 A 80 80 0 0 1 180 90" fill="none" stroke="#22c55e" strokeWidth="12" strokeLinecap="round" opacity="0.3" />
-                  <path d="M 20 90 A 80 80 0 0 1 164 38" fill="none" stroke="hsl(var(--primary))" strokeWidth="12" strokeLinecap="round" className="drop-shadow-lg" />
-                  <g transform="translate(100, 90)">
-                    <line x1="0" y1="0" x2="0" y2="-65" stroke="hsl(var(--foreground))" strokeWidth="3" strokeLinecap="round" transform="rotate(-43)" className="drop-shadow-md" />
-                    <circle cx="0" cy="0" r="6" fill="hsl(var(--primary))" className="drop-shadow-lg" />
-                  </g>
-                  <text x="10" y="95" fontSize="10">0</text>
-                  <text x="90" y="15" fontSize="10">50</text>
-                  <text x="185" y="95" fontSize="10" textAnchor="end">100</text>
-                </svg>
-                <div className="absolute bottom-0 left-1/2 -translate-x-1/2 text-center">
-                  <div className="text-3xl font-bold text-primary">{dashStats.percentile > 0 ? dashStats.percentile.toFixed(1) : '—'}</div>
-                  <div className="text-xs text-muted-foreground">{dashStats.percentile > 0 ? 'Percentile' : 'No data yet'}</div>
-                </div>
+            {/* Goals + Timer */}
+            <div className="flex flex-col xl:flex-row gap-6 items-stretch">
+              <div className="flex-1 xl:w-[70%]">
+                <DailyGoalsWidget />
               </div>
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm py-1.5 border-b border-slate-100">
-                  <span className="text-muted-foreground">Student</span>
-                  <span className="font-semibold truncate ml-2">{userProfile?.username || user?.name || 'Student'}</span>
-                </div>
-                <div className="flex justify-between text-sm py-1.5 border-b border-slate-100">
-                  <span className="text-muted-foreground">Target</span>
-                  <span className="font-semibold text-primary">{targetExamName}</span>
-                </div>
-                <div className="flex justify-between text-sm py-1.5 border-b border-slate-100">
-                  <span className="text-muted-foreground">Percentile</span>
-                  <span className={`font-bold ${dashStats.percentile > 0 ? 'text-green-600' : 'text-slate-400'}`}>{dashStats.percentile > 0 ? dashStats.percentile : 'N/A'}</span>
-                </div>
-                <div className="bg-green-50 border border-green-200 rounded-lg px-3 py-2 flex items-center gap-2 mt-1">
-                  <span className="text-lg">🏆</span>
+              <div className="flex-1 xl:w-[30%] bg-white rounded-xl border border-slate-200 p-4">
+                <StudyTimerWidget />
+              </div>
+            </div>
+
+            {/* Exam Status — Current Exams */}
+            <ExamStatusSummary />
+
+            {/* Upcoming Exams — immediately below current exams */}
+            <UpcomingExamsWidget />
+          </div>
+        )}
+
+        {/* ──────────────────────────────────────────────────────
+            PRACTICE TAB — Tests, quizzes & timer
+           ────────────────────────────────────────────────────── */}
+        {activeTab === 'practice' && (
+          <div className="space-y-8 animate-in fade-in duration-200">
+
+            {/* Daily Free Tests - Full View */}
+            <Card className="p-6 bg-white border border-slate-200 rounded-xl">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-green-400 flex items-center justify-center shadow-sm">
+                    <FileText className="h-5 w-5 text-white" />
+                  </div>
                   <div>
-                    <div className="text-[11px] text-green-700 font-bold">Excellent</div>
-                    <div className="text-[10px] text-green-600">Top 12.5%</div>
+                    <h3 className="font-bold text-[16px] text-slate-800 leading-none">Daily Free Tests</h3>
+                    <p className="text-[11px] text-slate-400 mt-0.5">{freeTests.length} tests available today</p>
                   </div>
                 </div>
               </div>
-            </div>
-
-            {/* Word of the Day card */}
-            <div className="w-full xl:w-1/4 bg-white rounded-2xl border border-slate-200 p-5" style={{ boxShadow: '0 1px 2px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.08), 0 12px 32px rgba(0,0,0,0.07)', borderLeft: '4px solid #3B82F6' }}>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-blue-400 mb-3">📖 Word of the Day</p>
-              <WordOfTheDayCard />
-            </div>
-
-          </div>
-
-
-          {/* Exploration — no section wrapper */}
-          <div className="space-y-5">
-
-          {/* 4. Featured Courses — Udemy-style */}
-          <FeaturedCoursesSection navigate={navigate} />
-
-          {/* 4. Trending Exams */}
-          <TrendingExams />
-
-          {/* 5. Exam Status Summary */}
-          <ExamStatusSummary />
-
-          {/* 6. Recent Exam Notifications */}
-          <RecentExamNotifications />
-
-
-          {/* 8. Free Test/Quiz + Upcoming Live Tests */}
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-5 items-stretch">
-            {/* Free Test/Quiz — PRIMARY action card */}
-            <Card className="p-5 db-card-primary border-none flex flex-col h-full" style={{ borderLeft: '4px solid #22C55E' }}>
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <div className="w-1 h-5 bg-primary rounded-full" />
-                  <h3 className="font-bold text-[15px] text-slate-800">Daily Free Quiz</h3>
-                </div>
-                <span className="text-[11px] text-primary font-semibold bg-primary/10 border border-primary/20 px-2 py-0.5 rounded-full">
-                  {freeTests.length} tests today
-                </span>
-              </div>
-              <div className="space-y-2 flex-1">
-                {freeTests.slice(0, 5).map((test, idx) => {
+              <div className="space-y-3">
+                {freeTests.map((test, idx) => {
                   const isCompleted = !!quizCompletions[test.id];
                   return (
                     <div
                       key={idx}
-                      className={`flex items-center justify-between px-3 py-2.5 rounded-xl border transition-all group ${
+                      className={`flex items-center justify-between px-4 py-3 rounded-xl border transition-all ${
                         isCompleted
-                          ? 'bg-slate-50 border-slate-100 opacity-70'       /* PASSIVE — muted/done */
-                          : 'bg-white border-slate-200 hover:border-green-300 hover:shadow-sm hover:bg-green-50/30' /* PRIMARY — actionable */
+                          ? 'bg-slate-50 border-slate-100 opacity-70'
+                          : 'bg-white border-slate-200 hover:border-emerald-300 hover:shadow-sm'
                       }`}
                     >
-                      <div className="flex items-center gap-3 min-w-0 flex-1">
-                        <div className={`shrink-0 w-8 h-8 rounded-lg flex items-center justify-center ${
-                          isCompleted ? 'bg-slate-100' : 'bg-green-50 border border-green-100'
+                      <div className="flex items-center gap-4 min-w-0 flex-1">
+                        <div className={`shrink-0 w-10 h-10 rounded-lg flex items-center justify-center ${
+                          isCompleted ? 'bg-slate-100' : 'bg-emerald-50'
                         }`}>
-                          <FileText className={`h-4 w-4 ${isCompleted ? 'text-slate-400' : 'text-green-600'}`} />
+                          <FileText className={`h-5 w-5 ${isCompleted ? 'text-slate-400' : 'text-emerald-600'}`} />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className={`font-semibold text-[12.5px] truncate ${isCompleted ? 'line-through text-slate-400' : 'text-slate-800 group-hover:text-green-700 transition-colors'}`}>{test.title}</p>
-                          <div className="text-[10px] text-slate-400 flex items-center gap-2 mt-0.5">
+                          <p className={`font-semibold text-[13px] truncate ${isCompleted ? 'line-through text-slate-400' : 'text-slate-800'}`}>{test.title}</p>
+                          <div className="text-[11px] text-slate-400 flex items-center gap-2 mt-0.5">
                             <span>{test.questions} Questions</span>
                             <span className="text-slate-300">•</span>
-                            <Clock className="h-2.5 w-2.5 text-slate-300" />
                             <span>{test.duration} mins</span>
+                            <span className="text-slate-300">•</span>
+                            <span className="capitalize">{test.difficulty}</span>
                           </div>
                         </div>
                       </div>
-                      <div className="shrink-0 ml-3">
+                      <div className="shrink-0 ml-4">
                         {isCompleted ? (
-                          <div className="flex items-center gap-1 text-emerald-600 font-semibold text-[10px] bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">
-                            <CheckCircle className="h-3 w-3" />
-                            Done
+                          <div className="flex items-center gap-1.5 text-emerald-600 font-semibold text-[11px] bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-200">
+                            <CheckCircle className="h-3.5 w-3.5" />
+                            Completed
                           </div>
                         ) : (
-                          <Button size="sm" className="h-7 px-3 bg-green-600 hover:bg-green-700 text-white rounded-lg text-[11px] font-semibold shadow-sm" onClick={() => handleStartTest(test)}>
-                            <Play className="h-2.5 w-2.5 mr-1" strokeWidth={3} />
-                            Start
+                          <Button size="sm" className="h-8 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[12px] font-semibold" onClick={() => handleStartTest(test)}>
+                            <Play className="h-3.5 w-3.5 mr-1.5" strokeWidth={3} />
+                            Start Test
                           </Button>
                         )}
                       </div>
@@ -732,264 +717,237 @@ const StudentDashboard = () => {
                   );
                 })}
               </div>
-              <Button variant="outline" className="w-full mt-4 text-[13px] font-semibold text-primary border-primary/30 bg-primary/5 hover:bg-primary/10 rounded-xl py-2.5" asChild>
-                <Link to="/student/daily-quizzes">View All Tests →</Link>
-              </Button>
             </Card>
 
-            {/* Upcoming Live Tests (restored) */}
+            {/* Upcoming Live Tests */}
             <UpcomingLiveTests />
           </div>
+        )}
 
-          {/* 9. Current Affairs Section */}
-          <Card className="p-4 db-card-secondary border-none group/card">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <Newspaper className="h-4 w-4 text-primary" />
-                <h3 className="font-semibold text-base">Current Affairs</h3>
+        {/* ──────────────────────────────────────────────────────
+            PERFORMANCE TAB — Analytics & progress
+           ────────────────────────────────────────────────────── */}
+        {activeTab === 'performance' && (
+          <div className="space-y-6 animate-in fade-in duration-200">
+
+            {/* ── Row 1: Graph (60%) + Percentile (40%) ── */}
+            <div className="flex flex-col xl:flex-row gap-6 items-stretch">
+
+              {/* Performance Graph — 60% */}
+              <div className="flex-[3] min-w-0">
+                <PerformanceGraph data={performanceData} />
               </div>
-              <div className="flex items-center gap-2">
-                {/* Auto Slide Toggle — compact pill */}
-                <button
-                  onClick={() => setIsAutoSlide(!isAutoSlide)}
-                  className={`flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-semibold border transition-colors ${
-                    isAutoSlide
-                      ? 'bg-primary/10 text-primary border-primary/20'
-                      : 'bg-muted text-muted-foreground border-border'
-                  }`}
-                >
-                  <span className={`w-1.5 h-1.5 rounded-full ${isAutoSlide ? 'bg-primary animate-pulse' : 'bg-slate-400'}`} />
-                  {isAutoSlide ? 'Auto' : 'Manual'}
-                </button>
 
-                {/* Saved Articles Sheet Trigger */}
-                <Sheet open={savedSheetOpen} onOpenChange={setSavedSheetOpen}>
-                  <SheetTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 relative">
-                      <Bookmark className="h-4 w-4" />
-                      {savedArticleIds.length > 0 && (
-                        <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border border-card"></span>
-                      )}
-                    </Button>
-                  </SheetTrigger>
-                  <SheetContent className="w-full sm:max-w-md p-0 flex flex-col z-[100]">
-                    <SheetHeader className="p-6 border-b">
-                      <SheetTitle className="flex items-center gap-2">
-                        <Bookmark className="h-5 w-5 text-primary" />
-                        Saved Articles
-                      </SheetTitle>
-                    </SheetHeader>
-                    <ScrollArea className="flex-1 p-6">
-                      {savedArticlesList.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center h-full text-center py-12 text-muted-foreground">
-                          <div className="bg-muted p-4 rounded-full mb-4">
-                            <Bookmark className="h-8 w-8 opacity-50" />
-                          </div>
-                          <p className="font-medium mb-1">No saved articles</p>
-                          <p className="text-sm">Bookmark articles to read them later</p>
-                        </div>
-                      ) : (
-                        <div className="space-y-4">
-                          {savedArticlesList.map(article => (
-                            <div key={article.id} className="relative group bg-card border rounded-lg overflow-hidden hover:shadow-md transition-all">
-                              <div className="p-4 cursor-pointer" onClick={() => { setSavedSheetOpen(false); setSelectedNews(article); setNewsDialogOpen(true); }}>
-                                <div className="flex justify-between items-start gap-3 mb-2">
-                                  <Badge variant="outline" className="text-xs">{article.category}</Badge>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-6 w-6 text-muted-foreground hover:text-destructive -mt-1 -mr-1"
-                                    onClick={(e) => { e.stopPropagation(); toggleSave(article.id); }}
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                  </Button>
-                                </div>
-                                <h4 className="font-semibold text-sm mb-2 group-hover:text-primary transition-colors line-clamp-2">
-                                  {article.title}
-                                </h4>
-                                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                  <span>{article.date}</span>
-                                  <span>•</span>
-                                  <span>{article.readTime}</span>
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </ScrollArea>
-                  </SheetContent>
-                </Sheet>
+              {/* Exam Percentile — 40% */}
+              <div className="flex-[2] min-w-0 bg-white rounded-xl border border-slate-200 p-5 flex flex-col">
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-500 to-orange-400 flex items-center justify-center shadow-sm">
+                    <Target className="h-4 w-4 text-white" />
+                  </div>
+                  <h3 className="font-bold text-[15px] text-slate-800">Exam Percentile</h3>
+                </div>
 
-                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setIsAutoSlide(false); handlePrevNews(); }}>
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setIsAutoSlide(false); handleNextNews(); }}>
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
+                {/* Gauge */}
+                <div className="relative w-full h-28 mb-3">
+                  <svg className="w-full h-full" viewBox="0 0 200 100">
+                    <path d="M 20 90 A 80 80 0 0 1 180 90" fill="none" stroke="#f1f5f9" strokeWidth="14" strokeLinecap="round" />
+                    <path d="M 20 90 A 80 80 0 0 1 68 24"  fill="none" stroke="#fca5a5" strokeWidth="14" strokeLinecap="round" />
+                    <path d="M 68 24 A 80 80 0 0 1 132 24" fill="none" stroke="#fdba74" strokeWidth="14" strokeLinecap="round" />
+                    <path d="M 132 24 A 80 80 0 0 1 180 90" fill="none" stroke="#86efac" strokeWidth="14" strokeLinecap="round" />
+                    <path d="M 20 90 A 80 80 0 0 1 164 38" fill="none" stroke="hsl(var(--primary))" strokeWidth="10" strokeLinecap="round" />
+                    <g transform="translate(100, 90)">
+                      <line x1="0" y1="0" x2="0" y2="-62" stroke="#1e293b" strokeWidth="2.5" strokeLinecap="round" transform="rotate(-43)" />
+                      <circle cx="0" cy="0" r="5" fill="hsl(var(--primary))" />
+                    </g>
+                    <text x="12" y="96" fontSize="9" fill="#94a3b8">0</text>
+                    <text x="89" y="13" fontSize="9" fill="#94a3b8">50</text>
+                    <text x="185" y="96" fontSize="9" fill="#94a3b8" textAnchor="end">100</text>
+                  </svg>
+                  <div className="absolute bottom-0 left-1/2 -translate-x-1/2 text-center">
+                    <div className="text-3xl font-black text-primary leading-none">{dashStats.percentile > 0 ? dashStats.percentile.toFixed(1) : '—'}</div>
+                    <div className="text-[10px] text-slate-400 mt-0.5">{dashStats.percentile > 0 ? 'Percentile' : 'No data yet'}</div>
+                  </div>
+                </div>
+
+                {/* Stats */}
+                <div className="space-y-1 mt-auto">
+                  <div className="flex justify-between items-center py-1.5 border-b border-slate-100">
+                    <span className="text-[12px] text-slate-500">Student</span>
+                    <span className="text-[12px] font-semibold text-slate-800 truncate ml-2">{userProfile?.username || user?.name || 'Student'}</span>
+                  </div>
+                  <div className="flex justify-between items-center py-1.5 border-b border-slate-100">
+                    <span className="text-[12px] text-slate-500">Target Exam</span>
+                    <span className="text-[12px] font-semibold text-primary">{targetExamName}</span>
+                  </div>
+                  <div className="flex justify-between items-center py-1.5 border-b border-slate-100">
+                    <span className="text-[12px] text-slate-500">Percentile</span>
+                    <span className={`text-[12px] font-bold ${dashStats.percentile > 0 ? 'text-emerald-600' : 'text-slate-400'}`}>{dashStats.percentile > 0 ? `${dashStats.percentile}` : 'N/A'}</span>
+                  </div>
+                  <div className="flex items-center gap-2 mt-2 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2">
+                    <span className="text-lg">🏆</span>
+                    <div>
+                      <div className="text-[11px] font-bold text-emerald-700">Excellent Performance</div>
+                      <div className="text-[10px] text-emerald-600">Top 12.5% of all aspirants</div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              {currentAffairsData.map((item, idx) => (
-                <div
-                  key={idx}
-                  className="group cursor-pointer bg-slate-50 border border-border/50 rounded-xl overflow-hidden hover:shadow-md hover:border-primary/30 transition-all"
-                  onClick={() => handleNewsClick(item)}
-                >
-                  <div className="relative overflow-hidden">
-                    <img
-                      src={item.image}
-                      alt={item.title}
-                      className="w-full h-24 object-cover transition-transform group-hover:scale-105"
-                    />
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="absolute top-1.5 right-1.5 h-7 w-7 bg-white/80 hover:bg-white rounded-lg"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (item.id) toggleSave(item.id);
-                      }}
-                    >
-                      <Bookmark className={`h-3.5 w-3.5 ${item.id && isSaved(item.id) ? "fill-primary text-primary" : ""}`} />
-                    </Button>
-                    <span className="absolute bottom-1.5 left-1.5 text-[9px] font-bold bg-white/90 text-slate-600 px-1.5 py-0.5 rounded-md uppercase tracking-wide">{item.category}</span>
-                  </div>
-                  <div className="p-3">
-                    <h4 className="font-semibold text-[12.5px] text-slate-800 line-clamp-2 leading-snug group-hover:text-primary transition-colors">{item.title}</h4>
-                    <p className="text-[11px] text-slate-500 line-clamp-1 mt-1">{item.description}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-            {isAutoSlide && (
-              <div className="h-0.5 bg-muted mt-4 rounded-full overflow-hidden">
-                <div className="h-full w-full bg-primary/50 animate-pulse origin-left"></div>
-              </div>
-            )}
-          </Card>
-
-          </div>{/* /space-y-5 (exploration) */}
-
-          {/* Mobile Right Sidebar Content */}
-          <div className="lg:hidden space-y-4">
-            {/* Your Presence - Mobile */}
-            <Card className="p-4 bg-white border border-slate-200 shadow-md rounded-2xl">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="font-semibold text-sm">Your presence</h3>
-                <div className="flex gap-1">
-                  <Button
-                    variant={attendanceView === 'week' ? 'default' : 'outline'}
-                    size="sm"
-                    className="h-7 text-xs px-3"
-                    onClick={() => setAttendanceView('week')}
-                  >
-                    Week
-                  </Button>
-                  <Button
-                    variant={attendanceView === 'month' ? 'default' : 'outline'}
-                    size="sm"
-                    className="h-7 text-xs px-3"
-                    onClick={() => setAttendanceView('month')}
-                  >
-                    Month
-                  </Button>
-                </div>
-              </div>
-
-              {/* Presence Grid */}
-              <div className="space-y-4 mb-4">
-                {attendanceView === 'week' ? (
-                  <div className="space-y-2">
-                    <div className="grid grid-cols-7 gap-1 text-center text-xs font-medium text-muted-foreground">
-                      {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((d, idx) => <div key={idx}>{d}</div>)}
-                    </div>
-                    <div className="grid grid-cols-7 gap-1">
-                      {/* Simplified Week View */}
-                      {weekDays.map((dayNum, idx) => {
-                        const curr = new Date();
-                        const currentDay = curr.getDay();
-                        const mondayOffset = curr.getDate() - (currentDay === 0 ? 6 : currentDay - 1);
-                        const mondayDate = new Date(curr);
-                        mondayDate.setDate(mondayOffset);
-
-                        const date = new Date(mondayDate);
-                        date.setDate(mondayDate.getDate() + idx);
-                        const dateKey = formatDateLocal(date);
-                        const active = !!studentPresence[dateKey];
-                        const isToday = dateKey === todayStr;
-
-                        return (
-                          <div
-                            key={idx}
-                            className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-medium border
-                              ${isToday ? (active ? 'bg-green-500 text-white border-green-500' : 'bg-background border-primary text-primary') :
-                                active ? 'bg-primary text-primary-foreground border-primary' : 'bg-muted text-muted-foreground border-transparent'}
-                            `}
-                          >
-                            {isToday ? 'Today' : active ? '✓' : ''}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ) : (
-                  /* Month View */
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <Button variant="ghost" size="sm" className="h-6 w-6 p-0" disabled>
-                        <ChevronLeft className="h-4 w-4" />
-                      </Button>
-                      <h4 className="font-semibold text-sm">{currentMonth} {currentYear}</h4>
-                      <Button variant="ghost" size="sm" className="h-6 w-6 p-0" disabled>
-                        <ChevronRight className="h-4 w-4" />
-                      </Button>
-                    </div>
-                    <div className="grid grid-cols-7 gap-1 text-center">
-                      {Array.from({ length: daysInMonth }).map((_, i) => {
-                        const day = i + 1;
-                        const date = new Date(currentYear, today.getMonth(), day);
-                        const dateKey = formatDateLocal(date);
-                        const isToday = day === currentDay;
-                        const wasActive = !!studentPresence[dateKey];
-                        const isActiveToday = isToday && hasTakenTestToday;
-                        const isSelected = dateKey === selectedDate;
-
-                        return (
-                          <div
-                            key={day}
-                            onClick={() => setSelectedDate(dateKey)}
-                            className={`
-                              w-8 h-8 flex items-center justify-center rounded-lg text-xs cursor-pointer transition-all
-                              ${isSelected ? 'bg-primary text-primary-foreground shadow-md scale-105 font-bold' : ''}
-                              ${!isSelected && isToday ? 'border-2 border-primary font-bold' : ''}
-                              ${!isSelected && isActiveToday ? 'bg-green-500 text-white border-green-500' : ''}
-                              ${!isSelected && !isActiveToday && wasActive ? 'bg-primary/10 text-primary' : ''}
-                              ${!isSelected && !isToday && !wasActive ? 'hover:bg-muted' : ''}
-                            `}
-                          >
-                            {day}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </Card>
-
-
+            {/* ── Row 2: Recent Exam Notifications — full width ── */}
+            <RecentExamNotifications />
           </div>
-        </div>
-      </div>
+        )}
 
-      {/* News Article Dialog */}
-      <NewsArticleDialog
-        article={selectedNews}
-        open={newsDialogOpen}
-        onOpenChange={setNewsDialogOpen}
-      />
+        {/* ──────────────────────────────────────────────────────
+            RESOURCES TAB — Courses, news & exam updates
+           ────────────────────────────────────────────────────── */}
+        {activeTab === 'resources' && (
+          <div className="space-y-8 animate-in fade-in duration-200">
+
+            {/* Featured Courses */}
+            <FeaturedCoursesSection navigate={navigate} />
+
+            {/* Current Affairs Section */}
+            <Card className="p-5 bg-white border border-slate-200 rounded-xl">
+              {/* Header */}
+              <div className="flex items-center justify-between mb-5">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center">
+                    <Newspaper className="h-4 w-4 text-emerald-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-[15px] text-slate-800 leading-none">Current Affairs</h3>
+                    <p className="text-[11px] text-slate-400 mt-0.5">Latest news &amp; updates</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  {/* Auto Slide Toggle */}
+                  <button
+                    onClick={() => setIsAutoSlide(!isAutoSlide)}
+                    className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold border transition-colors ${
+                      isAutoSlide
+                        ? 'bg-emerald-50 text-emerald-600 border-emerald-200'
+                        : 'bg-slate-50 text-slate-400 border-slate-200'
+                    }`}
+                  >
+                    <span className={`w-1.5 h-1.5 rounded-full ${isAutoSlide ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`} />
+                    {isAutoSlide ? 'Auto' : 'Manual'}
+                  </button>
+
+                  {/* Saved Articles Sheet */}
+                  <Sheet open={savedSheetOpen} onOpenChange={setSavedSheetOpen}>
+                    <SheetTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 relative">
+                        <Bookmark className="h-4 w-4" />
+                        {savedArticleIds.length > 0 && (
+                          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
+                        )}
+                      </Button>
+                    </SheetTrigger>
+                    <SheetContent className="w-[400px] sm:w-[540px]">
+                      <SheetHeader>
+                        <SheetTitle>Saved Articles</SheetTitle>
+                      </SheetHeader>
+                      <ScrollArea className="h-[calc(100vh-8rem)] pr-4">
+                        {savedArticlesList.length === 0 ? (
+                          <p className="text-sm text-muted-foreground text-center py-8">No saved articles yet</p>
+                        ) : (
+                          <div className="space-y-3">
+                            {savedArticlesList.map(article => (
+                              <div key={article.id} className="flex items-start gap-3 p-3 bg-slate-50 rounded-lg border border-slate-100">
+                                <img src={(article as any).imageUrl || (article as any).image || ''} alt="" className="w-16 h-12 object-cover rounded-md shrink-0" />
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-medium line-clamp-2">{article.title}</p>
+                                  <p className="text-[10px] text-slate-400 mt-1">{(article as any).date}</p>
+                                </div>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6 text-slate-400 hover:text-red-500 shrink-0"
+                                  onClick={() => toggleSave(article.id)}
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </Button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </ScrollArea>
+                    </SheetContent>
+                  </Sheet>
+
+                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setIsAutoSlide(false); setCurrentNewsIndex((prev) => (prev - 1 + sortedArticles.length) % sortedArticles.length); }}>
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setIsAutoSlide(false); setCurrentNewsIndex((prev) => (prev + 1) % sortedArticles.length); }}>
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+
+              {/* Articles — 3-column grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {currentAffairsData.map((item, idx) => (
+                  <div
+                    key={idx}
+                    className="group cursor-pointer bg-white border border-slate-200 rounded-xl overflow-hidden hover:shadow-md hover:border-emerald-300 transition-all duration-200 hover:-translate-y-0.5"
+                    onClick={() => { setSelectedNews(item); setNewsDialogOpen(true); }}
+                  >
+                    {/* Image */}
+                    <div className="relative overflow-hidden h-36">
+                      {item.image ? (
+                        <img
+                          src={item.image}
+                          alt={item.title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center">
+                          <Newspaper className="h-8 w-8 text-slate-300" />
+                        </div>
+                      )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+                      {/* Category pill */}
+                      <span className="absolute top-2 left-2 text-[9px] font-bold uppercase tracking-wide bg-emerald-500 text-white px-2 py-0.5 rounded-full">
+                        {item.category}
+                      </span>
+                    </div>
+                    {/* Body */}
+                    <div className="p-3">
+                      <p className="font-semibold text-[13px] text-slate-800 leading-snug line-clamp-2 group-hover:text-emerald-700 transition-colors">
+                        {item.title}
+                      </p>
+                      {item.description && (
+                        <p className="text-[11px] text-slate-500 mt-1 line-clamp-2 leading-relaxed">
+                          {item.description}
+                        </p>
+                      )}
+                      <div className="flex items-center justify-between mt-2.5 pt-2 border-t border-slate-100">
+                        <span className="text-[10px] text-slate-400">{(item as any).date || 'Today'}</span>
+                        <span className="text-[10px] font-semibold text-emerald-600 flex items-center gap-1">
+                          Read more <ChevronRight className="h-3 w-3" />
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Auto-slide progress bar */}
+              {isAutoSlide && (
+                <div className="h-0.5 bg-slate-100 mt-4 rounded-full overflow-hidden">
+                  <div className="h-full w-full bg-emerald-400/60 animate-pulse origin-left"></div>
+                </div>
+              )}
+            </Card>
+          </div>
+        )}
+
+      </div>{/* /tab content */}
+
+      {/* ── Dialogs & Modals ── */}
+      <NewsArticleDialog article={selectedNews} open={newsDialogOpen} onOpenChange={setNewsDialogOpen} />
 
       {/* Stat Card Detail Dialogs */}
       {statDialogType && (
@@ -1021,7 +979,5 @@ const StudentDashboard = () => {
     </div>
   );
 };
-
-
 
 export default StudentDashboard;

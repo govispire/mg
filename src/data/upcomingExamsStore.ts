@@ -26,7 +26,7 @@ const DEFAULT_ENTRIES: UpcomingExamEntry[] = [
     stage: 'Prelims',
     examDate: '2026-10-15',
     registrationDeadline: '2026-09-10',
-    logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/0/0e/IBPS_logo.svg/200px-IBPS_logo.svg.png',
+    logo: 'https://res.cloudinary.com/dsyxrhbwb/image/upload/v1744125077/ibps_ygpzwj.webp',
     category: 'banking',
     isActive: true,
     note: 'Notification expected in August',
@@ -38,7 +38,7 @@ const DEFAULT_ENTRIES: UpcomingExamEntry[] = [
     stage: 'Prelims',
     examDate: '2026-12-05',
     registrationDeadline: '2026-11-01',
-    logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/cc/SBI-logo.svg/200px-SBI-logo.svg.png',
+    logo: 'https://res.cloudinary.com/dsyxrhbwb/image/upload/v1744125088/sbi.webp',
     category: 'banking',
     isActive: true,
     note: '',
@@ -50,7 +50,7 @@ const DEFAULT_ENTRIES: UpcomingExamEntry[] = [
     stage: 'Prelims',
     examDate: '2026-11-20',
     registrationDeadline: '2026-10-15',
-    logo: 'https://upload.wikimedia.org/wikipedia/en/thumb/0/0e/IBPS_logo.svg/200px-IBPS_logo.svg.png',
+    logo: 'https://res.cloudinary.com/dsyxrhbwb/image/upload/v1744125077/ibps_ygpzwj.webp',
     category: 'banking',
     isActive: true,
     note: '',
@@ -73,28 +73,60 @@ export const getUpcomingExams = (): UpcomingExamEntry[] => {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
-      const entries = JSON.parse(raw) as UpcomingExamEntry[];
-      // Auto-patch missing logos from exam catalog
+      let entries = JSON.parse(raw) as UpcomingExamEntry[];
+
+      // ── Patch stale Wikipedia/broken logo URLs ──────────────────
+      const logoFixes: Record<string, string> = {
+        'wikipedia.org': '', // will trigger keyword fallback below
+        'ibps_logo':      'https://res.cloudinary.com/dsyxrhbwb/image/upload/v1744125077/ibps_ygpzwj.webp',
+      };
+      const cloudinaryMap: Record<string, string> = {
+        ibps:   'https://res.cloudinary.com/dsyxrhbwb/image/upload/v1744125077/ibps_ygpzwj.webp',
+        sbi:    'https://res.cloudinary.com/dsyxrhbwb/image/upload/v1744125088/sbi.webp',
+        ssc:    'https://res.cloudinary.com/dsyxrhbwb/image/upload/v1744125092/ssc_rrghxu.webp',
+        rrb:    'https://res.cloudinary.com/dsyxrhbwb/image/upload/v1744125088/RRB-NTPC_scjv3q.webp',
+        upsc:   'https://res.cloudinary.com/dsyxrhbwb/image/upload/v1744125077/IAS_qk287t.png',
+        rbi:    'https://res.cloudinary.com/dsyxrhbwb/image/upload/v1744125087/reservebank_of_india_jlgv5o.webp',
+      };
+      const getCloudinaryLogo = (name: string) => {
+        const n = name.toLowerCase();
+        if (n.includes('ibps'))                       return cloudinaryMap.ibps;
+        if (n.includes('sbi'))                        return cloudinaryMap.sbi;
+        if (n.includes('ssc'))                        return cloudinaryMap.ssc;
+        if (n.includes('rrb') || n.includes('rail'))  return cloudinaryMap.rrb;
+        if (n.includes('upsc'))                       return cloudinaryMap.upsc;
+        if (n.includes('rbi') || n.includes('nabard'))return cloudinaryMap.rbi;
+        return '';
+      };
+
       let patched = false;
+      entries = entries.map(entry => {
+        // Replace broken Wikipedia or empty logos
+        if (!entry.logo || entry.logo.includes('wikipedia.org') || entry.logo.includes('wikimed')) {
+          const fix = getCloudinaryLogo(entry.examName);
+          if (fix) { patched = true; return { ...entry, logo: fix }; }
+        }
+        return entry;
+      });
+
+      // Also auto-patch from catalog (original logic)
       const catalogRaw = localStorage.getItem('superadmin_exam_catalog');
       const catalog = catalogRaw ? JSON.parse(catalogRaw) : null;
-      const result = entries.map(entry => {
-        if (entry.logo) return entry;
+      entries = entries.map(entry => {
+        if (entry.logo && !entry.logo.includes('wikipedia.org')) return entry;
         if (!catalog) return entry;
-        for (const cat of catalog) {
-          for (const sec of cat.sections) {
-            for (const exam of sec.exams) {
+        for (const cat of catalog)
+          for (const sec of cat.sections)
+            for (const exam of sec.exams)
               if (exam.name?.toLowerCase() === entry.examName?.toLowerCase() && exam.logo) {
                 patched = true;
                 return { ...entry, logo: exam.logo };
               }
-            }
-          }
-        }
         return entry;
       });
-      if (patched) localStorage.setItem(STORAGE_KEY, JSON.stringify(result));
-      return result;
+
+      if (patched) localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
+      return entries;
     }
   } catch { /* ignore */ }
   return DEFAULT_ENTRIES;

@@ -85,8 +85,8 @@ function computeStats(
 }
 
 export function useDashboardStats(): DashboardStats {
-  const [stats, setStats] = useState<Omit<DashboardStats, 'isLoading'>>({ 
-    studyHours: 0, activeStreak: 0, mockTestsTaken: 0, avgScore: 0, percentile: 0, performanceData: [] 
+  const [stats, setStats] = useState<Omit<DashboardStats, 'isLoading'>>({
+    studyHours: 0, activeStreak: 0, mockTestsTaken: 0, avgScore: 0, percentile: 0, performanceData: []
   });
   const [isLoading, setIsLoading] = useState(true);
 

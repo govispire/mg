@@ -9,7 +9,7 @@ import {
   HelpCircle, Upload, Eye, CheckCircle, Users, Bell,
   PieChart, CreditCard, Settings, UserCheck, MessageSquare,
   Target, Clock, TrendingUp, Gift, Flame, Trophy, Star, Award, Lock, Shield,
-  Sparkles, FileEdit, GraduationCap, Newspaper
+  Sparkles, FileEdit, GraduationCap, Newspaper, Megaphone
 } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -274,6 +274,7 @@ const Sidebar: React.FC<SidebarProps> = ({ role, basePath, collapsed }) => {
           { icon: <Bell size={18} />, label: 'Upcoming Exams', to: `${basePath}/upcoming-exams`, highlight: true },
           { icon: <BookOpen size={18} />, label: 'Vocabulary', to: `${basePath}/vocabulary` },
           { icon: <Bell size={18} />, label: 'Exam Alerts', to: `${basePath}/exam-alerts`, highlight: true },
+          { icon: <Megaphone size={18} />, label: 'Ad Banners', to: `${basePath}/ads-manager`, highlight: true },
         ];
       case 'owner':
         return [
