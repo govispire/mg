@@ -391,8 +391,10 @@ const TargetExamCard: React.FC<TargetExamCardProps> = ({
     <div className="rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
       {/* ── Main card row ── */}
       <div className="bg-white flex">
-        {/* Top gradient accent */}
-        <div className={`h-1.5 bg-gradient-to-r ${meta.gradient}`} />
+        {/* ── LEFT: all content ── */}
+        <div className="flex-1 min-w-0">
+          {/* Top gradient accent */}
+          <div className={`h-1.5 bg-gradient-to-r ${meta.gradient}`} />
 
         <div className="p-5 sm:p-6">
 
@@ -482,38 +484,38 @@ const TargetExamCard: React.FC<TargetExamCardProps> = ({
             </Button>
           </div>
         </div>
-      </div>
+        </div>{/* ── end flex-1 left section ── */}
 
-      {/* ── RIGHT: Full-height Days Left sidebar ── */}
-      <div
-        className="flex-shrink-0 w-32 sm:w-44 flex flex-col items-center justify-center text-white relative overflow-hidden"
-        style={{
-          background: 'linear-gradient(160deg, #1e40af 0%, #0ea5e9 35%, #10b981 100%)'
-        }}
-      >
-        {/* Decorative blobs */}
-        <div className="absolute -top-6 -right-6 w-24 h-24 bg-white/10 rounded-full" />
-        <div className="absolute -bottom-6 -left-6 w-20 h-20 bg-white/10 rounded-full" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-28 h-28 border border-white/10 rounded-full" />
-        {/* Content */}
-        <div className="relative z-10 flex flex-col items-center">
-          <div
-            className="text-5xl sm:text-7xl font-black leading-none mb-1.5 drop-shadow-md"
-            style={{ fontFamily: "'Outfit', sans-serif", textShadow: '0 2px 12px rgba(0,0,0,0.2)' }}
-          >
-            {daysLeft !== null ? daysLeft : '—'}
-          </div>
-          <div className="text-[11px] sm:text-[13px] font-bold uppercase tracking-widest opacity-90 text-center px-2">
-            {daysLeft !== null ? 'Days Left' : 'TBA'}
-          </div>
-          <div className="mt-2 w-10 h-0.5 bg-white/40 rounded-full" />
-          <div className="mt-1.5 text-[9px] sm:text-[10px] opacity-70 tracking-wide font-medium">
-            to exam day
+        {/* ── RIGHT: Full-height Days Left sidebar ── */}
+        <div
+          className="flex-shrink-0 w-32 sm:w-44 flex flex-col items-center justify-center text-white relative overflow-hidden"
+          style={{
+            background: 'linear-gradient(160deg, #1e40af 0%, #0ea5e9 35%, #10b981 100%)'
+          }}
+        >
+          {/* Decorative blobs */}
+          <div className="absolute -top-6 -right-6 w-24 h-24 bg-white/10 rounded-full" />
+          <div className="absolute -bottom-6 -left-6 w-20 h-20 bg-white/10 rounded-full" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-28 h-28 border border-white/10 rounded-full" />
+          {/* Content */}
+          <div className="relative z-10 flex flex-col items-center">
+            <div
+              className="text-5xl sm:text-7xl font-black leading-none mb-1.5 drop-shadow-md"
+              style={{ fontFamily: "'Outfit', sans-serif", textShadow: '0 2px 12px rgba(0,0,0,0.2)' }}
+            >
+              {daysLeft !== null ? daysLeft : '—'}
+            </div>
+            <div className="text-[11px] sm:text-[13px] font-bold uppercase tracking-widest opacity-90 text-center px-2">
+              {daysLeft !== null ? 'Days Left' : 'TBA'}
+            </div>
+            <div className="mt-2 w-10 h-0.5 bg-white/40 rounded-full" />
+            <div className="mt-1.5 text-[9px] sm:text-[10px] opacity-70 tracking-wide font-medium">
+              to exam day
+            </div>
           </div>
         </div>
-      </div>
 
-      </div>{/* end main card row */}
+      </div>{/* ── end bg-white flex row ── */}
 
       {/* ── ADS BANNER strip — only renders when SuperAdmin has active ads ── */}
       <AdsBanner category={examCategory.toLowerCase()} />

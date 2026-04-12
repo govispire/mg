@@ -61,6 +61,23 @@ const getYesterdayISTStr = (): string => {
   return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`;
 };
 
+const getTomorrowISTStr = (): string => {
+  const d = getISTDate();
+  d.setUTCDate(d.getUTCDate() + 1);
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`;
+};
+
+const formatDisplayDate = (dateStr: string): string => {
+  const today = getISTDateStr();
+  const yesterday = getYesterdayISTStr();
+  if (dateStr === today) return 'Today';
+  if (dateStr === yesterday) return 'Yesterday';
+  try {
+    const [y, m, d] = dateStr.split('-').map(Number);
+    return new Date(y, m - 1, d).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' });
+  } catch { return dateStr; }
+};
+
 // ─── LocalStorage Helpers ─────────────────────────────────────────────────────
 const STORAGE_KEY = 'dailyGoals_v2';
 
@@ -103,6 +120,9 @@ export const DailyGoalsWidget: React.FC = () => {
   const [showHistory, setShowHistory] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editText, setEditText] = useState('');
+  // Shift-goals state: which day is being acted on
+  const [shiftConfirmDate, setShiftConfirmDate] = useState<string | null>(null);
+  const [selectedShiftIds, setSelectedShiftIds] = useState<Set<string>>(new Set());
 
   // ── Study Timer State ──────────────────────────────────────────────────────
   const [timerSelected, setTimerSelected] = useState<number | null>(null); // secs
@@ -166,13 +186,22 @@ export const DailyGoalsWidget: React.FC = () => {
   const goalsInCurrentBatch = todayGoals.length - (batchNumber - 1) * MAX_GOALS;
   const canAdd = goalsInCurrentBatch < MAX_GOALS;
 
-  // Get past goals (not today)
-  const pastGoals = useMemo(() =>
+  // Get past goals grouped by date (excluding today)
+  const pastGoalsByDate = useMemo(() => {
+    const map = new Map<string, Goal[]>();
     allGoals
       .filter(g => g.createdAt !== today)
-      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-      .slice(0, 20) // Show last 20 goals
-  , [allGoals, today]);
+      .forEach(g => {
+        if (!map.has(g.createdAt)) map.set(g.createdAt, []);
+        map.get(g.createdAt)!.push(g);
+      });
+    // Sort dates descending, return as array of [date, goals[]]
+    return [...map.entries()]
+      .sort(([a], [b]) => b.localeCompare(a))
+      .slice(0, 14); // last 14 days
+  }, [allGoals, today]);
+
+  const hasPastGoals = pastGoalsByDate.length > 0;
 
   // Get target exam from localStorage for filtering tests
   const targetExam = useMemo(() => {
@@ -363,6 +392,50 @@ export const DailyGoalsWidget: React.FC = () => {
     updateGoals([...todayGoals, newGoal]);
   };
 
+  // ── Shift unfinished goals to tomorrow (with OK confirmation) ──────────────
+  const openShiftConfirm = (date: string, pendingGoals: Goal[]) => {
+    setShiftConfirmDate(date);
+    setSelectedShiftIds(new Set(pendingGoals.map(g => g.id)));
+  };
+
+  const toggleShiftId = (id: string) => {
+    setSelectedShiftIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const confirmShift = () => {
+    if (!shiftConfirmDate) return;
+    const tomorrow = getTomorrowISTStr();
+    setAllGoals(prev => {
+      return prev.map(g => {
+        if (g.createdAt !== shiftConfirmDate) return g;
+        if (selectedShiftIds.has(g.id)) {
+          // Move to tomorrow
+          return { ...g, id: `${g.id}-shifted`, status: 'pending', createdAt: tomorrow };
+        }
+        // Mark remaining as missed
+        if (g.status === 'pending') return { ...g, status: 'missed' as GoalStatus };
+        return g;
+      });
+    });
+    setShiftConfirmDate(null);
+    setSelectedShiftIds(new Set());
+  };
+
+  const dismissAsMissed = (date: string) => {
+    setAllGoals(prev =>
+      prev.map(g =>
+        g.createdAt === date && g.status === 'pending'
+          ? { ...g, status: 'missed' as GoalStatus }
+          : g
+      )
+    );
+    setShiftConfirmDate(null);
+  };
+
   // ── Status Renderers ───────────────────────────────────────────────────────
   const statusIcon = (status: GoalStatus) => {
     if (status === 'completed') return <CheckCircle2 className="h-5 w-5 text-emerald-500 shrink-0" />;
@@ -395,7 +468,12 @@ export const DailyGoalsWidget: React.FC = () => {
               <div>
                 <h3 className="font-bold text-[14px] text-slate-800 leading-none">Today's Goals</h3>
                 {totalCount > 0 && (
-                  <p className="text-[9px] text-slate-400 mt-0.5">Batch #{batchNumber} · {completedCount} of {totalCount} completed</p>
+                  <p className="text-[9px] text-slate-400 mt-0.5">
+                    Batch #{batchNumber} · {completedCount} of {totalCount} completed
+                    <span className={`ml-1.5 font-bold ${goalsInCurrentBatch >= MAX_GOALS ? 'text-amber-500' : 'text-emerald-500'}`}>
+                      · {goalsInCurrentBatch}/{MAX_GOALS} slots
+                    </span>
+                  </p>
                 )}
               </div>
               {allDone && (
@@ -422,12 +500,12 @@ export const DailyGoalsWidget: React.FC = () => {
                   Add Goal
                 </button>
               ) : (
-                <span className="text-[9px] font-semibold text-slate-400 bg-slate-50 border border-slate-200 px-2 py-0.5 rounded-full">
-                  Complete current goals to add more
+                <span className="text-[9px] font-semibold text-amber-600 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
+                  5/5 · Complete goals to add more
                 </span>
               )}
               {/* History button */}
-              {pastGoals.length > 0 && (
+              {hasPastGoals && (
                 <button
                   onClick={() => setShowHistory(true)}
                   className="flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-full shadow-sm bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all"
@@ -571,23 +649,7 @@ export const DailyGoalsWidget: React.FC = () => {
                           Start
                         </Link>
                       )}
-                      {/* Edit button - always visible */}
-                      {editingId === goal.id ? (
-                        <button
-                          onClick={() => saveEditGoal(goal.id)}
-                          className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
-                        >
-                          <CheckCircle2 className="h-3.5 w-3.5" />
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => startEdit(goal)}
-                          className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                        >
-                          <Edit2 className="h-3.5 w-3.5" />
-                        </button>
-                      )}
-                      {/* Delete button - always visible */}
+                      {/* Delete only — goal name is final after creation */}
                       <button
                         onClick={() => requestDelete(goal.id)}
                         className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
@@ -785,52 +847,143 @@ export const DailyGoalsWidget: React.FC = () => {
 
       </div>
 
-      {/* ── History Dialog ── */}
-      <Dialog open={showHistory} onOpenChange={setShowHistory}>
-        <DialogContent className="max-w-md max-h-[80vh]">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-slate-500" />
-              Past Goals History
+      {/* ── History Dialog — Day-wise grouped ── */}
+      <Dialog open={showHistory} onOpenChange={open => { setShowHistory(open); if (!open) setShiftConfirmDate(null); }}>
+        <DialogContent className="max-w-md max-h-[85vh] p-0 overflow-hidden">
+          <DialogHeader className="px-5 pt-5 pb-3 border-b border-slate-100">
+            <DialogTitle className="flex items-center gap-2 text-slate-800">
+              <Calendar className="h-4 w-4 text-primary" />
+              Goals History
             </DialogTitle>
+            <p className="text-[11px] text-slate-400 mt-0.5">Your past goals day by day · Shift incomplete ones to tomorrow</p>
           </DialogHeader>
-          <ScrollArea className="h-[60vh] pr-4">
-            {pastGoals.length === 0 ? (
-              <p className="text-sm text-slate-400 text-center py-8">No past goals to show</p>
-            ) : (
-              <div className="space-y-2">
-                {pastGoals.map((goal, idx) => {
-                  const isDone = goal.status === 'completed';
-                  return (
-                    <div
-                      key={`${goal.id}-${idx}`}
-                      className={`flex items-start gap-3 px-3 py-2.5 rounded-lg border ${
-                        isDone ? 'bg-emerald-50/60 border-emerald-100' :
-                        goal.status === 'missed' ? 'bg-red-50/50 border-red-100 opacity-60' :
-                        'bg-slate-50 border-slate-100'
-                      }`}
-                    >
-                      <span className="shrink-0 mt-0.5">
-                        {isDone ? <CheckCircle2 className="h-4 w-4 text-emerald-500" /> :
-                         goal.status === 'missed' ? <X className="h-4 w-4 text-red-400" /> :
-                         <Circle className="h-4 w-4 text-slate-300" />}
-                      </span>
-                      <div className="flex-1 min-w-0">
-                        <p className={`text-[13px] font-semibold leading-snug ${isDone ? 'text-slate-600' : goal.status === 'missed' ? 'text-slate-400' : 'text-slate-700'}`}>
-                          {goal.label}
-                        </p>
-                        <div className="flex items-center gap-2 mt-1">
-                          <span className="text-[10px] text-slate-400">{goal.createdAt}</span>
-                          {goal.score !== undefined && (
-                            <Badge variant="secondary" className="text-[9px] px-1.5 py-0">Score: {goal.score}%</Badge>
-                          )}
-                        </div>
+
+          <ScrollArea className="h-[65vh]">
+            <div className="px-4 py-4 space-y-4">
+              {pastGoalsByDate.length === 0 ? (
+                <p className="text-sm text-slate-400 text-center py-8">No past goals to show</p>
+              ) : pastGoalsByDate.map(([date, goals]) => {
+                const done    = goals.filter(g => g.status === 'completed').length;
+                const missed  = goals.filter(g => g.status === 'missed').length;
+                const pending = goals.filter(g => g.status === 'pending').length;
+                const total   = goals.length;
+                const allDone = done === total;
+                const hasPending = pending > 0;
+                const isShiftable = hasPending && date !== getISTDateStr();
+                const isShifting  = shiftConfirmDate === date;
+
+                return (
+                  <div key={date} className="rounded-2xl border overflow-hidden"
+                    style={{ borderColor: allDone ? 'rgba(16,185,129,0.25)' : hasPending ? 'rgba(251,146,60,0.3)' : 'rgba(241,245,249,1)' }}>
+
+                    {/* Day header */}
+                    <div className="flex items-center justify-between px-4 py-2.5"
+                      style={{ background: allDone ? 'rgba(16,185,129,0.07)' : hasPending ? 'rgba(251,146,60,0.07)' : '#f8fafc' }}>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[13px] font-black text-slate-800">{formatDisplayDate(date)}</span>
+                        <span className="text-[10px] text-slate-400">{date}</span>
+                      </div>
+                      {/* Summary pill */}
+                      <div className="flex items-center gap-1.5">
+                        {done > 0 && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700">✅ {done}</span>}
+                        {missed > 0 && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-red-100 text-red-600">❌ {missed}</span>}
+                        {pending > 0 && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700">○ {pending} pending</span>}
+                        <span className="text-[9px] text-slate-400">{done}/{total}</span>
                       </div>
                     </div>
-                  );
-                })}
-              </div>
-            )}
+
+                    {/* Goals list */}
+                    <div className="divide-y divide-slate-50">
+                      {goals.map(g => (
+                        <div key={g.id} className="flex items-center gap-3 px-4 py-2.5"
+                          style={{ background: g.status === 'completed' ? 'rgba(240,253,244,0.5)' : g.status === 'missed' ? 'rgba(254,242,242,0.5)' : '#fff' }}>
+
+                          {isShifting && g.status === 'pending' ? (
+                            // Checkbox for selection during shift
+                            <button
+                              onClick={() => toggleShiftId(g.id)}
+                              className="shrink-0 w-4 h-4 rounded border-2 transition-all flex items-center justify-center"
+                              style={{
+                                borderColor: selectedShiftIds.has(g.id) ? '#10b981' : '#cbd5e1',
+                                background:  selectedShiftIds.has(g.id) ? '#10b981' : '#fff',
+                              }}
+                            >
+                              {selectedShiftIds.has(g.id) && <span style={{ color: '#fff', fontSize: 9, fontWeight: 900 }}>✓</span>}
+                            </button>
+                          ) : (
+                            <span className="shrink-0">
+                              {g.status === 'completed' ? <CheckCircle2 className="h-4 w-4 text-emerald-500" /> :
+                               g.status === 'missed'    ? <X className="h-4 w-4 text-red-400" /> :
+                               <Circle className="h-4 w-4 text-slate-300" />}
+                            </span>
+                          )}
+
+                          <div className="flex-1 min-w-0">
+                            <p className={`text-[12px] font-semibold truncate ${
+                              g.status === 'completed' ? 'text-slate-500 line-through' :
+                              g.status === 'missed'    ? 'text-red-400' :
+                              'text-slate-700'
+                            }`}>{g.label}</p>
+                            {g.estimatedMins && (
+                              <span className="text-[10px] text-slate-400 flex items-center gap-0.5">
+                                <Clock className="h-2.5 w-2.5" />{g.estimatedMins} min
+                              </span>
+                            )}
+                          </div>
+
+                          {g.score !== undefined && (
+                            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 shrink-0">Score: {g.score}%</span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Shift action row — only for days with pending goals */}
+                    {isShiftable && !isShifting && (
+                      <div className="px-4 py-2.5 bg-amber-50 border-t border-amber-100 flex items-center justify-between">
+                        <p className="text-[11px] text-amber-700 font-semibold">{pending} goal{pending > 1 ? 's' : ''} not completed</p>
+                        <button
+                          onClick={() => openShiftConfirm(date, goals.filter(g => g.status === 'pending'))}
+                          className="text-[10px] font-bold px-3 py-1.5 rounded-lg text-white transition-all hover:opacity-90"
+                          style={{ background: 'linear-gradient(135deg,#f59e0b,#d97706)' }}
+                        >
+                          Move to Tomorrow →
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Shift confirmation row */}
+                    {isShifting && (
+                      <div className="px-4 py-3 bg-amber-50 border-t border-amber-200 space-y-2">
+                        <p className="text-[11px] text-amber-800 font-bold">Select goals to move to tomorrow (deselect to mark as missed):</p>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={confirmShift}
+                            disabled={selectedShiftIds.size === 0 && pending > 0}
+                            className="flex-1 py-2 rounded-xl text-white text-[12px] font-black transition-all hover:opacity-90"
+                            style={{ background: 'linear-gradient(135deg,#16a34a,#22c55e)', boxShadow: '0 2px 8px rgba(34,197,94,0.4)' }}
+                          >
+                            ✓ OK — Move Selected
+                          </button>
+                          <button
+                            onClick={() => dismissAsMissed(date)}
+                            className="px-4 py-2 rounded-xl text-red-600 text-[11px] font-bold bg-red-50 border border-red-200 hover:bg-red-100 transition-all"
+                          >
+                            Mark All Missed
+                          </button>
+                        </div>
+                        <button
+                          onClick={() => setShiftConfirmDate(null)}
+                          className="w-full text-[10px] text-slate-400 hover:text-slate-600 pt-0.5"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </ScrollArea>
         </DialogContent>
       </Dialog>
