@@ -86,11 +86,11 @@ const StudentTests = () => {
 
   if (!hasSelectedCategories) {
     return (
-      <div className="container mx-auto px-4 max-w-6xl">
-        <div className="text-center py-12">
-          <BookOpen className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">No Exam Categories Selected</h2>
-          <p className="text-gray-600 mb-6">
+      <div className="container mx-auto px-3 sm:px-4 max-w-6xl">
+        <div className="text-center py-8 sm:py-12">
+          <BookOpen className="h-12 w-12 sm:h-16 sm:w-16 text-gray-400 mx-auto mb-3 sm:mb-4" />
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">No Exam Categories Selected</h2>
+          <p className="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6 px-4">
             Please select exam categories using the "Select Categories" button in the header to view tests.
           </p>
         </div>
@@ -169,45 +169,45 @@ const StudentTests = () => {
     const totalExamCount = catalogCat ? catalogExamCount : staticExamCount;
 
     return (
-      <div className="space-y-4">
+      <div className="space-y-3 sm:space-y-4">
         {/* Category Header */}
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-            <div className="flex items-center gap-4 flex-1 min-w-0 mr-4">
+        <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6">
+            <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0 mr-0 md:mr-4">
               <img
                 src={headerLogo}
                 alt={categoryData.name}
-                className="w-16 h-16 object-contain flex-shrink-0"
+                className="w-12 h-12 sm:w-16 sm:h-16 object-contain flex-shrink-0"
               />
               <div className="min-w-0">
-                <h1 className="text-2xl font-bold truncate">{categoryData.name}</h1>
-                <p className="text-gray-600 line-clamp-2 md:whitespace-normal">{categoryData.description}</p>
+                <h1 className="text-xl sm:text-2xl font-bold truncate">{categoryData.name}</h1>
+                <p className="text-xs sm:text-sm text-gray-600 line-clamp-2 md:whitespace-normal">{categoryData.description}</p>
               </div>
             </div>
 
-            <div className="flex flex-nowrap gap-4 justify-start md:justify-end overflow-x-auto pb-2 md:pb-0">
-              <div className="text-center bg-blue-50 px-4 py-2 rounded-lg border border-blue-100 min-w-[100px] flex-shrink-0">
-                <div className="text-xl font-bold text-blue-600 leading-none mb-1">{categoryData.studentsEnrolled.toLocaleString()}</div>
-                <div className="text-xs text-gray-600 font-medium uppercase tracking-wide">Enrolled</div>
+            <div className="flex flex-wrap sm:flex-nowrap gap-2 sm:gap-4 justify-start md:justify-end overflow-x-auto pb-2 md:pb-0">
+              <div className="text-center bg-blue-50 px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg border border-blue-100 min-w-[80px] sm:min-w-[100px] flex-shrink-0">
+                <div className="text-lg sm:text-xl font-bold text-blue-600 leading-none mb-1">{categoryData.studentsEnrolled.toLocaleString()}</div>
+                <div className="text-[10px] sm:text-xs text-gray-600 font-medium uppercase tracking-wide">Enrolled</div>
               </div>
-              <div className="text-center bg-green-50 px-4 py-2 rounded-lg border border-green-100 min-w-[100px] flex-shrink-0">
-                <div className="text-xl font-bold text-green-600 leading-none mb-1">{totalExamCount}</div>
-                <div className="text-xs text-gray-600 font-medium uppercase tracking-wide">Exams</div>
+              <div className="text-center bg-green-50 px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg border border-green-100 min-w-[80px] sm:min-w-[100px] flex-shrink-0">
+                <div className="text-lg sm:text-xl font-bold text-green-600 leading-none mb-1">{totalExamCount}</div>
+                <div className="text-[10px] sm:text-xs text-gray-600 font-medium uppercase tracking-wide">Exams</div>
               </div>
-              <div className="text-center bg-purple-50 px-4 py-2 rounded-lg border border-purple-100 min-w-[100px] flex-shrink-0">
-                <div className="text-xl font-bold text-purple-600 leading-none mb-1">95%</div>
-                <div className="text-xs text-gray-600 font-medium uppercase tracking-wide">Success</div>
+              <div className="text-center bg-purple-50 px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg border border-purple-100 min-w-[80px] sm:min-w-[100px] flex-shrink-0">
+                <div className="text-lg sm:text-xl font-bold text-purple-600 leading-none mb-1">95%</div>
+                <div className="text-[10px] sm:text-xs text-gray-600 font-medium uppercase tracking-wide">Success</div>
               </div>
-              <div className="text-center bg-orange-50 px-4 py-2 rounded-lg border border-orange-100 min-w-[100px] flex-shrink-0">
-                <div className="text-xl font-bold text-orange-600 leading-none mb-1">120</div>
-                <div className="text-xs text-gray-600 font-medium uppercase tracking-wide">Tests</div>
+              <div className="text-center bg-orange-50 px-2 sm:px-4 py-1.5 sm:py-2 rounded-lg border border-orange-100 min-w-[80px] sm:min-w-[100px] flex-shrink-0">
+                <div className="text-lg sm:text-xl font-bold text-orange-600 leading-none mb-1">120</div>
+                <div className="text-[10px] sm:text-xs text-gray-600 font-medium uppercase tracking-wide">Tests</div>
               </div>
             </div>
           </div>
         </div>
 
         {/* Exams Sections — use catalog sections if available, else fall back to static examData */}
-        <div className="space-y-4">
+        <div className="space-y-3 sm:space-y-4">
           {(catalogCat && catalogCat.sections.length > 0
             ? catalogCat.sections.map((section) => ({
               categoryId: section.id,
@@ -217,26 +217,26 @@ const StudentTests = () => {
             }))
             : groupedExams.sections
           ).map((section, index) => (
-            <div key={section.categoryId} className="space-y-4">
+            <div key={section.categoryId} className="space-y-3 sm:space-y-4">
               {/* Section Header - show for multi-section categories */}
               {((catalogCat && catalogCat.sections.length > 1) || (groupedExams.isGrouped && groupedExams.sections.length > 1)) && (
-                <div className="flex items-center gap-3 border-b pb-3">
+                <div className="flex items-center gap-2 sm:gap-3 border-b pb-2 sm:pb-3">
                   {section.logo && (
                     <img
                       src={section.logo || getSectionLogo(section.categoryId)}
                       alt={section.categoryName}
-                      className="w-8 h-8 object-contain"
+                      className="w-6 h-6 sm:w-8 sm:h-8 object-contain"
                     />
                   )}
-                  <h2 className="text-xl font-semibold text-gray-900">{section.categoryName}</h2>
-                  <Badge variant="secondary" className="ml-auto">
+                  <h2 className="text-base sm:text-xl font-semibold text-gray-900">{section.categoryName}</h2>
+                  <Badge variant="secondary" className="ml-auto text-[10px] sm:text-xs">
                     {section.exams.length} exams
                   </Badge>
                 </div>
               )}
 
               {/* Exams Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 sm:gap-6">
                 {section.exams.length > 0 ? (
                   section.exams.map((exam) => {
                     const totalTests = 'testSlots' in exam
@@ -245,47 +245,47 @@ const StudentTests = () => {
                     return (
                       <Card
                         key={exam.id}
-                        className="p-6 hover:shadow-lg transition-shadow cursor-pointer"
+                        className="p-4 sm:p-6 hover:shadow-lg transition-shadow cursor-pointer"
                         onClick={() => navigate(`/student/tests/${categoryId}/${exam.id}`)}
                       >
-                        <div className="space-y-4">
+                        <div className="space-y-3 sm:space-y-4">
                           <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-2 sm:gap-3">
                               <img
                                 src={exam.logo}
                                 alt={exam.name}
-                                className="w-10 h-10 object-contain"
+                                className="w-8 h-8 sm:w-10 sm:h-10 object-contain"
                                 onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                               />
                               <div>
-                                <h3 className="font-semibold">{exam.name}</h3>
+                                <h3 className="font-semibold text-sm sm:text-base">{exam.name}</h3>
                                 {exam.isPopular && (
-                                  <Badge variant="secondary" className="mt-1">Popular</Badge>
+                                  <Badge variant="secondary" className="mt-1 text-[10px]">Popular</Badge>
                                 )}
                               </div>
                             </div>
                           </div>
 
                           <div className="space-y-2">
-                            <div className="flex justify-between text-sm">
+                            <div className="flex justify-between text-xs sm:text-sm">
                               <span className="text-gray-600">Progress</span>
                               <span className="font-medium">0%</span>
                             </div>
-                            <Progress value={0} className="h-2" />
+                            <Progress value={0} className="h-1.5 sm:h-2" />
                           </div>
 
-                          <div className="grid grid-cols-2 gap-4 text-sm">
+                          <div className="grid grid-cols-2 gap-2 sm:gap-4 text-xs sm:text-sm">
                             <div className="text-center">
-                              <div className="font-bold text-blue-600">{totalTests}</div>
-                              <div className="text-gray-500">Tests</div>
+                              <div className="font-bold text-sm sm:text-base text-blue-600">{totalTests}</div>
+                              <div className="text-[10px] sm:text-gray-500">Tests</div>
                             </div>
                             <div className="text-center">
-                              <div className="font-bold text-green-600">0</div>
-                              <div className="text-gray-500">Completed</div>
+                              <div className="font-bold text-sm sm:text-base text-green-600">0</div>
+                              <div className="text-[10px] sm:text-gray-500">Completed</div>
                             </div>
                           </div>
 
-                          <Button className="w-full">
+                          <Button className="w-full text-sm">
                             View Tests
                           </Button>
                         </div>
@@ -293,10 +293,10 @@ const StudentTests = () => {
                     );
                   })
                 ) : (
-                  <div className="col-span-full text-center py-12">
-                    <BookOpen className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-xl font-semibold text-gray-900 mb-2">No Tests Available</h3>
-                    <p className="text-gray-600">
+                  <div className="col-span-full text-center py-8 sm:py-12">
+                    <BookOpen className="h-12 w-12 sm:h-16 sm:w-16 text-gray-400 mx-auto mb-3 sm:mb-4" />
+                    <h3 className="text-base sm:text-xl font-semibold text-gray-900 mb-2">No Tests Available</h3>
+                    <p className="text-xs sm:text-sm text-gray-600 px-4">
                       No tests found for this section.
                     </p>
                   </div>
@@ -310,20 +310,20 @@ const StudentTests = () => {
   };
 
   return (
-    <div className="space-y-4 max-w-7xl mx-auto">
+    <div className="space-y-3 sm:space-y-4 max-w-7xl mx-auto px-3 sm:px-4">
       {/* Category Tabs */}
       {availableCategories.length > 0 && (
         <div className="bg-white rounded-lg shadow-sm">
           <Tabs value={activeCategory} onValueChange={handleTabChange}>
-            <div className="border-b px-6 py-4">
+            <div className="border-b px-3 sm:px-6 py-3 sm:py-4">
               <TabsList className="grid w-full gap-1 bg-gray-100 p-1 rounded-lg overflow-hidden" style={{
-                gridTemplateColumns: `repeat(${availableCategories.length}, minmax(0, 1fr))`
+                gridTemplateColumns: `repeat(${Math.min(availableCategories.length, 4)}, minmax(0, 1fr))`
               }}>
                 {availableCategories.map((cat) => (
                   <TabsTrigger
                     key={cat.id}
                     value={cat.id}
-                    className="text-xs sm:text-sm px-2 py-2 whitespace-nowrap overflow-hidden text-ellipsis min-w-0 rounded-md"
+                    className="text-[11px] sm:text-sm px-1.5 sm:px-2 py-1.5 sm:py-2 whitespace-nowrap overflow-hidden text-ellipsis min-w-0 rounded-md"
                   >
                     <span className="truncate">{cat.name}</span>
                   </TabsTrigger>
@@ -333,7 +333,7 @@ const StudentTests = () => {
 
             {/* Tab Content for each category */}
             {availableCategories.map((cat) => (
-              <TabsContent key={cat.id} value={cat.id} className="p-6">
+              <TabsContent key={cat.id} value={cat.id} className="p-3 sm:p-6">
                 <CategoryContent categoryId={cat.id} />
               </TabsContent>
             ))}

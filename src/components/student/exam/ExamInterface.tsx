@@ -484,23 +484,23 @@ export const ExamInterface: React.FC<ExamInterfaceProps> = ({
             />
 
             {/* ── Header ── */}
-            <div className="bg-[#4a4a4a] text-white px-4 py-2.5 flex items-center border-b border-gray-600 relative">
+            <div className="bg-[#4a4a4a] text-white px-2 sm:px-4 py-2 sm:py-2.5 flex items-center border-b border-gray-600 relative">
                 {/* Left — Logo */}
-                <div className="flex items-center gap-2 w-1/4">
-                    <div className="w-8 h-8 rounded bg-[#1976d2] flex items-center justify-center font-bold text-white text-sm flex-shrink-0">
+                <div className="flex items-center gap-1.5 sm:gap-2 w-1/4">
+                    <div className="w-6 h-6 sm:w-8 sm:h-8 rounded bg-[#1976d2] flex items-center justify-center font-bold text-white text-xs sm:text-sm flex-shrink-0">
                         P
                     </div>
-                    <span className="text-xs text-gray-300 font-semibold hidden sm:block">PrepSmart</span>
+                    <span className="text-[10px] sm:text-xs text-gray-300 font-semibold hidden sm:block">PrepSmart</span>
                 </div>
 
                 {/* Centre — Exam title + section name */}
-                <div className="flex-1 text-center">
-                    <h1 className="text-base font-bold leading-tight">{examConfig.title}</h1>
-                    <div className="text-[10px] text-gray-400">{currentSection?.name}</div>
+                <div className="flex-1 text-center min-w-0">
+                    <h1 className="text-xs sm:text-base font-bold leading-tight truncate">{examConfig.title}</h1>
+                    <div className="text-[8px] sm:text-[10px] text-gray-400 truncate">{currentSection?.name}</div>
                 </div>
 
                 {/* Right — Fullscreen only */}
-                <div className="w-1/4 flex justify-end items-center gap-2">
+                <div className="w-1/4 flex justify-end items-center gap-1 sm:gap-2">
                     {/* Saved flash */}
                     {savedFlash && (
                         <div className="flex items-center gap-1.5 text-green-300 text-xs font-medium animate-pulse">
@@ -555,19 +555,19 @@ export const ExamInterface: React.FC<ExamInterfaceProps> = ({
             />
 
             {/* ── Section info row: Sections label + Time Left + Pause ── */}
-            <div className="bg-gray-100 border-b border-gray-300 px-4 py-1.5 flex items-center justify-between text-sm">
+            <div className="bg-gray-100 border-b border-gray-300 px-2 sm:px-4 py-1.5 sm:py-2 flex items-center justify-between text-xs sm:text-sm">
                 <span className="text-gray-600 font-medium">Sections</span>
-                <div className="flex items-center gap-3">
-                    <span className="text-gray-700 font-semibold border border-gray-400 rounded px-2.5 py-0.5 bg-white text-sm">
+                <div className="flex items-center gap-2 sm:gap-3">
+                    <span className="text-gray-700 font-semibold border border-gray-400 rounded px-2 sm:px-2.5 py-0.5 sm:py-1 bg-white text-[10px] sm:text-sm">
                         Time Left :&nbsp;{fmtTime(sessionState.sectionRemainingTime[currentSectionId] ?? initialSectionRemaining)}
                     </span>
                     <Button
                         variant="ghost" size="icon"
                         onClick={isPaused ? handleResume : () => setShowPauseConfirm(true)}
-                        className="h-7 w-7 text-gray-600 hover:text-gray-900 hover:bg-transparent"
+                        className="h-6 w-6 sm:h-7 sm:w-7 text-gray-600 hover:text-gray-900 hover:bg-transparent"
                         title={isPaused ? 'Resume exam' : 'Pause exam'}
                     >
-                        {isPaused ? <Play className="h-4 w-4" /> : <Pause className="h-4 w-4" />}
+                        {isPaused ? <Play className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> : <Pause className="h-3.5 w-3.5 sm:h-4 sm:w-4" />}
                     </Button>
                 </div>
             </div>

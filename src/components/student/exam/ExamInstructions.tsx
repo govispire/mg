@@ -70,23 +70,23 @@ const legendItems = [
 
 // ── USER CARD (right panel) ──────────────────────────────────────────────────
 const UserCard: React.FC<{ name: string; photo?: string }> = ({ name, photo }) => (
-    <div className="flex flex-col items-center gap-3 pt-6 px-4">
+    <div className="flex flex-col items-center gap-2 sm:gap-3 pt-4 sm:pt-6 px-2 sm:px-4">
         {photo ? (
             <img
                 src={photo}
                 alt={name}
-                className="w-24 h-24 rounded-full object-cover border-4 border-gray-300 shadow"
+                className="w-16 h-16 sm:w-24 sm:h-24 rounded-full object-cover border-2 sm:border-4 border-gray-300 shadow"
             />
         ) : (
             /* Default grey avatar — matches IBPS screenshot */
-            <div className="w-24 h-24 rounded-full bg-gradient-to-b from-gray-400 to-gray-600 border-4 border-gray-300 shadow flex items-center justify-center overflow-hidden">
-                <svg viewBox="0 0 100 100" className="w-20 h-20 text-gray-200" fill="currentColor">
+            <div className="w-16 h-16 sm:w-24 sm:h-24 rounded-full bg-gradient-to-b from-gray-400 to-gray-600 border-2 sm:border-4 border-gray-300 shadow flex items-center justify-center overflow-hidden">
+                <svg viewBox="0 0 100 100" className="w-14 h-14 sm:w-20 sm:h-20 text-gray-200" fill="currentColor">
                     <circle cx="50" cy="35" r="22" />
                     <ellipse cx="50" cy="90" rx="32" ry="22" />
                 </svg>
             </div>
         )}
-        <span className="text-[#c04000] font-bold text-base text-center">{name}</span>
+        <span className="text-[#c04000] font-bold text-sm sm:text-base text-center">{name}</span>
     </div>
 );
 
@@ -380,22 +380,22 @@ export const ExamInstructions: React.FC<ExamInstructionsProps> = ({
         <div className="fixed inset-0 bg-[#e0e0e0] flex flex-col" style={{ fontFamily: 'Arial, sans-serif' }}>
 
             {/* ── TOP HEADER — dark blue with exam title ── */}
-            <div className="bg-[#5b9dd9] text-white px-6 py-3 text-center flex-shrink-0">
-                <h1 className="text-xl font-bold">{examConfig.title}</h1>
+            <div className="bg-[#5b9dd9] text-white px-4 sm:px-6 py-2 sm:py-3 text-center flex-shrink-0">
+                <h1 className="text-base sm:text-xl font-bold">{examConfig.title}</h1>
             </div>
 
             {/* ── INSTRUCTIONS LABEL BAR ── */}
-            <div className="bg-[#b3cde0] px-4 py-2 border-b border-gray-400 flex-shrink-0">
-                <span className="font-bold text-gray-900">
+            <div className="bg-[#b3cde0] px-3 sm:px-4 py-1.5 sm:py-2 border-b border-gray-400 flex-shrink-0">
+                <span className="font-bold text-gray-900 text-sm sm:text-base">
                     {currentPage === 0 ? 'Instructions' : 'Important Instructions'}
                 </span>
             </div>
 
             {/* ── BODY: left content + right user card ── */}
-            <div className="flex flex-1 overflow-hidden border-t border-gray-400">
+            <div className="flex flex-col sm:flex-row flex-1 overflow-hidden border-t border-gray-400">
 
                 {/* LEFT — scrollable instruction content */}
-                <div className="flex-1 overflow-y-auto bg-white border-r border-gray-400">
+                <div className="flex-1 sm:flex-initial overflow-y-auto bg-white sm:border-r border-gray-400 order-2 sm:order-1">
                     {currentPage === 0
                         ? <Page1 examConfig={examConfig} />
                         : <Page2 examConfig={examConfig} hasAgreed={hasAgreed} onAgree={setHasAgreed} />
@@ -403,13 +403,13 @@ export const ExamInstructions: React.FC<ExamInstructionsProps> = ({
                 </div>
 
                 {/* RIGHT — user photo + name (matches IBPS right panel exactly) */}
-                <div className="w-44 flex-shrink-0 bg-[#f0f0f0] border-l border-gray-300 overflow-y-auto">
+                <div className="w-full sm:w-44 flex-shrink-0 bg-[#f0f0f0] border-t sm:border-t-0 sm:border-l border-gray-300 overflow-y-auto order-1 sm:order-2">
                     <UserCard name={userName} photo={userPhoto} />
                 </div>
             </div>
 
             {/* ── FOOTER NAV BAR ── */}
-            <div className="bg-[#d0d0d0] border-t border-gray-400 px-6 py-3 flex items-center justify-between flex-shrink-0">
+            <div className="bg-[#d0d0d0] border-t border-gray-400 px-4 sm:px-6 py-2 sm:py-3 flex items-center justify-between flex-shrink-0">
                 {/* Left — Previous */}
                 <div>
                     {currentPage > 0 && (

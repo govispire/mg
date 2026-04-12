@@ -167,7 +167,7 @@ const TestWindow = () => {
 
     if (phase === 'analysis' && analysisData) {
         return (
-            <div className="fixed inset-0 overflow-hidden bg-black/50 z-50">
+            <div className="fixed inset-0 overflow-auto bg-black/50 z-50 p-2 sm:p-4">
                 <TestAnalysisModal
                     isOpen={true}
                     onClose={handleCloseAnalysis}

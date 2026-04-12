@@ -151,23 +151,23 @@ const CountdownStrip = ({ targetDate }: { targetDate: Date }) => {
   const r = useCountdown(targetDate);
   const pad = (n: number) => String(n).padStart(2, '0');
   if (!r) return (
-    <div className="mt-2 flex items-center gap-1.5 text-emerald-600 text-xs font-semibold">
-      <Radio className="h-3 w-3 animate-pulse" /> Exam is Live Now!
+    <div className="mt-2 flex items-center gap-1.5 text-emerald-600 text-[10px] sm:text-xs font-semibold">
+      <Radio className="h-2.5 w-2.5 sm:h-3 sm:w-3 animate-pulse" /> Exam is Live Now!
     </div>
   );
   return (
     <div className="mt-2">
       <div className="flex items-center gap-1 mb-1">
-        <Timer className="h-3 w-3 text-primary" />
-        <span className="text-[11px] text-muted-foreground font-medium">Exam starts in</span>
+        <Timer className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-primary" />
+        <span className="text-[9px] sm:text-[11px] text-muted-foreground font-medium">Exam starts in</span>
       </div>
-      <div className="flex items-center gap-1">
-        {r.days > 0 && <><div className="bg-primary/10 text-primary font-bold text-xs px-2 py-0.5 rounded">{r.days}d</div><span className="text-muted-foreground text-xs">:</span></>}
-        <div className="bg-primary/10 text-primary font-bold text-xs px-2 py-0.5 rounded">{pad(r.hours)}h</div>
-        <span className="text-muted-foreground text-xs">:</span>
-        <div className="bg-primary/10 text-primary font-bold text-xs px-2 py-0.5 rounded">{pad(r.mins)}m</div>
-        <span className="text-muted-foreground text-xs">:</span>
-        <div className="bg-primary/10 text-primary font-bold text-xs px-2 py-0.5 rounded min-w-[32px] text-center">{pad(r.secs)}s</div>
+      <div className="flex items-center gap-0.5 sm:gap-1">
+        {r.days > 0 && <><div className="bg-primary/10 text-primary font-bold text-[9px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded">{r.days}d</div><span className="text-muted-foreground text-[9px] sm:text-xs">:</span></>}
+        <div className="bg-primary/10 text-primary font-bold text-[9px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded">{pad(r.hours)}h</div>
+        <span className="text-muted-foreground text-[9px] sm:text-xs">:</span>
+        <div className="bg-primary/10 text-primary font-bold text-[9px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded">{pad(r.mins)}m</div>
+        <span className="text-muted-foreground text-[9px] sm:text-xs">:</span>
+        <div className="bg-primary/10 text-primary font-bold text-[9px] sm:text-xs px-1.5 sm:px-2 py-0.5 rounded min-w-[28px] sm:min-w-[32px] text-center">{pad(r.secs)}s</div>
       </div>
     </div>
   );
@@ -178,49 +178,49 @@ const LiveTestCard = ({ test, onRegister }: { test: LiveTest; onRegister: (id: n
   const getAction = () => {
     if (test.status === 'registered') {
       return (
-        <div className="flex items-center gap-1 text-emerald-600 font-semibold text-xs bg-emerald-50 dark:bg-emerald-950 px-2.5 py-1.5 rounded-full border border-emerald-200 dark:border-emerald-800">
-          <CheckCircle className="h-3.5 w-3.5" /> Registered
+        <div className="flex items-center gap-1 text-emerald-600 font-semibold text-[10px] sm:text-xs bg-emerald-50 dark:bg-emerald-950 px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-full border border-emerald-200 dark:border-emerald-800">
+          <CheckCircle className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> <span className="hidden xs:inline">Registered</span>
         </div>
       );
     }
     if (test.status === 'start') {
-      return <Button size="sm" className="h-8 text-xs px-4">Start Now</Button>;
+      return <Button size="sm" className="h-7 sm:h-8 text-[10px] sm:text-xs px-2.5 sm:px-4">Start Now</Button>;
     }
     return (
-      <Button size="sm" className="h-8 text-xs px-4" onClick={() => onRegister(test.id)}>
+      <Button size="sm" className="h-7 sm:h-8 text-[10px] sm:text-xs px-2.5 sm:px-4" onClick={() => onRegister(test.id)}>
         Register
       </Button>
     );
   };
 
   return (
-    <Card className={`p-4 border hover:shadow-md transition-all group ${test.status === 'registered' ? 'border-emerald-200 dark:border-emerald-800' : ''}`}>
-      <div className="flex items-center gap-2 mb-3">
-        <Badge className="bg-red-500 text-white text-[10px] font-bold flex items-center gap-1 h-5 px-2">
+    <Card className={`p-3 sm:p-4 border hover:shadow-md transition-all group ${test.status === 'registered' ? 'border-emerald-200 dark:border-emerald-800' : ''}`}>
+      <div className="flex items-center gap-1.5 sm:gap-2 mb-2 sm:mb-3">
+        <Badge className="bg-red-500 text-white text-[9px] sm:text-[10px] font-bold flex items-center gap-1 h-4.5 sm:h-5 px-1.5 sm:px-2">
           <span className="relative flex h-1.5 w-1.5">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75" />
             <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-white" />
           </span>
-          LIVE TEST
+          <span className="hidden xs:inline">LIVE TEST</span>
         </Badge>
-        <Badge className="bg-emerald-500 text-white text-[10px] font-bold h-5 px-2">FREE</Badge>
+        <Badge className="bg-emerald-500 text-white text-[9px] sm:text-[10px] font-bold h-4.5 sm:h-5 px-1.5 sm:px-2">FREE</Badge>
       </div>
 
-      <h3 className="font-semibold text-sm leading-snug mb-3 group-hover:text-primary transition-colors line-clamp-2 min-h-[2.5rem]">
+      <h3 className="font-semibold text-xs sm:text-sm leading-snug mb-2 sm:mb-3 group-hover:text-primary transition-colors line-clamp-2 min-h-[2rem] sm:min-h-[2.5rem]">
         {test.title}
       </h3>
 
-      <div className="flex items-center gap-3 text-xs text-muted-foreground mb-3 flex-wrap">
-        <span className="flex items-center gap-1"><FileText className="h-3 w-3" />{test.questions} Qs</span>
+      <div className="flex items-center gap-2 sm:gap-3 text-[10px] sm:text-xs text-muted-foreground mb-2 sm:mb-3 flex-wrap">
+        <span className="flex items-center gap-1"><FileText className="h-2.5 w-2.5 sm:h-3 sm:w-3" />{test.questions} Qs</span>
         <span className="opacity-40">|</span>
-        <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{test.duration} Mins</span>
+        <span className="flex items-center gap-1"><Clock className="h-2.5 w-2.5 sm:h-3 sm:w-3" />{test.duration} Mins</span>
         <span className="opacity-40">|</span>
         <span>{test.marks} Marks</span>
       </div>
 
       <div className="flex items-center justify-between gap-2">
-        <span className="text-[11px] text-muted-foreground flex items-center gap-1 min-w-0">
-          <Clock className="h-3 w-3 shrink-0" />
+        <span className="text-[9px] sm:text-[11px] text-muted-foreground flex items-center gap-1 min-w-0">
+          <Clock className="h-2.5 w-2.5 sm:h-3 sm:w-3 shrink-0" />
           <span className="truncate">{test.startDate} to {test.endDate}</span>
         </span>
         <div className="shrink-0">{getAction()}</div>
@@ -228,9 +228,9 @@ const LiveTestCard = ({ test, onRegister }: { test: LiveTest; onRegister: (id: n
 
       {test.status === 'registered' && <CountdownStrip targetDate={test.examDateTime} />}
 
-      <div className="flex items-center gap-1.5 mt-3 pt-3 border-t">
-        <Globe className="h-3 w-3 text-muted-foreground shrink-0" />
-        <p className="text-[11px] text-muted-foreground">
+      <div className="flex items-center gap-1.5 mt-2 sm:mt-3 pt-2 sm:pt-3 border-t">
+        <Globe className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-muted-foreground shrink-0" />
+        <p className="text-[9px] sm:text-[11px] text-muted-foreground">
           {test.languages.map((lang, i) => (
             <span key={i}>
               {i > 0 && <span className="mx-0.5">,</span>}
@@ -250,43 +250,43 @@ const AttemptedCard = ({ test }: { test: AttemptedTest }) => {
   const scoreBg = percentage >= 70 ? 'bg-emerald-50 dark:bg-emerald-950 border-emerald-200' : percentage >= 50 ? 'bg-amber-50 dark:bg-amber-950 border-amber-200' : 'bg-red-50 dark:bg-red-950 border-red-200';
 
   return (
-    <Card className="p-4 border hover:shadow-md transition-all">
+    <Card className="p-3 sm:p-4 border hover:shadow-md transition-all">
       {/* Title */}
-      <h3 className="font-semibold text-sm line-clamp-2 mb-3 min-h-[2.5rem]">{test.title}</h3>
+      <h3 className="font-semibold text-xs sm:text-sm line-clamp-2 mb-2 sm:mb-3 min-h-[2rem] sm:min-h-[2.5rem]">{test.title}</h3>
 
       {/* Meta */}
-      <div className="flex items-center gap-3 text-xs text-muted-foreground mb-3 flex-wrap">
-        <span className="flex items-center gap-1"><FileText className="h-3 w-3" />{test.questions} Qs</span>
+      <div className="flex items-center gap-2 sm:gap-3 text-[10px] sm:text-xs text-muted-foreground mb-2 sm:mb-3 flex-wrap">
+        <span className="flex items-center gap-1"><FileText className="h-2.5 w-2.5 sm:h-3 sm:w-3" />{test.questions} Qs</span>
         <span className="opacity-40">|</span>
-        <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{test.duration} Mins</span>
+        <span className="flex items-center gap-1"><Clock className="h-2.5 w-2.5 sm:h-3 sm:w-3" />{test.duration} Mins</span>
         <span className="opacity-40">|</span>
-        <span className="flex items-center gap-1"><Users className="h-3 w-3" />{test.totalAttempts.toLocaleString()}</span>
+        <span className="flex items-center gap-1"><Users className="h-2.5 w-2.5 sm:h-3 sm:w-3" />{test.totalAttempts.toLocaleString()}</span>
       </div>
 
       {/* Score strip */}
-      <div className={`flex items-center justify-between rounded-lg px-3 py-2 border mb-3 ${scoreBg}`}>
+      <div className={`flex items-center justify-between rounded-lg px-2.5 sm:px-3 py-2 sm:py-2.5 border mb-2 sm:mb-3 ${scoreBg}`}>
         <div>
-          <div className={`text-xl font-bold ${scoreColor}`}>{percentage}%</div>
-          <div className="text-[10px] text-muted-foreground">Score: {test.score}/{test.totalMarks}</div>
+          <div className={`text-lg sm:text-xl font-bold ${scoreColor}`}>{percentage}%</div>
+          <div className="text-[9px] sm:text-[10px] text-muted-foreground">Score: {test.score}/{test.totalMarks}</div>
         </div>
         <div className="text-right">
-          <div className="text-sm font-bold">Rank #{test.rank}</div>
-          <div className="text-[10px] text-muted-foreground">Accuracy {test.accuracy}%</div>
+          <div className="text-xs sm:text-sm font-bold">Rank #{test.rank}</div>
+          <div className="text-[9px] sm:text-[10px] text-muted-foreground">Accuracy {test.accuracy}%</div>
         </div>
       </div>
 
       {/* Date */}
-      <div className="text-[11px] text-muted-foreground mb-3 flex items-center gap-1">
-        <Clock className="h-3 w-3" /> Attempted on {test.attemptedDate}
+      <div className="text-[9px] sm:text-[11px] text-muted-foreground mb-2 sm:mb-3 flex items-center gap-1">
+        <Clock className="h-2.5 w-2.5 sm:h-3 sm:w-3" /> Attempted on {test.attemptedDate}
       </div>
 
       {/* Action buttons */}
-      <div className="flex gap-2">
-        <Button variant="outline" size="sm" className="flex-1 h-8 text-xs gap-1">
-          <Eye className="h-3.5 w-3.5" /> Result
+      <div className="flex gap-1.5 sm:gap-2">
+        <Button variant="outline" size="sm" className="flex-1 h-7 sm:h-8 text-[10px] sm:text-xs gap-1">
+          <Eye className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> <span className="hidden xs:inline">Result</span>
         </Button>
-        <Button size="sm" className="flex-1 h-8 text-xs gap-1">
-          <BarChart2 className="h-3.5 w-3.5" /> Analysis
+        <Button size="sm" className="flex-1 h-7 sm:h-8 text-[10px] sm:text-xs gap-1">
+          <BarChart2 className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> <span className="hidden xs:inline">Analysis</span>
         </Button>
       </div>
     </Card>
@@ -324,39 +324,39 @@ const LiveTests = () => {
     : tests;
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
+    <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6 px-3 sm:px-4">
       {/* Header */}
-      <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
-          <Link to="/student/dashboard"><ArrowLeft className="h-4 w-4" /></Link>
+      <div className="flex items-center gap-2 sm:gap-3">
+        <Button variant="ghost" size="icon" className="h-7 w-7 sm:h-8 sm:w-8" asChild>
+          <Link to="/student/dashboard"><ArrowLeft className="h-3.5 w-3.5 sm:h-4 sm:w-4" /></Link>
         </Button>
         <div>
-          <h1 className="text-xl font-bold flex items-center gap-2">
-            <Radio className="h-5 w-5 text-red-500 animate-pulse" />
+          <h1 className="text-lg sm:text-xl font-bold flex items-center gap-2">
+            <Radio className="h-4 w-4 sm:h-5 sm:w-5 text-red-500 animate-pulse" />
             Live Tests
           </h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-xs sm:text-sm text-muted-foreground">
             {activeTab === 'attempted' ? `${attemptedTests.length} tests attempted` : `${filteredTests.length} live tests available`}
           </p>
         </div>
       </div>
 
       {/* Hero */}
-      <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent rounded-xl p-4 border border-primary/20">
-        <h2 className="font-bold text-base mb-1">Recommended Live Tests &amp; <span className="text-primary">Free Quizzes</span></h2>
-        <p className="text-sm text-muted-foreground">
+      <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent rounded-lg sm:rounded-xl p-3 sm:p-4 border border-primary/20">
+        <h2 className="font-bold text-sm sm:text-base mb-1">Recommended Live Tests &amp; <span className="text-primary">Free Quizzes</span></h2>
+        <p className="text-xs sm:text-sm text-muted-foreground">
           Specially crafted for you! Attempt 150+ daily Live tests &amp; quizzes and test your all India ranking.<br />
           Improve your scores and chances of selection in your target exam.
         </p>
       </div>
 
       {/* Tabs */}
-      <div className="flex items-center gap-2 flex-wrap border-b">
+      <div className="flex items-center gap-1 sm:gap-2 flex-wrap border-b">
         {tabs.map(tab => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`px-4 py-2 text-sm font-medium border-b-2 transition-all -mb-px ${
+            className={`px-2.5 sm:px-4 py-1.5 sm:py-2 text-[11px] sm:text-sm font-medium border-b-2 transition-all -mb-px ${
               activeTab === tab.id
                 ? 'border-primary text-primary'
                 : 'border-transparent text-muted-foreground hover:text-foreground'
@@ -369,17 +369,17 @@ const LiveTests = () => {
 
       {/* Cards */}
       {activeTab === 'attempted' ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5">
           {attemptedTests.map(test => <AttemptedCard key={test.id} test={test} />)}
         </div>
       ) : (
         filteredTests.length === 0 ? (
-          <div className="text-center py-20 text-muted-foreground">
-            <Users className="h-12 w-12 mx-auto mb-3 opacity-30" />
-            <p>No tests in this category</p>
+          <div className="text-center py-16 sm:py-20 text-muted-foreground">
+            <Users className="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-3 opacity-30" />
+            <p className="text-sm">No tests in this category</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5">
             {filteredTests.map(test => (
               <LiveTestCard key={test.id} test={test} onRegister={handleRegister} />
             ))}

@@ -116,27 +116,27 @@ const FeaturedCoursesSection = ({ navigate }: { navigate: (path: string) => void
     <div className="space-y-0 bg-white border border-border/60 rounded-2xl shadow-sm" style={{ overflow: 'visible' }}>
 
       {/* Header */}
-      <div className="px-5 pt-5 pb-3">
-        <div className="flex items-center mb-1">
-          <h3 className="font-bold text-base text-slate-900">Featured Courses</h3>
-          <span className="ml-2 text-[11px] text-slate-400 font-medium">Banking Exams</span>
+      <div className="px-4 sm:px-5 pt-4 sm:pt-5 pb-2 sm:pb-3">
+        <div className="flex items-center mb-0.5 sm:mb-1">
+          <h3 className="font-bold text-sm sm:text-base text-slate-900">Featured Courses</h3>
+          <span className="ml-1.5 sm:ml-2 text-[9px] sm:text-[11px] text-slate-400 font-medium">Banking Exams</span>
         </div>
       </div>
 
       {/* Scrollable Cards Row */}
-      <div className="relative px-3 py-4" style={{ overflow: 'visible' }}>
+      <div className="relative px-2 sm:px-3 py-3 sm:py-4" style={{ overflow: 'visible' }}>
         {/* Left arrow */}
         <button
           onClick={() => scroll('left')}
-          className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 bg-white border border-slate-200 rounded-full shadow-md flex items-center justify-center hover:bg-slate-50 transition-colors"
+          className="absolute left-0 sm:left-1 top-1/2 -translate-y-1/2 z-10 w-7 h-7 sm:w-8 sm:h-8 bg-white border border-slate-200 rounded-full shadow-md flex items-center justify-center hover:bg-slate-50 transition-colors"
         >
-          <ChevronLeft className="h-4 w-4 text-slate-700" />
+          <ChevronLeft className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-slate-700" />
         </button>
 
         {/* Card scroll container */}
         <div
           ref={scrollRef}
-          className="flex gap-4 overflow-x-auto scroll-smooth px-6 pb-2"
+          className="flex gap-3 sm:gap-4 overflow-x-auto scroll-smooth px-5 sm:px-6 pb-2"
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', overflowY: 'visible' } as React.CSSProperties}
         >
           {filteredCourses.map((course) => {
@@ -146,7 +146,7 @@ const FeaturedCoursesSection = ({ navigate }: { navigate: (path: string) => void
             return (
               <div
                 key={course.id}
-                className="relative flex-none w-48 group cursor-pointer"
+                className="relative flex-none w-40 sm:w-48 group cursor-pointer"
                 onMouseEnter={() => setHoveredCourse(course.id)}
                 onMouseLeave={() => setHoveredCourse(null)}
                 onClick={() => navigate(`/student/courses/${course.id}`)}
@@ -158,70 +158,70 @@ const FeaturedCoursesSection = ({ navigate }: { navigate: (path: string) => void
                     <img
                       src={course.thumbnail}
                       alt={course.title}
-                      className="w-full h-32 object-cover group-hover:scale-105 transition-transform duration-300"
+                      className="w-full h-24 sm:h-32 object-cover group-hover:scale-105 transition-transform duration-300"
                     />
                   </div>
 
                   {/* Card Body */}
-                  <div className="p-2.5 space-y-1.5">
-                    <h4 className="font-semibold text-[11px] leading-snug text-slate-900 line-clamp-2">{course.title}</h4>
-                    <p className="text-[10px] text-slate-500 truncate">{course.instructor}</p>
+                  <div className="p-2 sm:p-2.5 space-y-1 sm:space-y-1.5">
+                    <h4 className="font-semibold text-[10px] sm:text-[11px] leading-snug text-slate-900 line-clamp-2">{course.title}</h4>
+                    <p className="text-[9px] sm:text-[10px] text-slate-500 truncate">{course.instructor}</p>
 
                     {/* Badge + Rating */}
-                    <div className="flex items-center gap-1.5 flex-wrap">
+                    <div className="flex items-center gap-1 sm:gap-1.5 flex-wrap">
                       {badge && (
-                        <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-sm ${badge.color}`}>
+                        <span className={`text-[8px] sm:text-[9px] font-bold px-1 sm:px-1.5 py-0.5 rounded-sm ${badge.color}`}>
                           {badge.label}
                         </span>
                       )}
-                      <span className="flex items-center gap-0.5 text-[10px] text-amber-600 font-semibold">
+                      <span className="flex items-center gap-0.5 text-[9px] sm:text-[10px] text-amber-600 font-semibold">
                         ★ {course.rating}
                       </span>
-                      <span className="text-[9px] text-slate-400">({course.studentsCount.toLocaleString()})</span>
+                      <span className="text-[8px] sm:text-[9px] text-slate-400">({course.studentsCount.toLocaleString()})</span>
                     </div>
 
                     {/* Price */}
-                    <div className="flex items-baseline gap-1.5 pt-0.5">
-                      <span className="text-sm font-bold text-slate-900">₹{course.price.toLocaleString()}</span>
+                    <div className="flex items-baseline gap-1 sm:gap-1.5 pt-0.5">
+                      <span className="text-xs sm:text-sm font-bold text-slate-900">₹{course.price.toLocaleString()}</span>
                       {course.originalPrice && (
-                        <span className="text-[10px] text-slate-400 line-through">₹{course.originalPrice.toLocaleString()}</span>
+                        <span className="text-[8px] sm:text-[10px] text-slate-400 line-through">₹{course.originalPrice.toLocaleString()}</span>
                       )}
                     </div>
                   </div>
                 </div>
 
-                {/* Hover Popout — vertically centered on the card so all content is visible */}
+                {/* Hover Popout — hide on mobile, show on md+ screens */}
                 {hoveredCourse === course.id && (
                   <div
-                    className="absolute top-1/2 left-full ml-2 z-50 w-64 bg-white border border-slate-200 rounded-xl shadow-2xl p-4"
-                    style={{ minWidth: '240px', pointerEvents: 'auto', transform: 'translateY(-50%)' }}
+                    className="absolute top-1/2 left-full ml-2 z-50 w-56 sm:w-64 bg-white border border-slate-200 rounded-xl shadow-2xl p-3 sm:p-4 hidden md:block"
+                    style={{ minWidth: '224px', pointerEvents: 'auto', transform: 'translateY(-50%)' }}
                     onMouseEnter={() => setHoveredCourse(course.id)}
                     onMouseLeave={() => setHoveredCourse(null)}
                   >
-                    <h4 className="font-bold text-sm text-slate-900 mb-2 leading-snug">{course.title}</h4>
+                    <h4 className="font-bold text-xs sm:text-sm text-slate-900 mb-2 leading-snug">{course.title}</h4>
 
                     {/* Badge + Updated */}
                     <div className="flex items-center gap-2 mb-2">
                       {badge && (
-                        <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-sm ${badge.color}`}>
+                        <span className={`text-[8px] sm:text-[9px] font-bold px-1 sm:px-1.5 py-0.5 rounded-sm ${badge.color}`}>
                           {badge.label}
                         </span>
                       )}
-                      <span className="text-[10px] text-slate-500">Updated <strong>2025</strong></span>
+                      <span className="text-[9px] sm:text-[10px] text-slate-500">Updated <strong>2025</strong></span>
                     </div>
 
-                    <p className="text-[10px] text-slate-500 mb-2">
+                    <p className="text-[9px] sm:text-[10px] text-slate-500 mb-2">
                       {course.videosCount} total hours · All Levels · Subtitles
                     </p>
 
-                    <p className="text-xs text-slate-700 mb-3 leading-relaxed">
+                    <p className="text-[11px] sm:text-xs text-slate-700 mb-2 sm:mb-3 leading-relaxed">
                       Master {course.title.split(' ').slice(0, 4).join(' ')} with comprehensive video lessons, mock tests and expert guidance.
                     </p>
 
                     {/* Bullet highlights */}
-                    <ul className="space-y-1.5 mb-4">
+                    <ul className="space-y-1 sm:space-y-1.5 mb-3 sm:mb-4">
                       {getHighlights(course).map((h, i) => (
-                        <li key={i} className="flex items-start gap-1.5 text-[10px] text-slate-700">
+                        <li key={i} className="flex items-start gap-1 sm:gap-1.5 text-[9px] sm:text-[10px] text-slate-700">
                           <span className="text-green-600 mt-0.5 shrink-0">✓</span>
                           <span>{h}</span>
                         </li>
@@ -230,7 +230,7 @@ const FeaturedCoursesSection = ({ navigate }: { navigate: (path: string) => void
 
                     {/* CTA */}
                     <button
-                      className="w-full bg-primary text-white text-xs font-semibold py-2 rounded-lg hover:bg-primary/90 transition-colors"
+                      className="w-full bg-primary text-white text-[11px] sm:text-xs font-semibold py-1.5 sm:py-2 rounded-lg hover:bg-primary/90 transition-colors"
                       onClick={(e) => { e.stopPropagation(); }}
                     >
                       {isEnrolled ? 'Continue Course' : 'Enroll Now'}
@@ -245,9 +245,9 @@ const FeaturedCoursesSection = ({ navigate }: { navigate: (path: string) => void
         {/* Right arrow */}
         <button
           onClick={() => scroll('right')}
-          className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 bg-white border border-slate-200 rounded-full shadow-md flex items-center justify-center hover:bg-slate-50 transition-colors"
+          className="absolute right-0 sm:right-1 top-1/2 -translate-y-1/2 z-10 w-7 h-7 sm:w-8 sm:h-8 bg-white border border-slate-200 rounded-full shadow-md flex items-center justify-center hover:bg-slate-50 transition-colors"
         >
-          <ChevronRight className="h-4 w-4 text-slate-700" />
+          <ChevronRight className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-slate-700" />
         </button>
       </div>
 
@@ -570,12 +570,12 @@ const StudentDashboard = () => {
 
   return (
     <div className="min-h-screen db-bg">
-    <div className="max-w-7xl mx-auto px-3 py-4">
+    <div className="max-w-7xl mx-auto px-3 py-4 sm:px-4 sm:py-6 md:px-6 lg:px-8">
 
       {/* ═══════════════════════════════════════════════════════
           TARGET EXAM BANNER — always visible
          ═══════════════════════════════════════════════════════ */}
-      <div className="mb-6">
+      <div className="mb-4 sm:mb-6">
         <TargetExamCard
           targetExam={targetExamName}
           examCategory={examCategoryName}
@@ -590,7 +590,7 @@ const StudentDashboard = () => {
       {/* ═══════════════════════════════════════════════════════
           TAB NAVIGATION — sticky header
          ═══════════════════════════════════════════════════════ */}
-      <div className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-slate-200 rounded-t-xl -mx-3 px-3 pt-0 pb-0 mb-6">
+      <div className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-slate-200 rounded-t-xl -mx-3 px-3 sm:-mx-4 sm:px-4 md:-mx-6 md:px-6 pt-0 pb-0 mb-4 sm:mb-6">
         <div className="flex items-center justify-center">
           {tabs.map((tab) => {
             const Icon = tab.icon;
@@ -599,14 +599,14 @@ const StudentDashboard = () => {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center justify-center gap-2 flex-1 py-3.5 transition-all border-b-2 ${
+                className={`flex items-center justify-center gap-1 sm:gap-2 flex-1 py-2.5 sm:py-3.5 transition-all border-b-2 ${
                   isActive
                     ? 'border-emerald-500 text-emerald-600 bg-emerald-50/60 font-semibold'
                     : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50'
                 }`}
               >
-                <Icon className={`h-4 w-4 ${isActive ? 'text-emerald-500' : 'text-slate-400'}`} />
-                <span className="text-sm font-medium whitespace-nowrap">{tab.label}</span>
+                <Icon className={`h-3.5 w-3.5 sm:h-4 sm:w-4 ${isActive ? 'text-emerald-500' : 'text-slate-400'}`} />
+                <span className="text-xs sm:text-sm font-medium whitespace-nowrap">{tab.label}</span>
               </button>
             );
           })}
@@ -616,13 +616,13 @@ const StudentDashboard = () => {
       {/* ═══════════════════════════════════════════════════════
           TAB CONTENT — only active tab renders
          ═══════════════════════════════════════════════════════ */}
-      <div className="space-y-8">
+      <div className="space-y-6 sm:space-y-8">
 
         {/* ──────────────────────────────────────────────────────
             OVERVIEW TAB — Daily focus & quick stats
            ────────────────────────────────────────────────────── */}
         {activeTab === 'overview' && (
-          <div className="space-y-8 animate-in fade-in duration-200">
+          <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-200">
 
             {/* Stats Row */}
             <StatsOverview
@@ -635,11 +635,11 @@ const StudentDashboard = () => {
             />
 
             {/* Goals + Timer */}
-            <div className="flex flex-col xl:flex-row gap-6 items-stretch">
+            <div className="flex flex-col xl:flex-row gap-4 sm:gap-6 items-stretch">
               <div className="flex-1 xl:w-[70%]">
                 <DailyGoalsWidget />
               </div>
-              <div className="flex-1 xl:w-[30%] bg-white rounded-xl border border-slate-200 p-4">
+              <div className="flex-1 xl:w-[30%] bg-white rounded-xl border border-slate-200 p-3 sm:p-4">
                 <StudyTimerWidget />
               </div>
             </div>
@@ -656,42 +656,42 @@ const StudentDashboard = () => {
             PRACTICE TAB — Tests, quizzes & timer
            ────────────────────────────────────────────────────── */}
         {activeTab === 'practice' && (
-          <div className="space-y-8 animate-in fade-in duration-200">
+          <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-200">
 
             {/* Daily Free Tests - Full View */}
-            <Card className="p-6 bg-white border border-slate-200 rounded-xl">
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-green-400 flex items-center justify-center shadow-sm">
-                    <FileText className="h-5 w-5 text-white" />
+            <Card className="p-4 sm:p-6 bg-white border border-slate-200 rounded-xl">
+              <div className="flex items-center justify-between mb-4 sm:mb-6">
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-green-400 flex items-center justify-center shadow-sm">
+                    <FileText className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-[16px] text-slate-800 leading-none">Daily Free Tests</h3>
-                    <p className="text-[11px] text-slate-400 mt-0.5">{freeTests.length} tests available today</p>
+                    <h3 className="font-bold text-sm sm:text-base text-slate-800 leading-none">Daily Free Tests</h3>
+                    <p className="text-[10px] sm:text-[11px] text-slate-400 mt-0.5">{freeTests.length} tests available today</p>
                   </div>
                 </div>
               </div>
-              <div className="space-y-3">
+              <div className="space-y-2 sm:space-y-3">
                 {freeTests.map((test, idx) => {
                   const isCompleted = !!quizCompletions[test.id];
                   return (
                     <div
                       key={idx}
-                      className={`flex items-center justify-between px-4 py-3 rounded-xl border transition-all ${
+                      className={`flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl border transition-all ${
                         isCompleted
                           ? 'bg-slate-50 border-slate-100 opacity-70'
                           : 'bg-white border-slate-200 hover:border-emerald-300 hover:shadow-sm'
                       }`}
                     >
-                      <div className="flex items-center gap-4 min-w-0 flex-1">
-                        <div className={`shrink-0 w-10 h-10 rounded-lg flex items-center justify-center ${
+                      <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
+                        <div className={`shrink-0 w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center ${
                           isCompleted ? 'bg-slate-100' : 'bg-emerald-50'
                         }`}>
-                          <FileText className={`h-5 w-5 ${isCompleted ? 'text-slate-400' : 'text-emerald-600'}`} />
+                          <FileText className={`h-4 w-4 sm:h-5 sm:w-5 ${isCompleted ? 'text-slate-400' : 'text-emerald-600'}`} />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className={`font-semibold text-[13px] truncate ${isCompleted ? 'line-through text-slate-400' : 'text-slate-800'}`}>{test.title}</p>
-                          <div className="text-[11px] text-slate-400 flex items-center gap-2 mt-0.5">
+                          <p className={`font-semibold text-xs sm:text-[13px] truncate ${isCompleted ? 'line-through text-slate-400' : 'text-slate-800'}`}>{test.title}</p>
+                          <div className="text-[10px] sm:text-[11px] text-slate-400 flex items-center gap-1.5 sm:gap-2 mt-0.5">
                             <span>{test.questions} Questions</span>
                             <span className="text-slate-300">•</span>
                             <span>{test.duration} mins</span>
@@ -700,16 +700,16 @@ const StudentDashboard = () => {
                           </div>
                         </div>
                       </div>
-                      <div className="shrink-0 ml-4">
+                      <div className="shrink-0 ml-2 sm:ml-4">
                         {isCompleted ? (
-                          <div className="flex items-center gap-1.5 text-emerald-600 font-semibold text-[11px] bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-200">
-                            <CheckCircle className="h-3.5 w-3.5" />
-                            Completed
+                          <div className="flex items-center gap-1 sm:gap-1.5 text-emerald-600 font-semibold text-[10px] sm:text-[11px] bg-emerald-50 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg border border-emerald-200">
+                            <CheckCircle className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                            <span className="hidden xs:inline">Completed</span>
                           </div>
                         ) : (
-                          <Button size="sm" className="h-8 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[12px] font-semibold" onClick={() => handleStartTest(test)}>
-                            <Play className="h-3.5 w-3.5 mr-1.5" strokeWidth={3} />
-                            Start Test
+                          <Button size="sm" className="h-7 sm:h-8 px-2.5 sm:px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[11px] sm:text-[12px] font-semibold" onClick={() => handleStartTest(test)}>
+                            <Play className="h-3 w-3 sm:h-3.5 sm:w-3.5 sm:mr-1.5" strokeWidth={3} />
+                            <span className="hidden xs:inline">Start</span>
                           </Button>
                         )}
                       </div>
@@ -728,10 +728,10 @@ const StudentDashboard = () => {
             PERFORMANCE TAB — Analytics & progress
            ────────────────────────────────────────────────────── */}
         {activeTab === 'performance' && (
-          <div className="space-y-6 animate-in fade-in duration-200">
+          <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-200">
 
             {/* ── Row 1: Graph (60%) + Percentile (40%) ── */}
-            <div className="flex flex-col xl:flex-row gap-6 items-stretch">
+            <div className="flex flex-col xl:flex-row gap-4 sm:gap-6 items-stretch">
 
               {/* Performance Graph — 60% */}
               <div className="flex-[3] min-w-0">
@@ -739,16 +739,16 @@ const StudentDashboard = () => {
               </div>
 
               {/* Exam Percentile — 40% */}
-              <div className="flex-[2] min-w-0 bg-white rounded-xl border border-slate-200 p-5 flex flex-col">
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-500 to-orange-400 flex items-center justify-center shadow-sm">
-                    <Target className="h-4 w-4 text-white" />
+              <div className="flex-[2] min-w-0 bg-white rounded-xl border border-slate-200 p-4 sm:p-5 flex flex-col">
+                <div className="flex items-center gap-2 mb-3 sm:mb-4">
+                  <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br from-amber-500 to-orange-400 flex items-center justify-center shadow-sm">
+                    <Target className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-white" />
                   </div>
-                  <h3 className="font-bold text-[15px] text-slate-800">Exam Percentile</h3>
+                  <h3 className="font-bold text-sm sm:text-[15px] text-slate-800">Exam Percentile</h3>
                 </div>
 
                 {/* Gauge */}
-                <div className="relative w-full h-28 mb-3">
+                <div className="relative w-full h-24 sm:h-28 mb-2 sm:mb-3">
                   <svg className="w-full h-full" viewBox="0 0 200 100">
                     <path d="M 20 90 A 80 80 0 0 1 180 90" fill="none" stroke="#f1f5f9" strokeWidth="14" strokeLinecap="round" />
                     <path d="M 20 90 A 80 80 0 0 1 68 24"  fill="none" stroke="#fca5a5" strokeWidth="14" strokeLinecap="round" />
@@ -764,30 +764,30 @@ const StudentDashboard = () => {
                     <text x="185" y="96" fontSize="9" fill="#94a3b8" textAnchor="end">100</text>
                   </svg>
                   <div className="absolute bottom-0 left-1/2 -translate-x-1/2 text-center">
-                    <div className="text-3xl font-black text-primary leading-none">{dashStats.percentile > 0 ? dashStats.percentile.toFixed(1) : '—'}</div>
-                    <div className="text-[10px] text-slate-400 mt-0.5">{dashStats.percentile > 0 ? 'Percentile' : 'No data yet'}</div>
+                    <div className="text-2xl sm:text-3xl font-black text-primary leading-none">{dashStats.percentile > 0 ? dashStats.percentile.toFixed(1) : '—'}</div>
+                    <div className="text-[9px] sm:text-[10px] text-slate-400 mt-0.5">{dashStats.percentile > 0 ? 'Percentile' : 'No data yet'}</div>
                   </div>
                 </div>
 
                 {/* Stats */}
                 <div className="space-y-1 mt-auto">
                   <div className="flex justify-between items-center py-1.5 border-b border-slate-100">
-                    <span className="text-[12px] text-slate-500">Student</span>
-                    <span className="text-[12px] font-semibold text-slate-800 truncate ml-2">{userProfile?.username || user?.name || 'Student'}</span>
+                    <span className="text-[11px] sm:text-[12px] text-slate-500">Student</span>
+                    <span className="text-[11px] sm:text-[12px] font-semibold text-slate-800 truncate ml-2">{userProfile?.username || user?.name || 'Student'}</span>
                   </div>
                   <div className="flex justify-between items-center py-1.5 border-b border-slate-100">
-                    <span className="text-[12px] text-slate-500">Target Exam</span>
-                    <span className="text-[12px] font-semibold text-primary">{targetExamName}</span>
+                    <span className="text-[11px] sm:text-[12px] text-slate-500">Target Exam</span>
+                    <span className="text-[11px] sm:text-[12px] font-semibold text-primary">{targetExamName}</span>
                   </div>
                   <div className="flex justify-between items-center py-1.5 border-b border-slate-100">
-                    <span className="text-[12px] text-slate-500">Percentile</span>
-                    <span className={`text-[12px] font-bold ${dashStats.percentile > 0 ? 'text-emerald-600' : 'text-slate-400'}`}>{dashStats.percentile > 0 ? `${dashStats.percentile}` : 'N/A'}</span>
+                    <span className="text-[11px] sm:text-[12px] text-slate-500">Percentile</span>
+                    <span className={`text-[11px] sm:text-[12px] font-bold ${dashStats.percentile > 0 ? 'text-emerald-600' : 'text-slate-400'}`}>{dashStats.percentile > 0 ? `${dashStats.percentile}` : 'N/A'}</span>
                   </div>
-                  <div className="flex items-center gap-2 mt-2 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2">
-                    <span className="text-lg">🏆</span>
+                  <div className="flex items-center gap-2 mt-2 bg-emerald-50 border border-emerald-200 rounded-lg px-2.5 sm:px-3 py-1.5 sm:py-2">
+                    <span className="text-base sm:text-lg">🏆</span>
                     <div>
-                      <div className="text-[11px] font-bold text-emerald-700">Excellent Performance</div>
-                      <div className="text-[10px] text-emerald-600">Top 12.5% of all aspirants</div>
+                      <div className="text-[10px] sm:text-[11px] font-bold text-emerald-700">Excellent Performance</div>
+                      <div className="text-[9px] sm:text-[10px] text-emerald-600">Top 12.5% of all aspirants</div>
                     </div>
                   </div>
                 </div>
@@ -803,49 +803,49 @@ const StudentDashboard = () => {
             RESOURCES TAB — Courses, news & exam updates
            ────────────────────────────────────────────────────── */}
         {activeTab === 'resources' && (
-          <div className="space-y-8 animate-in fade-in duration-200">
+          <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-200">
 
             {/* Featured Courses */}
             <FeaturedCoursesSection navigate={navigate} />
 
             {/* Current Affairs Section */}
-            <Card className="p-5 bg-white border border-slate-200 rounded-xl">
+            <Card className="p-4 sm:p-5 bg-white border border-slate-200 rounded-xl">
               {/* Header */}
-              <div className="flex items-center justify-between mb-5">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center">
-                    <Newspaper className="h-4 w-4 text-emerald-600" />
+              <div className="flex items-center justify-between mb-4 sm:mb-5">
+                <div className="flex items-center gap-2 sm:gap-2.5">
+                  <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-emerald-50 flex items-center justify-center">
+                    <Newspaper className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-emerald-600" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-[15px] text-slate-800 leading-none">Current Affairs</h3>
-                    <p className="text-[11px] text-slate-400 mt-0.5">Latest news &amp; updates</p>
+                    <h3 className="font-bold text-sm sm:text-[15px] text-slate-800 leading-none">Current Affairs</h3>
+                    <p className="text-[10px] sm:text-[11px] text-slate-400 mt-0.5">Latest news &amp; updates</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 sm:gap-2">
                   {/* Auto Slide Toggle */}
                   <button
                     onClick={() => setIsAutoSlide(!isAutoSlide)}
-                    className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold border transition-colors ${
+                    className={`flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1 rounded-full text-[9px] sm:text-[10px] font-semibold border transition-colors ${
                       isAutoSlide
                         ? 'bg-emerald-50 text-emerald-600 border-emerald-200'
                         : 'bg-slate-50 text-slate-400 border-slate-200'
                     }`}
                   >
                     <span className={`w-1.5 h-1.5 rounded-full ${isAutoSlide ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`} />
-                    {isAutoSlide ? 'Auto' : 'Manual'}
+                    <span className="hidden xs:inline">{isAutoSlide ? 'Auto' : 'Manual'}</span>
                   </button>
 
                   {/* Saved Articles Sheet */}
                   <Sheet open={savedSheetOpen} onOpenChange={setSavedSheetOpen}>
                     <SheetTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 relative">
-                        <Bookmark className="h-4 w-4" />
+                      <Button variant="ghost" size="icon" className="h-7 w-7 sm:h-8 sm:w-8 relative">
+                        <Bookmark className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                         {savedArticleIds.length > 0 && (
-                          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
+                          <span className="absolute top-1 right-1 sm:top-1.5 sm:right-1.5 w-1.5 h-1.5 sm:w-2 sm:h-2 bg-red-500 rounded-full border border-white"></span>
                         )}
                       </Button>
                     </SheetTrigger>
-                    <SheetContent className="w-[400px] sm:w-[540px]">
+                    <SheetContent className="w-[calc(100vw-2rem)] sm:w-[400px] max-w-[400px] sm:max-w-[540px]">
                       <SheetHeader>
                         <SheetTitle>Saved Articles</SheetTitle>
                       </SheetHeader>
@@ -855,19 +855,19 @@ const StudentDashboard = () => {
                         ) : (
                           <div className="space-y-3">
                             {savedArticlesList.map(article => (
-                              <div key={article.id} className="flex items-start gap-3 p-3 bg-slate-50 rounded-lg border border-slate-100">
-                                <img src={(article as any).imageUrl || (article as any).image || ''} alt="" className="w-16 h-12 object-cover rounded-md shrink-0" />
+                              <div key={article.id} className="flex items-start gap-2.5 sm:gap-3 p-2.5 sm:p-3 bg-slate-50 rounded-lg border border-slate-100">
+                                <img src={(article as any).imageUrl || (article as any).image || ''} alt="" className="w-14 h-10 sm:w-16 sm:h-12 object-cover rounded-md shrink-0" />
                                 <div className="flex-1 min-w-0">
-                                  <p className="text-sm font-medium line-clamp-2">{article.title}</p>
-                                  <p className="text-[10px] text-slate-400 mt-1">{(article as any).date}</p>
+                                  <p className="text-xs sm:text-sm font-medium line-clamp-2">{article.title}</p>
+                                  <p className="text-[9px] sm:text-[10px] text-slate-400 mt-0.5 sm:mt-1">{(article as any).date}</p>
                                 </div>
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  className="h-6 w-6 text-slate-400 hover:text-red-500 shrink-0"
+                                  className="h-5 w-5 sm:h-6 sm:w-6 text-slate-400 hover:text-red-500 shrink-0"
                                   onClick={() => toggleSave(article.id)}
                                 >
-                                  <Trash2 className="h-3.5 w-3.5" />
+                                  <Trash2 className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                                 </Button>
                               </div>
                             ))}
@@ -877,17 +877,17 @@ const StudentDashboard = () => {
                     </SheetContent>
                   </Sheet>
 
-                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setIsAutoSlide(false); setCurrentNewsIndex((prev) => (prev - 1 + sortedArticles.length) % sortedArticles.length); }}>
-                    <ChevronLeft className="h-4 w-4" />
+                  <Button variant="ghost" size="icon" className="h-7 w-7 sm:h-8 sm:w-8" onClick={() => { setIsAutoSlide(false); setCurrentNewsIndex((prev) => (prev - 1 + sortedArticles.length) % sortedArticles.length); }}>
+                    <ChevronLeft className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   </Button>
-                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setIsAutoSlide(false); setCurrentNewsIndex((prev) => (prev + 1) % sortedArticles.length); }}>
-                    <ChevronRight className="h-4 w-4" />
+                  <Button variant="ghost" size="icon" className="h-7 w-7 sm:h-8 sm:w-8" onClick={() => { setIsAutoSlide(false); setCurrentNewsIndex((prev) => (prev + 1) % sortedArticles.length); }}>
+                    <ChevronRight className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   </Button>
                 </div>
               </div>
 
-              {/* Articles — 3-column grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {/* Articles — responsive grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                 {currentAffairsData.map((item, idx) => (
                   <div
                     key={idx}
@@ -895,7 +895,7 @@ const StudentDashboard = () => {
                     onClick={() => { setSelectedNews(item); setNewsDialogOpen(true); }}
                   >
                     {/* Image */}
-                    <div className="relative overflow-hidden h-36">
+                    <div className="relative overflow-hidden h-32 sm:h-36">
                       {item.image ? (
                         <img
                           src={item.image}
@@ -904,29 +904,29 @@ const StudentDashboard = () => {
                         />
                       ) : (
                         <div className="w-full h-full bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center">
-                          <Newspaper className="h-8 w-8 text-slate-300" />
+                          <Newspaper className="h-6 w-6 sm:h-8 sm:w-8 text-slate-300" />
                         </div>
                       )}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
                       {/* Category pill */}
-                      <span className="absolute top-2 left-2 text-[9px] font-bold uppercase tracking-wide bg-emerald-500 text-white px-2 py-0.5 rounded-full">
+                      <span className="absolute top-1.5 sm:top-2 left-1.5 sm:left-2 text-[8px] sm:text-[9px] font-bold uppercase tracking-wide bg-emerald-500 text-white px-1.5 sm:px-2 py-0.5 rounded-full">
                         {item.category}
                       </span>
                     </div>
                     {/* Body */}
-                    <div className="p-3">
-                      <p className="font-semibold text-[13px] text-slate-800 leading-snug line-clamp-2 group-hover:text-emerald-700 transition-colors">
+                    <div className="p-2.5 sm:p-3">
+                      <p className="font-semibold text-xs sm:text-[13px] text-slate-800 leading-snug line-clamp-2 group-hover:text-emerald-700 transition-colors">
                         {item.title}
                       </p>
                       {item.description && (
-                        <p className="text-[11px] text-slate-500 mt-1 line-clamp-2 leading-relaxed">
+                        <p className="text-[10px] sm:text-[11px] text-slate-500 mt-0.5 sm:mt-1 line-clamp-2 leading-relaxed">
                           {item.description}
                         </p>
                       )}
-                      <div className="flex items-center justify-between mt-2.5 pt-2 border-t border-slate-100">
-                        <span className="text-[10px] text-slate-400">{(item as any).date || 'Today'}</span>
-                        <span className="text-[10px] font-semibold text-emerald-600 flex items-center gap-1">
-                          Read more <ChevronRight className="h-3 w-3" />
+                      <div className="flex items-center justify-between mt-2 sm:mt-2.5 pt-2 sm:pt-2.5 border-t border-slate-100">
+                        <span className="text-[9px] sm:text-[10px] text-slate-400">{(item as any).date || 'Today'}</span>
+                        <span className="text-[9px] sm:text-[10px] font-semibold text-emerald-600 flex items-center gap-0.5 sm:gap-1">
+                          <span className="hidden xs:inline">Read</span> <ChevronRight className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
                         </span>
                       </div>
                     </div>
