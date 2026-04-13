@@ -230,7 +230,8 @@ const StudentCourses = () => {
 
   // Build grouped structure: category → subcategory → courses[]
   const groupedData = useMemo(() => {
-    let filtered = allCourses.filter(c => !enrolledSet.has(c.id));
+    // Start with ALL courses (enrolled or not)
+    let filtered = allCourses;
 
     // Global category context filter
     if (selectedCategories && selectedCategories.length > 0) {

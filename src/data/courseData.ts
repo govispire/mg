@@ -291,9 +291,9 @@ export const subjects: { [key: string]: Subject } = {
     id: 'english',
     name: 'English Language',
     icon: '📝',
-    chaptersCount: 8,
-    videosCount: 32,
-    testsCount: 12,
+    chaptersCount: 5,
+    videosCount: 10,
+    testsCount: 25,
     progress: 75,
     color: 'bg-blue-500'
   },
@@ -301,9 +301,9 @@ export const subjects: { [key: string]: Subject } = {
     id: 'quantitative',
     name: 'Quantitative Aptitude',
     icon: '🔢',
-    chaptersCount: 12,
-    videosCount: 48,
-    testsCount: 18,
+    chaptersCount: 3,
+    videosCount: 8,
+    testsCount: 11,
     progress: 60,
     color: 'bg-green-500'
   },
@@ -311,9 +311,9 @@ export const subjects: { [key: string]: Subject } = {
     id: 'reasoning',
     name: 'Reasoning Ability',
     icon: '🧩',
-    chaptersCount: 10,
-    videosCount: 40,
-    testsCount: 15,
+    chaptersCount: 3,
+    videosCount: 7,
+    testsCount: 10,
     progress: 45,
     color: 'bg-purple-500'
   },
@@ -321,9 +321,9 @@ export const subjects: { [key: string]: Subject } = {
     id: 'general-awareness',
     name: 'General Awareness',
     icon: '🌍',
-    chaptersCount: 15,
-    videosCount: 60,
-    testsCount: 20,
+    chaptersCount: 3,
+    videosCount: 8,
+    testsCount: 10,
     progress: 30,
     color: 'bg-orange-500'
   },
@@ -331,8 +331,8 @@ export const subjects: { [key: string]: Subject } = {
     id: 'computer',
     name: 'Computer Knowledge',
     icon: '💻',
-    chaptersCount: 6,
-    videosCount: 24,
+    chaptersCount: 3,
+    videosCount: 8,
     testsCount: 8,
     progress: 90,
     color: 'bg-indigo-500'
@@ -657,6 +657,248 @@ export const chapters = [
         isCompleted: false,
         score: null
       }
+    ]
+  },
+  // ── Quantitative Aptitude Chapters ─────────────────────────────────────────
+  {
+    id: 'numbers',
+    title: 'Number System',
+    subjectId: 'quantitative',
+    duration: '2.5 hours',
+    videosCount: 3,
+    testsCount: 4,
+    progress: 65,
+    isCompleted: false,
+    videos: [
+      { id: 'number-basics', title: 'Number System Basics', duration: '40 min', isWatched: true, thumbnail: 'https://images.unsplash.com/photo-1596495578065-6e0763fa1178?w=600&h=400&fit=crop' },
+      { id: 'types-of-numbers', title: 'Types of Numbers', duration: '35 min', isWatched: true, thumbnail: 'https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=600&h=400&fit=crop' },
+      { id: 'number-practice', title: 'Practice Problems', duration: '45 min', isWatched: false, thumbnail: 'https://images.unsplash.com/photo-1509228468518-180dd4864904?w=600&h=400&fit=crop' }
+    ],
+    tests: [
+      { id: 'number-test-1', title: 'Number System Test 1', questionsCount: 20, duration: '25 min', isCompleted: true, score: 78 },
+      { id: 'number-test-2', title: 'Number System Test 2', questionsCount: 20, duration: '25 min', isCompleted: true, score: 82 },
+      { id: 'number-test-3', title: 'Number System Test 3', questionsCount: 20, duration: '25 min', isCompleted: false, score: null },
+      { id: 'number-test-4', title: 'Number System Test 4', questionsCount: 20, duration: '25 min', isCompleted: false, score: null }
+    ]
+  },
+  {
+    id: 'percentage',
+    title: 'Percentage',
+    subjectId: 'quantitative',
+    duration: '2 hours',
+    videosCount: 2,
+    testsCount: 3,
+    progress: 50,
+    isCompleted: false,
+    videos: [
+      { id: 'percentage-basics', title: 'Percentage Fundamentals', duration: '38 min', isWatched: true, thumbnail: 'https://images.unsplash.com/photo-1596495578065-6e0763fa1178?w=600&h=400&fit=crop' },
+      { id: 'percentage-advanced', title: 'Advanced Percentage Problems', duration: '42 min', isWatched: false, thumbnail: 'https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=600&h=400&fit=crop' }
+    ],
+    tests: [
+      { id: 'pct-test-1', title: 'Percentage Test 1', questionsCount: 25, duration: '30 min', isCompleted: true, score: 70 },
+      { id: 'pct-test-2', title: 'Percentage Test 2', questionsCount: 25, duration: '30 min', isCompleted: false, score: null },
+      { id: 'pct-test-3', title: 'Percentage Test 3', questionsCount: 25, duration: '30 min', isCompleted: false, score: null }
+    ]
+  },
+  {
+    id: 'profit-loss',
+    title: 'Profit & Loss',
+    subjectId: 'quantitative',
+    duration: '2.5 hours',
+    videosCount: 3,
+    testsCount: 4,
+    progress: 30,
+    isCompleted: false,
+    videos: [
+      { id: 'pl-basics', title: 'Profit & Loss Basics', duration: '40 min', isWatched: true, thumbnail: 'https://images.unsplash.com/photo-1596495578065-6e0763fa1178?w=600&h=400&fit=crop' },
+      { id: 'pl-discount', title: 'Discount Problems', duration: '35 min', isWatched: false, thumbnail: 'https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=600&h=400&fit=crop' },
+      { id: 'pl-practice', title: 'Practice Session', duration: '45 min', isWatched: false, thumbnail: 'https://images.unsplash.com/photo-1509228468518-180dd4864904?w=600&h=400&fit=crop' }
+    ],
+    tests: [
+      { id: 'pl-test-1', title: 'Profit & Loss Test 1', questionsCount: 20, duration: '25 min', isCompleted: true, score: 65 },
+      { id: 'pl-test-2', title: 'Profit & Loss Test 2', questionsCount: 20, duration: '25 min', isCompleted: false, score: null },
+      { id: 'pl-test-3', title: 'Profit & Loss Test 3', questionsCount: 20, duration: '25 min', isCompleted: false, score: null },
+      { id: 'pl-test-4', title: 'Profit & Loss Test 4', questionsCount: 20, duration: '25 min', isCompleted: false, score: null }
+    ]
+  },
+  // ── Reasoning Ability Chapters ─────────────────────────────────────────────
+  {
+    id: 'coding-decoding',
+    title: 'Coding & Decoding',
+    subjectId: 'reasoning',
+    duration: '2 hours',
+    videosCount: 2,
+    testsCount: 3,
+    progress: 55,
+    isCompleted: false,
+    videos: [
+      { id: 'coding-basics', title: 'Coding Decoding Fundamentals', duration: '45 min', isWatched: true, thumbnail: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=600&h=400&fit=crop' },
+      { id: 'coding-patterns', title: 'Pattern Based Coding', duration: '40 min', isWatched: false, thumbnail: 'https://images.unsplash.com/photo-1516110833967-0b5716085746?w=600&h=400&fit=crop' }
+    ],
+    tests: [
+      { id: 'cd-test-1', title: 'Coding Test 1', questionsCount: 20, duration: '25 min', isCompleted: true, score: 72 },
+      { id: 'cd-test-2', title: 'Coding Test 2', questionsCount: 20, duration: '25 min', isCompleted: true, score: 68 },
+      { id: 'cd-test-3', title: 'Coding Test 3', questionsCount: 20, duration: '25 min', isCompleted: false, score: null }
+    ]
+  },
+  {
+    id: 'blood-relations',
+    title: 'Blood Relations',
+    subjectId: 'reasoning',
+    duration: '1.5 hours',
+    videosCount: 2,
+    testsCount: 3,
+    progress: 40,
+    isCompleted: false,
+    videos: [
+      { id: 'br-basics', title: 'Blood Relations Basics', duration: '35 min', isWatched: true, thumbnail: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=600&h=400&fit=crop' },
+      { id: 'br-family-tree', title: 'Family Tree Method', duration: '40 min', isWatched: false, thumbnail: 'https://images.unsplash.com/photo-1516110833967-0b5716085746?w=600&h=400&fit=crop' }
+    ],
+    tests: [
+      { id: 'br-test-1', title: 'Blood Relations Test 1', questionsCount: 15, duration: '20 min', isCompleted: true, score: 60 },
+      { id: 'br-test-2', title: 'Blood Relations Test 2', questionsCount: 15, duration: '20 min', isCompleted: false, score: null },
+      { id: 'br-test-3', title: 'Blood Relations Test 3', questionsCount: 15, duration: '20 min', isCompleted: false, score: null }
+    ]
+  },
+  {
+    id: 'seating-arrangement',
+    title: 'Seating Arrangement',
+    subjectId: 'reasoning',
+    duration: '3 hours',
+    videosCount: 3,
+    testsCount: 4,
+    progress: 25,
+    isCompleted: false,
+    videos: [
+      { id: 'sa-linear', title: 'Linear Arrangement', duration: '45 min', isWatched: true, thumbnail: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=600&h=400&fit=crop' },
+      { id: 'sa-circular', title: 'Circular Arrangement', duration: '50 min', isWatched: false, thumbnail: 'https://images.unsplash.com/photo-1516110833967-0b5716085746?w=600&h=400&fit=crop' },
+      { id: 'sa-practice', title: 'Practice Problems', duration: '45 min', isWatched: false, thumbnail: 'https://images.unsplash.com/photo-1509228468518-180dd4864904?w=600&h=400&fit=crop' }
+    ],
+    tests: [
+      { id: 'sa-test-1', title: 'Seating Arrangement Test 1', questionsCount: 20, duration: '30 min', isCompleted: true, score: 55 },
+      { id: 'sa-test-2', title: 'Seating Arrangement Test 2', questionsCount: 20, duration: '30 min', isCompleted: false, score: null },
+      { id: 'sa-test-3', title: 'Seating Arrangement Test 3', questionsCount: 20, duration: '30 min', isCompleted: false, score: null },
+      { id: 'sa-test-4', title: 'Seating Arrangement Test 4', questionsCount: 20, duration: '30 min', isCompleted: false, score: null }
+    ]
+  },
+  // ── General Awareness Chapters ─────────────────────────────────────────────
+  {
+    id: 'indian-history',
+    title: 'Indian History',
+    subjectId: 'general-awareness',
+    duration: '3 hours',
+    videosCount: 3,
+    testsCount: 4,
+    progress: 35,
+    isCompleted: false,
+    videos: [
+      { id: 'history-ancient', title: 'Ancient India', duration: '50 min', isWatched: true, thumbnail: 'https://images.unsplash.com/photo-1461896836934-ffe607ba8211?w=600&h=400&fit=crop' },
+      { id: 'history-medieval', title: 'Medieval Period', duration: '55 min', isWatched: false, thumbnail: 'https://images.unsplash.com/photo-1599940824399-b87987ce0799?w=600&h=400&fit=crop' },
+      { id: 'history-modern', title: 'Modern India', duration: '60 min', isWatched: false, thumbnail: 'https://images.unsplash.com/photo-1505664194779-8beaceb93744?w=600&h=400&fit=crop' }
+    ],
+    tests: [
+      { id: 'hist-test-1', title: 'History Test 1', questionsCount: 30, duration: '30 min', isCompleted: true, score: 58 },
+      { id: 'hist-test-2', title: 'History Test 2', questionsCount: 30, duration: '30 min', isCompleted: false, score: null },
+      { id: 'hist-test-3', title: 'History Test 3', questionsCount: 30, duration: '30 min', isCompleted: false, score: null },
+      { id: 'hist-test-4', title: 'History Test 4', questionsCount: 30, duration: '30 min', isCompleted: false, score: null }
+    ]
+  },
+  {
+    id: 'indian-polity',
+    title: 'Indian Polity',
+    subjectId: 'general-awareness',
+    duration: '2.5 hours',
+    videosCount: 3,
+    testsCount: 3,
+    progress: 20,
+    isCompleted: false,
+    videos: [
+      { id: 'polity-constitution', title: 'Constitution of India', duration: '50 min', isWatched: true, thumbnail: 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=600&h=400&fit=crop' },
+      { id: 'polity-rights', title: 'Fundamental Rights', duration: '45 min', isWatched: false, thumbnail: 'https://images.unsplash.com/photo-1589994965851-a8f479c573a9?w=600&h=400&fit=crop' },
+      { id: 'polity-governance', title: 'Governance Structure', duration: '40 min', isWatched: false, thumbnail: 'https://images.unsplash.com/photo-1575517111478-7f6afd0973db?w=600&h=400&fit=crop' }
+    ],
+    tests: [
+      { id: 'polity-test-1', title: 'Polity Test 1', questionsCount: 25, duration: '25 min', isCompleted: true, score: 50 },
+      { id: 'polity-test-2', title: 'Polity Test 2', questionsCount: 25, duration: '25 min', isCompleted: false, score: null },
+      { id: 'polity-test-3', title: 'Polity Test 3', questionsCount: 25, duration: '25 min', isCompleted: false, score: null }
+    ]
+  },
+  {
+    id: 'geography',
+    title: 'Geography',
+    subjectId: 'general-awareness',
+    duration: '2 hours',
+    videosCount: 2,
+    testsCount: 3,
+    progress: 15,
+    isCompleted: false,
+    videos: [
+      { id: 'geo-physical', title: 'Physical Geography', duration: '55 min', isWatched: true, thumbnail: 'https://images.unsplash.com/photo-1458668383970-8ddd3927deed?w=600&h=400&fit=crop' },
+      { id: 'geo-india', title: 'Indian Geography', duration: '50 min', isWatched: false, thumbnail: 'https://images.unsplash.com/photo-1526778548025-fa2f459cd5c1?w=600&h=400&fit=crop' }
+    ],
+    tests: [
+      { id: 'geo-test-1', title: 'Geography Test 1', questionsCount: 25, duration: '25 min', isCompleted: true, score: 45 },
+      { id: 'geo-test-2', title: 'Geography Test 2', questionsCount: 25, duration: '25 min', isCompleted: false, score: null },
+      { id: 'geo-test-3', title: 'Geography Test 3', questionsCount: 25, duration: '25 min', isCompleted: false, score: null }
+    ]
+  },
+  // ── Computer Knowledge Chapters ────────────────────────────────────────────
+  {
+    id: 'computer-basics',
+    title: 'Computer Fundamentals',
+    subjectId: 'computer',
+    duration: '2 hours',
+    videosCount: 3,
+    testsCount: 3,
+    progress: 80,
+    isCompleted: false,
+    videos: [
+      { id: 'comp-intro', title: 'Introduction to Computers', duration: '35 min', isWatched: true, thumbnail: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=600&h=400&fit=crop' },
+      { id: 'comp-hardware', title: 'Hardware Components', duration: '40 min', isWatched: true, thumbnail: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=600&h=400&fit=crop' },
+      { id: 'comp-software', title: 'Software Types', duration: '38 min', isWatched: true, thumbnail: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=600&h=400&fit=crop' }
+    ],
+    tests: [
+      { id: 'comp-test-1', title: 'Computer Basics Test 1', questionsCount: 20, duration: '20 min', isCompleted: true, score: 88 },
+      { id: 'comp-test-2', title: 'Computer Basics Test 2', questionsCount: 20, duration: '20 min', isCompleted: true, score: 85 },
+      { id: 'comp-test-3', title: 'Computer Basics Test 3', questionsCount: 20, duration: '20 min', isCompleted: false, score: null }
+    ]
+  },
+  {
+    id: 'ms-office',
+    title: 'MS Office',
+    subjectId: 'computer',
+    duration: '2.5 hours',
+    videosCount: 3,
+    testsCount: 3,
+    progress: 70,
+    isCompleted: false,
+    videos: [
+      { id: 'ms-word', title: 'MS Word Essentials', duration: '45 min', isWatched: true, thumbnail: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=600&h=400&fit=crop' },
+      { id: 'ms-excel', title: 'MS Excel Basics', duration: '50 min', isWatched: true, thumbnail: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=600&h=400&fit=crop' },
+      { id: 'ms-powerpoint', title: 'MS PowerPoint', duration: '35 min', isWatched: false, thumbnail: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=600&h=400&fit=crop' }
+    ],
+    tests: [
+      { id: 'ms-test-1', title: 'MS Office Test 1', questionsCount: 20, duration: '20 min', isCompleted: true, score: 75 },
+      { id: 'ms-test-2', title: 'MS Office Test 2', questionsCount: 20, duration: '20 min', isCompleted: true, score: 80 },
+      { id: 'ms-test-3', title: 'MS Office Test 3', questionsCount: 20, duration: '20 min', isCompleted: false, score: null }
+    ]
+  },
+  {
+    id: 'internet-basics',
+    title: 'Internet & Networking',
+    subjectId: 'computer',
+    duration: '1.5 hours',
+    videosCount: 2,
+    testsCount: 2,
+    progress: 60,
+    isCompleted: false,
+    videos: [
+      { id: 'internet-intro', title: 'Internet Fundamentals', duration: '40 min', isWatched: true, thumbnail: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=600&h=400&fit=crop' },
+      { id: 'network-basics', title: 'Networking Basics', duration: '45 min', isWatched: false, thumbnail: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=600&h=400&fit=crop' }
+    ],
+    tests: [
+      { id: 'net-test-1', title: 'Internet Test 1', questionsCount: 15, duration: '15 min', isCompleted: true, score: 72 },
+      { id: 'net-test-2', title: 'Internet Test 2', questionsCount: 15, duration: '15 min', isCompleted: false, score: null }
     ]
   }
 ];
