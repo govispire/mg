@@ -44,6 +44,7 @@ import { StatsOverview } from '@/components/student/dashboard/StatsOverview';
 import { PerformanceGraph } from '@/components/student/dashboard/PerformanceGraph';
 import WordOfTheDayCard from '@/components/student/VocabularyWidget';
 import TargetExamCard from '@/components/student/dashboard/TargetExamCard';
+import DashboardBannerStrip from '@/components/student/dashboard/DashboardBannerStrip';
 import RecentExamNotifications from '@/components/student/dashboard/RecentExamNotifications';
 import { courses as allCourses } from '@/data/courseData';
 import { DailyGoalsWidget } from '@/components/student/dashboard/DailyGoalsWidget';
@@ -585,13 +586,16 @@ const StudentDashboard = () => {
         />
       </div>
 
+      {/* ── Full-width landscape Banner ads (dashboard_banner placement) ── */}
+      <DashboardBannerStrip examCategory={examCategoryName} />
+
       {/* ADS BANNER is now embedded inside TargetExamCard above */}
 
       {/* ═══════════════════════════════════════════════════════
-          TAB NAVIGATION — sticky header
+          TAB NAVIGATION
          ═══════════════════════════════════════════════════════ */}
-      <div className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-slate-200 rounded-t-xl -mx-3 px-3 sm:-mx-4 sm:px-4 md:-mx-6 md:px-6 pt-0 pb-0 mb-4 sm:mb-6">
-        <div className="flex items-center justify-center">
+      <div className="bg-white border border-slate-200 rounded-xl shadow-sm -mx-3 px-3 sm:-mx-4 sm:px-4 md:-mx-6 md:px-6 mb-4 sm:mb-6">
+        <div className="flex items-center gap-1 p-1">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -599,14 +603,14 @@ const StudentDashboard = () => {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center justify-center gap-1 sm:gap-2 flex-1 py-2.5 sm:py-3.5 transition-all border-b-2 ${
+                className={`flex items-center justify-center gap-1.5 sm:gap-2 flex-1 py-2.5 sm:py-3 rounded-lg transition-all text-xs sm:text-sm font-medium ${
                   isActive
-                    ? 'border-emerald-500 text-emerald-600 bg-emerald-50/60 font-semibold'
-                    : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+                    ? 'bg-emerald-500 text-white shadow-sm shadow-emerald-200 font-semibold'
+                    : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
                 }`}
               >
-                <Icon className={`h-3.5 w-3.5 sm:h-4 sm:w-4 ${isActive ? 'text-emerald-500' : 'text-slate-400'}`} />
-                <span className="text-xs sm:text-sm font-medium whitespace-nowrap">{tab.label}</span>
+                <Icon className={`h-3.5 w-3.5 sm:h-4 sm:w-4 ${isActive ? 'text-white' : 'text-slate-400'}`} />
+                <span className="whitespace-nowrap">{tab.label}</span>
               </button>
             );
           })}
@@ -649,6 +653,16 @@ const StudentDashboard = () => {
 
             {/* Upcoming Exams — immediately below current exams */}
             <UpcomingExamsWidget />
+
+            {/* Word of the Day + Recent Exam Notifications — equal height grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+              <div className="h-full">
+                <WordOfTheDayCard />
+              </div>
+              <div className="h-full">
+                <RecentExamNotifications />
+              </div>
+            </div>
           </div>
         )}
 
@@ -793,9 +807,6 @@ const StudentDashboard = () => {
                 </div>
               </div>
             </div>
-
-            {/* ── Row 2: Recent Exam Notifications — full width ── */}
-            <RecentExamNotifications />
           </div>
         )}
 

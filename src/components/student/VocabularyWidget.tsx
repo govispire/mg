@@ -32,6 +32,9 @@ export default function WordOfTheDayCard() {
     const { user } = useAuth();
     const { todayWords, markWord, getWordProgress } = useVocabulary(user?.id || 'student_1');
     const [wordIndex, setWordIndex] = useState(0);
+    const [imgLoaded, setImgLoaded] = useState(false);
+    const [imgFailed, setImgFailed] = useState(false);
+    const [showModal, setShowModal] = useState(false);
 
     const today = new Date();
     const dateStr = today.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
@@ -42,12 +45,21 @@ export default function WordOfTheDayCard() {
 
     const progress = word ? getWordProgress(word.id) : undefined;
     const isLearned = progress?.status === 'learned';
+    const hasImage = !!(word?.imageUrl);
+
+    React.useEffect(() => {
+        setImgLoaded(false);
+        setImgFailed(false);
+    }, [wordIndex]);
 
     const handleSave = () => {
         if (word) markWord(word.id, 'learned', word.difficulty);
     };
     const handlePending = () => {
         if (word) markWord(word.id, 'pending');
+    };
+    const handleCardClick = () => {
+        if (word) setShowModal(true);
     };
 
     if (!word) {
@@ -115,7 +127,7 @@ export default function WordOfTheDayCard() {
     }
 
     return (
-        <div className="rounded-2xl overflow-hidden border border-slate-200 shadow-md bg-white w-full">
+        <div className="rounded-2xl overflow-hidden border border-slate-200 shadow-md bg-white w-full h-full flex flex-col">
             {/* ── Header bar ── */}
             <div className="flex items-center justify-between px-4 py-2.5 bg-muted/50 border-b border-border">
                 <div className="flex items-center gap-1.5">
@@ -134,8 +146,29 @@ export default function WordOfTheDayCard() {
                 </div>
             </div>
 
-            {/* ── Gradient word hero ── */}
-            <div className={`relative bg-gradient-to-br ${gradientClass} px-5 pt-6 pb-5`}>
+            {/* ── Gradient word hero with image (clickable) ── */}
+            <div 
+                className="relative px-5 pt-6 pb-5 overflow-hidden cursor-pointer hover:opacity-95 transition-opacity"
+                onClick={handleCardClick}
+            >
+                {/* Background image */}
+                {hasImage && !imgFailed && (
+                    <>
+                        <img
+                            src={word.imageUrl}
+                            alt={word.word}
+                            className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ${imgLoaded ? 'opacity-100' : 'opacity-0'}`}
+                            onLoad={() => setImgLoaded(true)}
+                            onError={() => setImgFailed(true)}
+                        />
+                        {/* Dark overlay for text readability */}
+                        <div className={`absolute inset-0 bg-gradient-to-br ${gradientClass} opacity-85`} />
+                    </>
+                )}
+                {/* Fallback gradient when no image */}
+                {(!hasImage || imgFailed) && (
+                    <div className={`absolute inset-0 bg-gradient-to-br ${gradientClass}`} />
+                )}
                 {/* Navigation arrows */}
                 {todayWords.length > 1 && (
                     <div className="absolute top-3 right-3 flex items-center gap-1">
@@ -173,7 +206,7 @@ export default function WordOfTheDayCard() {
             </div>
 
             {/* ── Content area ── */}
-            <div className="px-4 pt-4 pb-3 space-y-3 bg-white flex-1">
+            <div className="px-4 pt-4 pb-3 space-y-3 bg-white flex-1 flex flex-col">
                 {/* Meaning */}
                 <div className="space-y-0.5">
                     <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Meaning</p>
@@ -251,6 +284,112 @@ export default function WordOfTheDayCard() {
                     )}
                 </div>
             </div>
+
+            {/* ── Word Detail Modal ── */}
+            {showModal && word && (
+                <div
+                    className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+                    onClick={() => setShowModal(false)}
+                >
+                    <div
+                        className="relative w-full max-w-lg rounded-2xl overflow-hidden shadow-2xl bg-white animate-in fade-in zoom-in duration-200"
+                        onClick={e => e.stopPropagation()}
+                    >
+                        {/* Close button */}
+                        <button
+                            onClick={() => setShowModal(false)}
+                            className="absolute top-3 right-3 z-10 w-8 h-8 rounded-full bg-black/20 hover:bg-black/30 flex items-center justify-center text-white transition-colors"
+                        >
+                            <ChevronRight className="h-4 w-4 rotate-45" />
+                        </button>
+
+                        {/* Header */}
+                        <div className="flex items-center justify-between px-4 py-2.5 bg-muted/50 border-b border-border">
+                            <div className="flex items-center gap-1.5">
+                                <div className="flex gap-0.5">
+                                    <span className="w-2.5 h-2.5 rounded-full bg-rose-400" />
+                                    <span className="w-2.5 h-2.5 rounded-full bg-amber-400" />
+                                    <span className="w-2.5 h-2.5 rounded-full bg-green-400" />
+                                </div>
+                                <span className="text-xs font-semibold text-foreground ml-1">Word of the Day</span>
+                            </div>
+                            <span className="text-[10px] text-muted-foreground bg-muted px-2 py-0.5 rounded-full">{dateStr}</span>
+                        </div>
+
+                        {/* Hero with image */}
+                        <div className="relative px-5 pt-6 pb-5 overflow-hidden">
+                            {hasImage && !imgFailed && (
+                                <>
+                                    <img src={word.imageUrl} alt={word.word} className="absolute inset-0 w-full h-full object-cover" />
+                                    <div className={`absolute inset-0 bg-gradient-to-br ${gradientClass} opacity-85`} />
+                                </>
+                            )}
+                            {(!hasImage || imgFailed) && (
+                                <div className={`absolute inset-0 bg-gradient-to-br ${gradientClass}`} />
+                            )}
+                            <div className="relative z-10">
+                                <div className="flex items-end gap-2 mb-1">
+                                    <h2 className="text-[32px] font-black text-white leading-none tracking-tight drop-shadow">{word.word}</h2>
+                                    <span className="mb-0.5 text-white/60 text-xs font-medium">{word.pronunciation || ''}</span>
+                                </div>
+                                <span className="inline-block text-[10px] font-bold uppercase tracking-wider bg-white/20 text-white px-2.5 py-0.5 rounded-full">{pos}</span>
+                            </div>
+                        </div>
+
+                        {/* Content */}
+                        <div className="px-5 pt-4 pb-5 space-y-4">
+                            <div className="space-y-0.5">
+                                <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Meaning</p>
+                                <p className="text-sm text-foreground font-medium leading-snug">{word.meaning}</p>
+                            </div>
+                            <div className="space-y-0.5">
+                                <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Example</p>
+                                <p className="text-xs text-muted-foreground italic leading-relaxed border-l-2 border-primary/30 pl-2.5">"{word.example}"</p>
+                            </div>
+                            {(word.synonyms?.length ?? 0) > 0 && (
+                                <div className="space-y-1.5">
+                                    <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Synonyms</p>
+                                    <div className="flex flex-wrap gap-1.5">
+                                        {word.synonyms!.map(syn => (
+                                            <span key={syn} className="text-[11px] font-semibold px-3 py-1 rounded-full bg-muted border border-border text-foreground">{syn}</span>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                            {(word.antonyms?.length ?? 0) > 0 && (
+                                <div className="space-y-1.5">
+                                    <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Antonyms</p>
+                                    <div className="flex flex-wrap gap-1.5">
+                                        {word.antonyms!.map(ant => (
+                                            <span key={ant} className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-red-50 border border-red-200 text-red-600">↕ {ant}</span>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                            <div className="pt-2 border-t border-border">
+                                {isLearned ? (
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-1.5 text-xs font-semibold text-green-600">
+                                            <CheckCircle2 className="h-3.5 w-3.5" />
+                                            Saved to Vocabulary List ✓
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="flex items-center gap-2">
+                                        <button onClick={handleSave} className="flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold py-2.5 rounded-lg border border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-all duration-200">
+                                            <CheckCircle2 className="h-3.5 w-3.5" />
+                                            Save to Vocabulary List
+                                        </button>
+                                        <button onClick={handlePending} title="Revise Later" className="h-9 w-9 flex items-center justify-center rounded-lg border border-border text-muted-foreground hover:text-amber-600 hover:border-amber-300 hover:bg-amber-50 transition-all">
+                                            <RotateCcw className="h-3.5 w-3.5" />
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

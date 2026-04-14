@@ -76,9 +76,11 @@ export const FloatingTimerProvider: React.FC<{ children: React.ReactNode }> = ({
           localStorage.setItem('focus_sessions', String(sessions));
           localStorage.setItem('total_study_mins', String(total));
           try {
-            const arr = JSON.parse(localStorage.getItem('study_sessions') || '[]');
-            arr.push({ mins: prev.selectedMins, date: new Date().toISOString() });
-            localStorage.setItem('study_sessions', JSON.stringify(arr.slice(-50)));
+            const arr = JSON.parse(localStorage.getItem('studyTimerSessions') || '[]');
+            arr.push({ mins: prev.selectedMins, date: new Date().toISOString(), source: 'timer' });
+            const serialized = JSON.stringify(arr.slice(-200));
+            localStorage.setItem('studyTimerSessions', serialized);
+            window.dispatchEvent(new StorageEvent('storage', { key: 'studyTimerSessions', newValue: serialized }));
           } catch {}
           return { ...prev, remaining: 0, running: false, done: true, focusSessions: sessions, totalStudyMins: total };
         }

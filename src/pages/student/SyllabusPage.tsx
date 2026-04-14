@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
+import { stopTimerAndLaunchTest } from '@/utils/stopTimerAndLaunchTest';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -921,7 +922,7 @@ const SyllabusPage = () => {
                           onClick={() => {
                             // Open test in new window with proper parameters
                             const url = `/student/test-window?category=syllabus&examId=${selectedExam}&testId=${test.id}`;
-                            window.open(url, '_blank', 'width=1920,height=1080,menubar=no,toolbar=no,location=no,status=no');
+                            stopTimerAndLaunchTest({ url, testName: test.title });
                           }}
                         >
                           Take Test

@@ -148,7 +148,7 @@ const RecentExamNotifications: React.FC = () => {
   const visible = sorted.slice(0, 5);
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden" style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.04),0 4px 12px rgba(0,0,0,0.06)' }}>
+    <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden h-full flex flex-col" style={{ boxShadow: '0 1px 3px rgba(0,0,0,0.04),0 4px 12px rgba(0,0,0,0.06)' }}>
 
       {/* ── Header ──────────────────────────────────────────────────────── */}
       <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
@@ -174,7 +174,7 @@ const RecentExamNotifications: React.FC = () => {
       </div>
 
       {/* ── Notification Rows ────────────────────────────────────────────── */}
-      <div className="divide-y divide-slate-100">
+      <div className="divide-y divide-slate-100 flex-1">
         {visible.map((exam, idx) => {
           const st = getStatus(exam);
           const isNew = exam.notificationStatus === 'new' || exam.applyStatus === 'new';

@@ -11,7 +11,7 @@ import { TestAnalysisModal } from './TestAnalysisModal';
 import { TestSolutions } from './TestSolutions';
 import { generateMockAnalysisData } from '@/data/testAnalysisData';
 import { generateTestExam } from '@/utils/generateTestExam';
-
+import { stopTimerAndLaunchTest } from '@/utils/stopTimerAndLaunchTest';
 import { TestSubject } from '@/hooks/useExamCatalog';
 
 interface TestTypeGridProps {
@@ -291,7 +291,7 @@ export const TestTypeGrid: React.FC<TestTypeGridProps> = ({
                         onClick={() => {
                           const currentPath = window.location.pathname;
                           const url = `/student/test-window?category=${category}&examId=${examId}&testId=${test.testId}&returnUrl=${encodeURIComponent(currentPath)}`;
-                          window.open(url, '_blank', 'width=1920,height=1080,menubar=no,toolbar=no,location=no,status=no');
+                          stopTimerAndLaunchTest({ url, testName: test.testName });
                         }}
                       >
                         Reattempt
@@ -304,7 +304,7 @@ export const TestTypeGrid: React.FC<TestTypeGridProps> = ({
                       onClick={() => {
                         const currentPath = window.location.pathname;
                         const url = `/student/test-window?category=${category}&examId=${examId}&testId=${test.testId}&returnUrl=${encodeURIComponent(currentPath)}`;
-                        window.open(url, '_blank', 'width=1920,height=1080,menubar=no,toolbar=no,location=no,status=no');
+                        stopTimerAndLaunchTest({ url, testName: test.testName });
                       }}
                     >
                       {isInProgress ? 'Continue' : 'Start Test'}
@@ -499,7 +499,7 @@ export const TestTypeGrid: React.FC<TestTypeGridProps> = ({
                         onClick={() => {
                           const currentPath = window.location.pathname;
                           const url = `/student/test-window?category=${category}&examId=${examId}&testId=${test.testId}&returnUrl=${encodeURIComponent(currentPath)}`;
-                          window.open(url, '_blank', 'width=1920,height=1080,menubar=no,toolbar=no,location=no,status=no');
+                          stopTimerAndLaunchTest({ url, testName: test.testName });
                         }}
                       >
                         Reattempt
@@ -512,7 +512,7 @@ export const TestTypeGrid: React.FC<TestTypeGridProps> = ({
                       onClick={() => {
                         const currentPath = window.location.pathname;
                         const url = `/student/test-window?category=${category}&examId=${examId}&testId=${test.testId}&returnUrl=${encodeURIComponent(currentPath)}`;
-                        window.open(url, '_blank', 'width=1920,height=1080,menubar=no,toolbar=no,location=no,status=no');
+                        stopTimerAndLaunchTest({ url, testName: test.testName });
                       }}
                     >
                       {test.status === 'in-progress' ? 'Continue' : 'Start Test'}

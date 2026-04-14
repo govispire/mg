@@ -22,7 +22,7 @@ export const AdsBanner: React.FC<AdsBannerProps> = ({ category = '' }) => {
   const impressionTracked = useRef<Set<string>>(new Set());
 
   const loadAds = useCallback(() => {
-    const active = getActiveAds(category);
+    const active = getActiveAds({ categoryId: category || undefined });
     setAds(active);
     setCurrent(0);
     setProgress(0);

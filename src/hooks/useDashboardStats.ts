@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { dailyQuizzes } from '@/data/dailyQuizzesData';
 import { api } from '@/lib/api';
+import type { StudySession } from '@/store/useTimerStore';
 
 interface DashboardStats {
   studyHours: number;
@@ -19,19 +20,31 @@ const formatDateLocal = (date: Date) => {
   return `${y}-${m}-${d}`;
 };
 
+/** Read the unified studyTimerSessions from localStorage */
+function getTimerSessionMins(): number {
+  try {
+    const sessions: StudySession[] = JSON.parse(localStorage.getItem('studyTimerSessions') || '[]');
+    return sessions.reduce((acc, s) => acc + (s.mins || 0), 0);
+  } catch {
+    return 0;
+  }
+}
+
 function computeStats(
   quizCompletions: Record<string, { completed: boolean; score: number; date: string; duration?: number }>,
   studentPresence: Record<string, boolean>
 ): Omit<DashboardStats, 'isLoading'> {
   const completedEntries = Object.entries(quizCompletions).filter(([, v]) => v.completed);
 
-  // Study Hours
-  const studyMinutes = completedEntries.reduce((acc, [id, v]) => {
+  // Study Hours = quiz-based minutes + studyTimerSessions (timer + test durations)
+  const quizMinutes = completedEntries.reduce((acc, [id, v]) => {
     if (v.duration) return acc + v.duration;
     const quiz = dailyQuizzes.find(q => q.id === id);
     return acc + (quiz?.duration ?? 15);
   }, 0);
-  const studyHours = Math.round(studyMinutes / 60 * 10) / 10;
+  const timerMinutes = getTimerSessionMins();
+  const totalMinutes = quizMinutes + timerMinutes;
+  const studyHours = Math.round(totalMinutes / 60 * 10) / 10;
 
   // Mock Tests Taken
   const mockTestsTaken = completedEntries.length;
@@ -90,24 +103,36 @@ export function useDashboardStats(): DashboardStats {
   });
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
+  const refresh = () => {
     const token = localStorage.getItem('token');
-
     if (token) {
       Promise.all([api.getQuizCompletions(), api.getPresence()])
-        .then(([completions, presence]) => {
-          setStats(computeStats(completions, presence));
-        })
+        .then(([completions, presence]) => setStats(computeStats(completions, presence)))
         .catch(() => setStats(computeStats(getLocalCompletions(), getLocalPresence())))
         .finally(() => setIsLoading(false));
     } else {
       setStats(computeStats(getLocalCompletions(), getLocalPresence()));
       setIsLoading(false);
     }
+  };
+
+  useEffect(() => {
+    refresh();
+
+    // Re-compute whenever a session is saved to localStorage
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === 'studyTimerSessions' || e.key === 'quizCompletions') {
+        refresh();
+      }
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return { ...stats, isLoading };
 }
+
 
 function getLocalCompletions() {
   try { return JSON.parse(localStorage.getItem('quizCompletions') || '{}'); } catch { return {}; }

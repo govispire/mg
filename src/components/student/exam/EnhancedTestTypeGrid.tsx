@@ -12,6 +12,7 @@ import { generateAnalysisFromExam } from '@/utils/examAnalysis';
 import { generateTestExam } from '@/utils/generateTestExam';
 import { useBookmarkedTests } from '@/hooks/useBookmarkedTests';
 import { toast } from '@/hooks/use-toast';
+import { stopTimerAndLaunchTest } from '@/utils/stopTimerAndLaunchTest';
 
 interface TestItem {
   id: string;
@@ -147,7 +148,7 @@ const EnhancedTestTypeGrid: React.FC<EnhancedTestTypeGridProps> = ({ tests, test
               className="w-full"
               onClick={() => {
                 const url = `/student/test-window?category=${test.category}&examId=${test.id}&testId=${test.id}`;
-                window.open(url, '_blank', 'width=1920,height=1080,menubar=no,toolbar=no,location=no,status=no');
+                stopTimerAndLaunchTest({ url, testName: test.title });
               }}
             >
               <Play className="h-4 w-4 mr-2" />
@@ -158,7 +159,7 @@ const EnhancedTestTypeGrid: React.FC<EnhancedTestTypeGridProps> = ({ tests, test
               className="w-full"
               onClick={() => {
                 const url = `/student/test-window?category=${test.category}&examId=${test.id}&testId=${test.id}`;
-                window.open(url, '_blank', 'width=1920,height=1080,menubar=no,toolbar=no,location=no,status=no');
+                stopTimerAndLaunchTest({ url, testName: test.title });
               }}
             >
               <Play className="h-4 w-4 mr-2" />
@@ -189,7 +190,7 @@ const EnhancedTestTypeGrid: React.FC<EnhancedTestTypeGridProps> = ({ tests, test
                 size="sm"
                 onClick={() => {
                   const url = `/student/test-window?category=${test.category}&examId=${test.id}&testId=${test.id}`;
-                  window.open(url, '_blank', 'width=1920,height=1080,menubar=no,toolbar=no,location=no,status=no');
+                  stopTimerAndLaunchTest({ url, testName: test.title });
                 }}
                 className="flex items-center gap-1"
               >

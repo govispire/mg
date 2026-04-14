@@ -621,8 +621,23 @@ const StatCardDialog = ({ type, open, onOpenChange, preparationStartDate }: Stat
     // ── Study hours from presence + quiz activity ──
     const studyDataToday = getRealStudyDataForYear(today.getFullYear());
     const totalMinutesAll = Object.values(studyDataToday).reduce((s, m) => s + m, 0);
-    const totalHoursNum = Math.round(totalMinutesAll / 60 * 10) / 10;
-    const hoursToday = Math.round((studyDataToday[todayStr] || 0) / 60 * 10) / 10;
+
+    // ── Add studyTimerSessions (study timer + test durations) ──
+    type StudySession = { date: string; mins: number; source: 'timer' | 'test' };
+    let timerSessions: StudySession[] = [];
+    try {
+      timerSessions = JSON.parse(localStorage.getItem('studyTimerSessions') || '[]');
+    } catch { /* */ }
+    const timerMinutesAll = timerSessions.reduce((acc, s) => acc + (s.mins || 0), 0);
+    const totalHoursNum = Math.round((totalMinutesAll + timerMinutesAll) / 60 * 10) / 10;
+
+    const hoursToday = (() => {
+      const presenceMins = studyDataToday[todayStr] || 0;
+      const timerMins = timerSessions
+        .filter(s => s.date === todayStr)
+        .reduce((acc, s) => acc + s.mins, 0);
+      return Math.round((presenceMins + timerMins) / 60 * 10) / 10;
+    })();
 
     // This week (Mon-Sun)
     const weekStart = new Date(today);
@@ -634,7 +649,31 @@ const StatCardDialog = ({ type, open, onOpenChange, preparationStartDate }: Stat
       d.setDate(weekStart.getDate() + i);
       weekMinutes += studyDataToday[formatDate(d)] || 0;
     }
-    const hoursThisWeek = Math.round(weekMinutes / 60 * 10) / 10;
+    const timerWeekMinutes = timerSessions
+      .filter(s => {
+        const sd = new Date(s.date);
+        const ws = new Date(weekStart);
+        const we = new Date(weekStart); we.setDate(we.getDate() + 6);
+        return sd >= ws && sd <= we;
+      })
+      .reduce((acc, s) => acc + s.mins, 0);
+    const hoursThisWeek = Math.round((weekMinutes + timerWeekMinutes) / 60 * 10) / 10;
+
+    // ── Weekly breakdown (last 7 days, per-day timer vs test vs presence) ──
+    const weeklyBreakdown: {
+      label: string; dateStr: string;
+      timerMins: number; testMins: number; presenceMins: number; total: number;
+    }[] = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(today); d.setDate(today.getDate() - i);
+      const ds = formatDate(d);
+      const label = i === 0 ? 'Today' : ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d.getDay()];
+      const presenceMins = studyDataToday[ds] || 0;
+      const timerMins = timerSessions.filter(s => s.date === ds && s.source === 'timer').reduce((a, s) => a + s.mins, 0);
+      const testMins  = timerSessions.filter(s => s.date === ds && s.source === 'test').reduce((a, s) => a + s.mins, 0);
+      weeklyBreakdown.push({ label, dateStr: ds, timerMins, testMins, presenceMins, total: presenceMins + timerMins + testMins });
+    }
+    const maxWeekMins = Math.max(1, ...weeklyBreakdown.map(d => d.total));
 
     // Monthly breakdown (current year)
     const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -647,14 +686,16 @@ const StatCardDialog = ({ type, open, onOpenChange, preparationStartDate }: Stat
       for (let day = 1; day <= daysInMonth; day++) {
         const key = `${currentYear}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
         const mins = studyDataToday[key] || 0;
-        if (mins > 0) { monthMinutes += mins; activeDays++; }
+        const timerDay = timerSessions.filter(s => s.date === key).reduce((a, s) => a + s.mins, 0);
+        const combined = mins + timerDay;
+        if (combined > 0) { monthMinutes += combined; activeDays++; }
       }
       const monthHours = Math.round(monthMinutes / 60 * 10) / 10;
       if (monthHours > maxMonthHours) maxMonthHours = monthHours;
       monthlyBreakdown.push({ month: `${monthNames[month]} ${currentYear}`, hours: monthHours, days: activeDays });
     }
 
-    return { streak, totalActiveDays, totalTests, avgScore, thisMonth, recentTests, totalHoursNum, hoursToday, hoursThisWeek, monthlyBreakdown, maxMonthHours };
+    return { streak, totalActiveDays, totalTests, avgScore, thisMonth, recentTests, totalHoursNum, hoursToday, hoursThisWeek, monthlyBreakdown, maxMonthHours, weeklyBreakdown, maxWeekMins };
   }, [open]);
 
   // Streak badges — dynamically marked "achieved" based on real streak
@@ -1089,7 +1130,7 @@ const StatCardDialog = ({ type, open, onOpenChange, preparationStartDate }: Stat
             <div className="space-y-6">
               <div className="bg-cyan-50 p-4 rounded-lg">
                 <h3 className="font-semibold text-lg mb-2">Study Hours Breakdown</h3>
-                <p className="text-sm text-gray-600">Your accumulated study hours over time</p>
+                <p className="text-sm text-gray-600">Timer sessions + test durations — your full learning time</p>
               </div>
 
               <Card className="p-4 bg-gradient-to-r from-cyan-400 to-blue-400 text-white">
@@ -1102,19 +1143,80 @@ const StatCardDialog = ({ type, open, onOpenChange, preparationStartDate }: Stat
                 </div>
               </Card>
 
-              <div className="grid grid-cols-2 gap-4">
-                <Card className="p-4 text-center">
+              <div className="grid grid-cols-3 gap-3">
+                <Card className="p-3 text-center">
                   <div className="text-2xl font-bold text-gray-900">{dynamicStats.hoursToday}</div>
                   <div className="text-xs text-gray-600">Hours Today</div>
                 </Card>
-                <Card className="p-4 text-center">
+                <Card className="p-3 text-center">
                   <div className="text-2xl font-bold text-blue-600">{dynamicStats.hoursThisWeek}</div>
-                  <div className="text-xs text-gray-600">Hours This Week</div>
+                  <div className="text-xs text-gray-600">This Week</div>
+                </Card>
+                <Card className="p-3 text-center">
+                  <div className="text-2xl font-bold text-cyan-600">
+                    {dynamicStats.monthlyBreakdown[dynamicStats.monthlyBreakdown.length - 1]?.hours ?? 0}
+                  </div>
+                  <div className="text-xs text-gray-600">This Month</div>
                 </Card>
               </div>
 
+              {/* ── Weekly Breakdown (last 7 days) ── */}
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="font-semibold text-sm text-gray-700">Last 7 Days</h4>
+                  {/* Legend */}
+                  <div className="flex items-center gap-3 text-[10px] text-gray-500">
+                    <div className="flex items-center gap-1">
+                      <div className="w-2.5 h-2.5 rounded-sm bg-emerald-500" />
+                      <span>Study Timer</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <div className="w-2.5 h-2.5 rounded-sm bg-blue-500" />
+                      <span>Test</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <div className="w-2.5 h-2.5 rounded-sm bg-slate-300" />
+                      <span>Activity</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="grid grid-cols-7 gap-1.5">
+                  {dynamicStats.weeklyBreakdown.map((day, i) => {
+                    const isToday = i === 6;
+                    const pct = day.total === 0 ? 0 : Math.min(100, Math.round((day.total / dynamicStats.maxWeekMins) * 100));
+                    const timerPct = day.total === 0 ? 0 : Math.round((day.timerMins / day.total) * pct);
+                    const testPct  = day.total === 0 ? 0 : Math.round((day.testMins  / day.total) * pct);
+                    const presencePct = pct - timerPct - testPct;
+                    const totalH = Math.round(day.total / 60 * 10) / 10;
+                    return (
+                      <div key={i} className="flex flex-col items-center gap-1">
+                        {/* Stacked bar */}
+                        <div className="relative w-full flex flex-col justify-end rounded-t overflow-hidden" style={{ height: 60 }}>
+                          {day.total === 0 ? (
+                            <div className="w-full rounded-t-sm bg-slate-100" style={{ height: '8%' }} />
+                          ) : (
+                            <>
+                              {presencePct > 0 && <div className="w-full bg-slate-300" style={{ height: `${presencePct}%` }} />}
+                              {testPct  > 0 && <div className="w-full bg-blue-500"  style={{ height: `${testPct}%`  }} />}
+                              {timerPct > 0 && <div className="w-full bg-emerald-500" style={{ height: `${timerPct}%` }} />}
+                            </>
+                          )}
+                        </div>
+                        <span className={`text-[9px] font-medium ${isToday ? 'text-blue-600 font-bold' : 'text-gray-400'}`}>
+                          {day.label}
+                        </span>
+                        {day.total > 0 && (
+                          <span className="text-[9px] text-gray-500">{totalH}h</span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Monthly Breakdown */}
               <div className="space-y-3">
-                <h4 className="font-semibold">Monthly Breakdown</h4>
+                <h4 className="font-semibold text-sm text-gray-700">Monthly Breakdown</h4>
                 {dynamicStats.monthlyBreakdown.length === 0 ? (
                   <div className="text-center py-8 text-gray-500">
                     <Clock className="h-10 w-10 mx-auto mb-3 opacity-30" />
@@ -1142,10 +1244,11 @@ const StatCardDialog = ({ type, open, onOpenChange, preparationStartDate }: Stat
               </div>
 
               <div className="bg-gray-50 p-4 rounded-lg">
-                <h4 className="font-semibold mb-2">Study Time Formula</h4>
-                <ul className="text-xs text-gray-600 space-y-1">
-                  <li>✅ Presence marked (2+ quizzes/day) = 2 hours base</li>
-                  <li>📝 Each quiz completed = +30 minutes</li>
+                <h4 className="font-semibold mb-2 text-sm">What counts as Study Time?</h4>
+                <ul className="text-xs text-gray-600 space-y-1.5">
+                  <li className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" /> Study Timer sessions (fullscreen or mini widget)</li>
+                  <li className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-blue-500 shrink-0" /> Test / Quiz durations (counted on launch)</li>
+                  <li className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-slate-400 shrink-0" /> Daily presence activity (2+ quizzes completed)</li>
                 </ul>
               </div>
             </div>

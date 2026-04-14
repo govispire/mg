@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import {
@@ -8,10 +8,13 @@ import {
   TrendingUp,
   Calendar,
   Award,
+  ChevronLeft,
+  ChevronRight,
+  ExternalLink,
 } from 'lucide-react';
 import { getTargetExamRoute } from '@/utils/targetExamRoute';
 import { differenceInDays } from 'date-fns';
-import { AdsBanner } from '@/components/student/dashboard/AdsBanner';
+import { getActiveAds, recordClick, recordImpression, getSlideDuration, AdBanner } from '@/data/adsStore';
 
 interface TargetExamCardProps {
   targetExam: string;
@@ -387,6 +390,80 @@ const TargetExamCard: React.FC<TargetExamCardProps> = ({
     }
   })();
 
+  // ── Unified slide state: slot 0 = Days Left, slots 1..n = active ads ──────
+  const [ads, setAds] = useState<AdBanner[]>([]);
+  const [slideIdx, setSlideIdx] = useState(0);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const impressionTracked = useRef<Set<string>>(new Set());
+
+  const loadAds = useCallback(() => {
+    // Pass full student context so exam-level targeting works correctly
+    const examId = targetExam
+      ? `${examCategory.toLowerCase()}-${targetExam.toLowerCase().replace(/\s+/g, '-')}`
+      : undefined;
+    setAds(getActiveAds(
+      { categoryId: examCategory.toLowerCase() || undefined, examId },
+      'days_left_panel',
+    ));
+  }, [examCategory, targetExam]);
+
+  useEffect(() => {
+    loadAds();
+    const h = (e: StorageEvent) => { if (e.key === 'superadmin_ad_banners') loadAds(); };
+    window.addEventListener('storage', h);
+    return () => window.removeEventListener('storage', h);
+  }, [loadAds]);
+
+  // total slides = 1 (days-left) + ads.length
+  const totalSlides = 1 + ads.length;
+
+  // Record impression when an ad slide is shown
+  useEffect(() => {
+    if (slideIdx === 0) return;
+    const ad = ads[slideIdx - 1];
+    if (ad && !impressionTracked.current.has(ad.id)) {
+      impressionTracked.current.add(ad.id);
+      recordImpression(ad.id);
+    }
+  }, [slideIdx, ads]);
+
+  // Auto-advance
+  useEffect(() => {
+    if (totalSlides <= 1) return;
+    if (timerRef.current) clearTimeout(timerRef.current);
+    const currentAd = slideIdx > 0 ? ads[slideIdx - 1] : null;
+    const ms = currentAd ? getSlideDuration(currentAd.adType) : 6000;
+    timerRef.current = setTimeout(() => {
+      setSlideIdx(prev => (prev + 1) % totalSlides);
+    }, ms);
+    return () => { if (timerRef.current) clearTimeout(timerRef.current); };
+  }, [slideIdx, totalSlides, ads]);
+
+  // ── Guard: if active ads change (e.g. admin disables all ads),
+  //    reset slideIdx to 0 so Days Left is always visible.
+  //    Without this, slideIdx stays at 1+ while totalSlides drops to 1
+  //    → Days Left gets opacity:0 and is stuck invisible forever.
+  useEffect(() => {
+    if (slideIdx >= totalSlides) {
+      setSlideIdx(0);
+    }
+  }, [totalSlides]); // eslint-disable-line react-hooks/exhaustive-deps
+
+
+  const goTo = (idx: number) => { setSlideIdx(idx); };
+  const goPrev = () => setSlideIdx(prev => (prev - 1 + totalSlides) % totalSlides);
+  const goNext = () => setSlideIdx(prev => (prev + 1) % totalSlides);
+
+  const handleAdClick = (ad: AdBanner) => {
+    recordClick(ad.id);
+    if (ad.ctaUrl) {
+      ad.ctaUrl.startsWith('/') ? (window.location.href = ad.ctaUrl) : window.open(ad.ctaUrl, '_blank', 'noopener,noreferrer');
+    }
+  };
+
+  // Current ad (null for slide 0)
+  const currentAd = slideIdx > 0 ? ads[slideIdx - 1] : null;
+
   return (
     <div className="rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
       {/* ── Main card row ── */}
@@ -486,40 +563,159 @@ const TargetExamCard: React.FC<TargetExamCardProps> = ({
         </div>
         </div>{/* ── end flex-1 left section ── */}
 
-        {/* ── RIGHT: Full-height Days Left sidebar ── */}
+        {/* ── RIGHT: Unified slide container (Days Left + Ads) ── */}
+        {/*
+          KEY LAYOUT RULES:
+          - Container always has the Days-Left gradient bg (ads overlay on top via absolute)
+          - self-stretch ensures it fills the full row height from flexbox
+          - min-h-[220px] gives absolute children a real height to fill
+          - Slides are absolute inset-0 and use opacity for transitions
+        */}
         <div
-          className="flex-shrink-0 w-32 sm:w-44 flex flex-col items-center justify-center text-white relative overflow-hidden"
-          style={{
-            background: 'linear-gradient(160deg, #1e40af 0%, #0ea5e9 35%, #10b981 100%)'
-          }}
+          className="flex-shrink-0 w-44 sm:w-52 self-stretch min-h-[220px] relative overflow-hidden group select-none"
+          style={{ background: 'linear-gradient(160deg, #1e40af 0%, #0ea5e9 35%, #10b981 100%)' }}
         >
-          {/* Decorative blobs */}
-          <div className="absolute -top-6 -right-6 w-24 h-24 bg-white/10 rounded-full" />
-          <div className="absolute -bottom-6 -left-6 w-20 h-20 bg-white/10 rounded-full" />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-28 h-28 border border-white/10 rounded-full" />
-          {/* Content */}
-          <div className="relative z-10 flex flex-col items-center">
-            <div
-              className="text-5xl sm:text-7xl font-black leading-none mb-1.5 drop-shadow-md"
-              style={{ fontFamily: "'Outfit', sans-serif", textShadow: '0 2px 12px rgba(0,0,0,0.2)' }}
-            >
-              {daysLeft !== null ? daysLeft : '—'}
-            </div>
-            <div className="text-[11px] sm:text-[13px] font-bold uppercase tracking-widest opacity-90 text-center px-2">
-              {daysLeft !== null ? 'Days Left' : 'TBA'}
-            </div>
-            <div className="mt-2 w-10 h-0.5 bg-white/40 rounded-full" />
-            <div className="mt-1.5 text-[9px] sm:text-[10px] opacity-70 tracking-wide font-medium">
-              to exam day
+          {/* ── Slide 0: Days Left ── */}
+          <div
+            className="absolute inset-0 flex flex-col items-center justify-center text-white transition-opacity duration-500"
+            style={{ opacity: slideIdx === 0 ? 1 : 0, pointerEvents: slideIdx === 0 ? 'auto' : 'none' }}
+          >
+            {/* Decorative blobs */}
+            <div className="absolute -top-6 -right-6 w-24 h-24 bg-white/10 rounded-full" />
+            <div className="absolute -bottom-6 -left-6 w-20 h-20 bg-white/10 rounded-full" />
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-28 h-28 border border-white/10 rounded-full" />
+            <div className="relative z-10 flex flex-col items-center">
+              <div
+                className="text-5xl sm:text-7xl font-black leading-none mb-1.5 drop-shadow-md"
+                style={{ fontFamily: "'Outfit', sans-serif", textShadow: '0 2px 12px rgba(0,0,0,0.2)' }}
+              >
+                {daysLeft !== null ? daysLeft : '—'}
+              </div>
+              <div className="text-[11px] sm:text-[13px] font-bold uppercase tracking-widest opacity-90 text-center px-2">
+                {daysLeft !== null ? 'Days Left' : 'TBA'}
+              </div>
+              <div className="mt-2 w-10 h-0.5 bg-white/40 rounded-full" />
+              <div className="mt-1.5 text-[9px] sm:text-[10px] opacity-70 tracking-wide font-medium">
+                to exam day
+              </div>
             </div>
           </div>
+
+          {/* ── Slides 1..n: Ads ── */}
+          {ads.map((ad, idx) => (
+            <div
+              key={ad.id}
+              className="absolute inset-0 flex flex-col transition-opacity duration-500"
+              style={{
+                opacity: slideIdx === idx + 1 ? 1 : 0,
+                pointerEvents: slideIdx === idx + 1 ? 'auto' : 'none',
+                background: ad.imageDataUrl ? undefined : (ad.bgColor || 'linear-gradient(135deg,#1e40af,#10b981)'),
+              }}
+            >
+              {/* Full-cover background image */}
+              {ad.imageDataUrl && (
+                <img
+                  src={ad.imageDataUrl}
+                  alt={ad.title || 'Ad'}
+                  className="absolute inset-0 w-full h-full object-cover"
+                  draggable={false}
+                />
+              )}
+
+              {/*
+                AD CONTENT LAYOUT:
+                IMAGE-ONLY MODE (no title): clean image, subtle dark bottom strip for CTA only.
+                TEXT MODE (title set): full 3-zone layout with gradient overlay.
+              */}
+              {ad.title ? (
+                // ── TEXT MODE: gradient overlay + 3-zone layout ──────────────
+                <>
+                  {ad.imageDataUrl && <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/10 to-black/65" />}
+                  <div className="relative z-10 flex flex-col h-full">
+                    {/* Zone 1 — type badge */}
+                    <div className="pt-3 px-3 shrink-0">
+                      <span className="text-[8px] font-bold uppercase tracking-widest text-white/70 bg-black/25 px-2 py-0.5 rounded-full">
+                        {ad.adType === 'exam' ? '🎯 Exam' : ad.adType === 'course' ? '📚 Course' : ad.adType === 'announcement' ? '📢 News' : '🔥 Offer'}
+                      </span>
+                    </div>
+                    {/* Zone 2 — title + subtitle centered */}
+                    <div className="flex-1 flex flex-col items-center justify-center text-center px-3 py-2 gap-1.5">
+                      <p className="font-black text-white text-sm leading-tight line-clamp-4"
+                        style={{ fontFamily: "'Outfit', sans-serif", textShadow: '0 1px 4px rgba(0,0,0,0.5)' }}>
+                        {ad.title}
+                      </p>
+                      {ad.subtitle && (
+                        <p className="text-white/80 text-[10px] leading-snug line-clamp-2" style={{ textShadow: '0 1px 3px rgba(0,0,0,0.4)' }}>
+                          {ad.subtitle}
+                        </p>
+                      )}
+                    </div>
+                    {/* Zone 3 — CTA pinned at bottom */}
+                    <div className="shrink-0 pb-8 px-3 flex justify-center">
+                      {ad.ctaText && (
+                        <button type="button" onClick={() => handleAdClick(ad)}
+                          className="inline-flex items-center gap-1 bg-white text-slate-900 font-bold text-[10px] px-3 py-1.5 rounded-full shadow-md hover:scale-105 transition-transform">
+                          {ad.ctaText} <ExternalLink className="h-2.5 w-2.5" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </>
+              ) : (
+                // ── IMAGE-ONLY MODE: no text overlay, clean image ─────────────
+                // Just a subtle dark bottom strip so CTA button is readable
+                ad.ctaText && (
+                  <>
+                    <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-black/60 to-transparent z-10" />
+                    <div className="absolute bottom-2 left-0 right-0 z-20 flex justify-center" style={{ bottom: ads.length > 0 ? '1.75rem' : '0.5rem' }}>
+                      <button type="button" onClick={() => handleAdClick(ad)}
+                        className="inline-flex items-center gap-1 bg-white text-slate-900 font-bold text-[10px] px-3 py-1.5 rounded-full shadow-md hover:scale-105 transition-transform">
+                        {ad.ctaText} <ExternalLink className="h-2.5 w-2.5" />
+                      </button>
+                    </div>
+                  </>
+                )
+              )}
+            </div>
+          ))}
+
+          {/* ── Navigation (only when there are actual ads) ── */}
+          {ads.length > 0 && (
+            <>
+              {/* Prev / Next arrows — show on hover */}
+              <button
+                type="button"
+                onClick={goPrev}
+                className="absolute left-1 top-1/2 -translate-y-1/2 w-6 h-6 bg-white/20 backdrop-blur-sm hover:bg-white/40 text-white rounded-full flex items-center justify-center z-20 opacity-0 group-hover:opacity-100 transition-opacity"
+              >
+                <ChevronLeft className="h-3 w-3" />
+              </button>
+              <button
+                type="button"
+                onClick={goNext}
+                className="absolute right-1 top-1/2 -translate-y-1/2 w-6 h-6 bg-white/20 backdrop-blur-sm hover:bg-white/40 text-white rounded-full flex items-center justify-center z-20 opacity-0 group-hover:opacity-100 transition-opacity"
+              >
+                <ChevronRight className="h-3 w-3" />
+              </button>
+
+              {/* Dot indicators — pinned at very bottom */}
+              <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-1 z-30">
+                {Array.from({ length: totalSlides }).map((_, idx) => (
+                  <button
+                    type="button"
+                    key={idx}
+                    onClick={() => goTo(idx)}
+                    className={`rounded-full transition-all duration-300 ${
+                      idx === slideIdx ? 'w-4 h-1.5 bg-white' : 'w-1.5 h-1.5 bg-white/40 hover:bg-white/70'
+                    }`}
+                  />
+                ))}
+              </div>
+            </>
+          )}
         </div>
 
       </div>{/* ── end bg-white flex row ── */}
-
-      {/* ── ADS BANNER strip — only renders when SuperAdmin has active ads ── */}
-      <AdsBanner category={examCategory.toLowerCase()} />
-
     </div>
   );
 };

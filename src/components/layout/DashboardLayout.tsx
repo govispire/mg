@@ -7,7 +7,7 @@ import { useAuth } from '@/app/providers';
 import { CategorySelector } from '@/components/global/CategorySelector';
 import ProfileButton from '@/components/student/ProfileButton';
 import Sidebar from './Sidebar';
-import { FloatingTimerProvider } from '@/context/FloatingTimerContext';
+
 import FloatingTimerWidget from '@/components/student/dashboard/FloatingTimerWidget';
 
 interface DashboardLayoutProps {
@@ -20,8 +20,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ role, basePath }) => 
   const { user } = useAuth();
 
   return (
-    <FloatingTimerProvider>
-      <div className="flex h-screen bg-slate-100/80 w-full">
+    <div className="flex h-screen bg-slate-100/80 w-full">
         {/* Sidebar */}
         <div className={`${sidebarOpen ? 'block' : 'hidden'} lg:block fixed lg:relative inset-y-0 left-0 z-50 w-64 bg-white border-r border-slate-200/70 shadow-[1px_0_12px_rgba(0,0,0,0.04)]`}>
           <Sidebar role={role} basePath={basePath} collapsed={false} />
@@ -84,7 +83,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ role, basePath }) => 
 
       {/* ── Floating timer widget (Zustand-powered, persists across all pages) ── */}
       {role === 'student' && <FloatingTimerWidget />}
-    </FloatingTimerProvider>
+    </div>
   );
 };
 
