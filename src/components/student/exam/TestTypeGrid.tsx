@@ -160,7 +160,7 @@ export const TestTypeGrid: React.FC<TestTypeGridProps> = ({
             return (
               <div
                 key={test.testId}
-                className={`flex items-center gap-4 px-5 py-4 bg-white border border-gray-200 rounded-xl transition-all duration-200 hover:shadow-md hover:border-gray-300 ${
+                className={`flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 px-3 sm:px-5 py-3 sm:py-4 bg-white border border-gray-200 rounded-xl transition-all duration-200 hover:shadow-md hover:border-gray-300 ${
                   isCompleted
                     ? (test.score !== undefined && test.maxScore > 0 && (test.score / test.maxScore) >= 0.5
                       ? 'border-l-4 border-l-green-400'
@@ -170,146 +170,185 @@ export const TestTypeGrid: React.FC<TestTypeGridProps> = ({
                     : 'border-l-4 border-l-gray-200'
                 }`}
               >
-                {/* Status icon */}
-                <div className="shrink-0 mt-0.5">
-                  {getStatusIcon(test.status)}
-                </div>
+                {/* ── Top row on mobile: icon + name/meta + button ── */}
+                <div className="flex items-start gap-2 sm:contents">
 
-                {/* Test Name + meta — fixed width */}
-                <div className="w-52 shrink-0 min-w-0">
-                  <h3 className="font-semibold text-sm text-gray-800 leading-snug truncate">
-                    {test.testName}
-                  </h3>
-                  <div className="flex items-center gap-2 mt-1 flex-wrap">
-                    <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${getDifficultyColor(test.difficulty)}`}>
-                      {test.difficulty}
-                    </Badge>
-                    {test.lastAttempted && (
-                      <span className="text-[10px] text-gray-400 flex items-center gap-0.5">
-                        <Calendar className="h-2.5 w-2.5" />
-                        {formatDate(test.lastAttempted)}
-                      </span>
-                    )}
+                  {/* Status icon */}
+                  <div className="shrink-0 mt-0.5 sm:mt-0">
+                    {getStatusIcon(test.status)}
                   </div>
-                </div>
 
-                {/* ── Stat Columns (fixed widths, always 4 columns) ── */}
-                <div className="flex items-center flex-1 min-w-0">
-                  {isCompleted ? (
-                    <>
-                      {/* Col 1: Score */}
-                      <div className="w-28 text-center shrink-0">
-                        <p className="text-[10px] text-gray-400 uppercase tracking-wide font-medium">Your Score</p>
-                        <p className="text-sm font-bold text-green-600 mt-0.5">{test.score ?? 0}/{test.maxScore}</p>
-                      </div>
-                      {/* Col 2: Time Spent */}
-                      <div className="w-24 text-center shrink-0">
-                        <p className="text-[10px] text-gray-400 uppercase tracking-wide font-medium">Time Spent</p>
-                        <p className="text-sm font-semibold text-gray-700 mt-0.5">
-                          {test.timeSpent ? `${Math.floor(test.timeSpent / 60)}m` : '—'}
-                        </p>
-                      </div>
-                      {/* Col 3: Rank */}
-                      <div className="w-36 text-center shrink-0">
-                        <p className="text-[10px] text-gray-400 uppercase tracking-wide font-medium">Rank</p>
-                        <p className="text-sm font-semibold text-yellow-600 mt-0.5 flex items-center justify-center gap-1">
-                          <Trophy className="h-3 w-3" />
-                          {test.rank ? `#${test.rank}/${totalStudents.toLocaleString()}` : '—'}
-                        </p>
-                      </div>
+                  {/* Test Name + meta */}
+                  <div className="flex-1 min-w-0 sm:w-52 sm:flex-none sm:shrink-0">
+                    <h3 className="font-semibold text-sm text-gray-800 leading-snug line-clamp-2 sm:truncate">
+                      {test.testName}
+                    </h3>
+                    <div className="flex items-center gap-2 mt-1 flex-wrap">
+                      <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${getDifficultyColor(test.difficulty)}`}>
+                        {test.difficulty}
+                      </Badge>
+                      {test.lastAttempted && (
+                        <span className="text-[10px] text-gray-400 flex items-center gap-0.5">
+                          <Calendar className="h-2.5 w-2.5" />
+                          {formatDate(test.lastAttempted)}
+                        </span>
+                      )}
+                    </div>
+                  </div>
 
-                      {/* Col 5: Percentile */}
-                      <div className="flex-1 px-4">
-                        <p className="text-[10px] text-gray-400 uppercase tracking-wide font-medium mb-1">Percentile</p>
-                        <div className="flex items-center gap-2">
-                          <div className="flex-1 bg-gray-100 rounded-full h-1.5 overflow-hidden">
-                            <div
-                              className="h-full rounded-full bg-gradient-to-r from-blue-400 to-blue-600"
-                              style={{ width: `${test.percentile ?? 0}%` }}
-                            />
-                          </div>
-                          <span className="text-xs font-bold text-blue-600 shrink-0">
-                            {test.percentile !== undefined ? `${test.percentile}%` : '—'}
-                          </span>
-                        </div>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      {/* Col 1: Questions */}
-                      <div className="w-28 text-center shrink-0">
-                        <p className="text-[10px] text-gray-400 uppercase tracking-wide font-medium">Questions</p>
-                        <p className="text-sm font-semibold text-gray-700 mt-0.5">{totalQuestions}</p>
-                      </div>
-                      {/* Col 2: Marks */}
-                      <div className="w-24 text-center shrink-0">
-                        <p className="text-[10px] text-gray-400 uppercase tracking-wide font-medium">Marks</p>
-                        <p className="text-sm font-semibold text-gray-700 mt-0.5">{totalMarks}</p>
-                      </div>
-                      {/* Col 3: Time */}
-                      <div className="w-36 text-center shrink-0">
-                        <p className="text-[10px] text-gray-400 uppercase tracking-wide font-medium">Time</p>
-                        <p className="text-sm font-semibold text-gray-700 mt-0.5">{totalDuration} min</p>
-                      </div>
-                      {/* Col 4: Students */}
-                      <div className="w-24 text-center shrink-0">
-                        <p className="text-[10px] text-gray-400 uppercase tracking-wide font-medium">Students</p>
-                        <p className="text-sm font-semibold text-gray-700 mt-0.5">{totalStudents.toLocaleString()}</p>
-                      </div>
-                      {/* Col 5: empty spacer to match completed layout */}
-                      <div className="flex-1" />
-                    </>
-                  )}
-                </div>
-
-                {/* ── Action Buttons — fixed width right side ── */}
-                <div className="flex items-center gap-2 shrink-0">
-                  {isCompleted ? (
-                    <>
+                  {/* Action button — inline with name on mobile */}
+                  <div className="flex items-center gap-1.5 shrink-0 sm:hidden">
+                    {isCompleted ? (
+                      <>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleSolutionClick(test)}
+                          className="h-7 text-[11px] px-2 border-gray-200 hover:border-primary hover:text-primary"
+                        >
+                          <BookOpen className="h-3 w-3 mr-0.5" />
+                          Solution
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-7 text-[11px] px-2 border-gray-200 hover:border-primary hover:text-primary"
+                          onClick={() => {
+                            const currentPath = window.location.pathname;
+                            const url = `/student/test-window?category=${category}&examId=${examId}&testId=${test.testId}&returnUrl=${encodeURIComponent(currentPath)}`;
+                            stopTimerAndLaunchTest({ url, testName: test.testName });
+                          }}
+                        >
+                          Retry
+                        </Button>
+                      </>
+                    ) : (
                       <Button
                         size="sm"
-                        variant="outline"
-                        onClick={() => handleSolutionClick(test)}
-                        className="h-8 text-xs flex items-center gap-1 border-gray-200 hover:border-primary hover:text-primary"
-                      >
-                        <BookOpen className="h-3 w-3" />
-                        Solution
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleAnalysisClick(test)}
-                        className="h-8 text-xs flex items-center gap-1 border-gray-200 hover:border-primary hover:text-primary"
-                      >
-                        <BarChart3 className="h-3 w-3" />
-                        Analysis
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="h-8 text-xs border-gray-200 hover:border-primary hover:text-primary"
+                        className="h-7 text-[11px] px-3 font-semibold"
                         onClick={() => {
                           const currentPath = window.location.pathname;
                           const url = `/student/test-window?category=${category}&examId=${examId}&testId=${test.testId}&returnUrl=${encodeURIComponent(currentPath)}`;
                           stopTimerAndLaunchTest({ url, testName: test.testName });
                         }}
                       >
-                        Reattempt
+                        {isInProgress ? 'Continue' : 'Start Test'}
                       </Button>
-                    </>
-                  ) : (
-                    <Button
-                      size="sm"
-                      className="h-8 text-xs font-semibold min-w-[96px]"
-                      onClick={() => {
-                        const currentPath = window.location.pathname;
-                        const url = `/student/test-window?category=${category}&examId=${examId}&testId=${test.testId}&returnUrl=${encodeURIComponent(currentPath)}`;
-                        stopTimerAndLaunchTest({ url, testName: test.testName });
-                      }}
-                    >
-                      {isInProgress ? 'Continue' : 'Start Test'}
-                    </Button>
-                  )}
+                    )}
+                  </div>
+                </div>
+
+                {/* ── Stats row — shown below name on mobile, inline on desktop ── */}
+                <div className="flex items-center flex-1 min-w-0 ml-5 sm:ml-0 sm:contents">
+                  {/* Stats columns */}
+                  <div className="flex flex-wrap sm:flex-nowrap items-center gap-x-4 gap-y-1 flex-1 min-w-0">
+                    {isCompleted ? (
+                      <>
+                        <div className="text-center shrink-0">
+                          <p className="text-[10px] text-gray-400 uppercase tracking-wide font-medium">Score</p>
+                          <p className="text-xs font-bold text-green-600">{test.score ?? 0}/{test.maxScore}</p>
+                        </div>
+                        {test.timeSpent && (
+                          <div className="text-center shrink-0">
+                            <p className="text-[10px] text-gray-400 uppercase tracking-wide font-medium">Time</p>
+                            <p className="text-xs font-semibold text-gray-700">{Math.floor(test.timeSpent / 60)}m</p>
+                          </div>
+                        )}
+                        {test.rank && (
+                          <div className="text-center shrink-0">
+                            <p className="text-[10px] text-gray-400 uppercase tracking-wide font-medium">Rank</p>
+                            <p className="text-xs font-semibold text-yellow-600 flex items-center gap-0.5">
+                              <Trophy className="h-2.5 w-2.5" />
+                              #{test.rank}/{totalStudents.toLocaleString()}
+                            </p>
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-[80px]">
+                          <p className="text-[10px] text-gray-400 uppercase tracking-wide font-medium mb-0.5">Percentile</p>
+                          <div className="flex items-center gap-1.5">
+                            <div className="flex-1 bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                              <div
+                                className="h-full rounded-full bg-gradient-to-r from-blue-400 to-blue-600"
+                                style={{ width: `${test.percentile ?? 0}%` }}
+                              />
+                            </div>
+                            <span className="text-[10px] font-bold text-blue-600 shrink-0">
+                              {test.percentile !== undefined ? `${test.percentile}%` : '—'}
+                            </span>
+                          </div>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="text-center shrink-0">
+                          <p className="text-[10px] text-gray-400 uppercase tracking-wide font-medium">Questions</p>
+                          <p className="text-xs font-semibold text-gray-700">{totalQuestions}</p>
+                        </div>
+                        <div className="text-center shrink-0">
+                          <p className="text-[10px] text-gray-400 uppercase tracking-wide font-medium">Marks</p>
+                          <p className="text-xs font-semibold text-gray-700">{totalMarks}</p>
+                        </div>
+                        <div className="text-center shrink-0">
+                          <p className="text-[10px] text-gray-400 uppercase tracking-wide font-medium">Time</p>
+                          <p className="text-xs font-semibold text-gray-700">{totalDuration} min</p>
+                        </div>
+                        <div className="text-center shrink-0">
+                          <p className="text-[10px] text-gray-400 uppercase tracking-wide font-medium">Students</p>
+                          <p className="text-xs font-semibold text-gray-700">{totalStudents.toLocaleString()}</p>
+                        </div>
+                      </>
+                    )}
+                  </div>
+
+                  {/* ── Action Buttons — desktop only (mobile shows them inline above) ── */}
+                  <div className="hidden sm:flex items-center gap-2 shrink-0">
+                    {isCompleted ? (
+                      <>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleSolutionClick(test)}
+                          className="h-8 text-xs flex items-center gap-1 border-gray-200 hover:border-primary hover:text-primary"
+                        >
+                          <BookOpen className="h-3 w-3" />
+                          Solution
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleAnalysisClick(test)}
+                          className="h-8 text-xs flex items-center gap-1 border-gray-200 hover:border-primary hover:text-primary"
+                        >
+                          <BarChart3 className="h-3 w-3" />
+                          Analysis
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-8 text-xs border-gray-200 hover:border-primary hover:text-primary"
+                          onClick={() => {
+                            const currentPath = window.location.pathname;
+                            const url = `/student/test-window?category=${category}&examId=${examId}&testId=${test.testId}&returnUrl=${encodeURIComponent(currentPath)}`;
+                            stopTimerAndLaunchTest({ url, testName: test.testName });
+                          }}
+                        >
+                          Reattempt
+                        </Button>
+                      </>
+                    ) : (
+                      <Button
+                        size="sm"
+                        className="h-8 text-xs font-semibold min-w-[96px]"
+                        onClick={() => {
+                          const currentPath = window.location.pathname;
+                          const url = `/student/test-window?category=${category}&examId=${examId}&testId=${test.testId}&returnUrl=${encodeURIComponent(currentPath)}`;
+                          stopTimerAndLaunchTest({ url, testName: test.testName });
+                        }}
+                      >
+                        {isInProgress ? 'Continue' : 'Start Test'}
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </div>
             );
@@ -368,8 +407,8 @@ export const TestTypeGrid: React.FC<TestTypeGridProps> = ({
       {/* Subject Filter Chips */}
       {SubjectChips}
 
-      {/* Tests Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-5">
+      {/* Tests Grid — 1 col on mobile, 2 on sm, 3 on md, etc. */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 sm:gap-5">
         {filteredTests.map((test, idx) => {
           // Safe fallbacks for backward-compat with old localStorage cache
           const totalQuestions = test.totalQuestions ?? test.maxScore;

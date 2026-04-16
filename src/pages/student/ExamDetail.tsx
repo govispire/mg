@@ -15,10 +15,11 @@ import { DoubtsTab } from '@/components/student/exam/DoubtsTab';
 import { useExamProgress } from '@/hooks/useExamProgress';
 import { getExamsByCategory } from '@/data/examData';
 import { useExamCatalog, type TestSubject } from '@/hooks/useExamCatalog';
+import { getExamTheme } from '@/utils/examTheme';
 
 const ExamDetail = () => {
   const { category, examId } = useParams();
-  const [activeTab, setActiveTab] = useState("dashboard");
+  const [activeTab, setActiveTab] = useState("prelims");
   const [activeSubTab, setActiveSubTab] = useState("full");
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const { progressData, getTypeProgress, setProgressData, updateTestProgress } = useExamProgress(examId!);
@@ -139,12 +140,12 @@ const ExamDetail = () => {
   }, [examLogo]);
 
   const mainTabs = [
-    { value: "dashboard", label: "Dashboard" },
     { value: "prelims", label: "Prelims" },
     { value: "mains", label: "Mains" },
     { value: "live", label: "Live" },
     { value: "performance", label: "Performance" },
-    { value: "success-stories", label: "Success Stories" }
+    { value: "success-stories", label: "Success Stories" },
+    { value: "info", label: "Info" }
   ];
 
   const subTabs = [
@@ -155,8 +156,8 @@ const ExamDetail = () => {
   ];
 
   const getCurrentTestType = () => {
-    if (activeTab === "dashboard") return null;
     if (activeTab === "live") return "live";
+    if (activeTab === "info") return null;
     if (activeTab === "prelims") {
       switch (activeSubTab) {
         case "full": return "prelims";
@@ -281,46 +282,96 @@ const ExamDetail = () => {
     };
   }, [activeSlotTests]);
 
+  // ── Exam theme (unique colour identity per exam) ──────────────────────────
+  const theme = React.useMemo(() => getExamTheme(examId, examName), [examId, examName]);
+
   return (
     <div className="space-y-6">
+      {/* ── Back link ── */}
       <div>
-        <Link to={`/student/tests/${category}`} className="text-gray-500 flex items-center hover:text-gray-700">
-          <ArrowLeft className="h-4 w-4 mr-1" />
+        <Link to={`/student/tests/${category}`} className="text-gray-500 flex items-center hover:text-gray-700 text-sm font-medium gap-1.5 group">
+          <ArrowLeft className="h-4 w-4 group-hover:-translate-x-0.5 transition-transform" />
           <span>Back to {category?.replace('-', ' & ')}</span>
         </Link>
       </div>
 
-      <div className="flex items-center gap-3 mb-6 rounded-lg">
-        {isLogoUrl ? (
-          <img
-            src={examLogo as string}
-            alt={examName}
-            className="w-12 h-12 object-contain rounded"
-            onError={(e) => {
-              // Fallback to emoji if image fails to load
-              const target = e.target as HTMLImageElement;
-              target.style.display = 'none';
-              const fallback = document.createElement('span');
-              fallback.className = 'text-3xl';
-              fallback.textContent = '📚';
-              target.parentNode?.insertBefore(fallback, target);
-            }}
-          />
-        ) : (
-          <span className="text-3xl">{examLogo}</span>
-        )}
-        <div>
-          <h1 className="text-2xl font-bold">{examName}</h1>
-          <p className="text-muted-foreground">Comprehensive test preparation and progress tracking</p>
+      {/* ── Header card (testbook-style) ── */}
+      <div
+        className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden"
+        style={{ borderTop: `3px solid ${theme.borderColor}` }}
+      >
+        <div className="flex flex-col sm:flex-row items-start gap-0">
+
+          {/* LEFT — logo + title + chips */}
+          <div className="flex-1 p-4 sm:p-5 flex gap-3 sm:gap-4 items-start">
+            {/* Logo */}
+            <div
+              className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm overflow-hidden mt-0.5"
+              style={{ background: `${theme.borderColor}18`, border: `1.5px solid ${theme.borderColor}40` }}
+            >
+              {isLogoUrl ? (
+                <img src={examLogo as string} alt={examName} className="w-8 h-8 object-contain"
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                />
+              ) : (
+                <span className="text-2xl">{examLogo}</span>
+              )}
+            </div>
+
+            {/* Title + meta */}
+            <div className="flex-1 min-w-0">
+              <h1 className="text-lg sm:text-xl font-extrabold text-slate-900 leading-tight">{examName}</h1>
+
+              {/* Compact stats + rings — inside header */}
+              <div className="mt-3">
+                <ExamProgressDashboard
+                  progressData={progressData}
+                  getTypeProgress={getTypeProgress}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* RIGHT — price panel (sticky top-right) */}
+          <div
+            className="sm:w-52 border-t sm:border-t-0 sm:border-l border-slate-200 p-4 flex flex-col gap-3 bg-slate-50 sm:rounded-tr-2xl sm:sticky sm:top-4 self-start"
+          >
+            {/* Validity badge */}
+            <span
+              className="self-start text-[10px] font-bold px-2 py-0.5 rounded-full text-white"
+              style={{ background: theme.borderColor }}
+            >
+              Validity: 12 Month(s)
+            </span>
+
+            {/* Pack name + desc */}
+            <div>
+              <p className="text-sm font-bold text-slate-800 leading-tight">{examName.split(' ').slice(0, 2).join(' ')} PRE</p>
+              <p className="text-[11px] text-slate-500 mt-0.5">15 + 15 (2025 + 2026) Mock Tests</p>
+            </div>
+
+            {/* Price row */}
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-slate-400 line-through">₹379</span>
+              <span className="text-lg font-extrabold text-slate-900">₹199</span>
+              <button
+                className="ml-auto text-xs font-bold text-white px-3 py-1.5 rounded-lg"
+                style={{ background: theme.borderColor }}
+              >
+                Buy Now
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Removed Roadmap and Advertisement */}
-
-      <Card className="overflow-hidden">
-        <Tabs defaultValue="dashboard" value={activeTab} onValueChange={setActiveTab}>
-          <div className="bg-gray-50 p-4 border-b">
-            {/* Main Tabs - Single row */}
+      {/* ── Main card with tabs + inline progress ── */}
+      <Card className="overflow-hidden" style={{ borderTop: `3px solid ${theme.borderColor}` }}>
+        <Tabs defaultValue="prelims" value={activeTab} onValueChange={setActiveTab}>
+          <div className="bg-gray-50 p-3 sm:p-4 border-b">
+            {/* Gradient top stripe */}
+            <div className={`h-0.5 w-full bg-gradient-to-r ${theme.gradientClass} mb-3 rounded-full opacity-60`} />
+            {/* Main Tabs */}
             <div className="overflow-x-auto">
               <TabsList className="grid w-full grid-cols-6 min-w-max lg:min-w-0">
                 {mainTabs.map((tab) => (
@@ -328,6 +379,7 @@ const ExamDetail = () => {
                     key={tab.value}
                     value={tab.value}
                     className="whitespace-nowrap text-xs sm:text-sm"
+                    style={activeTab === tab.value ? { color: theme.borderColor, borderBottom: `2px solid ${theme.borderColor}` } : {}}
                   >
                     {tab.label}
                   </TabsTrigger>
@@ -344,10 +396,13 @@ const ExamDetail = () => {
                       {subTabs.map((subTab) => (
                         <Button
                           key={subTab.value}
-                          variant={activeSubTab === subTab.value ? "default" : "outline"}
                           size="sm"
                           onClick={() => setActiveSubTab(subTab.value)}
-                          className="whitespace-nowrap text-xs"
+                          className={`whitespace-nowrap text-xs transition-all ${
+                            activeSubTab === subTab.value
+                              ? theme.activeTabBtn
+                              : 'bg-white text-slate-600 border border-slate-200 hover:border-slate-300'
+                          }`}
                         >
                           {subTab.label}
                         </Button>
@@ -358,18 +413,20 @@ const ExamDetail = () => {
                   {/* View Mode Toggle */}
                   <div className="flex gap-1 border rounded-lg p-1">
                     <Button
-                      variant={viewMode === 'grid' ? "default" : "ghost"}
                       size="sm"
                       onClick={() => setViewMode('grid')}
-                      className="p-2"
+                      className={`p-2 ${ viewMode === 'grid' ? theme.activeTabBtn : 'ghost' }`}
+                      variant={viewMode === 'grid' ? 'default' : 'ghost'}
+                      style={viewMode === 'grid' ? { backgroundColor: theme.borderColor, color: '#fff' } : {}}
                     >
                       <Grid3X3 className="h-4 w-4" />
                     </Button>
                     <Button
-                      variant={viewMode === 'list' ? "default" : "ghost"}
                       size="sm"
                       onClick={() => setViewMode('list')}
+                      variant={viewMode === 'list' ? 'default' : 'ghost'}
                       className="p-2"
+                      style={viewMode === 'list' ? { backgroundColor: theme.borderColor, color: '#fff' } : {}}
                     >
                       <List className="h-4 w-4" />
                     </Button>
@@ -403,58 +460,10 @@ const ExamDetail = () => {
             )}
           </div>
 
-          <div className="p-4 sm:p-6">
-            <TabsContent value="dashboard" className="mt-0">
-              <div className="space-y-6">
-                <ExamProgressDashboard
-                  progressData={progressData}
-                  getTypeProgress={getTypeProgress}
-                />
-
-                {/* Info Tabs within Dashboard */}
-                <Card className="border-t-4 border-t-primary">
-                  <Tabs defaultValue="how-to-start" className="w-full">
-                    <div className="border-b bg-muted/30">
-                      <TabsList className="w-full grid grid-cols-4 h-auto p-2 bg-transparent">
-                        <TabsTrigger value="how-to-start" className="text-xs sm:text-sm">
-                          How to Start
-                        </TabsTrigger>
-                        <TabsTrigger value="syllabus" className="text-xs sm:text-sm">
-                          Syllabus
-                        </TabsTrigger>
-                        <TabsTrigger value="cutoff" className="text-xs sm:text-sm">
-                          Previous Cutoff
-                        </TabsTrigger>
-                        <TabsTrigger value="doubts" className="text-xs sm:text-sm">
-                          Doubts
-                        </TabsTrigger>
-                      </TabsList>
-                    </div>
-
-                    <div className="p-4">
-                      <TabsContent value="how-to-start" className="mt-0">
-                        <HowToStartTab examId={examId!} examName={examName} />
-                      </TabsContent>
-
-                      <TabsContent value="syllabus" className="mt-0">
-                        <SyllabusTab examId={examId!} examName={examName} />
-                      </TabsContent>
-
-                      <TabsContent value="cutoff" className="mt-0">
-                        <PreviousCutoffTab examId={examId!} examName={examName} />
-                      </TabsContent>
-
-                      <TabsContent value="doubts" className="mt-0">
-                        <DoubtsTab examId={examId!} examName={examName} />
-                      </TabsContent>
-                    </div>
-                  </Tabs>
-                </Card>
-              </div>
-            </TabsContent>
-
-            {mainTabs.slice(1, 4).map((tab) => (
-              <TabsContent key={tab.value} value={tab.value} className="mt-0">
+          <div className="p-4 sm:p-5">
+            {/* Prelims / Mains / Live tabs */}
+            {['prelims', 'mains', 'live'].map((tabVal) => (
+              <TabsContent key={tabVal} value={tabVal} className="mt-0">
                 {getCurrentTestType() && (
                   <TestTypeGrid
                     testType={getCurrentTestType()!}
@@ -473,6 +482,27 @@ const ExamDetail = () => {
 
             <TabsContent value="success-stories" className="mt-0">
               <SuccessStoriesTab examId={examId!} examName={examName} />
+            </TabsContent>
+
+            <TabsContent value="info" className="mt-0">
+              <Card className="border-t-4" style={{ borderTopColor: theme.borderColor }}>
+                <Tabs defaultValue="how-to-start" className="w-full">
+                  <div className="border-b bg-muted/30">
+                    <TabsList className="w-full grid grid-cols-4 h-auto p-2 bg-transparent">
+                      <TabsTrigger value="how-to-start" className="text-xs sm:text-sm">How to Start</TabsTrigger>
+                      <TabsTrigger value="syllabus" className="text-xs sm:text-sm">Syllabus</TabsTrigger>
+                      <TabsTrigger value="cutoff" className="text-xs sm:text-sm">Previous Cutoff</TabsTrigger>
+                      <TabsTrigger value="doubts" className="text-xs sm:text-sm">Doubts</TabsTrigger>
+                    </TabsList>
+                  </div>
+                  <div className="p-4">
+                    <TabsContent value="how-to-start" className="mt-0"><HowToStartTab examId={examId!} examName={examName} /></TabsContent>
+                    <TabsContent value="syllabus" className="mt-0"><SyllabusTab examId={examId!} examName={examName} /></TabsContent>
+                    <TabsContent value="cutoff" className="mt-0"><PreviousCutoffTab examId={examId!} examName={examName} /></TabsContent>
+                    <TabsContent value="doubts" className="mt-0"><DoubtsTab examId={examId!} examName={examName} /></TabsContent>
+                  </div>
+                </Tabs>
+              </Card>
             </TabsContent>
           </div>
         </Tabs>

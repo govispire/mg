@@ -27,14 +27,14 @@ export const ExamActionButtons: React.FC<ExamActionButtonsProps> = ({
     sectionLocked = false,
 }) => {
     return (
-        <div className="bg-[#f5f5f5] border-t border-gray-300 flex items-center">
-            {/* ── Left group: Mark for Review & Clear Response ── */}
-            <div className="flex items-center gap-2 px-4 py-2.5 flex-1">
+        <div className="bg-[#f5f5f5] border-t border-gray-300 flex flex-col sm:flex-row items-stretch sm:items-center">
+            {/* ── Row 1 on mobile / Left group on desktop ── */}
+            <div className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-4 py-2 flex-1 border-b sm:border-b-0 border-gray-200">
                 <Button
                     variant="outline"
                     onClick={onMarkAndNext}
                     disabled={sectionLocked}
-                    className="bg-white hover:bg-gray-100 text-gray-900 border-gray-400 text-sm"
+                    className="flex-1 sm:flex-none bg-white hover:bg-gray-100 text-gray-900 border-gray-400 text-xs sm:text-sm px-2 sm:px-4"
                 >
                     Mark for Review &amp; Next
                 </Button>
@@ -42,19 +42,19 @@ export const ExamActionButtons: React.FC<ExamActionButtonsProps> = ({
                     variant="outline"
                     onClick={onClearResponse}
                     disabled={!hasAnswer || sectionLocked}
-                    className="bg-white hover:bg-gray-100 text-gray-900 border-gray-400 text-sm"
+                    className="flex-1 sm:flex-none bg-white hover:bg-gray-100 text-gray-900 border-gray-400 text-xs sm:text-sm px-2 sm:px-4"
                 >
                     Clear Response
                 </Button>
             </div>
 
-            {/* ── Centre-right group: Previous + Save & Next ── */}
-            <div className="flex items-center gap-2 px-4 py-2.5">
+            {/* ── Row 2 on mobile / Right group on desktop ── */}
+            <div className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-4 py-2">
                 <Button
                     variant="outline"
                     onClick={onPrevious}
                     disabled={!hasPrevious || !onPrevious || sectionLocked}
-                    className="bg-white hover:bg-gray-100 text-gray-800 border-gray-400 text-sm"
+                    className="flex-1 sm:flex-none bg-white hover:bg-gray-100 text-gray-800 border-gray-400 text-xs sm:text-sm px-2 sm:px-4"
                 >
                     Previous
                 </Button>
@@ -62,7 +62,7 @@ export const ExamActionButtons: React.FC<ExamActionButtonsProps> = ({
                 <Button
                     onClick={onSaveAndNext}
                     disabled={sectionLocked}
-                    className={`text-white text-sm transition-all ${hasUnsavedChange
+                    className={`flex-1 sm:flex-none text-white text-xs sm:text-sm px-2 sm:px-4 transition-all ${hasUnsavedChange
                         ? 'bg-[#1976d2] hover:bg-[#1565c0] ring-2 ring-yellow-400 ring-offset-1'
                         : 'bg-[#5b9dd9] hover:bg-[#4a8cc8]'
                         }`}
@@ -70,16 +70,10 @@ export const ExamActionButtons: React.FC<ExamActionButtonsProps> = ({
                 >
                     Save &amp; Next
                 </Button>
-            </div>
 
-            {/* ── Submit panel: fixed width matching the right palette ── */}
-            <div
-                className="flex items-center justify-center border-l border-gray-300 py-2.5"
-                style={{ width: 280 }}
-            >
                 <Button
                     onClick={onSubmitSection}
-                    className={`text-white text-sm font-semibold px-8 py-2 ${isLastSection
+                    className={`flex-1 sm:flex-none text-white text-xs sm:text-sm font-semibold px-3 sm:px-8 py-2 ${isLastSection
                         ? 'bg-[#1976d2] hover:bg-[#1565c0]'
                         : 'bg-[#1976d2] hover:bg-[#1565c0]'
                         }`}

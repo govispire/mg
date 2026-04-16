@@ -614,7 +614,7 @@ export const StudyTimerWidget: React.FC = () => {
             <div className="flex flex-col items-center">
               <span
                 className="font-black tabular-nums leading-none"
-                style={{ fontSize: 68, fontFamily: "'Outfit','Inter',sans-serif", color: '#0f172a', letterSpacing: '-0.04em', lineHeight: 1 }}
+                style={{ fontSize: 'clamp(36px, 10vw, 68px)', fontFamily: "'Outfit','Inter',sans-serif", color: '#0f172a', letterSpacing: '-0.04em', lineHeight: 1 }}
               >
                 {String(Math.floor(selectedMins / 60)).padStart(2, '0')}
               </span>
@@ -623,15 +623,15 @@ export const StudyTimerWidget: React.FC = () => {
 
             {/* Colon */}
             <span
-              className="font-black text-slate-300 mx-1.5"
-              style={{ fontSize: 52, lineHeight: 1, marginBottom: 18, fontFamily: "'Outfit','Inter',sans-serif" }}
+              className="font-black text-slate-300 mx-1"
+              style={{ fontSize: 'clamp(28px, 8vw, 52px)', lineHeight: 1, marginBottom: 18, fontFamily: "'Outfit','Inter',sans-serif" }}
             >:</span>
 
             {/* Minutes */}
             <div className="flex flex-col items-center">
               <span
                 className="font-black tabular-nums leading-none"
-                style={{ fontSize: 68, fontFamily: "'Outfit','Inter',sans-serif", color: '#059669', letterSpacing: '-0.04em', lineHeight: 1 }}
+                style={{ fontSize: 'clamp(36px, 10vw, 68px)', fontFamily: "'Outfit','Inter',sans-serif", color: '#059669', letterSpacing: '-0.04em', lineHeight: 1 }}
               >
                 {String(selectedMins % 60).padStart(2, '0')}
               </span>
@@ -644,15 +644,15 @@ export const StudyTimerWidget: React.FC = () => {
 
             {/* Colon */}
             <span
-              className="font-black text-slate-300 mx-1.5"
-              style={{ fontSize: 52, lineHeight: 1, marginBottom: 18, fontFamily: "'Outfit','Inter',sans-serif" }}
+              className="font-black text-slate-300 mx-1"
+              style={{ fontSize: 'clamp(28px, 8vw, 52px)', lineHeight: 1, marginBottom: 18, fontFamily: "'Outfit','Inter',sans-serif" }}
             >:</span>
 
             {/* Seconds */}
             <div className="flex flex-col items-center">
               <span
                 className="font-black tabular-nums leading-none"
-                style={{ fontSize: 68, fontFamily: "'Outfit','Inter',sans-serif", color: '#cbd5e1', letterSpacing: '-0.04em', lineHeight: 1 }}
+                style={{ fontSize: 'clamp(36px, 10vw, 68px)', fontFamily: "'Outfit','Inter',sans-serif", color: '#cbd5e1', letterSpacing: '-0.04em', lineHeight: 1 }}
               >00</span>
               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1.5">SEC</span>
             </div>
@@ -692,12 +692,12 @@ export const StudyTimerWidget: React.FC = () => {
           </p>
 
           {/* Quick pick pills */}
-          <div className="flex gap-2 mb-2">
+          <div className="flex flex-wrap gap-2 mb-2">
             {QUICK_OPTIONS.map(m => (
               <button
                 key={m}
                 onClick={() => pickDuration(m)}
-                className="flex-1 py-2 rounded-full text-[12px] font-semibold transition-all border"
+                className="flex-1 min-w-[60px] py-2 rounded-full text-[12px] font-semibold transition-all border"
                 style={selectedMins === m && !showCustom
                   ? { background: 'linear-gradient(135deg,#16a34a,#22c55e)', color: '#fff', border: 'transparent', boxShadow: '0 2px 8px rgba(34,197,94,0.35)' }
                   : { background: '#fff', color: '#64748b', border: '1.5px solid #e2e8f0' }}

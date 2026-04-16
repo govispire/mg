@@ -326,29 +326,41 @@ const getExamMeta = (exam: string): ExamMeta => {
   };
 };
 
+// Responsive sizes: use smaller values on mobile via a viewport-aware approach
 const CircularProgress: React.FC<{
   pct: number;
   color: string;
   label: string;
   size?: number;
+  mobileSize?: number;
   strokeWidth?: number;
-}> = ({ pct, color, label, size = 90, strokeWidth = 7 }) => {
+}> = ({ pct, color, label, size = 90, mobileSize, strokeWidth = 7 }) => {
+  // Use CSS custom properties via inline style for responsive sizing
+  const displaySize = mobileSize ?? Math.round(size * 0.78);
   const r = (size - strokeWidth * 2) / 2;
   const circ = 2 * Math.PI * r;
   const offset = circ - (pct / 100) * circ;
 
   return (
-    <div className="flex flex-col items-center gap-2">
-      <div className="relative" style={{ width: size, height: size }}>
+    <div className="flex flex-col items-center gap-1">
+      {/* Wrapper scales the SVG via CSS on mobile */}
+      <div
+        className="relative shrink-0"
+        style={{
+          width: size,
+          height: size,
+          '--mobile-size': `${displaySize}px`,
+        } as React.CSSProperties}
+      >
         {/* Track */}
-        <svg width={size} height={size} className="-rotate-90" style={{ position: 'absolute', top: 0, left: 0 }}>
+        <svg width={size} height={size} className="-rotate-90 absolute inset-0" viewBox={`0 0 ${size} ${size}`}>
           <circle
             cx={size / 2} cy={size / 2} r={r}
             fill="none" stroke="#e2e8f0" strokeWidth={strokeWidth + 1}
           />
         </svg>
         {/* Progress */}
-        <svg width={size} height={size} className="-rotate-90" style={{ position: 'absolute', top: 0, left: 0 }}>
+        <svg width={size} height={size} className="-rotate-90 absolute inset-0" viewBox={`0 0 ${size} ${size}`}>
           <circle
             cx={size / 2} cy={size / 2} r={r}
             fill="none"
@@ -362,13 +374,39 @@ const CircularProgress: React.FC<{
         </svg>
         {/* Percentage inside */}
         <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-sm font-bold text-slate-800">{pct}%</span>
+          <span className="font-bold text-slate-800" style={{ fontSize: Math.round(size * 0.15) }}>{pct}%</span>
         </div>
       </div>
       <span className="text-[10px] font-medium text-slate-600 text-center leading-tight">{label}</span>
     </div>
   );
 };
+
+// Responsive hook-free approach: render two sizes and show/hide via CSS
+const ResponsiveCircles: React.FC<{
+  sections: { name: string; color: string; pct: number }[];
+  overallPct: number;
+  labelOverall: string;
+}> = ({ sections, overallPct, labelOverall }) => (
+  <>
+    {/* Mobile layout: smaller circles in a horizontal scroll row */}
+    <div className="flex md:hidden flex-wrap items-end gap-3 mb-4">
+      <CircularProgress pct={overallPct} color="#10b981" label={labelOverall} size={80} strokeWidth={7} />
+      <div className="w-px h-14 bg-slate-200 self-center" />
+      {sections.map((s) => (
+        <CircularProgress key={s.name} pct={s.pct} color={s.color} label={s.name} size={64} strokeWidth={6} />
+      ))}
+    </div>
+    {/* Desktop layout: original sizes */}
+    <div className="hidden md:flex flex-wrap items-end gap-5 mb-5">
+      <CircularProgress pct={overallPct} color="#10b981" label={labelOverall} size={112} strokeWidth={9} />
+      <div className="h-20 w-px bg-slate-200 self-center" />
+      {sections.map((s) => (
+        <CircularProgress key={s.name} pct={s.pct} color={s.color} label={s.name} size={88} strokeWidth={7} />
+      ))}
+    </div>
+  </>
+);
 
 const TargetExamCard: React.FC<TargetExamCardProps> = ({
   targetExam,
@@ -466,8 +504,8 @@ const TargetExamCard: React.FC<TargetExamCardProps> = ({
 
   return (
     <div className="rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
-      {/* ── Main card row ── */}
-      <div className="bg-white flex">
+      {/* ── Main card row: stacks on mobile, side-by-side on md+ ── */}
+      <div className="bg-white flex flex-col md:flex-row">
         {/* ── LEFT: all content ── */}
         <div className="flex-1 min-w-0">
           {/* Top gradient accent */}
@@ -501,39 +539,18 @@ const TargetExamCard: React.FC<TargetExamCardProps> = ({
             </div>
           </div>
 
-          {/* ── Circles Row: Overall (big) + Subject circles ── */}
-          <div className="flex flex-wrap items-end gap-5 mb-5">
+          {/* ── Circles Row: responsive via ResponsiveCircles ── */}
+          <ResponsiveCircles
+            sections={meta.sections}
+            overallPct={liveOverallPct !== undefined && liveOverallPct > 0 ? liveOverallPct : meta.overallPct}
+            labelOverall={liveOverallPct !== undefined && liveOverallPct > 0 ? 'Your Score' : 'Overall'}
+          />
 
-            {/* Overall — bigger */}
-            <CircularProgress
-              pct={liveOverallPct !== undefined && liveOverallPct > 0 ? liveOverallPct : meta.overallPct}
-              color="#10b981"
-              label={liveOverallPct !== undefined && liveOverallPct > 0 ? 'Your Score' : 'Overall'}
-              size={112}
-              strokeWidth={9}
-            />
-
-            {/* Divider */}
-            <div className="h-20 w-px bg-slate-200 hidden sm:block self-center" />
-
-            {/* Subject circles */}
-            {meta.sections.map((s) => (
-              <CircularProgress
-                key={s.name}
-                pct={s.pct}
-                color={s.color}
-                label={s.name}
-                size={88}
-                strokeWidth={7}
-              />
-            ))}
-          </div>
-
-          {/* Action Buttons */}
+          {/* Action Buttons — wrap on small screens */}
           <div className="flex flex-wrap items-center gap-2">
             <Button
               size="sm"
-              className="bg-primary hover:bg-primary/90 text-white font-semibold px-5 py-2 gap-2 rounded-xl text-xs shadow-sm"
+              className="bg-primary hover:bg-primary/90 text-white font-semibold px-4 py-2 gap-2 rounded-xl text-xs shadow-sm"
               onClick={() => navigate(mockRoute)}
             >
               <Play className="h-3.5 w-3.5" />
@@ -543,7 +560,7 @@ const TargetExamCard: React.FC<TargetExamCardProps> = ({
             <Button
               size="sm"
               variant="outline"
-              className="text-slate-700 border-slate-200 font-medium px-5 py-2 gap-2 rounded-xl text-xs hover:bg-slate-50"
+              className="text-slate-700 border-slate-200 font-medium px-4 py-2 gap-2 rounded-xl text-xs hover:bg-slate-50"
               onClick={() => navigate('/student/syllabus')}
             >
               <BookOpen className="h-3.5 w-3.5" />
@@ -553,7 +570,7 @@ const TargetExamCard: React.FC<TargetExamCardProps> = ({
             <Button
               size="sm"
               variant="outline"
-              className="text-slate-700 border-slate-200 font-medium px-5 py-2 gap-2 rounded-xl text-xs hover:bg-slate-50"
+              className="text-slate-700 border-slate-200 font-medium px-4 py-2 gap-2 rounded-xl text-xs hover:bg-slate-50"
               onClick={() => navigate('/student/performance-analytics')}
             >
               <TrendingUp className="h-3.5 w-3.5" />
@@ -571,8 +588,13 @@ const TargetExamCard: React.FC<TargetExamCardProps> = ({
           - min-h-[220px] gives absolute children a real height to fill
           - Slides are absolute inset-0 and use opacity for transitions
         */}
+        {/*
+          RIGHT PANEL:
+          - Mobile: full-width horizontal banner (h-36)
+          - md+: sidebar (w-80, self-stretch)
+        */}
         <div
-          className="flex-shrink-0 w-44 sm:w-52 self-stretch min-h-[220px] relative overflow-hidden group select-none"
+          className="flex-shrink-0 w-full md:w-80 h-44 md:h-auto md:self-stretch relative overflow-hidden group select-none"
           style={{ background: 'linear-gradient(160deg, #1e40af 0%, #0ea5e9 35%, #10b981 100%)' }}
         >
           {/* ── Slide 0: Days Left ── */}
@@ -612,7 +634,7 @@ const TargetExamCard: React.FC<TargetExamCardProps> = ({
                 background: ad.imageDataUrl ? undefined : (ad.bgColor || 'linear-gradient(135deg,#1e40af,#10b981)'),
               }}
             >
-              {/* Full-cover background image */}
+              {/* Full-cover background image — object-contain so never cropped */}
               {ad.imageDataUrl && (
                 <img
                   src={ad.imageDataUrl}

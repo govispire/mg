@@ -20,9 +20,13 @@ import {
   BookOpen,
   TrendingUp,
   Library,
+  BarChart3,
+  RotateCcw,
 } from 'lucide-react';
 import NewsArticleDialog from '@/components/student/NewsArticleDialog';
 import StatCardDialog from '@/components/student/StatCardDialog';
+import QuizLeaderboardModal from '@/components/student/quiz/QuizLeaderboardModal';
+import { getQuizLeaderboard } from '@/services/quizLeaderboardService';
 import { dailyQuizzes } from '@/data/dailyQuizzesData';
 import QuizAttemptIBPS, { QuizResult } from '@/components/student/quiz/QuizAttemptIBPS';
 import launchExamWindow from '@/utils/launchExam';
@@ -266,6 +270,7 @@ const StudentDashboard = () => {
   const [statDialogType, setStatDialogType] = useState<'journey' | 'hours' | 'active' | 'tests' | 'tasks' | null>(null);
   const [activeQuiz, setActiveQuiz] = useState<any | null>(null);
   const [isAutoSlide, setIsAutoSlide] = useState(true);
+  const [selectedQuizForLeaderboard, setSelectedQuizForLeaderboard] = useState<any | null>(null);
 
   // Post-signup modal states
   const [showCompulsoryForm, setShowCompulsoryForm] = useState(false);
@@ -685,47 +690,98 @@ const StudentDashboard = () => {
                   </div>
                 </div>
               </div>
-              <div className="space-y-2 sm:space-y-3">
+              <div className="space-y-3 sm:space-y-4">
                 {freeTests.map((test, idx) => {
                   const isCompleted = !!quizCompletions[test.id];
+                  const completionData = quizCompletions[test.id];
+                  const totalMarks = test.questions * 2;
+                  const yourMarks = completionData?.score ? Math.round((completionData.score / 100) * totalMarks) : 0;
+
                   return (
                     <div
                       key={idx}
-                      className={`flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl border transition-all ${
+                      className={`px-3 sm:px-4 py-3 sm:py-4 rounded-xl border transition-all ${
                         isCompleted
-                          ? 'bg-slate-50 border-slate-100 opacity-70'
+                          ? 'bg-gradient-to-r from-emerald-50/50 to-green-50/30 border-emerald-200'
                           : 'bg-white border-slate-200 hover:border-emerald-300 hover:shadow-sm'
                       }`}
                     >
-                      <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
+                      {/* Top row: Icon + Title + Action */}
+                      <div className="flex items-start gap-2 sm:gap-3">
                         <div className={`shrink-0 w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center ${
-                          isCompleted ? 'bg-slate-100' : 'bg-emerald-50'
+                          isCompleted ? 'bg-emerald-100' : 'bg-emerald-50'
                         }`}>
-                          <FileText className={`h-4 w-4 sm:h-5 sm:w-5 ${isCompleted ? 'text-slate-400' : 'text-emerald-600'}`} />
+                          <FileText className={`h-4 w-4 sm:h-5 sm:w-5 ${isCompleted ? 'text-emerald-600' : 'text-emerald-600'}`} />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className={`font-semibold text-xs sm:text-[13px] truncate ${isCompleted ? 'line-through text-slate-400' : 'text-slate-800'}`}>{test.title}</p>
-                          <div className="text-[10px] sm:text-[11px] text-slate-400 flex items-center gap-1.5 sm:gap-2 mt-0.5">
+                          <p className={`font-semibold text-xs sm:text-[13px] ${isCompleted ? 'text-emerald-700' : 'text-slate-800'}`}>{test.title}</p>
+                          <div className="text-[10px] sm:text-[11px] text-slate-500 flex items-center gap-1.5 sm:gap-2 mt-1">
                             <span>{test.questions} Questions</span>
                             <span className="text-slate-300">•</span>
                             <span>{test.duration} mins</span>
                             <span className="text-slate-300">•</span>
                             <span className="capitalize">{test.difficulty}</span>
                           </div>
+
+                          {/* Completed: Show results & buttons */}
+                          {isCompleted && (
+                            <div className="mt-2 sm:mt-3">
+                              <div className="flex items-center gap-2 sm:gap-3 mb-2 sm:mb-3 flex-wrap">
+                                <div className="bg-emerald-100 text-emerald-700 px-2 sm:px-2.5 py-1 rounded-md text-[10px] sm:text-[11px] font-semibold flex items-center gap-1">
+                                  <CheckCircle className="h-3 w-3" />
+                                  Score: {completionData.score}%
+                                </div>
+                                <div className="bg-blue-50 text-blue-700 px-2 sm:px-2.5 py-1 rounded-md text-[10px] sm:text-[11px] font-semibold">
+                                  Marks: {yourMarks}/{totalMarks}
+                                </div>
+                              </div>
+                              {/* Action buttons: Solution, Analysis, Retest */}
+                              <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="h-7 sm:h-8 px-2 sm:px-3 text-[10px] sm:text-[11px] font-semibold border-emerald-300 text-emerald-700 hover:bg-emerald-50"
+                                  onClick={() => {
+                                    window.open(
+                                      `/student/exam-window?quizId=${test.id}&title=${encodeURIComponent(test.title)}&subject=${encodeURIComponent(test.subject)}&duration=${test.duration}&questions=${test.questions}&mode=solution`,
+                                      '_blank',
+                                      'width=1920,height=1080,menubar=no,toolbar=no,location=no,status=no'
+                                    );
+                                  }}
+                                >
+                                  <FileText className="h-3 w-3 sm:mr-1" />
+                                  <span className="hidden sm:inline">Solution</span>
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="h-7 sm:h-8 px-2 sm:px-3 text-[10px] sm:text-[11px] font-semibold border-blue-300 text-blue-700 hover:bg-blue-50"
+                                  onClick={() => setSelectedQuizForLeaderboard(test)}
+                                >
+                                  <BarChart3 className="h-3 w-3 sm:mr-1" />
+                                  <span className="hidden sm:inline">Analysis</span>
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="h-7 sm:h-8 px-2 sm:px-3 text-[10px] sm:text-[11px] font-semibold border-slate-300 text-slate-700 hover:bg-slate-50"
+                                  onClick={() => handleStartTest(test)}
+                                >
+                                  <RotateCcw className="h-3 w-3 sm:mr-1" />
+                                  <span className="hidden sm:inline">Retest</span>
+                                </Button>
+                              </div>
+                            </div>
+                          )}
                         </div>
-                      </div>
-                      <div className="shrink-0 ml-2 sm:ml-4">
-                        {isCompleted ? (
-                          <div className="flex items-center gap-1 sm:gap-1.5 text-emerald-600 font-semibold text-[10px] sm:text-[11px] bg-emerald-50 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg border border-emerald-200">
-                            <CheckCircle className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
-                            <span className="hidden xs:inline">Completed</span>
-                          </div>
-                        ) : (
-                          <Button size="sm" className="h-7 sm:h-8 px-2.5 sm:px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[11px] sm:text-[12px] font-semibold" onClick={() => handleStartTest(test)}>
-                            <Play className="h-3 w-3 sm:h-3.5 sm:w-3.5 sm:mr-1.5" strokeWidth={3} />
-                            <span className="hidden xs:inline">Start</span>
-                          </Button>
-                        )}
+                        <div className="shrink-0">
+                          {!isCompleted ? (
+                            <Button size="sm" className="h-8 sm:h-9 px-3 sm:px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[11px] sm:text-[12px] font-semibold shadow-sm" onClick={() => handleStartTest(test)}>
+                              <Play className="h-3.5 w-3.5 sm:mr-1.5" strokeWidth={3} />
+                              <span>Start Test</span>
+                            </Button>
+                          ) : null}
+                        </div>
                       </div>
                     </div>
                   );
@@ -735,6 +791,24 @@ const StudentDashboard = () => {
 
             {/* Upcoming Live Tests */}
             <UpcomingLiveTests />
+
+            {/* Quiz Leaderboard Modal for Analysis */}
+            {selectedQuizForLeaderboard && (
+              <QuizLeaderboardModal
+                isOpen={!!selectedQuizForLeaderboard}
+                onClose={() => setSelectedQuizForLeaderboard(null)}
+                leaderboard={getQuizLeaderboard(
+                  selectedQuizForLeaderboard.id,
+                  selectedQuizForLeaderboard.title,
+                  quizCompletions[selectedQuizForLeaderboard.id]?.score 
+                    ? { 
+                        score: quizCompletions[selectedQuizForLeaderboard.id].score, 
+                        timeTaken: selectedQuizForLeaderboard.duration * 60 * 0.7 
+                      }
+                    : undefined
+                )}
+              />
+            )}
           </div>
         )}
 

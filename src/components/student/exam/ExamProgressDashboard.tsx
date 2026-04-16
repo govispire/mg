@@ -1,9 +1,5 @@
-
 import React from 'react';
-import { Card } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
-import { Badge } from '@/components/ui/badge';
-import { Users, TrendingUp, Clock, Award, Target, Zap } from 'lucide-react';
+import { Users, Award, TrendingUp, Target, Clock, Zap } from 'lucide-react';
 import { ExamProgressData } from '@/hooks/useExamProgress';
 
 interface ExamProgressDashboardProps {
@@ -18,123 +14,108 @@ interface ExamProgressDashboardProps {
   };
 }
 
+const ACCENT = '#10b981';
+
+/* ── Tiny SVG ring ─────────────────────────────────────────────────────────── */
+const MiniRing: React.FC<{ pct: number; size?: number; stroke?: number }> = ({
+  pct, size = 44, stroke = 4,
+}) => {
+  const r = (size - stroke) / 2;
+  const circ = 2 * Math.PI * r;
+  const dash = Math.min(pct, 100) / 100 * circ;
+  return (
+    <svg width={size} height={size} className="flex-shrink-0">
+      <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="#e2e8f0" strokeWidth={stroke} />
+      <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={ACCENT} strokeWidth={stroke}
+        strokeDasharray={`${dash} ${circ - dash}`} strokeLinecap="round"
+        transform={`rotate(-90 ${size/2} ${size/2})`}
+        style={{ transition: 'stroke-dasharray 0.5s ease' }}
+      />
+    </svg>
+  );
+};
+
+const TEST_TYPES: { key: string; name: string; icon: React.ReactNode }[] = [
+  { key: 'prelims',   name: 'Prelims',   icon: <Target className="h-3 w-3" /> },
+  { key: 'mains',     name: 'Mains',     icon: <Award className="h-3 w-3" /> },
+  { key: 'sectional', name: 'Sectional', icon: <Clock className="h-3 w-3" /> },
+  { key: 'speed',     name: 'Speed',     icon: <Zap className="h-3 w-3" /> },
+  { key: 'pyq',       name: 'PYQ',       icon: <TrendingUp className="h-3 w-3" /> },
+  { key: 'live',      name: 'Live',      icon: <Users className="h-3 w-3" /> },
+];
+
 export const ExamProgressDashboard: React.FC<ExamProgressDashboardProps> = ({
   progressData,
-  getTypeProgress
+  getTypeProgress,
 }) => {
-  const overallStats = [
-    {
-      title: 'Total Users',
-      value: progressData.totalUsers.toLocaleString(),
-      icon: <Users className="h-5 w-5" />,
-      color: 'text-blue-600'
-    },
-    {
-      title: 'Your Rank',
-      value: progressData.userRank ? `#${progressData.userRank}` : 'N/A',
-      icon: <Award className="h-5 w-5" />,
-      color: 'text-green-600'
-    },
-    {
-      title: 'Overall Progress',
-      value: `${progressData.overallProgress}%`,
-      icon: <TrendingUp className="h-5 w-5" />,
-      color: 'text-purple-600'
-    },
-    {
-      title: 'Tests Completed',
-      value: `${Object.keys(progressData.testTypes).reduce((sum, type) => 
-        sum + getTypeProgress(type as keyof ExamProgressData['testTypes']).completed, 0)}/120`,
-      icon: <Target className="h-5 w-5" />,
-      color: 'text-orange-600'
-    }
-  ];
-
-  const testTypeStats = [
-    { key: 'prelims', name: 'Prelims', icon: <Target className="h-4 w-4" />, color: 'bg-blue-500' },
-    { key: 'mains', name: 'Mains', icon: <Award className="h-4 w-4" />, color: 'bg-purple-500' },
-    { key: 'sectional', name: 'Sectional', icon: <Clock className="h-4 w-4" />, color: 'bg-green-500' },
-    { key: 'speed', name: 'Speed', icon: <Zap className="h-4 w-4" />, color: 'bg-yellow-500' },
-    { key: 'pyq', name: 'PYQ', icon: <TrendingUp className="h-4 w-4" />, color: 'bg-red-500' },
-    { key: 'live', name: 'Live', icon: <Users className="h-4 w-4" />, color: 'bg-indigo-500' }
-  ];
+  const totalCompleted = Object.keys(progressData.testTypes).reduce(
+    (s, t) => s + getTypeProgress(t as keyof ExamProgressData['testTypes']).completed, 0,
+  );
+  const totalTests = Object.keys(progressData.testTypes).reduce(
+    (s, t) => s + getTypeProgress(t as keyof ExamProgressData['testTypes']).total, 0,
+  );
+  const completedPct = totalTests > 0 ? Math.round((totalCompleted / totalTests) * 100) : 0;
 
   return (
-    <div className="space-y-6">
-      {/* Overall Statistics */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {overallStats.map((stat, index) => (
-          <Card key={index} className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 mb-1">{stat.title}</p>
-                <p className="text-xl font-bold">{stat.value}</p>
+    <div className="px-4 py-3 space-y-4">
+
+      {/* ── 4 compact stat tiles ────────────────────────────────────────── */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        {[
+          { label: 'Total Users',      value: progressData.totalUsers.toLocaleString(), pct: null, icon: <Users className="h-3.5 w-3.5" /> },
+          { label: 'Your Rank',        value: progressData.userRank ? `#${progressData.userRank}` : 'N/A', pct: null, icon: <Award className="h-3.5 w-3.5" /> },
+          { label: 'Overall Progress', value: `${progressData.overallProgress}%`, pct: progressData.overallProgress, icon: null },
+          { label: 'Tests Completed',  value: `${totalCompleted}/${totalTests || 120}`, pct: completedPct, icon: null },
+        ].map((stat, i) => (
+          <div key={i}
+            className="flex items-center gap-2.5 bg-white rounded-xl border border-slate-200 px-3 py-2.5 shadow-sm"
+          >
+            {stat.pct !== null ? (
+              <div className="relative flex-shrink-0">
+                <MiniRing pct={stat.pct} />
+                <span className="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-slate-700">
+                  {stat.pct}%
+                </span>
               </div>
-              <div className={`${stat.color}`}>
+            ) : (
+              <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
+                style={{ background: `${ACCENT}15`, color: ACCENT }}>
                 {stat.icon}
               </div>
+            )}
+            <div className="min-w-0">
+              <p className="text-[10px] text-slate-400 leading-none">{stat.label}</p>
+              <p className="text-sm font-bold text-slate-800 mt-0.5 truncate">{stat.value}</p>
             </div>
-          </Card>
+          </div>
         ))}
       </div>
 
-      {/* Test Type Progress */}
-      <Card className="p-6">
-        <h3 className="text-lg font-semibold mb-4">Test Type Progress</h3>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          {testTypeStats.map((testType) => {
-            const progress = getTypeProgress(testType.key as keyof ExamProgressData['testTypes']);
+      {/* ── Test type ring row ───────────────────────────────────────────── */}
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <div className="flex items-center justify-between px-3 py-2 border-b border-slate-100">
+          <span className="text-[11px] font-bold text-slate-600 uppercase tracking-wide">Test Type Progress</span>
+          <span className="text-[10px] text-slate-400">{totalCompleted}/{totalTests || 120} done</span>
+        </div>
+        <div className="grid grid-cols-3 sm:grid-cols-6 divide-x divide-slate-100">
+          {TEST_TYPES.map((tt) => {
+            const prog = getTypeProgress(tt.key as keyof ExamProgressData['testTypes']);
             return (
-              <div key={testType.key} className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className={`${testType.color} text-white p-1 rounded`}>
-                      {testType.icon}
-                    </div>
-                    <span className="font-medium">{testType.name}</span>
-                  </div>
-                  <Badge variant="outline">
-                    {progress.completed}/{progress.total}
-                  </Badge>
+              <div key={tt.key} className="flex flex-col items-center py-3 px-2 gap-1.5">
+                <div className="relative">
+                  <MiniRing pct={prog.percentage} size={40} stroke={4} />
+                  <span className="absolute inset-0 flex items-center justify-center text-[8px] font-bold text-slate-700">
+                    {Math.round(prog.percentage)}%
+                  </span>
                 </div>
-                <Progress value={progress.percentage} className="h-2" />
-                <div className="text-xs text-gray-500">
-                  <span>{Math.round(progress.percentage)}% Complete</span>
-                </div>
+                <p className="text-[10px] font-semibold text-slate-600">{tt.name}</p>
+                <p className="text-[9px] text-slate-400">{prog.completed}/{prog.total}</p>
               </div>
             );
           })}
         </div>
-      </Card>
-
-      {/* Performance Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="p-4 border-l-4 border-l-green-500">
-          <h4 className="font-semibold text-green-700">Best Performance</h4>
-          <p className="text-2xl font-bold text-green-600">
-            {Math.max(...Object.keys(progressData.testTypes).map(type => 
-              getTypeProgress(type as keyof ExamProgressData['testTypes']).bestScore
-            ))}%
-          </p>
-          <p className="text-sm text-gray-600">Highest score achieved</p>
-        </Card>
-        
-        <Card className="p-4 border-l-4 border-l-blue-500">
-          <h4 className="font-semibold text-blue-700">Total Attempts</h4>
-          <p className="text-2xl font-bold text-blue-600">
-            {Object.keys(progressData.testTypes).reduce((sum, type) => 
-              sum + getTypeProgress(type as keyof ExamProgressData['testTypes']).totalAttempts, 0
-            )}
-          </p>
-          <p className="text-sm text-gray-600">Tests attempted</p>
-        </Card>
-        
-        <Card className="p-4 border-l-4 border-l-purple-500">
-          <h4 className="font-semibold text-purple-700">Study Streak</h4>
-          <p className="text-2xl font-bold text-purple-600">7</p>
-          <p className="text-sm text-gray-600">Days consecutive</p>
-        </Card>
       </div>
+
     </div>
   );
 };

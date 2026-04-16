@@ -36,7 +36,7 @@ export interface PlacementConfig {
 }
 
 export const PLACEMENT_REGISTRY: PlacementConfig[] = [
-  { id: 'days_left_panel',  label: 'Days Left Sidebar',    description: 'Right-side portrait slider on Target Exam card', icon: '📌', cropWidth: 400,  cropHeight: 600, previewAspect: '400/600' },
+  { id: 'days_left_panel',  label: 'Days Left Sidebar',    description: 'Right-side panel — square 320×320 works on both desktop (portrait) and mobile (landscape)', icon: '📌', cropWidth: 320,  cropHeight: 320, previewAspect: '1/1' },
   { id: 'dashboard_banner', label: 'Dashboard Banner',      description: 'Full-width landscape strip below Target Exam card', icon: '🖼️', cropWidth: 1200, cropHeight: 300, previewAspect: '1200/300' },
   { id: 'test_page',        label: 'Test Page',             description: 'Banner shown on the Tests listing page', icon: '📝', cropWidth: 1200, cropHeight: 300, previewAspect: '1200/300' },
   { id: 'popup_modal',      label: 'Popup Modal',           description: 'Full-screen interstitial popup', icon: '💬', cropWidth: 600,  cropHeight: 400, previewAspect: '600/400' },
@@ -95,15 +95,43 @@ type CropState = { startX: number; startY: number; endX: number; endY: number; d
 const ImageCropper: React.FC<{ srcUrl: string; placement: PlacementConfig; onCrop: (d: string) => void; onCancel: () => void; }> = ({ srcUrl, placement, onCrop, onCancel }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
-  const ar = placement.cropWidth / placement.cropHeight;
+  const ar = placement.cropWidth / placement.cropHeight;   // target W:H ratio in pixels
+
+  // Compute a crop box that maximises coverage of the container while locking AR.
+  // Coordinates are percentages of the container (0-100).
   const initCrop = useCallback((): CropState => {
-    const cw = containerRef.current?.clientWidth ?? 600;
-    const ch = containerRef.current?.clientHeight ?? 420;
-    const w = Math.min(60, 60); const h = w / ar;
-    const sx = (100 - w) / 2; const sy = (100 - h) / 2;
+    const con = containerRef.current;
+    const img = imgRef.current;
+    if (!con || !img) {
+      // Fallback: centre 60% wide box
+      const w = 60; const h = w / ar;
+      const sx = (100 - w) / 2; const sy = (100 - h) / 2;
+      return { startX: sx, startY: sy, endX: sx + w, endY: sy + h, dragging: false, dragFrom: null, resizing: null };
+    }
+    // Pixel dimensions of container and rendered image
+    const cRect = con.getBoundingClientRect();
+    const iRect = img.getBoundingClientRect();
+    // Image occupies these % of the container
+    const imgW = (iRect.width  / cRect.width)  * 100;
+    const imgH = (iRect.height / cRect.height) * 100;
+    // Container pixel AR (needed to translate pixel AR → % AR)
+    const conAR = cRect.width / cRect.height;  // container W:H
+    // In percentage space the effective AR is: (pixelAR * containerH/containerW) = pixelAR/conAR
+    const pctAR = ar / conAR;  // (crop_w% / crop_h%)
+    // Fit crop box inside the visible image area
+    let w = imgW;
+    let h = w / pctAR;
+    if (h > imgH) { h = imgH; w = h * pctAR; }
+    // Centre inside the image area
+    const imgLeft = ((iRect.left - cRect.left) / cRect.width) * 100;
+    const imgTop  = ((iRect.top  - cRect.top)  / cRect.height) * 100;
+    const sx = imgLeft + (imgW - w) / 2;
+    const sy = imgTop  + (imgH - h) / 2;
     return { startX: sx, startY: sy, endX: sx + w, endY: sy + h, dragging: false, dragFrom: null, resizing: null };
   }, [ar]);
+
   const [cropState, setCropState] = useState<CropState>(initCrop);
+  const reinitCrop = useCallback(() => setCropState(initCrop()), [initCrop]);
 
   const getImageRect = () => {
     const img = imgRef.current; const con = containerRef.current;
@@ -137,11 +165,17 @@ const ImageCropper: React.FC<{ srcUrl: string; placement: PlacementConfig; onCro
   };
 
   useEffect(() => {
+    const conAR = (() => {
+      const c = containerRef.current;
+      return c ? c.clientWidth / c.clientHeight : 1;
+    });
     const onMove = (e: MouseEvent) => {
       const con = containerRef.current; if (!con) return;
       const rect = con.getBoundingClientRect();
+      const cAR = rect.width / rect.height;   // container pixel AR
+      const pctAR = ar / cAR;                 // effective AR in % space
       const mx = ((e.clientX - rect.left) / rect.width) * 100;
-      const my = ((e.clientY - rect.top) / rect.height) * 100;
+      const my = ((e.clientY - rect.top)  / rect.height) * 100;
       setCropState(s => {
         if (s.dragging && s.dragFrom) {
           const dx = mx - s.dragFrom.x; const dy = my - s.dragFrom.y;
@@ -152,10 +186,11 @@ const ImageCropper: React.FC<{ srcUrl: string; placement: PlacementConfig; onCro
         }
         if (s.resizing) {
           let { startX, startY, endX, endY } = s;
-          if (s.resizing === 'se') { endX = mx; endY = startY + (mx - startX) / ar; }
-          else if (s.resizing === 'sw') { startX = mx; endY = startY + (endX - mx) / ar; }
-          else if (s.resizing === 'ne') { endX = mx; startY = endY - (mx - startX) / ar; }
-          else if (s.resizing === 'nw') { startX = mx; startY = endY - (endX - mx) / ar; }
+          // All AR calculations use pctAR (% width / % height)
+          if (s.resizing === 'se') { endX = mx; endY = startY + (endX - startX) / pctAR; }
+          else if (s.resizing === 'sw') { startX = mx; endY = startY + (endX - startX) / pctAR; }
+          else if (s.resizing === 'ne') { endX = mx; startY = endY - (endX - startX) / pctAR; }
+          else if (s.resizing === 'nw') { startX = mx; startY = endY - (endX - startX) / pctAR; }
           startX = Math.max(0, Math.min(startX, endX - 5));
           startY = Math.max(0, Math.min(startY, endY - 5));
           endX = Math.min(100, endX); endY = Math.min(100, endY);
@@ -182,6 +217,7 @@ const ImageCropper: React.FC<{ srcUrl: string; placement: PlacementConfig; onCro
     const sy = Math.max(0, relSY * img.naturalHeight);
     const sw = Math.max(1, (relEX - relSX) * img.naturalWidth);
     const sh = Math.max(1, (relEY - relSY) * img.naturalHeight);
+    // Save at exact panel dimensions so object-cover fills perfectly
     const canvas = document.createElement('canvas');
     canvas.width = placement.cropWidth; canvas.height = placement.cropHeight;
     canvas.getContext('2d')!.drawImage(img, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
@@ -200,7 +236,7 @@ const ImageCropper: React.FC<{ srcUrl: string; placement: PlacementConfig; onCro
         </div>
       </div>
       <div ref={containerRef} className="relative overflow-hidden rounded-xl border-2 border-emerald-400/40 cursor-crosshair bg-slate-900" style={{ userSelect: 'none' }} onMouseDown={onMouseDown}>
-        <img ref={imgRef} src={srcUrl} alt="crop" className="w-full block max-h-[380px] object-contain" draggable={false} />
+        <img ref={imgRef} src={srcUrl} alt="crop" className="w-full block max-h-[380px] object-contain" draggable={false} onLoad={reinitCrop} />
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute top-0 left-0 right-0 bg-black/50" style={{ height: `${startY}%` }} />
           <div className="absolute left-0 right-0 bottom-0 bg-black/50" style={{ height: `${100 - endY}%` }} />
@@ -529,7 +565,7 @@ const AdForm: React.FC<AdFormProps> = ({ form, setForm, adding, showCropper, raw
                     className="w-full border-2 border-dashed border-slate-300 rounded-xl flex flex-col items-center justify-center gap-2 hover:border-emerald-400 hover:bg-emerald-50 transition-all py-6">
                     <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center"><Upload className="h-5 w-5 text-slate-400" /></div>
                     <span className="text-xs text-slate-500 font-medium">Click to upload (JPG/PNG/WebP, max 20MB)</span>
-                    <span className="text-[10px] text-slate-400">Will be cropped to {placementCfg.cropWidth}×{placementCfg.cropHeight}px</span>
+                    <span className="text-[10px] text-slate-400">Full image used — no auto-crop (uses object-contain)</span>
                   </button>
                 )}
                 <input ref={localFileRef} type="file" accept="image/*" className="hidden"

@@ -4,10 +4,12 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
-  Radio, Globe, Clock, FileText, Users, ArrowLeft,
-  CheckCircle, Timer, BarChart2, Eye
+  Radio, Clock, FileText, Users, ArrowLeft,
+  CheckCircle, Timer, BarChart2, Target,
+  Award, TrendingUp, Calendar, Play
 } from 'lucide-react';
 import { toast } from 'sonner';
+import LiveTestLeaderboardModal from '@/components/student/quiz/LiveTestLeaderboardModal';
 
 // ── Data ──────────────────────────────────────────────────────────────────────
 type TestStatus = 'register' | 'registered' | 'start';
@@ -174,70 +176,269 @@ const CountdownStrip = ({ targetDate }: { targetDate: Date }) => {
 };
 
 // ── Live Test Card ─────────────────────────────────────────────────────────────
-const LiveTestCard = ({ test, onRegister }: { test: LiveTest; onRegister: (id: number) => void }) => {
+const LiveTestCard = ({ 
+  test, 
+  onRegister, 
+  onStartTest,
+  onShowLeaderboard,
+  isCompleted,
+  isInProgress,
+  onContinueTest
+}: { 
+  test: LiveTest; 
+  onRegister: (id: number) => void;
+  onStartTest: (test: LiveTest) => void;
+  onShowLeaderboard: (test: LiveTest) => void;
+  isCompleted?: boolean;
+  isInProgress?: boolean;
+  onContinueTest?: (test: LiveTest) => void;
+}) => {
+  const isLive = test.status === 'start';
+  const isEnded = new Date() > new Date(test.examDateTime.getTime() + test.duration * 60000);
+
   const getAction = () => {
-    if (test.status === 'registered') {
+    // After test ends - Show only Leaderboard, Solution, Analysis
+    if (isEnded) {
       return (
-        <div className="flex items-center gap-1 text-emerald-600 font-semibold text-[10px] sm:text-xs bg-emerald-50 dark:bg-emerald-950 px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-full border border-emerald-200 dark:border-emerald-800">
-          <CheckCircle className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> <span className="hidden xs:inline">Registered</span>
+        <div className="space-y-2">
+          <Button 
+            size="sm" 
+            className="w-full h-8 text-xs font-semibold gap-1.5 bg-slate-800 hover:bg-slate-900 text-white"
+            onClick={() => onShowLeaderboard(test)}
+          >
+            <TrendingUp className="h-3.5 w-3.5" />
+            View Leaderboard
+          </Button>
+          <div className="grid grid-cols-2 gap-2">
+            <Button 
+              size="sm" 
+              variant="outline"
+              className="h-8 text-xs font-semibold gap-1.5"
+              onClick={() => {
+                window.open(
+                  `/student/exam-window?testId=${test.id}&title=${encodeURIComponent(test.title)}&duration=${test.duration}&questions=${test.questions}&mode=solution`,
+                  '_blank',
+                  'width=1920,height=1080,menubar=no,toolbar=no,location=no,status=no'
+                );
+              }}
+            >
+              <FileText className="h-3.5 w-3.5" />
+              Solution
+            </Button>
+            <Button 
+              size="sm" 
+              variant="outline"
+              className="h-8 text-xs font-semibold gap-1.5"
+            >
+              <BarChart2 className="h-3.5 w-3.5" />
+              Analysis
+            </Button>
+          </div>
         </div>
       );
     }
-    if (test.status === 'start') {
-      return <Button size="sm" className="h-7 sm:h-8 text-[10px] sm:text-xs px-2.5 sm:px-4">Start Now</Button>;
+
+    // Test completed
+    if (isCompleted) {
+      return (
+        <div className="space-y-2">
+          <Button 
+            size="sm" 
+            className="w-full h-8 text-xs font-semibold gap-1.5 bg-slate-800 hover:bg-slate-900 text-white"
+            onClick={() => onShowLeaderboard(test)}
+          >
+            <TrendingUp className="h-3.5 w-3.5" />
+            View Leaderboard
+          </Button>
+          <div className="grid grid-cols-2 gap-2">
+            <Button 
+              size="sm" 
+              variant="outline"
+              className="h-8 text-xs font-semibold gap-1.5"
+              onClick={() => {
+                window.open(
+                  `/student/exam-window?testId=${test.id}&title=${encodeURIComponent(test.title)}&duration=${test.duration}&questions=${test.questions}&mode=solution`,
+                  '_blank',
+                  'width=1920,height=1080,menubar=no,toolbar=no,location=no,status=no'
+                );
+              }}
+            >
+              <FileText className="h-3.5 w-3.5" />
+              Solution
+            </Button>
+            <Button 
+              size="sm" 
+              variant="outline"
+              className="h-8 text-xs font-semibold gap-1.5"
+            >
+              <BarChart2 className="h-3.5 w-3.5" />
+              Analysis
+            </Button>
+          </div>
+        </div>
+      );
     }
+
+    // In progress (paused)
+    if (isInProgress) {
+      return (
+        <div className="space-y-2">
+          <Button 
+            size="sm" 
+            className="w-full h-8 text-xs font-semibold gap-1.5 bg-slate-800 hover:bg-slate-900 text-white"
+            onClick={() => onContinueTest?.(test)}
+          >
+            <Play className="h-3.5 w-3.5" />
+            Continue Test
+          </Button>
+          <Button 
+            size="sm" 
+            variant="outline"
+            className="w-full h-8 text-xs font-semibold gap-1.5"
+            onClick={() => onShowLeaderboard(test)}
+          >
+            <TrendingUp className="h-3.5 w-3.5" />
+            View Leaderboard
+          </Button>
+        </div>
+      );
+    }
+
+    // Test is live - Show Leaderboard and Start
+    if (isLive) {
+      return (
+        <div className="space-y-2">
+          <Button 
+            size="sm" 
+            className="w-full h-8 text-xs font-semibold gap-1.5 bg-slate-800 hover:bg-slate-900 text-white"
+            onClick={() => onStartTest(test)}
+          >
+            <Play className="h-3.5 w-3.5" />
+            Start Test
+          </Button>
+          <Button 
+            size="sm" 
+            variant="outline"
+            className="w-full h-8 text-xs font-semibold gap-1.5"
+            onClick={() => onShowLeaderboard(test)}
+          >
+            <TrendingUp className="h-3.5 w-3.5" />
+            View Leaderboard
+          </Button>
+        </div>
+      );
+    }
+
+    // Registered - Show Start Test
+    if (test.status === 'registered') {
+      return (
+        <div className="space-y-2">
+          <Button 
+            size="sm" 
+            className="w-full h-8 text-xs font-semibold gap-1.5 bg-slate-800 hover:bg-slate-900 text-white"
+            onClick={() => onStartTest(test)}
+          >
+            <Play className="h-3.5 w-3.5" />
+            Start Test
+          </Button>
+          <Button 
+            size="sm" 
+            variant="outline"
+            className="w-full h-8 text-xs font-semibold gap-1.5"
+            onClick={() => onShowLeaderboard(test)}
+          >
+            <TrendingUp className="h-3.5 w-3.5" />
+            View Leaderboard
+          </Button>
+        </div>
+      );
+    }
+
+    // Not registered - Show Register
     return (
-      <Button size="sm" className="h-7 sm:h-8 text-[10px] sm:text-xs px-2.5 sm:px-4" onClick={() => onRegister(test.id)}>
-        Register
+      <Button 
+        size="sm" 
+        className="w-full h-8 text-xs font-semibold gap-1.5 bg-slate-800 hover:bg-slate-900 text-white" 
+        onClick={() => onRegister(test.id)}
+      >
+        <Target className="h-3.5 w-3.5" />
+        Register Now
       </Button>
     );
   };
 
   return (
-    <Card className={`p-3 sm:p-4 border hover:shadow-md transition-all group ${test.status === 'registered' ? 'border-emerald-200 dark:border-emerald-800' : ''}`}>
-      <div className="flex items-center gap-1.5 sm:gap-2 mb-2 sm:mb-3">
-        <Badge className="bg-red-500 text-white text-[9px] sm:text-[10px] font-bold flex items-center gap-1 h-4.5 sm:h-5 px-1.5 sm:px-2">
-          <span className="relative flex h-1.5 w-1.5">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75" />
-            <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-white" />
-          </span>
-          <span className="hidden xs:inline">LIVE TEST</span>
-        </Badge>
-        <Badge className="bg-emerald-500 text-white text-[9px] sm:text-[10px] font-bold h-4.5 sm:h-5 px-1.5 sm:px-2">FREE</Badge>
-      </div>
+    <Card className="group relative border-2 border-slate-200 bg-white transition-all duration-200 hover:shadow-lg hover:border-slate-300">
+      <div className="p-3">
+        {/* Header: Badges */}
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-1.5">
+            {isLive && (
+              <Badge className="bg-red-500 text-white text-[10px] font-bold flex items-center gap-1 h-5 px-2">
+                <span className="relative flex h-1.5 w-1.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75" />
+                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-white" />
+                </span>
+                LIVE
+              </Badge>
+            )}
+            <Badge className="bg-slate-600 text-white text-[10px] font-bold h-5 px-2">
+              FREE
+            </Badge>
+          </div>
+          <div className="text-[10px] font-semibold text-slate-400">
+            #{test.id}
+          </div>
+        </div>
 
-      <h3 className="font-semibold text-xs sm:text-sm leading-snug mb-2 sm:mb-3 group-hover:text-primary transition-colors line-clamp-2 min-h-[2rem] sm:min-h-[2.5rem]">
-        {test.title}
-      </h3>
+        {/* Title */}
+        <h3 className="font-semibold text-xs leading-tight text-slate-800 mb-2 line-clamp-2 min-h-[2rem]">
+          {test.title}
+        </h3>
 
-      <div className="flex items-center gap-2 sm:gap-3 text-[10px] sm:text-xs text-muted-foreground mb-2 sm:mb-3 flex-wrap">
-        <span className="flex items-center gap-1"><FileText className="h-2.5 w-2.5 sm:h-3 sm:w-3" />{test.questions} Qs</span>
-        <span className="opacity-40">|</span>
-        <span className="flex items-center gap-1"><Clock className="h-2.5 w-2.5 sm:h-3 sm:w-3" />{test.duration} Mins</span>
-        <span className="opacity-40">|</span>
-        <span>{test.marks} Marks</span>
-      </div>
+        {/* Stats Row */}
+        <div className="flex items-center gap-2 mb-2 text-xs text-slate-600">
+          <div className="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded">
+            <FileText className="h-3 w-3" />
+            <span className="font-medium">{test.questions} Qs</span>
+          </div>
+          <div className="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded">
+            <Clock className="h-3 w-3" />
+            <span className="font-medium">{test.duration} Min</span>
+          </div>
+          <div className="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded">
+            <Award className="h-3 w-3" />
+            <span className="font-medium">{test.marks} Marks</span>
+          </div>
+        </div>
 
-      <div className="flex items-center justify-between gap-2">
-        <span className="text-[9px] sm:text-[11px] text-muted-foreground flex items-center gap-1 min-w-0">
-          <Clock className="h-2.5 w-2.5 sm:h-3 sm:w-3 shrink-0" />
+        {/* Date Range */}
+        <div className="flex items-center gap-1.5 text-[11px] text-slate-500 mb-3">
+          <Calendar className="h-3.5 w-3.5" />
           <span className="truncate">{test.startDate} to {test.endDate}</span>
-        </span>
-        <div className="shrink-0">{getAction()}</div>
-      </div>
+        </div>
 
-      {test.status === 'registered' && <CountdownStrip targetDate={test.examDateTime} />}
+        {/* Countdown for registered tests */}
+        {test.status === 'registered' && !isLive && (
+          <div className="mb-3">
+            <CountdownStrip targetDate={test.examDateTime} />
+          </div>
+        )}
 
-      <div className="flex items-center gap-1.5 mt-2 sm:mt-3 pt-2 sm:pt-3 border-t">
-        <Globe className="h-2.5 w-2.5 sm:h-3 sm:w-3 text-muted-foreground shrink-0" />
-        <p className="text-[9px] sm:text-[11px] text-muted-foreground">
-          {test.languages.map((lang, i) => (
-            <span key={i}>
-              {i > 0 && <span className="mx-0.5">,</span>}
-              <span className={lang.startsWith('+') ? 'text-primary font-medium' : ''}>{lang}</span>
-            </span>
-          ))}
-        </p>
+        {/* Action Buttons */}
+        <div className="border-t border-slate-100 pt-3">
+          {getAction()}
+        </div>
+
+        {/* Completed badge */}
+        {isCompleted && (
+          <div className="absolute top-2 right-2">
+            <div className="flex items-center gap-1 text-slate-600 font-semibold text-[10px] bg-slate-100 px-2 py-1 rounded border border-slate-200">
+              <CheckCircle className="h-3 w-3" />
+              <span>Done</span>
+            </div>
+          </div>
+        )}
       </div>
     </Card>
   );
@@ -247,47 +448,99 @@ const LiveTestCard = ({ test, onRegister }: { test: LiveTest; onRegister: (id: n
 const AttemptedCard = ({ test }: { test: AttemptedTest }) => {
   const percentage = Math.round((test.score / test.totalMarks) * 100);
   const scoreColor = percentage >= 70 ? 'text-emerald-600' : percentage >= 50 ? 'text-amber-600' : 'text-red-500';
-  const scoreBg = percentage >= 70 ? 'bg-emerald-50 dark:bg-emerald-950 border-emerald-200' : percentage >= 50 ? 'bg-amber-50 dark:bg-amber-950 border-amber-200' : 'bg-red-50 dark:bg-red-950 border-red-200';
+  const scoreGradient = percentage >= 70 
+    ? 'from-emerald-500 to-emerald-600 bg-gradient-to-br' 
+    : percentage >= 50 
+    ? 'from-amber-500 to-amber-600 bg-gradient-to-br'
+    : 'from-red-500 to-red-600 bg-gradient-to-br';
+  const scoreBg = percentage >= 70 
+    ? 'bg-emerald-50 border-emerald-200' 
+    : percentage >= 50 
+    ? 'bg-amber-50 border-amber-200' 
+    : 'bg-red-50 border-red-200';
 
   return (
-    <Card className="p-3 sm:p-4 border hover:shadow-md transition-all">
-      {/* Title */}
-      <h3 className="font-semibold text-xs sm:text-sm line-clamp-2 mb-2 sm:mb-3 min-h-[2rem] sm:min-h-[2.5rem]">{test.title}</h3>
+    <Card className="group relative overflow-hidden border-2 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 bg-white">
+      {/* Top gradient bar */}
+      <div className={`h-1.5 ${scoreGradient}`} />
+      
+      <div className="p-4">
+        {/* Title */}
+        <h3 className="font-bold text-sm leading-snug text-slate-800 mb-3 line-clamp-2 min-h-[2.5rem] group-hover:text-primary transition-colors">
+          {test.title}
+        </h3>
 
-      {/* Meta */}
-      <div className="flex items-center gap-2 sm:gap-3 text-[10px] sm:text-xs text-muted-foreground mb-2 sm:mb-3 flex-wrap">
-        <span className="flex items-center gap-1"><FileText className="h-2.5 w-2.5 sm:h-3 sm:w-3" />{test.questions} Qs</span>
-        <span className="opacity-40">|</span>
-        <span className="flex items-center gap-1"><Clock className="h-2.5 w-2.5 sm:h-3 sm:w-3" />{test.duration} Mins</span>
-        <span className="opacity-40">|</span>
-        <span className="flex items-center gap-1"><Users className="h-2.5 w-2.5 sm:h-3 sm:w-3" />{test.totalAttempts.toLocaleString()}</span>
-      </div>
-
-      {/* Score strip */}
-      <div className={`flex items-center justify-between rounded-lg px-2.5 sm:px-3 py-2 sm:py-2.5 border mb-2 sm:mb-3 ${scoreBg}`}>
-        <div>
-          <div className={`text-lg sm:text-xl font-bold ${scoreColor}`}>{percentage}%</div>
-          <div className="text-[9px] sm:text-[10px] text-muted-foreground">Score: {test.score}/{test.totalMarks}</div>
+        {/* Meta Info */}
+        <div className="flex items-center gap-3 text-xs text-slate-600 mb-4 flex-wrap">
+          <div className="flex items-center gap-1.5">
+            <FileText className="h-4 w-4 text-slate-500" />
+            <span className="font-medium">{test.questions} Questions</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <Clock className="h-4 w-4 text-slate-500" />
+            <span className="font-medium">{test.duration} Minutes</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <Users className="h-4 w-4 text-slate-500" />
+            <span className="font-medium">{test.totalAttempts.toLocaleString()} Attempts</span>
+          </div>
         </div>
-        <div className="text-right">
-          <div className="text-xs sm:text-sm font-bold">Rank #{test.rank}</div>
-          <div className="text-[9px] sm:text-[10px] text-muted-foreground">Accuracy {test.accuracy}%</div>
+
+        {/* Score Card */}
+        <div className={`rounded-xl p-4 border-2 mb-4 ${scoreBg}`}>
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="flex items-baseline gap-1 mb-1">
+                <span className={`text-3xl font-black ${scoreColor}`}>{percentage}</span>
+                <span className={`text-lg font-semibold ${scoreColor}`}>%</span>
+              </div>
+              <div className="text-xs text-slate-600 font-medium">
+                Score: <span className="font-bold">{test.score}</span> / {test.totalMarks}
+              </div>
+            </div>
+            <div className="text-right">
+              <div className="flex items-center gap-1.5 mb-1">
+                <Award className="h-5 w-5 text-primary" />
+                <span className="text-xl font-black text-slate-800">#{test.rank}</span>
+              </div>
+              <div className="text-xs text-slate-600 font-medium">
+                Accuracy: <span className="font-bold">{test.accuracy}%</span>
+              </div>
+            </div>
+          </div>
+          
+          {/* Progress bar */}
+          <div className="mt-3 pt-3 border-t border-slate-200">
+            <div className="flex items-center justify-between text-xs text-slate-600 mb-2">
+              <span className="font-medium">Performance</span>
+              <span className="font-bold">{percentage}%</span>
+            </div>
+            <div className="w-full h-2 bg-white rounded-full overflow-hidden border border-slate-200">
+              <div 
+                className={`h-full ${scoreGradient} transition-all duration-500`}
+                style={{ width: `${percentage}%` }}
+              />
+            </div>
+          </div>
         </div>
-      </div>
 
-      {/* Date */}
-      <div className="text-[9px] sm:text-[11px] text-muted-foreground mb-2 sm:mb-3 flex items-center gap-1">
-        <Clock className="h-2.5 w-2.5 sm:h-3 sm:w-3" /> Attempted on {test.attemptedDate}
-      </div>
+        {/* Attempt Date */}
+        <div className="flex items-center gap-2 text-xs text-slate-600 mb-4 bg-slate-50 rounded-lg px-3 py-2 border border-slate-200">
+          <Calendar className="h-4 w-4 text-slate-500" />
+          <span className="font-medium">Attempted on {test.attemptedDate}</span>
+        </div>
 
-      {/* Action buttons */}
-      <div className="flex gap-1.5 sm:gap-2">
-        <Button variant="outline" size="sm" className="flex-1 h-7 sm:h-8 text-[10px] sm:text-xs gap-1">
-          <Eye className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> <span className="hidden xs:inline">Result</span>
-        </Button>
-        <Button size="sm" className="flex-1 h-7 sm:h-8 text-[10px] sm:text-xs gap-1">
-          <BarChart2 className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> <span className="hidden xs:inline">Analysis</span>
-        </Button>
+        {/* Action Buttons */}
+        <div className="grid grid-cols-2 gap-2">
+          <Button variant="outline" size="sm" className="h-10 text-xs font-semibold gap-2 hover:bg-slate-50 border-2">
+            <Eye className="h-4 w-4" />
+            Result
+          </Button>
+          <Button size="sm" className="h-10 text-xs font-semibold gap-2 bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-md hover:shadow-lg transition-all">
+            <TrendingUp className="h-4 w-4" />
+            Analysis
+          </Button>
+        </div>
       </div>
     </Card>
   );
@@ -299,6 +552,42 @@ type TabType = 'all' | 'quizzes' | 'attempted';
 const LiveTests = () => {
   const [tests, setTests] = React.useState<LiveTest[]>(baseTests);
   const [activeTab, setActiveTab] = React.useState<TabType>('all');
+  const [selectedTestForLeaderboard, setSelectedTestForLeaderboard] = useState<LiveTest | null>(null);
+  const [testCompletions, setTestCompletions] = useState<Record<number, { score: number; completedAt: string }>>({});
+  const [inProgressTests, setInProgressTests] = useState<Record<number, { startTime: string; lastSaved: string }>>({});
+
+  // Load test completions from localStorage
+  React.useEffect(() => {
+    const savedCompletions = localStorage.getItem('liveTestCompletions');
+    if (savedCompletions) {
+      try {
+        setTestCompletions(JSON.parse(savedCompletions));
+      } catch (e) {
+        console.error('Failed to parse test completions:', e);
+      }
+    }
+    
+    const savedInProgress = localStorage.getItem('liveTestInProgress');
+    if (savedInProgress) {
+      try {
+        setInProgressTests(JSON.parse(savedInProgress));
+      } catch (e) {
+        console.error('Failed to parse in-progress tests:', e);
+      }
+    }
+  }, []);
+
+  // Real-time leaderboard update every 30 seconds
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      // Trigger re-render of leaderboard modal if open
+      if (selectedTestForLeaderboard) {
+        setSelectedTestForLeaderboard({ ...selectedTestForLeaderboard });
+      }
+    }, 30000); // Update every 30 seconds
+    
+    return () => clearInterval(interval);
+  }, [selectedTestForLeaderboard]);
 
   const handleRegister = (id: number) => {
     const test = tests.find(t => t.id === id);
@@ -307,8 +596,66 @@ const LiveTests = () => {
     const stored = JSON.parse(localStorage.getItem('liveTestRegistrations') || '{}');
     stored[id] = { registeredAt: new Date().toISOString(), title: test.title };
     localStorage.setItem('liveTestRegistrations', JSON.stringify(stored));
-    toast.success(`You have successfully registered for\n${test.title}`, {
-      description: `Exam on ${test.startDate}. A live countdown will appear on your card.`,
+    toast.success(`Successfully registered for ${test.title}`, {
+      duration: 3000,
+    });
+  };
+
+  const handleStartTest = (test: LiveTest) => {
+    // Save in-progress state
+    const newInProgress = {
+      ...inProgressTests,
+      [test.id]: {
+        startTime: new Date().toISOString(),
+        lastSaved: new Date().toISOString()
+      }
+    };
+    setInProgressTests(newInProgress);
+    localStorage.setItem('liveTestInProgress', JSON.stringify(newInProgress));
+    
+    // Open exam window for the live test
+    window.open(
+      `/student/exam-window?testId=${test.id}&title=${encodeURIComponent(test.title)}&duration=${test.duration}&questions=${test.questions}&marks=${test.marks}&mode=exam`,
+      '_blank',
+      'width=1920,height=1080,menubar=no,toolbar=no,location=no,status=no'
+    );
+    
+    toast.info('📝 Exam window opened. Good luck!', {
+      duration: 3000,
+    });
+  };
+
+  const handleContinueTest = (test: LiveTest) => {
+    // Open exam window to continue
+    window.open(
+      `/student/exam-window?testId=${test.id}&title=${encodeURIComponent(test.title)}&duration=${test.duration}&questions=${test.questions}&marks=${test.marks}&mode=continue`,
+      '_blank',
+      'width=1920,height=1080,menubar=no,toolbar=no,location=no,status=no'
+    );
+    
+    toast.info('📝 Continuing your exam...', {
+      duration: 3000,
+    });
+  };
+
+  const handleTestComplete = (testId: number, score: number) => {
+    const completions = {
+      ...testCompletions,
+      [testId]: {
+        score,
+        completedAt: new Date().toISOString()
+      }
+    };
+    setTestCompletions(completions);
+    localStorage.setItem('liveTestCompletions', JSON.stringify(completions));
+    
+    // Remove from in-progress
+    const newInProgress = { ...inProgressTests };
+    delete newInProgress[testId];
+    setInProgressTests(newInProgress);
+    localStorage.setItem('liveTestInProgress', JSON.stringify(newInProgress));
+    
+    toast.success(`🎉 Test completed! Score: ${score}%`, {
       duration: 5000,
     });
   };
@@ -381,10 +728,28 @@ const LiveTests = () => {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5">
             {filteredTests.map(test => (
-              <LiveTestCard key={test.id} test={test} onRegister={handleRegister} />
+              <LiveTestCard
+                key={test.id}
+                test={test}
+                onRegister={handleRegister}
+                onStartTest={handleStartTest}
+                onContinueTest={handleContinueTest}
+                onShowLeaderboard={setSelectedTestForLeaderboard}
+                isCompleted={!!testCompletions[test.id]}
+                isInProgress={!!inProgressTests[test.id]}
+              />
             ))}
           </div>
         )
+      )}
+
+      {/* Live Test Leaderboard Modal */}
+      {selectedTestForLeaderboard && (
+        <LiveTestLeaderboardModal
+          test={selectedTestForLeaderboard}
+          onClose={() => setSelectedTestForLeaderboard(null)}
+          userCompletion={testCompletions[selectedTestForLeaderboard.id]}
+        />
       )}
     </div>
   );
