@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, Target, Trophy, Zap, Clock, TrendingUp, Users, Grid3X3, List } from 'lucide-react';
+import { ArrowLeft, Target, Trophy, Zap, Clock, TrendingUp, Users, Grid3X3, List, CheckCircle2, ShoppingCart } from 'lucide-react';
 import { ExamProgressDashboard } from '@/components/student/exam/ExamProgressDashboard';
 import { TestTypeGrid } from '@/components/student/exam/TestTypeGrid';
 import { ExamPerformanceTab } from '@/components/student/exam/ExamPerformanceTab';
@@ -17,12 +17,29 @@ import { getExamsByCategory } from '@/data/examData';
 import { useExamCatalog, type TestSubject } from '@/hooks/useExamCatalog';
 import { getExamTheme } from '@/utils/examTheme';
 
+/* ─── helpers ─────────────────────────────────────────────────────────────── */
+
+/** Persist per-exam purchase state in localStorage */
+const PURCHASE_KEY = (examId: string) => `exam_purchased_${examId}`;
+
 const ExamDetail = () => {
   const { category, examId } = useParams();
   const [activeTab, setActiveTab] = useState("prelims");
   const [activeSubTab, setActiveSubTab] = useState("full");
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const { progressData, getTypeProgress, setProgressData, updateTestProgress } = useExamProgress(examId!);
+
+  /* ─── purchase state ─── */
+  const [isPurchased, setIsPurchased] = useState<boolean>(() => {
+    if (!examId) return false;
+    return localStorage.getItem(PURCHASE_KEY(examId)) === 'true';
+  });
+
+  const handleBuy = () => {
+    if (!examId) return;
+    localStorage.setItem(PURCHASE_KEY(examId), 'true');
+    setIsPurchased(true);
+  };
 
   const { catalog } = useExamCatalog();
 
@@ -295,73 +312,197 @@ const ExamDetail = () => {
         </Link>
       </div>
 
-      {/* ── Header card (testbook-style) ── */}
+      {/* ══════════════════════════════════════════════════════════════════════
+          EXAM HEADER CARD  ·  unified surface, state-aware left + right
+      ══════════════════════════════════════════════════════════════════════ */}
       <div
-        className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden"
-        style={{ borderTop: `3px solid ${theme.borderColor}` }}
+        className="rounded-2xl border border-slate-200 overflow-hidden"
+        style={{
+          borderTop: `3px solid ${theme.borderColor}`,
+          boxShadow: '0 2px 12px 0 rgba(0,0,0,.07)',
+          background: '#fff',
+        }}
       >
-        <div className="flex flex-col sm:flex-row items-start gap-0">
+        <div className="flex flex-col sm:flex-row items-stretch min-h-[160px]">
 
-          {/* LEFT — logo + title + chips */}
-          <div className="flex-1 p-4 sm:p-5 flex gap-3 sm:gap-4 items-start">
-            {/* Logo */}
+          {/* ── LEFT  ── logo · title · stats ── */}
+          <div className="flex-1 p-5 sm:p-6 flex gap-4 items-start">
+
+            {/* Logo — 48 × 48, tinted ring that picks up the exam colour */}
             <div
-              className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm overflow-hidden mt-0.5"
-              style={{ background: `${theme.borderColor}18`, border: `1.5px solid ${theme.borderColor}40` }}
+              className="flex-shrink-0 rounded-xl overflow-hidden"
+              style={{
+                width: 48, height: 48,
+                background: `${theme.borderColor}14`,
+                border: `2px solid ${theme.borderColor}30`,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                marginTop: 2,
+              }}
             >
               {isLogoUrl ? (
-                <img src={examLogo as string} alt={examName} className="w-8 h-8 object-contain"
+                <img
+                  src={examLogo as string} alt={examName}
+                  style={{ width: 34, height: 34, objectFit: 'contain' }}
                   onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                 />
               ) : (
-                <span className="text-2xl">{examLogo}</span>
+                <span style={{ fontSize: 22 }}>{examLogo}</span>
               )}
             </div>
 
-            {/* Title + meta */}
+            {/* Title + dashboard */}
             <div className="flex-1 min-w-0">
-              <h1 className="text-lg sm:text-xl font-extrabold text-slate-900 leading-tight">{examName}</h1>
-
-              {/* Compact stats + rings — inside header */}
-              <div className="mt-3">
-                <ExamProgressDashboard
-                  progressData={progressData}
-                  getTypeProgress={getTypeProgress}
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* RIGHT — price panel (sticky top-right) */}
-          <div
-            className="sm:w-52 border-t sm:border-t-0 sm:border-l border-slate-200 p-4 flex flex-col gap-3 bg-slate-50 sm:rounded-tr-2xl sm:sticky sm:top-4 self-start"
-          >
-            {/* Validity badge */}
-            <span
-              className="self-start text-[10px] font-bold px-2 py-0.5 rounded-full text-white"
-              style={{ background: theme.borderColor }}
-            >
-              Validity: 12 Month(s)
-            </span>
-
-            {/* Pack name + desc */}
-            <div>
-              <p className="text-sm font-bold text-slate-800 leading-tight">{examName.split(' ').slice(0, 2).join(' ')} PRE</p>
-              <p className="text-[11px] text-slate-500 mt-0.5">15 + 15 (2025 + 2026) Mock Tests</p>
-            </div>
-
-            {/* Price row */}
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-slate-400 line-through">₹379</span>
-              <span className="text-lg font-extrabold text-slate-900">₹199</span>
-              <button
-                className="ml-auto text-xs font-bold text-white px-3 py-1.5 rounded-lg"
-                style={{ background: theme.borderColor }}
+              {/* Exam name — 22 px / 800 weight */}
+              <h1
+                className="font-extrabold text-slate-900 leading-tight"
+                style={{ fontSize: 22 }}
               >
-                Buy Now
-              </button>
+                {examName}
+              </h1>
+
+              {/* State-aware progress dashboard */}
+              <ExamProgressDashboard
+                progressData={progressData}
+                getTypeProgress={getTypeProgress}
+                isPurchased={isPurchased}
+                totalUsersPublic={3435}
+                totalTestsAvailable={120}
+                totalCleared={567}
+              />
             </div>
           </div>
+
+          {/* ── RIGHT  ── purchase / unlocked panel ─────────────────────── */}
+          {/*  Uses a soft tinted column that shares the card's corner radius
+               and has matching 24 px internal padding.  No inner border box,
+               no extra shadow — it IS part of the card, not on top of it.   */}
+          <div
+            className="sm:w-60 flex-shrink-0 flex flex-col"
+            style={{
+              background: isPurchased ? '#f0fdf4' : '#f8fafc',
+              borderLeft: '1px solid',
+              borderColor: isPurchased ? '#d1fae5' : '#e2e8f0',
+              /* inherit the card's rounded-right corners */
+              borderRadius: '0 16px 16px 0',
+              padding: 24,
+            }}
+          >
+            {isPurchased ? (
+              /* ── AFTER PURCHASE: Course Unlocked ── */
+              <div className="flex flex-col items-center justify-center gap-3 h-full text-center">
+                {/* circle tick */}
+                <div
+                  className="flex items-center justify-center rounded-full"
+                  style={{
+                    width: 56, height: 56,
+                    background: theme.borderColor,
+                    boxShadow: `0 4px 14px 0 ${theme.borderColor}45`,
+                  }}
+                >
+                  <CheckCircle2 style={{ width: 28, height: 28, color: '#fff' }} />
+                </div>
+
+                {/* text */}
+                <div>
+                  <p style={{ fontSize: 16, fontWeight: 800, color: '#1e293b' }}>Course Unlocked!</p>
+                  <p style={{ fontSize: 11, color: '#64748b', marginTop: 3 }}>You have unlocked the full course</p>
+                </div>
+
+                {/* CTA */}
+                <button
+                  onClick={() => setActiveTab('prelims')}
+                  className="w-full font-bold text-white transition-opacity hover:opacity-90 active:scale-95"
+                  style={{
+                    fontSize: 13,
+                    padding: '10px 0',
+                    borderRadius: 12,
+                    background: theme.borderColor,
+                    boxShadow: `0 2px 8px 0 ${theme.borderColor}40`,
+                    border: 'none',
+                    cursor: 'pointer',
+                    transition: 'opacity .15s, transform .1s',
+                  }}
+                >
+                  Continue Learning
+                </button>
+
+                {/* validity */}
+                <div
+                  className="flex items-center gap-1.5"
+                  style={{ fontSize: 11, color: '#94a3b8' }}
+                >
+                  <Clock style={{ width: 12, height: 12 }} />
+                  <span>Valid for 256 days</span>
+                </div>
+              </div>
+            ) : (
+              /* ── BEFORE PURCHASE: Buy CTA ── */
+              <div className="flex flex-col gap-3 h-full">
+                {/* validity badge */}
+                <span
+                  className="self-start font-bold text-white"
+                  style={{
+                    fontSize: 10,
+                    padding: '3px 10px',
+                    borderRadius: 999,
+                    background: theme.borderColor,
+                  }}
+                >
+                  Valid for 12 months
+                </span>
+
+                {/* package name */}
+                <div>
+                  <p
+                    className="font-extrabold text-slate-800 leading-snug"
+                    style={{ fontSize: 14 }}
+                  >
+                    Get the {examName.split(' ').slice(0, 3).join(' ')} Full Package
+                  </p>
+                  <span
+                    className="inline-block font-semibold"
+                    style={{
+                      fontSize: 11,
+                      marginTop: 6,
+                      padding: '2px 8px',
+                      borderRadius: 999,
+                      background: `${theme.borderColor}18`,
+                      color: theme.borderColor,
+                    }}
+                  >
+                    Prelims + Mains
+                  </span>
+                </div>
+
+                {/* price — push to bottom */}
+                <div className="mt-auto flex items-baseline gap-2">
+                  <span style={{ fontSize: 13, color: '#94a3b8', textDecoration: 'line-through' }}>₹999</span>
+                  <span style={{ fontSize: 26, fontWeight: 800, color: '#1e293b', lineHeight: 1 }}>₹299</span>
+                </div>
+
+                {/* buy button */}
+                <button
+                  id="exam-buy-btn"
+                  onClick={handleBuy}
+                  className="w-full flex items-center justify-center gap-2 font-bold text-white
+                             hover:opacity-90 active:scale-95 transition-all"
+                  style={{
+                    fontSize: 14,
+                    padding: '11px 0',
+                    borderRadius: 12,
+                    background: theme.borderColor,
+                    boxShadow: `0 3px 10px 0 ${theme.borderColor}50`,
+                    border: 'none',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <ShoppingCart style={{ width: 16, height: 16 }} />
+                  Buy
+                </button>
+              </div>
+            )}
+          </div>
+
         </div>
       </div>
 
