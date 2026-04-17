@@ -4,7 +4,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Clock, CheckCircle, Play, RotateCcw, Trophy, Calendar, BarChart3, BookOpen, Users, FileText, Award } from 'lucide-react';
+import { Clock, CheckCircle, Play, RotateCcw, Trophy, Calendar, BarChart3, BookOpen, Users, FileText, Award, Lock } from 'lucide-react';
 import { TestProgress } from '@/hooks/useExamProgress';
 import { Link, useParams } from 'react-router-dom';
 import { TestAnalysisModal } from './TestAnalysisModal';
@@ -27,6 +27,7 @@ interface TestTypeGridProps {
   };
   viewMode?: 'grid' | 'list';
   subjects?: TestSubject[]; // optional subject subsections
+  isPurchased?: boolean;
 }
 
 export const TestTypeGrid: React.FC<TestTypeGridProps> = ({
@@ -35,6 +36,7 @@ export const TestTypeGrid: React.FC<TestTypeGridProps> = ({
   progress,
   viewMode = 'grid',
   subjects = [],
+  isPurchased = true,
 }) => {
   const { category, examId } = useParams();
   const [showAnalysisModal, setShowAnalysisModal] = useState(false);
@@ -53,7 +55,10 @@ export const TestTypeGrid: React.FC<TestTypeGridProps> = ({
     setShowSolutionsModal(true);
   };
 
-  const getStatusIcon = (status: TestProgress['status']) => {
+  const getStatusIcon = (status: TestProgress['status'], isLocked?: boolean) => {
+    if (isLocked) {
+      return <Lock className="h-4 w-4 text-gray-400" />;
+    }
     switch (status) {
       case 'completed':
         return <CheckCircle className="h-4 w-4 text-green-600" />;
@@ -156,6 +161,7 @@ export const TestTypeGrid: React.FC<TestTypeGridProps> = ({
             const totalDuration = test.totalDuration ?? 60;
             const isCompleted = test.status === 'completed';
             const isInProgress = test.status === 'in-progress';
+            const isLocked = !isPurchased && idx >= 3;
 
             return (
               <div
@@ -175,7 +181,7 @@ export const TestTypeGrid: React.FC<TestTypeGridProps> = ({
 
                   {/* Status icon */}
                   <div className="shrink-0 mt-0.5 sm:mt-0">
-                    {getStatusIcon(test.status)}
+                    {getStatusIcon(test.status, isLocked)}
                   </div>
 
                   {/* Test Name + meta */}
@@ -196,46 +202,7 @@ export const TestTypeGrid: React.FC<TestTypeGridProps> = ({
                     </div>
                   </div>
 
-                  {/* Action button — inline with name on mobile */}
-                  <div className="flex items-center gap-1.5 shrink-0 sm:hidden">
-                    {isCompleted ? (
-                      <>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleSolutionClick(test)}
-                          className="h-7 text-[11px] px-2 border-gray-200 hover:border-primary hover:text-primary"
-                        >
-                          <BookOpen className="h-3 w-3 mr-0.5" />
-                          Solution
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="h-7 text-[11px] px-2 border-gray-200 hover:border-primary hover:text-primary"
-                          onClick={() => {
-                            const currentPath = window.location.pathname;
-                            const url = `/student/test-window?category=${category}&examId=${examId}&testId=${test.testId}&returnUrl=${encodeURIComponent(currentPath)}`;
-                            stopTimerAndLaunchTest({ url, testName: test.testName });
-                          }}
-                        >
-                          Retry
-                        </Button>
-                      </>
-                    ) : (
-                      <Button
-                        size="sm"
-                        className="h-7 text-[11px] px-3 font-semibold"
-                        onClick={() => {
-                          const currentPath = window.location.pathname;
-                          const url = `/student/test-window?category=${category}&examId=${examId}&testId=${test.testId}&returnUrl=${encodeURIComponent(currentPath)}`;
-                          stopTimerAndLaunchTest({ url, testName: test.testName });
-                        }}
-                      >
-                        {isInProgress ? 'Continue' : 'Start Test'}
-                      </Button>
-                    )}
-                  </div>
+
                 </div>
 
                 {/* ── Stats row — shown below name on mobile, inline on desktop ── */}
@@ -339,16 +306,82 @@ export const TestTypeGrid: React.FC<TestTypeGridProps> = ({
                       <Button
                         size="sm"
                         className="h-8 text-xs font-semibold min-w-[96px]"
+                        variant={isLocked ? 'secondary' : 'default'}
                         onClick={() => {
+                          if (isLocked) {
+                            alert('This test is locked. Please purchase the full package to unlock.');
+                            return;
+                          }
                           const currentPath = window.location.pathname;
                           const url = `/student/test-window?category=${category}&examId=${examId}&testId=${test.testId}&returnUrl=${encodeURIComponent(currentPath)}`;
                           stopTimerAndLaunchTest({ url, testName: test.testName });
                         }}
                       >
-                        {isInProgress ? 'Continue' : 'Start Test'}
+                        {isLocked ? (
+                           <span className="flex items-center gap-1.5"><Lock className="h-3 w-3" /> Locked</span>
+                        ) : isInProgress ? 'Continue' : 'Start Test'}
                       </Button>
                     )}
                   </div>
+                </div>
+
+                {/* ── Action Buttons — mobile only (below stats) ── */}
+                <div className="sm:hidden pt-3 mt-1 border-t border-gray-100">
+                  {isCompleted ? (
+                    <div className="space-y-2">
+                       <div className="flex gap-2">
+                         <Button
+                           size="sm"
+                           variant="outline"
+                           onClick={() => handleSolutionClick(test)}
+                           className="flex-1 h-9 text-xs border-gray-200 hover:border-primary hover:text-primary shadow-sm"
+                         >
+                           <BookOpen className="h-3.5 w-3.5 mr-1" />
+                           Solution
+                         </Button>
+                         <Button
+                           size="sm"
+                           variant="outline"
+                           onClick={() => handleAnalysisClick(test)}
+                           className="flex-1 h-9 text-xs border-gray-200 hover:border-primary hover:text-primary shadow-sm"
+                         >
+                           <BarChart3 className="h-3.5 w-3.5 mr-1" />
+                           Analysis
+                         </Button>
+                       </div>
+                       <Button
+                         size="sm"
+                         variant="outline"
+                         className="w-full h-9 text-xs border-gray-200 bg-gray-50/50 hover:bg-gray-100 text-gray-700 shadow-sm"
+                         onClick={() => {
+                           const currentPath = window.location.pathname;
+                           const url = `/student/test-window?category=${category}&examId=${examId}&testId=${test.testId}&returnUrl=${encodeURIComponent(currentPath)}`;
+                           stopTimerAndLaunchTest({ url, testName: test.testName });
+                         }}
+                       >
+                         Reattempt
+                       </Button>
+                    </div>
+                  ) : (
+                    <Button
+                      size="sm"
+                      className="w-full h-9 text-xs font-bold shadow-sm"
+                      variant={isLocked ? 'secondary' : 'default'}
+                      onClick={() => {
+                        if (isLocked) {
+                          alert('This test is locked. Please purchase the full package to unlock.');
+                          return;
+                        }
+                        const currentPath = window.location.pathname;
+                        const url = `/student/test-window?category=${category}&examId=${examId}&testId=${test.testId}&returnUrl=${encodeURIComponent(currentPath)}`;
+                        stopTimerAndLaunchTest({ url, testName: test.testName });
+                      }}
+                    >
+                      {isLocked ? (
+                         <span className="flex items-center gap-1.5"><Lock className="h-3 w-3" /> Locked</span>
+                      ) : isInProgress ? 'Continue' : 'Start Test'}
+                    </Button>
+                  )}
                 </div>
               </div>
             );
@@ -415,6 +448,8 @@ export const TestTypeGrid: React.FC<TestTypeGridProps> = ({
           const totalMarks = test.totalMarks ?? test.maxScore;
           const totalDuration = test.totalDuration ?? 60;
           const totalStudents = test.totalStudents ?? 45320;
+          const isLocked = !isPurchased && idx >= 3;
+          
           return (
             <Card key={test.testId} className={`p-3 transition-all duration-200 hover:shadow-md ${getStatusBackgroundColor(test.status, test.score, test.maxScore)}`}>
               <div className="space-y-3">
@@ -426,9 +461,9 @@ export const TestTypeGrid: React.FC<TestTypeGridProps> = ({
                       {idx + 1}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-medium text-sm leading-tight">{test.testName}</h3>
+                      <h3 className="font-medium text-sm leading-tight">{test.testName} {isLocked && <Badge variant="secondary" className="text-[9px] px-1 ml-1 leading-none py-0.5 align-middle bg-gray-100 text-gray-500">Locked</Badge>}</h3>
                       <div className="flex items-center gap-2 mt-1 flex-wrap">
-                        {getStatusIcon(test.status)}
+                        {getStatusIcon(test.status, isLocked)}
                         <Badge variant="outline" className={`text-xs ${getDifficultyColor(test.difficulty)}`}>
                           {test.difficulty}
                         </Badge>
@@ -548,13 +583,20 @@ export const TestTypeGrid: React.FC<TestTypeGridProps> = ({
                     <Button
                       size="sm"
                       className="w-full text-xs"
+                      variant={isLocked ? 'secondary' : 'default'}
                       onClick={() => {
+                        if (isLocked) {
+                          alert('This test is locked. Please purchase the full package to unlock.');
+                          return;
+                        }
                         const currentPath = window.location.pathname;
                         const url = `/student/test-window?category=${category}&examId=${examId}&testId=${test.testId}&returnUrl=${encodeURIComponent(currentPath)}`;
                         stopTimerAndLaunchTest({ url, testName: test.testName });
                       }}
                     >
-                      {test.status === 'in-progress' ? 'Continue' : 'Start Test'}
+                      {isLocked ? (
+                           <span className="flex items-center gap-1.5"><Lock className="h-3 w-3" /> Locked</span>
+                      ) : test.status === 'in-progress' ? 'Continue' : 'Start Test'}
                     </Button>
                   )}
                 </div>

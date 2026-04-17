@@ -3,8 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, Target, Trophy, Zap, Clock, TrendingUp, Users, Grid3X3, List, CheckCircle2, ShoppingCart } from 'lucide-react';
-import { ExamProgressDashboard } from '@/components/student/exam/ExamProgressDashboard';
+import { ArrowLeft, Target, Trophy, Zap, Clock, TrendingUp, Users, Grid3X3, List, CheckCircle2, ShoppingCart, Calendar, Award, PlayCircle, Shield } from 'lucide-react';
 import { TestTypeGrid } from '@/components/student/exam/TestTypeGrid';
 import { ExamPerformanceTab } from '@/components/student/exam/ExamPerformanceTab';
 import { SuccessStoriesTab } from '@/components/student/exam/SuccessStoriesTab';
@@ -313,198 +312,186 @@ const ExamDetail = () => {
       </div>
 
       {/* ══════════════════════════════════════════════════════════════════════
-          EXAM HEADER CARD  ·  unified surface, state-aware left + right
+          NEW EXAM HEADER CARD
       ══════════════════════════════════════════════════════════════════════ */}
-      <div
-        className="rounded-2xl border border-slate-200 overflow-hidden"
-        style={{
-          borderTop: `3px solid ${theme.borderColor}`,
-          boxShadow: '0 2px 12px 0 rgba(0,0,0,.07)',
-          background: '#fff',
-        }}
-      >
-        <div className="flex flex-col sm:flex-row items-stretch min-h-[160px]">
+      {!isPurchased ? (
+        /* ── BEFORE PURCHASE ── */
+        <div className="flex flex-col sm:flex-row bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+          {/* LEFT SIDE */}
+          <div className="flex-1 p-5 sm:p-7">
+            <div className="text-[10px] font-bold text-blue-600 mb-1 tracking-wider uppercase">TARGET EXAMINATION</div>
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 bg-gray-50 flex items-center justify-center rounded-xl border border-gray-100 flex-shrink-0">
+                {isLogoUrl ? (
+                  <img src={examLogo as string} alt={examName} className="w-9 h-9 object-contain" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                ) : (
+                  <span className="text-3xl">{examLogo}</span>
+                )}
+              </div>
+              <h1 className="text-2xl sm:text-3xl font-black text-gray-900 leading-tight">{examName}</h1>
+            </div>
+            <p className="text-sm font-bold text-gray-500 mt-2 mb-6">Prelims + Mains + Interview</p>
 
-          {/* ── LEFT  ── logo · title · stats ── */}
-          <div className="flex-1 p-5 sm:p-6 flex gap-4 items-start">
-
-            {/* Logo — 48 × 48, tinted ring that picks up the exam colour */}
-            <div
-              className="flex-shrink-0 rounded-xl overflow-hidden"
-              style={{
-                width: 48, height: 48,
-                background: `${theme.borderColor}14`,
-                border: `2px solid ${theme.borderColor}30`,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                marginTop: 2,
-              }}
-            >
-              {isLogoUrl ? (
-                <img
-                  src={examLogo as string} alt={examName}
-                  style={{ width: 34, height: 34, objectFit: 'contain' }}
-                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                />
-              ) : (
-                <span style={{ fontSize: 22 }}>{examLogo}</span>
-              )}
+            {/* STATS */}
+            <div className="flex flex-wrap sm:flex-nowrap divide-y sm:divide-y-0 sm:divide-x divide-gray-200 py-3 border-t border-b border-gray-100 mb-4 bg-gray-50/50 rounded-t-xl px-2">
+              <div className="flex-1 text-center py-2 sm:py-1">
+                <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Total Users</div>
+                <div className="text-xl font-black text-gray-900 mt-1">3,435</div>
+              </div>
+              <div className="flex-1 text-center py-2 sm:py-1">
+                <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Total Tests Available</div>
+                <div className="text-xl font-black text-gray-900 mt-1">120</div>
+              </div>
+              <div className="flex-1 text-center py-2 sm:py-1">
+                <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Total People Cleared</div>
+                <div className="text-xl font-black text-gray-900 mt-1">567</div>
+              </div>
             </div>
 
-            {/* Title + dashboard */}
-            <div className="flex-1 min-w-0">
-              {/* Exam name — 22 px / 800 weight */}
-              <h1
-                className="font-extrabold text-slate-900 leading-tight"
-                style={{ fontSize: 22 }}
-              >
-                {examName}
-              </h1>
-
-              {/* State-aware progress dashboard */}
-              <ExamProgressDashboard
-                progressData={progressData}
-                getTypeProgress={getTypeProgress}
-                isPurchased={isPurchased}
-                totalUsersPublic={3435}
-                totalTestsAvailable={120}
-                totalCleared={567}
-              />
+            <div className="flex flex-wrap sm:flex-nowrap py-3 border-b border-gray-100 px-2 gap-y-4">
+              <div className="w-1/2 sm:flex-1 text-center py-1">
+                <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Full Test Prelims</div>
+                <div className="text-lg font-bold text-gray-700 mt-1">60</div>
+              </div>
+              <div className="hidden sm:block w-px bg-gray-200 mx-2"></div>
+              <div className="w-1/2 sm:flex-1 text-center py-1">
+                <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Full Test Mains</div>
+                <div className="text-lg font-bold text-gray-700 mt-1">60</div>
+              </div>
+              <div className="hidden sm:block w-px bg-gray-200 mx-2"></div>
+              <div className="w-1/2 sm:flex-1 text-center py-1">
+                <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Sectional Test</div>
+                <div className="text-lg font-bold text-gray-700 mt-1">40</div>
+              </div>
+              <div className="hidden sm:block w-px bg-gray-200 mx-2"></div>
+              <div className="w-1/2 sm:flex-1 text-center py-1">
+                <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Speed Test</div>
+                <div className="text-lg font-bold text-gray-700 mt-1">30</div>
+              </div>
             </div>
           </div>
 
-          {/* ── RIGHT  ── purchase / unlocked panel ─────────────────────── */}
-          {/*  Uses a soft tinted column that shares the card's corner radius
-               and has matching 24 px internal padding.  No inner border box,
-               no extra shadow — it IS part of the card, not on top of it.   */}
-          <div
-            className="sm:w-60 flex-shrink-0 flex flex-col"
-            style={{
-              background: isPurchased ? '#f0fdf4' : '#f8fafc',
-              borderLeft: '1px solid',
-              borderColor: isPurchased ? '#d1fae5' : '#e2e8f0',
-              /* inherit the card's rounded-right corners */
-              borderRadius: '0 16px 16px 0',
-              padding: 24,
-            }}
-          >
-            {isPurchased ? (
-              /* ── AFTER PURCHASE: Course Unlocked ── */
-              <div className="flex flex-col items-center justify-center gap-3 h-full text-center">
-                {/* circle tick */}
-                <div
-                  className="flex items-center justify-center rounded-full"
-                  style={{
-                    width: 56, height: 56,
-                    background: theme.borderColor,
-                    boxShadow: `0 4px 14px 0 ${theme.borderColor}45`,
-                  }}
-                >
-                  <CheckCircle2 style={{ width: 28, height: 28, color: '#fff' }} />
-                </div>
-
-                {/* text */}
-                <div>
-                  <p style={{ fontSize: 16, fontWeight: 800, color: '#1e293b' }}>Course Unlocked!</p>
-                  <p style={{ fontSize: 11, color: '#64748b', marginTop: 3 }}>You have unlocked the full course</p>
-                </div>
-
-                {/* CTA */}
-                <button
-                  onClick={() => setActiveTab('prelims')}
-                  className="w-full font-bold text-white transition-opacity hover:opacity-90 active:scale-95"
-                  style={{
-                    fontSize: 13,
-                    padding: '10px 0',
-                    borderRadius: 12,
-                    background: theme.borderColor,
-                    boxShadow: `0 2px 8px 0 ${theme.borderColor}40`,
-                    border: 'none',
-                    cursor: 'pointer',
-                    transition: 'opacity .15s, transform .1s',
-                  }}
-                >
-                  Continue Learning
-                </button>
-
-                {/* validity */}
-                <div
-                  className="flex items-center gap-1.5"
-                  style={{ fontSize: 11, color: '#94a3b8' }}
-                >
-                  <Clock style={{ width: 12, height: 12 }} />
-                  <span>Valid for 256 days</span>
-                </div>
-              </div>
-            ) : (
-              /* ── BEFORE PURCHASE: Buy CTA ── */
-              <div className="flex flex-col gap-3 h-full">
-                {/* validity badge */}
-                <span
-                  className="self-start font-bold text-white"
-                  style={{
-                    fontSize: 10,
-                    padding: '3px 10px',
-                    borderRadius: 999,
-                    background: theme.borderColor,
-                  }}
-                >
-                  Valid for 12 months
-                </span>
-
-                {/* package name */}
-                <div>
-                  <p
-                    className="font-extrabold text-slate-800 leading-snug"
-                    style={{ fontSize: 14 }}
-                  >
-                    Get the {examName.split(' ').slice(0, 3).join(' ')} Full Package
-                  </p>
-                  <span
-                    className="inline-block font-semibold"
-                    style={{
-                      fontSize: 11,
-                      marginTop: 6,
-                      padding: '2px 8px',
-                      borderRadius: 999,
-                      background: `${theme.borderColor}18`,
-                      color: theme.borderColor,
-                    }}
-                  >
-                    Prelims + Mains
-                  </span>
-                </div>
-
-                {/* price — push to bottom */}
-                <div className="mt-auto flex items-baseline gap-2">
-                  <span style={{ fontSize: 13, color: '#94a3b8', textDecoration: 'line-through' }}>₹999</span>
-                  <span style={{ fontSize: 26, fontWeight: 800, color: '#1e293b', lineHeight: 1 }}>₹299</span>
-                </div>
-
-                {/* buy button */}
-                <button
-                  id="exam-buy-btn"
-                  onClick={handleBuy}
-                  className="w-full flex items-center justify-center gap-2 font-bold text-white
-                             hover:opacity-90 active:scale-95 transition-all"
-                  style={{
-                    fontSize: 14,
-                    padding: '11px 0',
-                    borderRadius: 12,
-                    background: theme.borderColor,
-                    boxShadow: `0 3px 10px 0 ${theme.borderColor}50`,
-                    border: 'none',
-                    cursor: 'pointer',
-                  }}
-                >
-                  <ShoppingCart style={{ width: 16, height: 16 }} />
-                  Buy
-                </button>
-              </div>
-            )}
+          {/* RIGHT SIDE */}
+          <div className="sm:w-[280px] border-t-4 sm:border-t-0 sm:border-l-[6px] border-green-500 p-6 flex flex-col justify-center items-center text-center bg-[#f8fafc]">
+            <div className="bg-green-500 text-white font-bold text-[11px] uppercase tracking-widest px-4 py-1.5 rounded-full mb-4">Validity : 12 Month</div>
+            <div className="font-semibold text-gray-500 text-sm">Prelims + Mains</div>
+            <div className="font-black text-gray-900 text-xl mt-1.5 mb-5">{examName.split(' ').slice(0, 3).join(' ')} Full Package</div>
+            <div className="flex items-center justify-center gap-3 mb-6">
+              <span className="text-gray-400 font-bold text-lg line-through">₹999</span>
+              <span className="text-gray-900 font-black text-4xl">₹299</span>
+            </div>
+            <button onClick={handleBuy} className="bg-green-500 hover:bg-green-600 text-white font-bold text-lg py-3.5 px-6 rounded-full shadow-lg shadow-green-500/30 transition-all w-full flex items-center justify-center gap-2 active:scale-95">
+              <ShoppingCart className="w-5 h-5"/> Buy Now
+            </button>
           </div>
-
         </div>
-      </div>
+      ) : (
+        /* ── AFTER PURCHASE ── */
+        <div className="flex flex-col md:flex-row bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+          {/* LEFT SIDE */}
+          <div className="flex-1 p-5 sm:p-7 flex flex-col">
+            <div className="flex flex-col xl:flex-row gap-6 mb-6">
+              <div className="flex-1">
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 bg-gray-50 flex items-center justify-center rounded-xl border border-gray-100 flex-shrink-0">
+                    {isLogoUrl ? (
+                      <img src={examLogo as string} alt={examName} className="w-9 h-9 object-contain" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                    ) : (
+                      <span className="text-3xl">{examLogo}</span>
+                    )}
+                  </div>
+                  <div>
+                    <h1 className="text-2xl sm:text-3xl font-black text-gray-900 leading-tight">{examName}</h1>
+                    <p className="text-sm font-semibold text-gray-500 mt-1">Preliminary Examination - {(Math.floor(Math.random() * 5000) + 5000).toLocaleString()} Vacancies</p>
+                  </div>
+                </div>
+                
+                {/* Meta details */}
+                <div className="flex flex-wrap gap-4 mt-5">
+                  <div className="flex items-center gap-1.5 bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100 text-gray-700">
+                    <Calendar className="w-4 h-4 text-primary" /> <span className="font-bold text-[13px]">5 Oct 2026</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100 text-gray-700">
+                    <Clock className="w-4 h-4 text-primary" /> <span className="font-bold text-[13px]">45 min</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100 text-gray-700">
+                    <Award className="w-4 h-4 text-primary" /> <span className="font-bold text-[13px]">80 Marks</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Progress Rings - Injected directly here */}
+              <div className="flex items-center flex-wrap gap-4 xl:justify-end shrink-0">
+                {(() => {
+                  /* Calculate simple progress percentages for visual purposes based on the user's data */
+                  const typeKeys = Object.keys(progressData.testTypes) as (keyof typeof progressData.testTypes)[];
+                  const totalCompleted = typeKeys.reduce((s, k) => s + getTypeProgress(k).completed, 0);
+                  const totalTests = typeKeys.reduce((s, k) => s + getTypeProgress(k).total, 0) || 120;
+                  
+                  const ringData = [
+                    { label: 'Overall', pct: progressData.overallProgress || 0, color: '#10b981' },
+                    { label: 'Quantitative', pct: Math.min(Math.round((progressData.overallProgress || 0) * 0.9 + 5), 100), color: '#3b82f6' },
+                    { label: 'Reasoning', pct: Math.min(Math.round((progressData.overallProgress || 0) * 1.1), 100), color: '#8b5cf6' },
+                    { label: 'English', pct: Math.min(Math.round((progressData.overallProgress || 0) * 0.85 + 10), 100), color: '#f59e0b' },
+                    { label: 'Gen. Aware', pct: Math.min(Math.round((progressData.overallProgress || 0) * 0.75 + 15), 100), color: '#ec4899' },
+                  ];
+
+                  return ringData.map((ring, idx) => {
+                    const size = 68;
+                    const stroke = 6;
+                    const r = (size - stroke) / 2;
+                    const circ = 2 * Math.PI * r;
+                    const dash = (Math.max(0, Math.min(ring.pct, 100)) / 100) * circ;
+                    
+                    return (
+                      <div key={idx} className="flex flex-col items-center">
+                        <div className="relative" style={{ width: size, height: size }}>
+                          <svg width={size} height={size} className="block -rotate-90">
+                            <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="#f1f5f9" strokeWidth={stroke} />
+                            <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={ring.color} strokeWidth={stroke} strokeLinecap="round" 
+                              strokeDasharray={`${dash} ${circ - dash}`} 
+                              style={{ transition: 'stroke-dasharray 1s ease-out' }} />
+                          </svg>
+                          <span className="absolute inset-0 flex items-center justify-center font-bold text-gray-800" style={{ fontSize: 13 }}>
+                            {ring.pct}%
+                          </span>
+                        </div>
+                        <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mt-2">{ring.label}</span>
+                      </div>
+                    );
+                  });
+                })()}
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="mt-auto flex flex-wrap items-center gap-3 pt-4 border-t border-gray-100">
+              <button onClick={() => setActiveTab('prelims')} className="bg-primary hover:bg-primary/90 text-white flex items-center gap-2 font-bold px-5 py-2.5 rounded-xl shadow-md transition-all active:scale-95 text-sm">
+                <PlayCircle className="w-5 h-5"/> Start Full Mock
+              </button>
+              <button className="border-2 border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-gray-700 font-bold px-5 py-2.5 rounded-xl transition-all active:scale-95 text-sm">
+                View Syllabus
+              </button>
+              <button className="border-2 border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-gray-700 font-bold px-5 py-2.5 rounded-xl transition-all active:scale-95 text-sm">
+                Score Prediction
+              </button>
+            </div>
+          </div>
+
+          {/* RIGHT SIDE Gradient Countdown */}
+          <div className="md:w-[260px] bg-gradient-to-br from-blue-600 to-teal-400 p-8 flex flex-col justify-center items-center text-white relative overflow-hidden shrink-0">
+             {/* Decorative background circles */}
+             <div className="absolute -top-10 -right-10 w-32 h-32 bg-white/10 rounded-full blur-xl pointer-events-none"></div>
+             <div className="absolute -bottom-16 -left-16 w-48 h-48 bg-white/10 rounded-full blur-2xl pointer-events-none"></div>
+             
+             <div className="text-[72px] font-black leading-none drop-shadow-md pb-2 z-10 flex items-baseline">
+               170
+             </div>
+             <div className="text-sm font-black uppercase tracking-[0.25em] opacity-90 pb-1 z-10">Days Left</div>
+             <div className="text-[10px] uppercase font-bold opacity-75 tracking-wider mt-1 border-t border-white/20 pt-2 w-full text-center z-10">To Exam Day</div>
+          </div>
+        </div>
+      )}
 
       {/* ── Main card with tabs + inline progress ── */}
       <Card className="overflow-hidden" style={{ borderTop: `3px solid ${theme.borderColor}` }}>
@@ -612,6 +599,7 @@ const ExamDetail = () => {
                     progress={activeSlotProgress}
                     viewMode={viewMode}
                     subjects={activeSlotSubjects}
+                    isPurchased={isPurchased}
                   />
                 )}
               </TabsContent>
