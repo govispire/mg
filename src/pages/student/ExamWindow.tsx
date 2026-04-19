@@ -56,16 +56,40 @@ const ExamWindow = () => {
         return () => window.removeEventListener('beforeunload', handleBeforeUnload);
     }, [phase, mode]);
 
-    // If in solution mode, load previous responses and go directly to solutions
+    // If in solution or analysis mode, load previous responses
     useEffect(() => {
-        if (mode === 'solution') {
+        if (mode === 'solution' || mode === 'analysis') {
             const storedResponses = localStorage.getItem(`quiz_responses_${quizId}`);
             if (storedResponses) {
-                setExamResponses(JSON.parse(storedResponses));
-                setPhase('solutions');
+                const parsedResponses = JSON.parse(storedResponses);
+                setExamResponses(parsedResponses);
+                
+                if (mode === 'analysis') {
+                    // Generate questions and config
+                    const questions = getQuestionsForQuiz(subject, questionCount);
+                    const examConfig: ExamConfig = {
+                        id: quizId, title: quizTitle, totalDuration: duration,
+                        languages: ['English'], instructions: [],
+                        sections: [{
+                            id: 'main-section', name: subject, questionsCount: questions.length,
+                            questions: questions.map((q, index) => ({
+                                id: q.id, sectionId: 'main-section', sectionName: subject,
+                                questionNumber: index + 1, type: 'mcq' as const, question: q.text,
+                                options: q.options.map((opt, i) => ({ id: `opt-${index}-${i}`, text: opt })),
+                                correctAnswer: `opt-${index}-${q.correctAnswer}`,
+                                marks: 1, negativeMarks: 0.25, explanation: q.explanation,
+                            })),
+                        }]
+                    };
+                    const analysis = generateAnalysisFromExam(examConfig, parsedResponses);
+                    setAnalysisData(analysis);
+                    setPhase('analysis');
+                } else {
+                    setPhase('solutions');
+                }
             }
         }
-    }, [mode, quizId]);
+    }, [mode, quizId, subject, questionCount, quizTitle, duration]);
 
     // Get questions
     const questions = getQuestionsForQuiz(subject, questionCount);

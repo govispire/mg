@@ -16,6 +16,7 @@ import DailyNewsPage from '@/pages/student/DailyNewsPage';
 import Downloads from '@/pages/Downloads';
 import ExamNotifications from '@/pages/ExamNotifications';
 import NotFound from '@/pages/NotFound';
+import MentorshipLanding from '@/pages/MentorshipLanding';
 
 function App() {
   return (
@@ -36,6 +37,7 @@ function App() {
         <Route path="/employee/*" element={<EmployeeRoutes />} />
         <Route path="/super-admin/*" element={<SuperAdminRoutes />} />
         <Route path="/owner/*" element={<OwnerRoutes />} />
+        <Route path="/mentorship" element={<MentorshipLanding />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
       <Toaster />

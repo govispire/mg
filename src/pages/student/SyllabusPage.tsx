@@ -22,6 +22,8 @@ import {
 } from '@/data/syllabusData';
 import { useExamCatalog } from '@/hooks/useExamCatalog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Checkbox } from '@/components/ui/checkbox';
 import ExamComparison from '@/components/student/syllabus/ExamComparison';
 import StudyPlanGenerator from '@/components/student/syllabus/StudyPlanGenerator';
 import {
@@ -407,102 +409,131 @@ const SyllabusPage = () => {
   return (
     <div className="space-y-4 max-w-7xl mx-auto">
       {/* Header with Category Info */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div className="flex flex-col gap-2">
-          <h1 className="text-2xl font-bold">Know Your Syllabus</h1>
-          <div className="w-64">
-            <Select value={selectedCategoryId} onValueChange={setSelectedCategoryId}>
-              <SelectTrigger className="h-9 bg-white">
-                <SelectValue placeholder="Select Exam Category" />
-              </SelectTrigger>
-              <SelectContent>
-                {catalog.filter(c => c.isVisible).map(cat => (
-                  <SelectItem key={cat.id} value={cat.id}>
-                    {cat.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4 pb-4 border-b border-border/40">
+        <div>
+          <h1 className="text-2xl font-bold mb-3">Know Your Syllabus</h1>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="w-full sm:w-56">
+              <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1 block">Category</label>
+              <Select value={selectedCategoryId} onValueChange={setSelectedCategoryId}>
+                <SelectTrigger className="h-9 bg-white">
+                  <SelectValue placeholder="Select Category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {catalog.filter(c => c.isVisible).map(cat => (
+                    <SelectItem key={cat.id} value={cat.id}>
+                      {cat.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="w-full sm:w-56">
+              <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1 block">Exam</label>
+              <Select 
+                value={selectedExam} 
+                onValueChange={(val) => {
+                  setSelectedExam(val);
+                  setSelectedTier(allSyllabusData[val]?.tiers[0]?.id || '');
+                }}
+              >
+                <SelectTrigger className="h-9 bg-white">
+                  <SelectValue placeholder="Select Exam" />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableExams.map(exam => (
+                    <SelectItem key={exam.id} value={exam.id}>
+                      <div className="flex items-center gap-2">
+                        <img src={exam.logo} alt="" className="w-4 h-4 object-contain rounded-sm" />
+                        {exam.name}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 lg:mb-0">
           {/* Search */}
-          <div className="relative">
+          <div className="relative flex-1 sm:flex-none">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <input
               type="text"
               placeholder="Search topics..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 pr-4 py-2 text-sm border rounded-lg bg-background w-48 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              className="pl-9 pr-4 py-2 h-9 text-sm border rounded-md bg-white w-full sm:w-48 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all font-medium placeholder:font-normal"
             />
           </div>
 
-          {/* Compare Button */}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowComparison(true)}
-            disabled={compareExams.length < 2}
-            className="gap-1"
-          >
-            <ArrowUpDown className="h-4 w-4" />
-            Compare ({compareExams.length})
-          </Button>
-
-          {/* Study Plan Button */}
-          <Button
-            size="sm"
-            onClick={() => setShowStudyPlan(true)}
-            className="gap-1 bg-gradient-to-r from-emerald-500 to-teal-500 text-white"
-          >
-            <Zap className="h-4 w-4" />
-            Study Plan
-          </Button>
-        </div>
-      </div>
-
-      {/* Exam Selector */}
-      <div className="w-full overflow-x-auto pb-2">
-        <Tabs 
-          value={selectedExam} 
-          onValueChange={(val) => {
-            setSelectedExam(val);
-            setSelectedTier(allSyllabusData[val]?.tiers[0]?.id || '');
-          }}
-          className="w-full"
-        >
-          <TabsList className="w-max justify-start bg-transparent p-0 h-auto gap-2">
-            {availableExams.map((exam) => (
-              <TabsTrigger
-                key={exam.id}
-                value={exam.id}
-                className="data-[state=active]:bg-emerald-500 data-[state=active]:text-white bg-white border border-gray-200 shadow-sm rounded-lg px-4 py-2.5 flex items-center gap-3 transition-all"
-              >
-                <img src={exam.logo} alt={exam.name} className="w-5 h-5 object-contain rounded-sm" />
-                <span className="font-medium">{exam.name}</span>
-
-                {/* Compare checkbox inside Trigger */}
-                <div
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    e.preventDefault();
-                    toggleCompare(exam.id);
-                  }}
-                  className={`ml-1 w-4 h-4 rounded border flex items-center justify-center cursor-pointer transition-colors ${compareExams.includes(exam.id)
-                    ? 'bg-purple-500 border-purple-500'
-                    : 'border-gray-300 bg-white data-[state=active]:border-white/30 data-[state=active]:bg-white/10'
-                    }`}
+          <div className="flex items-center gap-2 ml-auto sm:ml-0">
+            {/* Compare Button with Popover for Checklist */}
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant={compareExams.length >= 2 ? "default" : "outline"}
+                  size="sm"
+                  className="gap-1 h-9"
                 >
-                  {compareExams.includes(exam.id) && (
-                    <CheckCircle2 className="h-3 w-3 text-white flex-shrink-0" />
-                  )}
+                  <ArrowUpDown className="h-4 w-4" />
+                  Compare <Badge variant="secondary" className="ml-1 px-1.5 py-0 text-[10px] bg-muted-foreground/20">{compareExams.length}</Badge>
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-64 p-3" align="end">
+                <div className="space-y-3">
+                  <div>
+                    <h4 className="font-semibold text-sm">Select Exams to Compare</h4>
+                    <p className="text-xs text-muted-foreground">Select up to 3 exams</p>
+                  </div>
+                  <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                    {availableExams.map(exam => (
+                      <div key={exam.id} className="flex items-start space-x-2 py-1">
+                        <Checkbox 
+                          id={`compare-${exam.id}`}
+                          checked={compareExams.includes(exam.id)}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              if (compareExams.length < 3) setCompareExams([...compareExams, exam.id]);
+                            } else {
+                              setCompareExams(compareExams.filter(id => id !== exam.id));
+                            }
+                          }}
+                          className="mt-0.5"
+                        />
+                        <label 
+                          htmlFor={`compare-${exam.id}`}
+                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer select-none"
+                        >
+                          {exam.name}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                  <Button 
+                    className="w-full text-xs h-8 mt-2" 
+                    onClick={() => setShowComparison(true)}
+                    disabled={compareExams.length < 2}
+                  >
+                    View Comparison
+                  </Button>
                 </div>
-              </TabsTrigger>
-            ))}
-          </TabsList>
-        </Tabs>
+              </PopoverContent>
+            </Popover>
+
+            {/* Study Plan Button */}
+            <Button
+              size="sm"
+              onClick={() => setShowStudyPlan(true)}
+              className="gap-1 h-9 bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-sm hover:shadow"
+            >
+              <Zap className="h-4 w-4" />
+              Study Plan
+            </Button>
+          </div>
+        </div>
       </div>
 
       {/* Exam Info Card */}
@@ -628,7 +659,7 @@ const SyllabusPage = () => {
               {recentlyViewed.map((item) => (
                 <button
                   key={item.topicId}
-                  className="p-2 bg-white rounded-lg text-left hover:shadow-sm transition-all border border-purple-100"
+                  className="p-3 bg-white rounded-lg text-left hover:shadow-md transition-all border border-purple-200 shadow-sm flex flex-col justify-center"
                   onClick={() => {
                     // Find the topic and open resources
                     currentTier?.subjects.forEach(subject => {
@@ -639,8 +670,8 @@ const SyllabusPage = () => {
                     });
                   }}
                 >
-                  <p className="text-xs font-medium truncate">{item.topicName}</p>
-                  <p className="text-[10px] text-muted-foreground truncate">{item.subjectName}</p>
+                  <p className="text-[13px] font-bold text-slate-800 truncate w-full">{item.topicName}</p>
+                  <p className="text-[11px] text-slate-600 font-medium truncate w-full mt-0.5">{item.subjectName}</p>
                 </button>
               ))}
             </div>

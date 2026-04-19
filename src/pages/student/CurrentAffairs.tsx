@@ -92,28 +92,31 @@ const CurrentAffairs = () => {
       {/* Content Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-          <TabsList className="bg-muted/50 p-1 h-12 flex-wrap md:flex-nowrap">
-            <TabsTrigger value="news" className="gap-2 px-4 h-10">
+          <TabsList 
+            className="flex w-full justify-start bg-muted/50 p-1 h-auto overflow-x-auto overflow-y-hidden"
+            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+          >
+            <TabsTrigger value="news" className="gap-2 px-4 h-10 shrink-0 whitespace-nowrap">
               <BookOpen className="h-4 w-4" />
               News
             </TabsTrigger>
-            <TabsTrigger value="daily-news" className="gap-2 px-4 h-10">
+            <TabsTrigger value="daily-news" className="gap-2 px-4 h-10 shrink-0 whitespace-nowrap">
               <CalendarDays className="h-4 w-4" />
               Daily News
             </TabsTrigger>
-            <TabsTrigger value="all-in-one" className="gap-2 px-4 h-10">
+            <TabsTrigger value="all-in-one" className="gap-2 px-4 h-10 shrink-0 whitespace-nowrap">
               <Layers className="h-4 w-4" />
               All in One
             </TabsTrigger>
-            <TabsTrigger value="daily-quizzes" className="gap-2 px-4 h-10">
+            <TabsTrigger value="daily-quizzes" className="gap-2 px-4 h-10 shrink-0 whitespace-nowrap">
               <Zap className="h-4 w-4" />
               Daily Quiz
             </TabsTrigger>
-            <TabsTrigger value="weekly-quizzes" className="gap-2 px-4 h-10">
+            <TabsTrigger value="weekly-quizzes" className="gap-2 px-4 h-10 shrink-0 whitespace-nowrap">
               <FileText className="h-4 w-4" />
               Weekly Quiz
             </TabsTrigger>
-            <TabsTrigger value="monthly-quizzes" className="gap-2 px-4 h-10">
+            <TabsTrigger value="monthly-quizzes" className="gap-2 px-4 h-10 shrink-0 whitespace-nowrap">
               <Trophy className="h-4 w-4" />
               Month Quiz
             </TabsTrigger>

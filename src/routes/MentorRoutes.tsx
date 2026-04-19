@@ -8,7 +8,8 @@ import StudentsManagement from '@/pages/mentor/StudentsManagement';
 import TaskAssignment from '@/pages/mentor/TaskAssignment';
 import ProgressTracking from '@/pages/mentor/ProgressTracking';
 import SessionScheduling from '@/pages/mentor/SessionScheduling';
-import MentorMessages from '@/pages/mentor/MentorMessages';
+import MentorChat from '@/pages/mentor/MentorChat';
+import MentorLeaderboard from '@/pages/mentor/MentorLeaderboard';
 import MentorAnalytics from '@/pages/mentor/MentorAnalytics';
 import MentorSchedule from '@/pages/mentor/MentorSchedule';
 import MentorCalendar from '@/pages/mentor/MentorCalendar';
@@ -27,7 +28,8 @@ const MentorRoutes = () => {
           <Route path="/assign-tasks" element={<TaskAssignment />} />
           <Route path="/progress" element={<ProgressTracking />} />
           <Route path="/sessions" element={<SessionScheduling />} />
-          <Route path="/messages" element={<MentorMessages />} />
+          <Route path="/messages" element={<MentorChat />} />
+          <Route path="/leaderboard" element={<MentorLeaderboard />} />
           <Route path="/analytics" element={<MentorAnalytics />} />
           <Route path="/schedule" element={<MentorSchedule />} />
           <Route path="*" element={<NotFound />} />

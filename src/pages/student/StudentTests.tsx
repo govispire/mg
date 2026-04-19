@@ -316,16 +316,19 @@ const StudentTests = () => {
         <div className="bg-white rounded-lg shadow-sm">
           <Tabs value={activeCategory} onValueChange={handleTabChange}>
             <div className="border-b px-3 sm:px-6 py-3 sm:py-4">
-              <TabsList className="grid w-full gap-1 bg-gray-100 p-1 rounded-lg overflow-hidden" style={{
-                gridTemplateColumns: `repeat(${Math.min(availableCategories.length, 4)}, minmax(0, 1fr))`
-              }}>
+              <TabsList 
+                className="flex w-full gap-1 bg-gray-100 p-1 rounded-lg overflow-x-auto" 
+                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+              >
                 {availableCategories.map((cat) => (
                   <TabsTrigger
                     key={cat.id}
                     value={cat.id}
-                    className="text-[11px] sm:text-sm px-1.5 sm:px-2 py-1.5 sm:py-2 whitespace-nowrap overflow-hidden text-ellipsis min-w-0 rounded-md"
+                    className={`text-[11px] sm:text-sm px-3 sm:px-4 py-1.5 sm:py-2 whitespace-nowrap rounded-md ${
+                      availableCategories.length <= 4 ? 'flex-1' : 'flex-shrink-0'
+                    }`}
                   >
-                    <span className="truncate">{cat.name}</span>
+                    {cat.name}
                   </TabsTrigger>
                 ))}
               </TabsList>

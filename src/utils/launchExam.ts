@@ -20,6 +20,7 @@ interface ExamLaunchParams {
     duration: number;   // minutes
     questions: number;
     returnUrl?: string; // URL to return to after completing quiz
+    mode?: 'exam' | 'analysis' | 'solution'; // Mode to start in
 }
 
 // Helper: local date string
@@ -62,7 +63,6 @@ export const launchExamWindow = (params: ExamLaunchParams) => {
     // This counts toward Total Study Hours (test time = productive study time)
     saveTestSession(duration);
 
-    // ── BUILD EXAM URL ────────────────────────────────────────────────────
     const urlParams = new URLSearchParams({
         quizId,
         title,
@@ -70,6 +70,10 @@ export const launchExamWindow = (params: ExamLaunchParams) => {
         duration: duration.toString(),
         questions: questions.toString(),
     });
+
+    if (params.mode) {
+        urlParams.set('mode', params.mode);
+    }
 
     if (returnUrl) {
         urlParams.set('returnUrl', returnUrl);

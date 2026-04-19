@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
-import { Menu, X } from 'lucide-react';
+import { Menu, X, ChevronDown, Search, ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
 import AuthModal from '@/components/auth/AuthModal';
 import { CompulsoryFormModal, WelcomeMessageModal } from '@/components/auth/UpdatedAuthModal';
@@ -73,23 +73,33 @@ const LandingHeader = () => {
         </Link>
 
         {/* Desktop Menu */}
-        <div className="hidden md:flex items-center gap-8">
+        <div className="hidden md:flex items-center gap-6 lg:gap-8">
           <nav>
-            <ul className="flex items-center gap-6">
-
-
-              <li><Link to="/blog" className="text-sm hover:text-primary transition-colors">Blog</Link></li>
-              <li><Link to="/current-affairs" className="text-sm hover:text-primary transition-colors">Current Affairs</Link></li>
-              <li><Link to="/exam-notifications" className="text-sm hover:text-primary transition-colors">Exam Alerts</Link></li>
-              <li><Link to="/downloads" className="text-sm hover:text-primary transition-colors">Downloads</Link></li>
-              <li><Link to="/pricing" className="text-sm hover:text-primary transition-colors">Pricing</Link></li>
+            <ul className="flex items-center gap-5 lg:gap-7">
+              <li><Link to="/blog" className="text-sm font-medium hover:text-primary transition-colors text-slate-700">Blog</Link></li>
+              <li><Link to="/current-affairs" className="text-sm font-medium hover:text-primary transition-colors text-slate-700">Current Affairs</Link></li>
+              <li><Link to="/exam-notifications" className="text-sm font-medium hover:text-primary transition-colors text-slate-700">Exam Alerts</Link></li>
+              <li><Link to="/downloads" className="text-sm font-medium hover:text-primary transition-colors text-slate-700">Downloads</Link></li>
+              <li><Link to="/pricing" className="text-sm font-medium hover:text-primary transition-colors text-slate-700">Pricing</Link></li>
+              <li>
+                <Link 
+                  to="/mentorship" 
+                  className="text-sm font-medium text-slate-700 hover:text-primary transition-colors flex items-center gap-1.5"
+                >
+                  Mentorship
+                  <span className="px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 text-[10px] font-bold uppercase tracking-wide">New</span>
+                </Link>
+              </li>
             </ul>
           </nav>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
+            <button className="p-2 hover:bg-muted rounded-full transition-colors hidden lg:block text-slate-400 hover:text-slate-600">
+              <Search className="h-5 w-5" />
+            </button>
             <Dialog open={isLoginDialogOpen} onOpenChange={setIsLoginDialogOpen}>
               <DialogTrigger asChild>
-                <Button variant="outline" onClick={() => { setActiveAuthTab("login"); setIsLoginDialogOpen(true); }}>Login</Button>
+                <Button variant="outline" className="rounded-full px-6 font-medium" onClick={() => { setActiveAuthTab("login"); setIsLoginDialogOpen(true); }}>Login</Button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-[500px] max-w-[95vw]">
                 <AuthModal activeTab={activeAuthTab} setActiveTab={setActiveAuthTab} onClose={() => setIsLoginDialogOpen(false)} />
@@ -98,7 +108,9 @@ const LandingHeader = () => {
 
             <Dialog open={isRegisterDialogOpen} onOpenChange={setIsRegisterDialogOpen}>
               <DialogTrigger asChild>
-                <Button onClick={() => { setActiveAuthTab("register"); setIsRegisterDialogOpen(true); }}>Sign Up</Button>
+                <Button className="rounded-full px-6 bg-[#5b51ff] hover:bg-[#4a42ff] hover:shadow-lg transition-all font-medium" onClick={() => { setActiveAuthTab("register"); setIsRegisterDialogOpen(true); }}>
+                  Sign Up
+                </Button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-[500px] max-w-[95vw]">
                 <AuthModal
@@ -124,15 +136,20 @@ const LandingHeader = () => {
             <ul className="flex flex-col gap-4">
 
 
-              <li><Link to="/blog" className="block py-2" onClick={() => setIsMenuOpen(false)}>Blog</Link></li>
-              <li><Link to="/current-affairs" className="block py-2" onClick={() => setIsMenuOpen(false)}>Current Affairs</Link></li>
-              <li><Link to="/exam-notifications" className="block py-2" onClick={() => setIsMenuOpen(false)}>Exam Alerts</Link></li>
-              <li><Link to="/downloads" className="block py-2" onClick={() => setIsMenuOpen(false)}>Downloads</Link></li>
-              <li><Link to="/pricing" className="block py-2" onClick={() => setIsMenuOpen(false)}>Pricing</Link></li>
+              <li><Link to="/blog" className="block py-2 font-medium" onClick={() => setIsMenuOpen(false)}>Blog</Link></li>
+              <li><Link to="/current-affairs" className="block py-2 font-medium" onClick={() => setIsMenuOpen(false)}>Current Affairs</Link></li>
+              <li><Link to="/exam-notifications" className="block py-2 font-medium" onClick={() => setIsMenuOpen(false)}>Exam Alerts</Link></li>
+              <li><Link to="/downloads" className="block py-2 font-medium" onClick={() => setIsMenuOpen(false)}>Downloads</Link></li>
+              <li><Link to="/pricing" className="block py-2 font-medium" onClick={() => setIsMenuOpen(false)}>Pricing</Link></li>
+              <li>
+                <Link to="/mentorship" className="py-2 font-medium flex items-center justify-between" onClick={() => setIsMenuOpen(false)}>
+                  Mentorship <span className="px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 text-[10px] font-bold uppercase">New</span>
+                </Link>
+              </li>
               <li className="pt-2 border-t">
                 <Dialog open={isLoginDialogOpen} onOpenChange={setIsLoginDialogOpen}>
                   <DialogTrigger asChild>
-                    <Button variant="outline" className="w-full" onClick={() => { setActiveAuthTab("login"); setIsLoginDialogOpen(true); }}>Login</Button>
+                    <Button variant="outline" className="w-full rounded-full" onClick={() => { setActiveAuthTab("login"); setIsLoginDialogOpen(true); }}>Login</Button>
                   </DialogTrigger>
                   <DialogContent className="sm:max-w-[500px] max-w-[95vw]">
                     <AuthModal activeTab={activeAuthTab} setActiveTab={setActiveAuthTab} onClose={() => setIsLoginDialogOpen(false)} />
@@ -142,7 +159,9 @@ const LandingHeader = () => {
               <li>
                 <Dialog open={isRegisterDialogOpen} onOpenChange={setIsRegisterDialogOpen}>
                   <DialogTrigger asChild>
-                    <Button className="w-full" onClick={() => { setActiveAuthTab("register"); setIsRegisterDialogOpen(true); }}>Sign Up</Button>
+                    <Button className="w-full rounded-full bg-[#5b51ff] hover:bg-[#4a42ff]" onClick={() => { setActiveAuthTab("register"); setIsRegisterDialogOpen(true); }}>
+                      Sign Up
+                    </Button>
                   </DialogTrigger>
                   <DialogContent className="sm:max-w-[500px] max-w-[95vw]">
                     <AuthModal
