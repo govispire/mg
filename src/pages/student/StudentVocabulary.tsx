@@ -13,7 +13,7 @@ import {
     CalendarDays, RotateCcw, Brain,
     Eye, EyeOff, Sparkles, Star, Layers,
     TrendingUp, Target, Zap, Award, ChevronRight,
-    CheckCircle2,
+    CheckCircle2, Image as ImageIcon
 } from 'lucide-react';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -61,6 +61,7 @@ const WordFlipCard: React.FC<{
     const pos = guessPos(word.word);
     const gradient = WORD_GRADIENTS[index % WORD_GRADIENTS.length];
     const isLearned = status === 'learned';
+    const [showImageModal, setShowImageModal] = useState(false);
 
     return (
         <div className={`rounded-2xl overflow-hidden border transition-all duration-300 ${isLearned ? 'border-emerald-200 bg-emerald-50/60' : 'border-border bg-card hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5'}`}>
@@ -85,6 +86,15 @@ const WordFlipCard: React.FC<{
                         </div>
                     </div>
                     <div className="flex items-center gap-1.5">
+                        {word.imageUrl && (
+                            <button
+                                onClick={(e) => { e.stopPropagation(); setShowImageModal(true); }}
+                                className="h-7 w-7 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center transition-all"
+                                title="View Image"
+                            >
+                                <ImageIcon className="h-3.5 w-3.5 text-white/90" />
+                            </button>
+                        )}
                         {isLearned ? (
                             <div className="h-7 w-7 rounded-full bg-white/30 flex items-center justify-center">
                                 <CheckCircle2 className="h-4 w-4 text-white" />
@@ -102,6 +112,28 @@ const WordFlipCard: React.FC<{
                     </p>
                 )}
             </div>
+
+            {/* ── Image Modal ── */}
+            {showImageModal && word.imageUrl && (
+                <div 
+                    className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4" 
+                    onClick={(e) => { e.stopPropagation(); setShowImageModal(false); }}
+                >
+                    <div className="bg-white rounded-2xl overflow-hidden shadow-2xl max-w-lg w-full relative" onClick={e => e.stopPropagation()}>
+                        <img src={word.imageUrl} alt={word.word} className="w-full h-auto max-h-[60vh] object-cover" />
+                        <button 
+                            onClick={(e) => { e.stopPropagation(); setShowImageModal(false); }} 
+                            className="absolute top-3 right-3 h-8 w-8 rounded-full bg-black/40 hover:bg-black/60 flex items-center justify-center text-white transition-colors"
+                        >
+                            <span className="text-lg leading-none">&times;</span>
+                        </button>
+                        <div className="p-5 text-center bg-gradient-to-br from-slate-50 to-white">
+                            <h2 className="text-3xl font-black text-slate-800 mb-1">{word.word}</h2>
+                            <p className="text-slate-500 font-medium">{word.meaning}</p>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* ── Expanded content ── */}
             {(flipped || isLearned) && (
@@ -303,35 +335,41 @@ const StudentVocabulary: React.FC = () => {
         { label: 'Level', value: stats.level, icon: <Award className="h-5 w-5" />, gradient: 'from-violet-500 to-indigo-600', bg: 'bg-violet-50', text: 'text-violet-700' },
     ];
 
-    if (quizActive) {
-        const quizWords = todayWords.filter(w => !learnedIds.has(w.id));
-        return (
-            <div className="max-w-2xl mx-auto px-4 py-8">
-                <div className="flex items-center gap-3 mb-8">
-                    <button onClick={() => setQuizActive(false)} className="h-9 w-9 rounded-xl border flex items-center justify-center text-muted-foreground hover:bg-muted transition-all">
-                        <ChevronLeft className="h-4 w-4" />
-                    </button>
-                    <div>
-                        <h2 className="text-xl font-bold flex items-center gap-2"><Brain className="h-5 w-5 text-violet-600" /> Vocabulary Quiz</h2>
-                        <p className="text-xs text-muted-foreground">Test your knowledge</p>
-                    </div>
-                </div>
-                {quizWords.length < 2 ? (
-                    <div className="text-center py-16">
-                        <div className="text-5xl mb-4">🎉</div>
-                        <h3 className="text-xl font-bold mb-2">All words learned!</h3>
-                        <p className="text-muted-foreground mb-4 text-sm">No pending words to quiz on</p>
-                        <Button onClick={() => setQuizActive(false)} variant="outline">Go Back</Button>
-                    </div>
-                ) : (
-                    <QuizSession words={quizWords} onRecord={recordQuizAttempt} onClose={() => setQuizActive(false)} />
-                )}
-            </div>
-        );
-    }
-
     return (
         <div className="space-y-6 max-w-7xl mx-auto">
+            {/* ── Quiz Modal ── */}
+            {quizActive && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-slate-900/60 backdrop-blur-sm">
+                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh] animate-in fade-in zoom-in duration-200">
+                        <div className="px-5 py-4 border-b flex items-center justify-between bg-white">
+                            <div className="flex items-center gap-3">
+                                <div className="h-10 w-10 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-600">
+                                    <Brain className="h-5 w-5" />
+                                </div>
+                                <div>
+                                    <h2 className="text-lg font-bold text-slate-800">Vocabulary Quiz</h2>
+                                    <p className="text-xs text-slate-500">Test your knowledge</p>
+                                </div>
+                            </div>
+                            <button onClick={() => setQuizActive(false)} className="h-8 w-8 rounded-full hover:bg-slate-100 flex items-center justify-center text-slate-500 transition-colors">
+                                <span className="text-xl leading-none font-bold">&times;</span>
+                            </button>
+                        </div>
+                        <div className="p-6 overflow-y-auto bg-slate-50">
+                            {todayWords.filter(w => !learnedIds.has(w.id)).length < 2 ? (
+                                <div className="text-center py-16">
+                                    <div className="text-5xl mb-4">🎉</div>
+                                    <h3 className="text-xl font-bold mb-2">All words learned!</h3>
+                                    <p className="text-muted-foreground mb-4 text-sm">No pending words to quiz on</p>
+                                    <Button onClick={() => setQuizActive(false)} variant="outline">Close</Button>
+                                </div>
+                            ) : (
+                                <QuizSession words={todayWords.filter(w => !learnedIds.has(w.id))} onRecord={recordQuizAttempt} onClose={() => setQuizActive(false)} />
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
             {/* ── Page Header ── */}
             <div className="flex items-center justify-between">
                 <div>

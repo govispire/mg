@@ -155,10 +155,32 @@ const MentorshipWizard = () => {
     return () => clearInterval(timer);
   }, [step]);
 
+  // ─── Category & stage ID mapping ─────────────────────────────────────────
+  // mentorshipData.ts uses different IDs than mentorshipExamData.ts
+
+  const CATEGORY_MAP: Record<string, string> = {
+    'banking-insurance': 'banking',
+    'civil-services':    'state',
+    'banking-ssc-combo': 'banking',  // combo: show banking exams as primary
+    'railway-ssc-combo': 'railway',  // combo: show railway exams as primary
+    'upsc-civil-combo':  'upsc',     // combo: show upsc exams as primary
+  };
+
+  // Stage 'all' in mentorshipData maps to 'overall' in mentorshipExamData
+  const STAGE_MAP: Record<string, string> = {
+    'all': 'overall',
+  };
+
+  const resolvedCategoryId =
+    CATEGORY_MAP[state.category?.id ?? ''] ?? (state.category?.id ?? '');
+
+  const resolvedStageId =
+    STAGE_MAP[state.stage?.id ?? ''] ?? (state.stage?.id ?? '');
+
   // ─── filtered exams ───────────────────────────────────────────────────────
 
   const categoryExams = targetExams.filter(e =>
-    e.category === (state.category?.id ?? '') &&
+    e.category === resolvedCategoryId &&
     (searchExam === '' || e.name.toLowerCase().includes(searchExam.toLowerCase()))
   );
   const popularExams = categoryExams.filter(e => e.popular);
@@ -166,7 +188,7 @@ const MentorshipWizard = () => {
 
   // ─── available subjects for selected stage ────────────────────────────────
 
-  const stageId = state.stage?.id as 'prelims' | 'mains' | 'interview' | 'overall' | undefined;
+  const stageId = resolvedStageId as 'prelims' | 'mains' | 'interview' | 'overall' | undefined;
   const availableSubjects = subjectOptions.filter(s =>
     !stageId || s.stages.includes(stageId)
   );
@@ -177,7 +199,7 @@ const MentorshipWizard = () => {
   const myTests = diagnosticTests
     .filter(t =>
       (!stageId || t.stages.includes(stageId)) &&
-      t.categories.includes(state.category?.id ?? '')
+      t.categories.includes(resolvedCategoryId)
     )
     .slice(0, 5);
 
@@ -374,6 +396,18 @@ const MentorshipWizard = () => {
                 </div>
               </div>
             )}
+            {/* Empty state */}
+            {categoryExams.length === 0 && (
+              <div className="text-center py-12">
+                <div className="text-4xl mb-3">🔍</div>
+                <p className="text-gray-500 font-medium mb-1">No exams found for this category yet.</p>
+                <p className="text-xs text-gray-400">
+                  Exams for <span className="font-semibold">{state.category?.name}</span> are coming soon.
+                  You can go back and pick a different category.
+                </p>
+              </div>
+            )}
+
             <ContinueBtn
               onClick={() => { setSearchExam(''); setStep(4); }}
               disabled={!state.targetExam}

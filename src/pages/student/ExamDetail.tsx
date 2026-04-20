@@ -316,7 +316,7 @@ const ExamDetail = () => {
       ══════════════════════════════════════════════════════════════════════ */}
       {!isPurchased ? (
         /* ── BEFORE PURCHASE ── */
-        <div className="flex flex-col sm:flex-row bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+        <div className="flex flex-col sm:flex-row bg-gradient-to-br from-blue-50 via-white to-indigo-50 rounded-2xl shadow-sm border border-blue-100 overflow-hidden">
           {/* LEFT SIDE */}
           <div className="flex-1 p-5 sm:p-7">
             <div className="text-[10px] font-bold text-blue-600 mb-1 tracking-wider uppercase">TARGET EXAMINATION</div>
@@ -333,7 +333,7 @@ const ExamDetail = () => {
             <p className="text-sm font-bold text-gray-500 mt-2 mb-6">Prelims + Mains + Interview</p>
 
             {/* STATS */}
-            <div className="flex flex-wrap sm:flex-nowrap divide-y sm:divide-y-0 sm:divide-x divide-gray-200 py-3 border-t border-b border-gray-100 mb-4 bg-gray-50/50 rounded-t-xl px-2">
+            <div className="flex flex-wrap sm:flex-nowrap divide-y sm:divide-y-0 sm:divide-x divide-blue-100 py-3 border-t border-b border-blue-100 mb-4 bg-white/70 rounded-t-xl px-2">
               <div className="flex-1 text-center py-2 sm:py-1">
                 <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Total Users</div>
                 <div className="text-xl font-black text-gray-900 mt-1">3,435</div>
@@ -348,7 +348,8 @@ const ExamDetail = () => {
               </div>
             </div>
 
-            <div className="flex flex-wrap sm:flex-nowrap py-3 border-b border-gray-100 px-2 gap-y-4">
+            {/* TEST TYPE COUNTS */}
+            <div className="flex flex-wrap sm:flex-nowrap py-3 border-b border-blue-100 px-2 gap-y-4">
               <div className="w-1/2 sm:flex-1 text-center py-1">
                 <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Full Test Prelims</div>
                 <div className="text-lg font-bold text-gray-700 mt-1">60</div>
@@ -465,6 +466,42 @@ const ExamDetail = () => {
             </div>
 
             {/* Action Buttons */}
+            {/* Tests Completed Summary Cards */}
+            {(() => {
+              const typeKeys = Object.keys(progressData.testTypes) as (keyof typeof progressData.testTypes)[];
+              const totalCompleted = typeKeys.reduce((s, k) => s + getTypeProgress(k).completed, 0);
+              const totalTests = typeKeys.reduce((s, k) => s + getTypeProgress(k).total, 0) || 120;
+              const types = [
+                { label: 'Prelims', key: 'prelims' as const, color: 'bg-blue-50 border-blue-200 text-blue-700' },
+                { label: 'Mains', key: 'mains' as const, color: 'bg-purple-50 border-purple-200 text-purple-700' },
+                { label: 'Sectional', key: 'sectional' as const, color: 'bg-green-50 border-green-200 text-green-700' },
+                { label: 'Speed', key: 'speed' as const, color: 'bg-orange-50 border-orange-200 text-orange-700' },
+              ];
+              return (
+                <div className="mb-4 pt-3 border-t border-gray-100">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Tests Completed</span>
+                    <span className="text-[11px] font-bold text-primary">{totalCompleted} / {totalTests} Total</span>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    {types.map(t => {
+                      const prog = getTypeProgress(t.key);
+                      const pct = prog.total > 0 ? Math.round((prog.completed / prog.total) * 100) : 0;
+                      return (
+                        <div key={t.key} className={`rounded-xl border px-3 py-2.5 ${t.color}`}>
+                          <div className="text-[10px] font-bold uppercase tracking-wide opacity-70 mb-1">{t.label}</div>
+                          <div className="text-lg font-black leading-none">{prog.completed}<span className="text-xs font-semibold opacity-60">/{prog.total}</span></div>
+                          <div className="mt-1.5 h-1 bg-black/10 rounded-full overflow-hidden">
+                            <div className="h-full bg-current rounded-full transition-all duration-700" style={{ width: `${pct}%` }} />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })()}
+
             <div className="mt-auto flex flex-wrap items-center gap-3 pt-4 border-t border-gray-100">
               <button onClick={() => setActiveTab('prelims')} className="bg-primary hover:bg-primary/90 text-white flex items-center gap-2 font-bold px-5 py-2.5 rounded-xl shadow-md transition-all active:scale-95 text-sm">
                 <PlayCircle className="w-5 h-5"/> Start Full Mock

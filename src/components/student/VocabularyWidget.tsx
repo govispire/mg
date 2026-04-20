@@ -1,12 +1,11 @@
 import React, { useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useVocabulary, VocabWord } from '@/hooks/useVocabulary';
 import { useAuth } from '@/app/providers';
 import {
     BookOpen, ChevronRight, ChevronLeft, ExternalLink,
-    Volume2, CheckCircle2, RotateCcw
+    Volume2, CheckCircle2, RotateCcw, MessageSquare
 } from 'lucide-react';
 
 // Part of speech detection
@@ -19,108 +18,62 @@ const guessPos = (word: string): string => {
     return 'Noun';
 };
 
-// Gradient schemes cycling per word index
-const WORD_GRADIENTS = [
-    'from-blue-600 to-indigo-700',
-    'from-violet-600 to-purple-700',
-    'from-teal-500 to-cyan-600',
-    'from-rose-500 to-pink-600',
-    'from-amber-500 to-orange-600',
-];
-
 export default function WordOfTheDayCard() {
     const { user } = useAuth();
     const { todayWords, markWord, getWordProgress } = useVocabulary(user?.id || 'student_1');
     const [wordIndex, setWordIndex] = useState(0);
     const [imgLoaded, setImgLoaded] = useState(false);
     const [imgFailed, setImgFailed] = useState(false);
-    const [showModal, setShowModal] = useState(false);
 
     const today = new Date();
     const dateStr = today.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
 
     const word: VocabWord | undefined = todayWords[wordIndex];
-    const pos = word ? guessPos(word.word) : 'Adjective';
-    const gradientClass = WORD_GRADIENTS[wordIndex % WORD_GRADIENTS.length];
+    const pos = word ? guessPos(word.word) : 'Noun';
 
     const progress = word ? getWordProgress(word.id) : undefined;
     const isLearned = progress?.status === 'learned';
-    const hasImage = !!(word?.imageUrl);
+    const hasImage = !!(word?.imageUrl) && !imgFailed;
 
     React.useEffect(() => {
         setImgLoaded(false);
         setImgFailed(false);
     }, [wordIndex]);
 
-    const handleSave = () => {
-        if (word) markWord(word.id, 'learned', word.difficulty);
-    };
-    const handlePending = () => {
+    const handleSave = () => { if (word) markWord(word.id, 'learned', word.difficulty); };
+    const handleSkip = () => {
         if (word) markWord(word.id, 'pending');
-    };
-    const handleCardClick = () => {
-        if (word) setShowModal(true);
+        if (wordIndex < todayWords.length - 1) setWordIndex(i => i + 1);
     };
 
+    // ── All words done state ────────────────────────────────────────────────
     if (!word) {
         return (
-            <div className="rounded-2xl overflow-hidden border border-emerald-200 bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-950/40 dark:to-teal-950/40 shadow-sm w-full">
-                {/* Header */}
-                <div className="flex items-center justify-between px-4 py-2.5 bg-white/60 dark:bg-white/5 border-b border-emerald-100 dark:border-emerald-900">
-                    <div className="flex items-center gap-1.5">
-                        <div className="flex gap-0.5">
-                            <span className="w-2.5 h-2.5 rounded-full bg-rose-400" />
-                            <span className="w-2.5 h-2.5 rounded-full bg-amber-400" />
-                            <span className="w-2.5 h-2.5 rounded-full bg-green-400" />
-                        </div>
-                        <span className="text-xs font-semibold text-foreground ml-1">Word of the Day</span>
+            <div className="rounded-2xl overflow-hidden border border-emerald-200 bg-gradient-to-br from-emerald-50 to-teal-50 shadow-sm w-full">
+                <div className="flex items-center justify-between px-4 py-3 bg-white/60 border-b border-emerald-100">
+                    <div className="flex items-center gap-2">
+                        <MessageSquare className="w-4 h-4 text-emerald-600" />
+                        <span className="text-sm font-bold text-slate-700">Today's Vocabulary Challenge</span>
                     </div>
-                    <span className="text-[10px] text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
-                        {new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
-                    </span>
+                    <Link to="/student/vocabulary" className="text-emerald-600 hover:text-emerald-700">
+                        <ExternalLink className="h-3.5 w-3.5" />
+                    </Link>
                 </div>
-
-                {/* Body */}
-                <div className="px-5 py-5 text-center space-y-3">
-                    <div className="text-4xl animate-bounce">🎉</div>
-
-                    <div>
-                        <h3 className="font-black text-base text-emerald-800 dark:text-emerald-300">
-                            All 5 Words Done!
-                        </h3>
-                        <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-0.5 font-medium">
-                            Come back tomorrow for new words
-                        </p>
-                    </div>
-
-                    {/* 5-dot progress */}
+                <div className="px-5 py-8 text-center space-y-3">
+                    <div className="text-4xl">🎉</div>
+                    <h3 className="font-black text-base text-emerald-800">All 5 Words Done!</h3>
+                    <p className="text-xs text-emerald-600 font-medium">Come back tomorrow for new words</p>
                     <div className="flex items-center justify-center gap-2 py-1">
                         {[...Array(5)].map((_, i) => (
-                            <div key={i} className="h-2.5 w-2.5 rounded-full bg-emerald-500 shadow-sm shadow-emerald-300" />
+                            <div key={i} className="h-2 w-2 rounded-full bg-emerald-500 shadow-sm shadow-emerald-300" />
                         ))}
                     </div>
-
-                    {/* CTAs */}
-                    <div className="space-y-2 pt-1">
-                        <Link
-                            to="/student/vocabulary"
-                            className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-md shadow-emerald-200"
-                        >
-                            <CheckCircle2 className="h-3.5 w-3.5" />
-                            See My Learned Words
-                        </Link>
-                        <Link
-                            to="/student/vocabulary"
-                            className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl border border-emerald-200 bg-white/80 hover:bg-emerald-50 text-emerald-700 text-xs font-semibold transition-all"
-                        >
-                            <BookOpen className="h-3.5 w-3.5" />
-                            Explore Full Vocabulary Page
-                        </Link>
-                    </div>
-
-                    <p className="text-[10px] text-muted-foreground">
-                        💡 Quiz on past words to sharpen accuracy
-                    </p>
+                    <Link
+                        to="/student/vocabulary"
+                        className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-md mt-2"
+                    >
+                        <CheckCircle2 className="h-3.5 w-3.5" /> See My Learned Words
+                    </Link>
                 </div>
             </div>
         );
@@ -128,268 +81,170 @@ export default function WordOfTheDayCard() {
 
     return (
         <div className="rounded-2xl overflow-hidden border border-slate-200 shadow-md bg-white w-full h-full flex flex-col">
-            {/* ── Header bar ── */}
-            <div className="flex items-center justify-between px-4 py-2.5 bg-muted/50 border-b border-border">
-                <div className="flex items-center gap-1.5">
-                    <div className="flex gap-0.5">
-                        <span className="w-2.5 h-2.5 rounded-full bg-rose-400" />
-                        <span className="w-2.5 h-2.5 rounded-full bg-amber-400" />
-                        <span className="w-2.5 h-2.5 rounded-full bg-green-400" />
-                    </div>
-                    <span className="text-xs font-semibold text-foreground ml-1">Word of the Day</span>
-                </div>
+
+            {/* ── Header ── */}
+            <div className="flex items-center justify-between px-4 py-2.5 bg-slate-50 border-b border-slate-100">
                 <div className="flex items-center gap-2">
-                    <span className="text-[10px] text-muted-foreground bg-muted px-2 py-0.5 rounded-full">{dateStr}</span>
-                    <Link to="/student/vocabulary" className="text-muted-foreground hover:text-primary transition-colors">
-                        <ExternalLink className="h-3 w-3" />
-                    </Link>
+                    <MessageSquare className="w-4 h-4 text-emerald-600" />
+                    <div>
+                        <span className="text-sm font-bold text-slate-800">Today's Vocabulary Challenge</span>
+                        <p className="text-[10px] text-slate-400 leading-none mt-0.5">
+                            Learn 1 new word daily and track progress automatically.
+                        </p>
+                    </div>
                 </div>
+                <Link to="/student/vocabulary" className="text-slate-400 hover:text-emerald-600 transition-colors ml-2 shrink-0">
+                    <ExternalLink className="h-3.5 w-3.5" />
+                </Link>
             </div>
 
-            {/* ── Gradient word hero with image (clickable) ── */}
-            <div 
-                className="relative px-5 pt-6 pb-5 overflow-hidden cursor-pointer hover:opacity-95 transition-opacity"
-                onClick={handleCardClick}
-            >
-                {/* Background image */}
-                {hasImage && !imgFailed && (
-                    <>
-                        <img
-                            src={word.imageUrl}
-                            alt={word.word}
-                            className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ${imgLoaded ? 'opacity-100' : 'opacity-0'}`}
-                            onLoad={() => setImgLoaded(true)}
-                            onError={() => setImgFailed(true)}
-                        />
-                        {/* Dark overlay for text readability */}
-                        <div className={`absolute inset-0 bg-gradient-to-br ${gradientClass} opacity-85`} />
-                    </>
-                )}
-                {/* Fallback gradient when no image */}
-                {(!hasImage || imgFailed) && (
-                    <div className={`absolute inset-0 bg-gradient-to-br ${gradientClass}`} />
-                )}
-                {/* Navigation arrows */}
+            {/* ── Image Card area (matches reference) ── */}
+            <div className="relative mx-3 mt-3 rounded-2xl overflow-hidden shadow-sm" style={{ minHeight: 200 }}>
+
+                {/* Counter + close area */}
+                <div className="absolute top-3 right-3 z-20 flex items-center gap-1.5">
+                    <span className="text-[11px] text-white/90 font-semibold bg-black/30 px-2 py-0.5 rounded-full">
+                        {wordIndex + 1}/{todayWords.length}
+                    </span>
+                </div>
+
+                {/* Nav arrows */}
                 {todayWords.length > 1 && (
-                    <div className="absolute top-3 right-3 flex items-center gap-1">
+                    <>
                         <button
                             onClick={() => setWordIndex(i => Math.max(0, i - 1))}
                             disabled={wordIndex === 0}
-                            className="h-6 w-6 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center text-white disabled:opacity-30 transition"
+                            className="absolute left-2 top-1/2 -translate-y-1/2 z-20 h-7 w-7 rounded-full bg-black/25 hover:bg-black/40 flex items-center justify-center text-white disabled:opacity-30 transition"
                         >
-                            <ChevronLeft className="h-3 w-3" />
+                            <ChevronLeft className="h-3.5 w-3.5" />
                         </button>
-                        <span className="text-white/80 text-[10px] font-medium">{wordIndex + 1}/{todayWords.length}</span>
                         <button
                             onClick={() => setWordIndex(i => Math.min(todayWords.length - 1, i + 1))}
                             disabled={wordIndex === todayWords.length - 1}
-                            className="h-6 w-6 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center text-white disabled:opacity-30 transition"
+                            className="absolute right-2 top-1/2 -translate-y-1/2 z-20 h-7 w-7 rounded-full bg-black/25 hover:bg-black/40 flex items-center justify-center text-white disabled:opacity-30 transition"
                         >
-                            <ChevronRight className="h-3 w-3" />
+                            <ChevronRight className="h-3.5 w-3.5" />
                         </button>
+                    </>
+                )}
+
+                {/* Image */}
+                {hasImage ? (
+                    <img
+                        src={word.imageUrl}
+                        alt={word.word}
+                        className={`w-full object-cover transition-opacity duration-500 ${imgLoaded ? 'opacity-100' : 'opacity-0'}`}
+                        style={{ height: '100%', minHeight: 200 }}
+                        onLoad={() => setImgLoaded(true)}
+                        onError={() => setImgFailed(true)}
+                    />
+                ) : (
+                    <div
+                        className="w-full flex items-center justify-center"
+                        style={{
+                            height: 200,
+                            background: 'linear-gradient(135deg,#059669,#10b981)',
+                        }}
+                    >
+                        <span className="text-6xl font-black text-white/20 select-none">{word.word[0]}</span>
                     </div>
                 )}
 
-                {/* Word + POS */}
-                <div className="flex items-end gap-2 mb-1">
-                    <h2 className="text-[28px] font-black text-white leading-none tracking-tight drop-shadow">
-                        {word.word}
-                    </h2>
-                    <span className="mb-0.5 text-white/60 text-xs font-medium">{word.pronunciation || ''}</span>
-                </div>
-                <span className="inline-block text-[10px] font-bold uppercase tracking-wider bg-white/20 text-white px-2.5 py-0.5 rounded-full">
-                    {pos}
-                </span>
+                {/* Skeleton while loading */}
+                {hasImage && !imgLoaded && (
+                    <div className="absolute inset-0 bg-slate-200 animate-pulse rounded-2xl" />
+                )}
 
-                {/* Wave-like bottom cut */}
-                <div className="absolute bottom-0 left-0 right-0 h-3 bg-white" style={{ borderRadius: '50% 50% 0 0 / 100% 100% 0 0', transform: 'scaleX(1.02)' }} />
+                {/* Bottom gradient overlay with word */}
+                <div className="absolute bottom-0 left-0 right-0 px-4 pt-10 pb-3"
+                    style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.68) 0%, transparent 100%)' }}>
+                    <div className="flex items-baseline gap-2">
+                        <h2 className="text-2xl font-black text-white leading-none tracking-tight drop-shadow">
+                            {word.word}
+                        </h2>
+                        {word.pronunciation && (
+                            <span className="text-white/70 text-xs font-medium">{word.pronunciation}</span>
+                        )}
+                    </div>
+                    <div className="flex items-center gap-2 mt-1">
+                        <span className="text-[10px] text-white/80 font-semibold">Word of the Day</span>
+                        <span className="text-white/50 text-[10px]">·</span>
+                        <span className="text-[10px] text-white/70 font-medium">{wordIndex + 1}/{todayWords.length}</span>
+                    </div>
+                </div>
             </div>
 
-            {/* ── Content area ── */}
-            <div className="px-4 pt-4 pb-3 space-y-3 bg-white flex-1 flex flex-col">
+            {/* ── Content below image ── */}
+            <div className="px-4 pt-3 pb-3 flex-1 flex flex-col gap-2.5">
+
                 {/* Meaning */}
-                <div className="space-y-0.5">
-                    <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Meaning</p>
-                    <p className="text-sm text-foreground font-medium leading-snug">{word.meaning}</p>
-                </div>
+                <p className="text-[13px] text-slate-700 font-medium leading-snug">
+                    {word.meaning}
+                </p>
 
                 {/* Example */}
-                <div className="space-y-0.5">
-                    <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Example</p>
-                    <p className="text-xs text-muted-foreground italic leading-relaxed border-l-2 border-primary/30 pl-2.5">
-                        "{word.example}"
-                    </p>
-                </div>
+                {word.example && (
+                    <div className="bg-slate-50 rounded-lg px-3 py-2 border-l-2 border-slate-300">
+                        <p className="text-[11px] text-slate-500 italic leading-relaxed">
+                            "{word.example}"
+                        </p>
+                    </div>
+                )}
 
                 {/* Synonyms */}
                 {(word.synonyms?.length ?? 0) > 0 && (
-                    <div className="space-y-1.5">
-                        <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Synonyms</p>
-                        <div className="flex flex-wrap gap-1.5">
-                            {word.synonyms!.map(syn => (
-                                <span
-                                    key={syn}
-                                    className="text-[11px] font-semibold px-3 py-1 rounded-full bg-muted border border-border text-foreground hover:bg-primary/10 hover:border-primary/30 hover:text-primary transition-all cursor-default"
-                                >
-                                    {syn}
-                                </span>
-                            ))}
-                        </div>
-                    </div>
-                )}
-
-                {/* Antonyms */}
-                {(word.antonyms?.length ?? 0) > 0 && (
-                    <div className="flex flex-wrap gap-1.5">
-                        {word.antonyms!.slice(0, 2).map(ant => (
+                    <div className="flex flex-wrap items-center gap-1.5">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mr-0.5">Synonyms</span>
+                        {word.synonyms!.map(syn => (
+                            <span
+                                key={syn}
+                                className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-slate-100 border border-slate-200 text-slate-600"
+                            >
+                                {syn}
+                            </span>
+                        ))}
+                        {(word.antonyms?.length ?? 0) > 0 && word.antonyms!.slice(0, 1).map(ant => (
                             <span
                                 key={ant}
-                                className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-red-50 border border-red-200 text-red-600"
+                                className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-red-50 border border-red-200 text-red-500"
                             >
-                                ↕ {ant}
+                                {ant}
                             </span>
                         ))}
                     </div>
                 )}
 
-                {/* Actions */}
-                <div className="pt-1 border-t border-border">
+                {/* Action Buttons */}
+                <div className="flex gap-2 pt-1 mt-auto">
                     {isLearned ? (
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-1.5 text-xs font-semibold text-green-600">
+                        <div className="flex items-center justify-between w-full">
+                            <div className="flex items-center gap-1.5 text-xs font-semibold text-emerald-600">
                                 <CheckCircle2 className="h-3.5 w-3.5" />
-                                Saved to Vocabulary List ✓
+                                Saved to Vocabulary ✓
                             </div>
-                            <Link to="/student/vocabulary" className="text-[10px] text-primary hover:underline font-medium">
+                            <Link to="/student/vocabulary" className="text-[10px] text-emerald-600 hover:underline font-medium">
                                 See All →
                             </Link>
                         </div>
                     ) : (
-                        <div className="flex items-center gap-2">
+                        <>
+                            <button
+                                onClick={handleSkip}
+                                className="flex-1 py-2.5 rounded-xl border-2 border-slate-200 text-slate-600 text-[12px] font-bold hover:bg-slate-50 transition-all"
+                            >
+                                Skip Today
+                            </button>
                             <button
                                 onClick={handleSave}
-                                className="flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold py-2 rounded-lg border border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-all duration-200"
+                                className="flex-1 py-2.5 rounded-xl text-white text-[12px] font-bold transition-all hover:opacity-90 active:scale-95"
+                                style={{ background: 'linear-gradient(135deg,#059669,#10b981)', boxShadow: '0 3px 10px rgba(16,185,129,0.35)' }}
                             >
-                                <CheckCircle2 className="h-3.5 w-3.5" />
-                                Save to Vocabulary List
+                                Mark as Learned
                             </button>
-                            <button
-                                onClick={handlePending}
-                                title="Revise Later"
-                                className="h-8 w-8 flex items-center justify-center rounded-lg border border-border text-muted-foreground hover:text-amber-600 hover:border-amber-300 hover:bg-amber-50 transition-all"
-                            >
-                                <RotateCcw className="h-3.5 w-3.5" />
-                            </button>
-                        </div>
+                        </>
                     )}
                 </div>
             </div>
-
-            {/* ── Word Detail Modal ── */}
-            {showModal && word && (
-                <div
-                    className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
-                    onClick={() => setShowModal(false)}
-                >
-                    <div
-                        className="relative w-full max-w-lg rounded-2xl overflow-hidden shadow-2xl bg-white animate-in fade-in zoom-in duration-200"
-                        onClick={e => e.stopPropagation()}
-                    >
-                        {/* Close button */}
-                        <button
-                            onClick={() => setShowModal(false)}
-                            className="absolute top-3 right-3 z-10 w-8 h-8 rounded-full bg-black/20 hover:bg-black/30 flex items-center justify-center text-white transition-colors"
-                        >
-                            <ChevronRight className="h-4 w-4 rotate-45" />
-                        </button>
-
-                        {/* Header */}
-                        <div className="flex items-center justify-between px-4 py-2.5 bg-muted/50 border-b border-border">
-                            <div className="flex items-center gap-1.5">
-                                <div className="flex gap-0.5">
-                                    <span className="w-2.5 h-2.5 rounded-full bg-rose-400" />
-                                    <span className="w-2.5 h-2.5 rounded-full bg-amber-400" />
-                                    <span className="w-2.5 h-2.5 rounded-full bg-green-400" />
-                                </div>
-                                <span className="text-xs font-semibold text-foreground ml-1">Word of the Day</span>
-                            </div>
-                            <span className="text-[10px] text-muted-foreground bg-muted px-2 py-0.5 rounded-full">{dateStr}</span>
-                        </div>
-
-                        {/* Hero with image */}
-                        <div className="relative px-5 pt-6 pb-5 overflow-hidden">
-                            {hasImage && !imgFailed && (
-                                <>
-                                    <img src={word.imageUrl} alt={word.word} className="absolute inset-0 w-full h-full object-cover" />
-                                    <div className={`absolute inset-0 bg-gradient-to-br ${gradientClass} opacity-85`} />
-                                </>
-                            )}
-                            {(!hasImage || imgFailed) && (
-                                <div className={`absolute inset-0 bg-gradient-to-br ${gradientClass}`} />
-                            )}
-                            <div className="relative z-10">
-                                <div className="flex items-end gap-2 mb-1">
-                                    <h2 className="text-[32px] font-black text-white leading-none tracking-tight drop-shadow">{word.word}</h2>
-                                    <span className="mb-0.5 text-white/60 text-xs font-medium">{word.pronunciation || ''}</span>
-                                </div>
-                                <span className="inline-block text-[10px] font-bold uppercase tracking-wider bg-white/20 text-white px-2.5 py-0.5 rounded-full">{pos}</span>
-                            </div>
-                        </div>
-
-                        {/* Content */}
-                        <div className="px-5 pt-4 pb-5 space-y-4">
-                            <div className="space-y-0.5">
-                                <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Meaning</p>
-                                <p className="text-sm text-foreground font-medium leading-snug">{word.meaning}</p>
-                            </div>
-                            <div className="space-y-0.5">
-                                <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Example</p>
-                                <p className="text-xs text-muted-foreground italic leading-relaxed border-l-2 border-primary/30 pl-2.5">"{word.example}"</p>
-                            </div>
-                            {(word.synonyms?.length ?? 0) > 0 && (
-                                <div className="space-y-1.5">
-                                    <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Synonyms</p>
-                                    <div className="flex flex-wrap gap-1.5">
-                                        {word.synonyms!.map(syn => (
-                                            <span key={syn} className="text-[11px] font-semibold px-3 py-1 rounded-full bg-muted border border-border text-foreground">{syn}</span>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-                            {(word.antonyms?.length ?? 0) > 0 && (
-                                <div className="space-y-1.5">
-                                    <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground">Antonyms</p>
-                                    <div className="flex flex-wrap gap-1.5">
-                                        {word.antonyms!.map(ant => (
-                                            <span key={ant} className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-red-50 border border-red-200 text-red-600">↕ {ant}</span>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-                            <div className="pt-2 border-t border-border">
-                                {isLearned ? (
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-1.5 text-xs font-semibold text-green-600">
-                                            <CheckCircle2 className="h-3.5 w-3.5" />
-                                            Saved to Vocabulary List ✓
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <div className="flex items-center gap-2">
-                                        <button onClick={handleSave} className="flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold py-2.5 rounded-lg border border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-all duration-200">
-                                            <CheckCircle2 className="h-3.5 w-3.5" />
-                                            Save to Vocabulary List
-                                        </button>
-                                        <button onClick={handlePending} title="Revise Later" className="h-9 w-9 flex items-center justify-center rounded-lg border border-border text-muted-foreground hover:text-amber-600 hover:border-amber-300 hover:bg-amber-50 transition-all">
-                                            <RotateCcw className="h-3.5 w-3.5" />
-                                        </button>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     );
 }

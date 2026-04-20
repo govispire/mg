@@ -162,16 +162,21 @@ export const TestTypeGrid: React.FC<TestTypeGridProps> = ({
             const isCompleted = test.status === 'completed';
             const isInProgress = test.status === 'in-progress';
             const isLocked = !isPurchased && idx >= 3;
+            // When locked, always treat as not-attempted to hide fake scores
+            const effectiveCompleted = isLocked ? false : isCompleted;
+            const effectiveInProgress = isLocked ? false : isInProgress;
 
             return (
               <div
                 key={test.testId}
                 className={`flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 px-3 sm:px-5 py-3 sm:py-4 bg-white border border-gray-200 rounded-xl transition-all duration-200 hover:shadow-md hover:border-gray-300 ${
-                  isCompleted
+                  isLocked
+                    ? 'border-l-4 border-l-gray-200 bg-gray-50'
+                    : effectiveCompleted
                     ? (test.score !== undefined && test.maxScore > 0 && (test.score / test.maxScore) >= 0.5
                       ? 'border-l-4 border-l-green-400'
                       : 'border-l-4 border-l-red-400')
-                    : isInProgress
+                    : effectiveInProgress
                     ? 'border-l-4 border-l-orange-400'
                     : 'border-l-4 border-l-gray-200'
                 }`}
@@ -209,7 +214,7 @@ export const TestTypeGrid: React.FC<TestTypeGridProps> = ({
                 <div className="flex items-center flex-1 min-w-0 ml-5 sm:ml-0 sm:contents">
                   {/* Stats columns */}
                   <div className="flex flex-wrap sm:flex-nowrap items-center gap-x-4 gap-y-1 flex-1 min-w-0">
-                    {isCompleted ? (
+                    {effectiveCompleted ? (
                       <>
                         <div className="text-center shrink-0">
                           <p className="text-[10px] text-gray-400 uppercase tracking-wide font-medium">Score</p>
@@ -269,7 +274,7 @@ export const TestTypeGrid: React.FC<TestTypeGridProps> = ({
 
                   {/* ── Action Buttons — desktop only (mobile shows them inline above) ── */}
                   <div className="hidden sm:flex items-center gap-2 shrink-0">
-                    {isCompleted ? (
+                    {effectiveCompleted ? (
                       <>
                         <Button
                           size="sm"
@@ -319,7 +324,7 @@ export const TestTypeGrid: React.FC<TestTypeGridProps> = ({
                       >
                         {isLocked ? (
                            <span className="flex items-center gap-1.5"><Lock className="h-3 w-3" /> Locked</span>
-                        ) : isInProgress ? 'Continue' : 'Start Test'}
+                        ) : effectiveInProgress ? 'Continue' : 'Start Test'}
                       </Button>
                     )}
                   </div>
@@ -327,7 +332,7 @@ export const TestTypeGrid: React.FC<TestTypeGridProps> = ({
 
                 {/* ── Action Buttons — mobile only (below stats) ── */}
                 <div className="sm:hidden pt-3 mt-1 border-t border-gray-100">
-                  {isCompleted ? (
+                  {effectiveCompleted ? (
                     <div className="space-y-2">
                        <div className="flex gap-2">
                          <Button
@@ -379,7 +384,7 @@ export const TestTypeGrid: React.FC<TestTypeGridProps> = ({
                     >
                       {isLocked ? (
                          <span className="flex items-center gap-1.5"><Lock className="h-3 w-3" /> Locked</span>
-                      ) : isInProgress ? 'Continue' : 'Start Test'}
+                      ) : effectiveInProgress ? 'Continue' : 'Start Test'}
                     </Button>
                   )}
                 </div>
@@ -449,9 +454,14 @@ export const TestTypeGrid: React.FC<TestTypeGridProps> = ({
           const totalDuration = test.totalDuration ?? 60;
           const totalStudents = test.totalStudents ?? 45320;
           const isLocked = !isPurchased && idx >= 3;
-          
+          // When locked, treat the card as fresh regardless of stored status
+          const effectiveStatus = isLocked ? 'not-attempted' : test.status;
           return (
-            <Card key={test.testId} className={`p-3 transition-all duration-200 hover:shadow-md ${getStatusBackgroundColor(test.status, test.score, test.maxScore)}`}>
+            <Card key={test.testId} className={`p-3 transition-all duration-200 hover:shadow-md ${
+              isLocked
+                ? 'bg-gray-50 border-gray-200 border-dashed'
+                : getStatusBackgroundColor(test.status, test.score, test.maxScore)
+            }`}>
               <div className="space-y-3">
                 {/* Test Number Badge + Header */}
                 <div className="flex items-start justify-between">
@@ -480,7 +490,7 @@ export const TestTypeGrid: React.FC<TestTypeGridProps> = ({
 
                 {/* Test Stats */}
                 <div className="space-y-2 text-xs text-gray-600">
-                  {test.status === 'completed' ? (
+                  {effectiveStatus === 'completed' ? (
                     // ── COMPLETED: show result stats ──
                     <>
                       <div className="flex justify-between">
@@ -530,7 +540,7 @@ export const TestTypeGrid: React.FC<TestTypeGridProps> = ({
                 </div>
 
                 {/* Percentile Bar (completed only) */}
-                {test.status === 'completed' && (
+                {effectiveStatus === 'completed' && (
                   <div className="space-y-1">
                     <Progress value={test.percentile ?? 0} className="h-2" />
                     <div className="flex justify-between text-xs">
@@ -544,7 +554,7 @@ export const TestTypeGrid: React.FC<TestTypeGridProps> = ({
 
                 {/* Action Buttons */}
                 <div className="pt-2 border-t">
-                  {test.status === 'completed' ? (
+                  {effectiveStatus === 'completed' ? (
                     <div className="space-y-2">
                       <div className="flex gap-1">
                         <Button

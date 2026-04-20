@@ -42,8 +42,8 @@ export const useExamProgress = (examId: string) => {
     examId,
     examName: '',
     totalUsers: 45320,
-    userRank: 1243,
-    overallProgress: 35,
+    userRank: undefined,
+    overallProgress: 0,
     testTypes: {
       prelims: generateMockTests('prelims', 20),
       mains: generateMockTests('mains', 20),
@@ -54,8 +54,12 @@ export const useExamProgress = (examId: string) => {
     }
   });
 
-  // Migrate stale cached tests (old format missing rank / totalStudents / subjectId)
+  // Migrate stale cached tests — wipe any tests that were randomly set to
+  // 'completed' or 'in-progress' without actual user action (old format).
   useEffect(() => {
+    const hasRandomCompleted = (tests: TestProgress[]) =>
+      tests.some(t => t.status !== 'not-attempted' && !t.lastAttempted);
+
     const missingRank = (tests: TestProgress[]) =>
       tests.some(t => t.status === 'completed' && (t.rank === undefined || t.totalStudents === undefined));
 
@@ -64,6 +68,13 @@ export const useExamProgress = (examId: string) => {
       progressData.testTypes.speed.some(t => !t.subjectId) ||
       progressData.testTypes.sectional.length !== 30 ||
       progressData.testTypes.speed.length !== 30 ||
+      // Re-generate any type that has phantom completions (no lastAttempted = was randomly seeded)
+      hasRandomCompleted(progressData.testTypes.prelims) ||
+      hasRandomCompleted(progressData.testTypes.mains) ||
+      hasRandomCompleted(progressData.testTypes.sectional) ||
+      hasRandomCompleted(progressData.testTypes.speed) ||
+      hasRandomCompleted(progressData.testTypes.pyq) ||
+      hasRandomCompleted(progressData.testTypes.live) ||
       missingRank(progressData.testTypes.prelims) ||
       missingRank(progressData.testTypes.mains) ||
       missingRank(progressData.testTypes.pyq) ||
@@ -72,13 +83,15 @@ export const useExamProgress = (examId: string) => {
     if (needsMigration) {
       setProgressData(prev => ({
         ...prev,
+        overallProgress: 0,
+        userRank: undefined,
         testTypes: {
+          prelims: generateMockTests('prelims', 20),
+          mains: generateMockTests('mains', 20),
           sectional: generateMockTests('sectional', 30),
           speed: generateMockTests('speed', 30),
-          prelims: missingRank(prev.testTypes.prelims) ? generateMockTests('prelims', 20) : prev.testTypes.prelims,
-          mains: missingRank(prev.testTypes.mains) ? generateMockTests('mains', 20) : prev.testTypes.mains,
-          pyq: missingRank(prev.testTypes.pyq) ? generateMockTests('pyq', 20) : prev.testTypes.pyq,
-          live: missingRank(prev.testTypes.live) ? generateMockTests('live', 20) : prev.testTypes.live,
+          pyq: generateMockTests('pyq', 20),
+          live: generateMockTests('live', 20),
         },
       }));
     }
@@ -138,31 +151,28 @@ function generateMockTests(type: string, count: number): TestProgress[] {
   if (type === 'sectional' || type === 'speed') {
     for (const subject of subjectGroups) {
       for (let i = 1; i <= testsPerSubject; i++) {
-        const status = Math.random() > 0.7 ? 'completed' : Math.random() > 0.5 ? 'in-progress' : 'not-attempted';
+        // All tests start as not-attempted — status only changes when a student actually submits
         const totalQuestions = type === 'speed' ? 30 : 50;
         const totalMarks = totalQuestions;
         const totalDuration = type === 'speed' ? 20 : 30;
         const totalStudents = Math.floor(Math.random() * 30000) + 10000;
         const maxScore = totalMarks;
-        const rank = status === 'completed' ? Math.floor(Math.random() * totalStudents * 0.5) + 1 : undefined;
-        const score = status === 'completed' ? Math.floor(Math.random() * maxScore) + 10 : undefined;
-        const percentile = (rank && totalStudents) ? Math.round(((totalStudents - rank) / totalStudents) * 100 * 10) / 10 : undefined;
 
         tests.push({
           testId: `${type}-${subject.id}-${i}`,
           testName: `${subject.label} ${typeLabel} Test ${i}`,
-          status,
-          score,
+          status: 'not-attempted',
+          score: undefined,
           maxScore,
           totalQuestions,
           totalMarks,
           totalDuration,
           totalStudents,
-          timeSpent: status !== 'not-attempted' ? Math.floor(Math.random() * 1800) + 600 : undefined,
-          attempts: status === 'not-attempted' ? 0 : Math.floor(Math.random() * 3) + 1,
-          lastAttempted: status !== 'not-attempted' ? new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] : undefined,
-          rank,
-          percentile,
+          timeSpent: undefined,
+          attempts: 0,
+          lastAttempted: undefined,
+          rank: undefined,
+          percentile: undefined,
           difficulty: difficulties[Math.floor(Math.random() * difficulties.length)],
           subjectId: subject.id,
         });
@@ -171,33 +181,29 @@ function generateMockTests(type: string, count: number): TestProgress[] {
     return tests;
   }
 
-  // For other types (prelims, mains, pyq, live) — standard flat generation
+  // For other types (prelims, mains, pyq, live) — all start as not-attempted
   for (let i = 1; i <= count; i++) {
-    const status = Math.random() > 0.7 ? 'completed' : Math.random() > 0.5 ? 'in-progress' : 'not-attempted';
     const totalQuestions = 100;
     const totalMarks = totalQuestions;
     const totalDuration = 60;
     const totalStudents = Math.floor(Math.random() * 30000) + 10000;
     const maxScore = totalMarks;
-    const rank = status === 'completed' ? Math.floor(Math.random() * totalStudents * 0.5) + 1 : undefined;
-    const score = status === 'completed' ? Math.floor(Math.random() * maxScore) + 20 : undefined;
-    const percentile = (rank && totalStudents) ? Math.round(((totalStudents - rank) / totalStudents) * 100 * 10) / 10 : undefined;
 
     tests.push({
       testId: `${type}-${i}`,
       testName: `${type.charAt(0).toUpperCase() + type.slice(1)} Test ${i}`,
-      status,
-      score,
+      status: 'not-attempted',
+      score: undefined,
       maxScore,
       totalQuestions,
       totalMarks,
       totalDuration,
       totalStudents,
-      timeSpent: status !== 'not-attempted' ? Math.floor(Math.random() * 3600) + 1800 : undefined,
-      attempts: status === 'not-attempted' ? 0 : Math.floor(Math.random() * 3) + 1,
-      lastAttempted: status !== 'not-attempted' ? new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] : undefined,
-      rank,
-      percentile,
+      timeSpent: undefined,
+      attempts: 0,
+      lastAttempted: undefined,
+      rank: undefined,
+      percentile: undefined,
       difficulty: difficulties[Math.floor(Math.random() * difficulties.length)],
       subjectId: undefined,
     });
