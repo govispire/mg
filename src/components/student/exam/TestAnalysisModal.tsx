@@ -86,9 +86,15 @@ export const TestAnalysisModal: React.FC<TestAnalysisModalProps> = ({
             </div>
           </DialogHeader>
 
-          {/* Pass/Fail Animation */}
+          {/* Pass/Fail Banner */}
           <div className="mb-2 sm:mb-3">
-            <PassFailAnimation passed={analysisData.passed} />
+            <PassFailAnimation
+              passed={analysisData.passed}
+              score={analysisData.sectionWiseData?.reduce((s, sec) => s + sec.score, 0)}
+              maxScore={analysisData.sectionWiseData?.reduce((s, sec) => s + sec.maxScore, 0)}
+              percentile={analysisData.percentile}
+              rank={analysisData.rank}
+            />
           </div>
 
           {/* Tab Navigation */}

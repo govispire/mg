@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Paperclip, Mic,  ArrowRight, CheckCheck, Clock } from 'lucide-react';
+import { Send, Paperclip, Mic,  ArrowRight, CheckCheck, Clock, Search, X } from 'lucide-react';
 
 interface Message {
   id: string;
@@ -9,6 +9,7 @@ interface Message {
   read: boolean;
   type?: 'text' | 'voice' | 'attachment';
   attachmentName?: string;
+  isTyping?: boolean;
 }
 
 const QUICK_REPLIES = [
@@ -18,6 +19,26 @@ const QUICK_REPLIES = [
   "I need extra practice task",
   "When is our next session?",
 ];
+
+// ─── Typing Indicator Component ──────────────────────────────────────────────
+
+const TypingIndicator = ({ avatar, name }: { avatar: string; name: string }) => (
+  <div className="flex gap-3 mb-3">
+    <img src={avatar} alt={name} className="w-7 h-7 rounded-full flex-shrink-0 mt-1" />
+    <div className="max-w-[72%]">
+      <div className="bg-white text-gray-900 border border-gray-100 rounded-2xl rounded-bl-sm px-4 py-3 shadow-sm">
+        <div className="flex items-center gap-1">
+          <div className="flex gap-1">
+            <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+            <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+            <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+          </div>
+          <span className="text-xs text-gray-500 ml-2">{name} is typing...</span>
+        </div>
+      </div>
+    </div>
+  </div>
+);
 
 const initialMessages: Message[] = [
   {
@@ -75,7 +96,13 @@ const StudentChatPage: React.FC<StudentChatPageProps> = ({
 }) => {
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [input, setInput] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
+  const [isMentorTyping, setIsMentorTyping] = useState(false);
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isSearchMode, setIsSearchMode] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -93,9 +120,14 @@ const StudentChatPage: React.FC<StudentChatPageProps> = ({
     };
     setMessages(prev => [...prev, msg]);
     setInput('');
+    setIsTyping(false);
 
-    // Simulate mentor reply
+    // Show mentor typing indicator
+    setIsMentorTyping(true);
+
+    // Simulate mentor reply with typing delay
     setTimeout(() => {
+      setIsMentorTyping(false);
       setMessages(prev => [
         ...prev,
         {
@@ -107,15 +139,43 @@ const StudentChatPage: React.FC<StudentChatPageProps> = ({
           type: 'text',
         },
       ]);
-    }, 1500);
+    }, 2000);
   };
 
-  const groupedMessages = messages.reduce<{ date: string; msgs: Message[] }[]>((acc, msg) => {
-    const date = 'Today';
-    if (!acc.find(g => g.date === date)) acc.push({ date, msgs: [] });
-    acc.find(g => g.date === date)!.msgs.push(msg);
-    return acc;
-  }, []);
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (files) {
+      const newFiles = Array.from(files);
+      setUploadedFiles(prev => [...prev, ...newFiles]);
+
+      // Create file attachment messages
+      newFiles.forEach(file => {
+        const fileMsg: Message = {
+          id: `file-${Date.now()}-${Math.random()}`,
+          sender: 'student',
+          text: `📎 ${file.name}`,
+          time: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true }),
+          read: false,
+          type: 'attachment',
+          attachmentName: file.name,
+        };
+        setMessages(prev => [...prev, fileMsg]);
+      });
+    }
+  };
+
+  const triggerFileUpload = () => {
+    fileInputRef.current?.click();
+  };
+
+  const groupedMessages = messages
+    .filter(msg => !searchQuery || msg.text.toLowerCase().includes(searchQuery.toLowerCase()))
+    .reduce<{ date: string; msgs: Message[] }[]>((acc, msg) => {
+      const date = 'Today';
+      if (!acc.find(g => g.date === date)) acc.push({ date, msgs: [] });
+      acc.find(g => g.date === date)!.msgs.push(msg);
+      return acc;
+    }, []);
 
   return (
     <div className="flex flex-col h-[calc(100vh-180px)] min-h-[500px] bg-gray-50 rounded-2xl overflow-hidden border border-gray-200">
@@ -134,10 +194,44 @@ const StudentChatPage: React.FC<StudentChatPageProps> = ({
             {mentorOnline ? '● Online · Responds within 2 hrs' : '● Offline'}
           </p>
         </div>
-        <button className="text-xs text-blue-600 font-semibold bg-blue-50 px-3 py-1.5 rounded-lg hover:bg-blue-100 transition-colors">
+        <button className="text-xs text-blue-600 font-semibold bg-blue-50 px-3 py-1.5 rounded-lg hover:bg-blue-100 transition-colors"
+                aria-label={`View ${mentorName}'s profile`}>
           View Profile
         </button>
+        <button
+          onClick={() => setIsSearchMode(!isSearchMode)}
+          className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-gray-200 transition-colors"
+          aria-label={isSearchMode ? "Close search" : "Search messages"}
+        >
+          {isSearchMode ? <X className="w-4 h-4" /> : <Search className="w-4 h-4" />}
+        </button>
       </div>
+
+      {/* Search Bar */}
+      {isSearchMode && (
+        <div className="px-5 py-3 bg-white border-b border-gray-100">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              placeholder="Search messages..."
+              className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+              autoFocus
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 hover:text-gray-600"
+                aria-label="Clear search"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Message Thread */}
       <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
@@ -190,6 +284,10 @@ const StudentChatPage: React.FC<StudentChatPageProps> = ({
                 </div>
               </div>
             ))}
+            {/* Typing Indicator */}
+            {isMentorTyping && (
+              <TypingIndicator avatar={mentorAvatar} name={mentorName} />
+            )}
           </div>
         ))}
         <div ref={bottomRef} />
@@ -203,6 +301,7 @@ const StudentChatPage: React.FC<StudentChatPageProps> = ({
               key={reply}
               onClick={() => sendMessage(reply)}
               className="whitespace-nowrap text-xs px-3 py-1.5 bg-blue-50 text-blue-700 rounded-full border border-blue-200 hover:bg-blue-100 transition-colors font-medium flex-shrink-0"
+              aria-label={`Send quick reply: ${reply}`}
             >
               {reply}
             </button>
@@ -212,7 +311,22 @@ const StudentChatPage: React.FC<StudentChatPageProps> = ({
 
       {/* Input Bar */}
       <div className="px-4 py-3 bg-white border-t border-gray-100 flex items-end gap-3">
-        <button className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-gray-200 transition-colors flex-shrink-0">
+        {/* Hidden file input */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          multiple
+          accept="image/*,.pdf,.doc,.docx,.txt"
+          onChange={handleFileUpload}
+          className="hidden"
+          aria-label="Upload files to share with mentor"
+        />
+
+        <button
+          onClick={triggerFileUpload}
+          className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-gray-200 transition-colors flex-shrink-0"
+          aria-label="Attach file to message"
+        >
           <Paperclip className="w-4 h-4" />
         </button>
         <div className="flex-1 bg-gray-50 border border-gray-200 rounded-2xl px-4 py-2.5">
@@ -225,14 +339,18 @@ const StudentChatPage: React.FC<StudentChatPageProps> = ({
             }}
             placeholder="Type a message…"
             className="w-full bg-transparent text-sm text-gray-900 placeholder-gray-400 resize-none focus:outline-none leading-relaxed"
+            aria-label="Type your message to mentor"
           />
         </div>
-        <button className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-gray-200 transition-colors flex-shrink-0">
+        <button className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-gray-200 transition-colors flex-shrink-0"
+                aria-label="Record voice message">
           <Mic className="w-4 h-4" />
         </button>
         <button
           onClick={() => sendMessage(input)}
           className="w-9 h-9 rounded-full bg-blue-600 hover:bg-blue-700 flex items-center justify-center text-white transition-colors flex-shrink-0 shadow-md"
+          aria-label="Send message"
+          disabled={!input.trim()}
         >
           <Send className="w-4 h-4" />
         </button>

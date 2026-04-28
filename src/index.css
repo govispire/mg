@@ -521,3 +521,229 @@
 .db-section-gap { gap: 24px; }
 .db-card-gap    { gap: 16px; }
 .db-inner-pad   { padding: 20px; }
+
+/* ═══════════════════════════════════════════════════════════
+   MENTORSHIP PAGE REDESIGN - DESIGN SYSTEM UTILITIES
+   Design tokens and utility classes for consistent styling
+═══════════════════════════════════════════════════════════ */
+
+/* Reduced Motion Support - Respects user preferences */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Design System Utility Classes */
+
+/* Consistent Shadows */
+.mentorship-shadow-subtle {
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+}
+
+.mentorship-shadow-default {
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+}
+
+.mentorship-shadow-medium {
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+}
+
+.mentorship-shadow-large {
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+}
+
+.mentorship-shadow-xl {
+  box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+}
+
+/* Consistent Border Radius */
+.mentorship-rounded-sm {
+  border-radius: 8px;
+}
+
+.mentorship-rounded-md {
+  border-radius: 12px;
+}
+
+.mentorship-rounded-lg {
+  border-radius: 16px;
+}
+
+/* Consistent Transitions */
+.mentorship-transition-fast {
+  transition-duration: 200ms;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.mentorship-transition-normal {
+  transition-duration: 300ms;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.mentorship-transition-slow {
+  transition-duration: 400ms;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Hover State Utilities */
+.mentorship-hover-lift {
+  transition: transform 200ms cubic-bezier(0.4, 0, 0.2, 1), 
+              box-shadow 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.mentorship-hover-lift:hover {
+  transform: translateY(-2px);
+}
+
+/* Focus Visible Utilities - WCAG AA Compliant */
+.mentorship-focus-visible:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+
+/* Card Base Styles */
+.mentorship-card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.mentorship-card:hover {
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+}
+
+/* Typography Utilities */
+.mentorship-text-display {
+  font-size: 24px;
+  line-height: 1.2;
+  font-weight: 700;
+}
+
+.mentorship-text-heading {
+  font-size: 20px;
+  line-height: 1.2;
+  font-weight: 700;
+}
+
+.mentorship-text-subheading {
+  font-size: 18px;
+  line-height: 1.5;
+  font-weight: 700;
+}
+
+.mentorship-text-body-lg {
+  font-size: 16px;
+  line-height: 1.5;
+  font-weight: 400;
+}
+
+.mentorship-text-body {
+  font-size: 14px;
+  line-height: 1.5;
+  font-weight: 400;
+}
+
+.mentorship-text-caption {
+  font-size: 12px;
+  line-height: 1.4;
+  font-weight: 500;
+}
+
+.mentorship-text-label {
+  font-size: 12px;
+  line-height: 1.4;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* Spacing Utilities */
+.mentorship-section-spacing {
+  margin-bottom: 24px;
+}
+
+.mentorship-component-spacing {
+  margin-bottom: 16px;
+}
+
+/* Semantic Color Backgrounds */
+.mentorship-bg-success {
+  background-color: #f0fdf4;
+  color: #16a34a;
+}
+
+.mentorship-bg-warning {
+  background-color: #fff7ed;
+  color: #ea580c;
+}
+
+.mentorship-bg-error {
+  background-color: #fef2f2;
+  color: #dc2626;
+}
+
+.mentorship-bg-info {
+  background-color: #eff6ff;
+  color: #2563eb;
+}
+
+/* Touch Target Utilities - Minimum 44x44px for accessibility */
+.mentorship-touch-target {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+/* Animation Utilities */
+.mentorship-animate-fade-in {
+  animation: mentorship-fade-in 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.mentorship-animate-slide-in {
+  animation: mentorship-slide-in 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.mentorship-animate-scale-in {
+  animation: mentorship-scale-in 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes mentorship-fade-in {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes mentorship-slide-in {
+  0% {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes mentorship-scale-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}

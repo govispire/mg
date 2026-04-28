@@ -1,4 +1,6 @@
 import React, { useEffect, Component, ErrorInfo, ReactNode } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/app/providers/AuthProvider';
 import LandingHeader from '@/components/layout/LandingHeader';
 import Footer from '@/components/layout/Footer';
 import HeroMentorship from '@/components/landing/mentorship/HeroMentorship';
@@ -40,9 +42,17 @@ class ErrorBoundary extends Component<
 }
 
 const MentorshipLanding = () => {
+  const navigate = useNavigate();
+  const { user, isAuthenticated } = useAuth();
+
   useEffect(() => {
     window.scrollTo(0, 0);
-  }, []);
+    
+    // Check if user is authenticated and redirect to student mentorship dashboard
+    if (isAuthenticated && user?.role === 'student') {
+      navigate('/student/mentorship', { replace: true });
+    }
+  }, [navigate, isAuthenticated, user]);
 
   return (
     <div className="w-full min-h-screen bg-background">

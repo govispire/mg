@@ -5,7 +5,7 @@ import {
   Play,
   BookOpen,
   Target,
-  TrendingUp,
+  Brain,
   Calendar,
   Award,
   ChevronLeft,
@@ -570,11 +570,11 @@ const TargetExamCard: React.FC<TargetExamCardProps> = ({
             <Button
               size="sm"
               variant="outline"
-              className="text-slate-700 border-slate-200 font-medium px-4 py-2 gap-2 rounded-xl text-xs hover:bg-slate-50"
+              className="text-violet-700 border-violet-200 font-medium px-4 py-2 gap-2 rounded-xl text-xs hover:bg-violet-50"
               onClick={() => navigate('/student/performance-analytics')}
             >
-              <TrendingUp className="h-3.5 w-3.5" />
-              Score Prediction
+              <Brain className="h-3.5 w-3.5" />
+              Weakness Predictor
             </Button>
           </div>
         </div>

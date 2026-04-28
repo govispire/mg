@@ -76,13 +76,17 @@ const ProgressPage: React.FC = () => {
       </div>
 
       {/* Tab bar */}
-      <div className="flex gap-1 bg-gray-100 p-1 rounded-xl w-fit">
+      <div className="flex gap-1 bg-gray-100 p-1 rounded-xl w-fit" role="tablist" aria-label="Progress view options">
         {(['overview', 'leaderboard', 'weekly'] as Tab[]).map(t => (
           <button
             key={t}
             onClick={() => setActiveTab(t)}
             className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all capitalize
               ${activeTab === t ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+            role="tab"
+            aria-selected={activeTab === t}
+            aria-controls={`progress-panel-${t}`}
+            id={`progress-tab-${t}`}
           >
             {t}
           </button>
@@ -91,7 +95,7 @@ const ProgressPage: React.FC = () => {
 
       {/* ── Overview ── */}
       {activeTab === 'overview' && (
-        <div className="space-y-4">
+        <div className="space-y-4" role="tabpanel" aria-labelledby="progress-tab-overview" id="progress-panel-overview">
           <h3 className="text-sm font-bold text-gray-700">Subject-wise Progress</h3>
           {subjectProgress.map(s => (
             <div key={s.subject} className="bg-white rounded-xl border border-gray-200 p-4">
@@ -123,7 +127,7 @@ const ProgressPage: React.FC = () => {
 
       {/* ── Leaderboard ── */}
       {activeTab === 'leaderboard' && (
-        <div>
+        <div role="tabpanel" aria-labelledby="progress-tab-leaderboard" id="progress-panel-leaderboard">
           <div className="flex items-center gap-2 mb-4">
             <span className="text-xs text-gray-500 font-medium">Sort by:</span>
             {(['task', 'score', 'streak'] as const).map(f => (
@@ -132,6 +136,8 @@ const ProgressPage: React.FC = () => {
                 onClick={() => setLbFilter(f)}
                 className={`text-xs px-3 py-1.5 rounded-lg font-semibold transition-colors capitalize
                   ${lbFilter === f ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                aria-label={`Sort leaderboard by ${f === 'task' ? 'task completion' : f === 'score' ? 'test score' : 'streak'}`}
+                aria-pressed={lbFilter === f}
               >
                 {f === 'task' ? 'Task Completion' : f === 'score' ? 'Test Score' : 'Streak'}
               </button>
@@ -187,7 +193,7 @@ const ProgressPage: React.FC = () => {
 
       {/* ── Weekly ── */}
       {activeTab === 'weekly' && (
-        <div>
+        <div role="tabpanel" aria-labelledby="progress-tab-weekly" id="progress-panel-weekly">
           <h3 className="text-sm font-bold text-gray-700 mb-4">This Week's Performance</h3>
 
           {/* Bar chart */}

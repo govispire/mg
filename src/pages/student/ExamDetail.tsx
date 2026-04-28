@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, Target, Trophy, Zap, Clock, TrendingUp, Users, Grid3X3, List, CheckCircle2, ShoppingCart, Calendar, Award, PlayCircle, Shield } from 'lucide-react';
+import { ArrowLeft, Target, Trophy, Zap, Clock, TrendingUp, Users, Grid3X3, List, CheckCircle2, ShoppingCart, Calendar, Award, PlayCircle, Shield, Brain } from 'lucide-react';
 import { TestTypeGrid } from '@/components/student/exam/TestTypeGrid';
 import { ExamPerformanceTab } from '@/components/student/exam/ExamPerformanceTab';
 import { SuccessStoriesTab } from '@/components/student/exam/SuccessStoriesTab';
@@ -333,23 +333,23 @@ const ExamDetail = () => {
             <p className="text-sm font-bold text-gray-500 mt-2 mb-6">Prelims + Mains + Interview</p>
 
             {/* STATS */}
-            <div className="flex flex-wrap sm:flex-nowrap divide-y sm:divide-y-0 sm:divide-x divide-blue-100 py-3 border-t border-b border-blue-100 mb-4 bg-white/70 rounded-t-xl px-2">
-              <div className="flex-1 text-center py-2 sm:py-1">
+            <div className="flex flex-wrap gap-y-2 sm:divide-x divide-blue-100 py-3 border-t border-b border-blue-100 mb-4 bg-white/70 rounded-t-xl px-2 overflow-x-auto">
+              <div className="flex-1 min-w-[80px] text-center py-2 sm:py-1">
                 <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Total Users</div>
                 <div className="text-xl font-black text-gray-900 mt-1">3,435</div>
               </div>
-              <div className="flex-1 text-center py-2 sm:py-1">
+              <div className="flex-1 min-w-[80px] text-center py-2 sm:py-1">
                 <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Total Tests Available</div>
                 <div className="text-xl font-black text-gray-900 mt-1">120</div>
               </div>
-              <div className="flex-1 text-center py-2 sm:py-1">
+              <div className="flex-1 min-w-[80px] text-center py-2 sm:py-1">
                 <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Total People Cleared</div>
                 <div className="text-xl font-black text-gray-900 mt-1">567</div>
               </div>
             </div>
 
             {/* TEST TYPE COUNTS */}
-            <div className="flex flex-wrap sm:flex-nowrap py-3 border-b border-blue-100 px-2 gap-y-4">
+            <div className="flex flex-wrap py-3 border-b border-blue-100 px-2 gap-y-4 overflow-x-auto">
               <div className="w-1/2 sm:flex-1 text-center py-1">
                 <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Full Test Prelims</div>
                 <div className="text-lg font-bold text-gray-700 mt-1">60</div>
@@ -373,7 +373,7 @@ const ExamDetail = () => {
           </div>
 
           {/* RIGHT SIDE */}
-          <div className="sm:w-[280px] border-t-4 sm:border-t-0 sm:border-l-[6px] border-green-500 p-6 flex flex-col justify-center items-center text-center bg-[#f8fafc]">
+          <div className="sm:w-[280px] border-t-4 sm:border-t-0 sm:border-l-[6px] border-green-500 p-5 sm:p-6 flex flex-col justify-center items-center text-center bg-[#f8fafc]">
             <div className="bg-green-500 text-white font-bold text-[11px] uppercase tracking-widest px-4 py-1.5 rounded-full mb-4">Validity : 12 Month</div>
             <div className="font-semibold text-gray-500 text-sm">Prelims + Mains</div>
             <div className="font-black text-gray-900 text-xl mt-1.5 mb-5">{examName.split(' ').slice(0, 3).join(' ')} Full Package</div>
@@ -393,7 +393,7 @@ const ExamDetail = () => {
           <div className="flex-1 p-5 sm:p-7 flex flex-col">
             <div className="flex flex-col xl:flex-row gap-6 mb-6">
               <div className="flex-1">
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-4 mb-5">
                   <div className="w-14 h-14 bg-gray-50 flex items-center justify-center rounded-xl border border-gray-100 flex-shrink-0">
                     {isLogoUrl ? (
                       <img src={examLogo as string} alt={examName} className="w-9 h-9 object-contain" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
@@ -402,11 +402,11 @@ const ExamDetail = () => {
                     )}
                   </div>
                   <div>
+                    <div className="text-[10px] font-bold text-primary uppercase tracking-wider mb-0.5">Target Examination</div>
                     <h1 className="text-2xl sm:text-3xl font-black text-gray-900 leading-tight">{examName}</h1>
                     <p className="text-sm font-semibold text-gray-500 mt-1">Preliminary Examination - {(Math.floor(Math.random() * 5000) + 5000).toLocaleString()} Vacancies</p>
                   </div>
                 </div>
-                
                 {/* Meta details */}
                 <div className="flex flex-wrap gap-4 mt-5">
                   <div className="flex items-center gap-1.5 bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100 text-gray-700">
@@ -421,8 +421,8 @@ const ExamDetail = () => {
                 </div>
               </div>
 
-              {/* Progress Rings - Injected directly here */}
-              <div className="flex items-center flex-wrap gap-4 xl:justify-end shrink-0">
+              {/* Progress Rings */}
+              <div className="flex items-center flex-wrap gap-3 xl:justify-end shrink-0 overflow-x-auto">
                 {(() => {
                   /* Calculate simple progress percentages for visual purposes based on the user's data */
                   const typeKeys = Object.keys(progressData.testTypes) as (keyof typeof progressData.testTypes)[];
@@ -502,15 +502,16 @@ const ExamDetail = () => {
               );
             })()}
 
-            <div className="mt-auto flex flex-wrap items-center gap-3 pt-4 border-t border-gray-100">
-              <button onClick={() => setActiveTab('prelims')} className="bg-primary hover:bg-primary/90 text-white flex items-center gap-2 font-bold px-5 py-2.5 rounded-xl shadow-md transition-all active:scale-95 text-sm">
-                <PlayCircle className="w-5 h-5"/> Start Full Mock
+            <div className="mt-auto flex flex-wrap items-center gap-2 sm:gap-3 pt-4 border-t border-gray-100">
+              <button onClick={() => setActiveTab('prelims')} className="bg-primary hover:bg-primary/90 text-white flex items-center gap-2 font-bold px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl shadow-md transition-all active:scale-95 text-xs sm:text-sm">
+                <PlayCircle className="w-4 sm:w-5 h-4 sm:h-5"/> Start Full Mock
               </button>
-              <button className="border-2 border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-gray-700 font-bold px-5 py-2.5 rounded-xl transition-all active:scale-95 text-sm">
+              <button className="border-2 border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-gray-700 font-bold px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl transition-all active:scale-95 text-xs sm:text-sm">
                 View Syllabus
               </button>
-              <button className="border-2 border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-gray-700 font-bold px-5 py-2.5 rounded-xl transition-all active:scale-95 text-sm">
-                Score Prediction
+              <button className="border-2 border-violet-200 hover:border-violet-300 hover:bg-violet-50 text-violet-700 font-bold px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl transition-all active:scale-95 text-xs sm:text-sm flex items-center gap-2">
+                <Brain className="w-4 h-4" />
+                Weakness Predictor
               </button>
             </div>
           </div>
