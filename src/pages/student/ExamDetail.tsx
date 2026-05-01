@@ -15,6 +15,7 @@ import { useExamProgress } from '@/hooks/useExamProgress';
 import { getExamsByCategory } from '@/data/examData';
 import { useExamCatalog, type TestSubject } from '@/hooks/useExamCatalog';
 import { getExamTheme } from '@/utils/examTheme';
+import { WeaknessDetectionModal } from '@/components/student/exam/WeaknessDetectionModal';
 
 /* ─── helpers ─────────────────────────────────────────────────────────────── */
 
@@ -26,6 +27,7 @@ const ExamDetail = () => {
   const [activeTab, setActiveTab] = useState("prelims");
   const [activeSubTab, setActiveSubTab] = useState("full");
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [weaknessOpen, setWeaknessOpen] = useState(false);
   const { progressData, getTypeProgress, setProgressData, updateTestProgress } = useExamProgress(examId!);
 
   /* ─── purchase state ─── */
@@ -509,10 +511,11 @@ const ExamDetail = () => {
               <button className="border-2 border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-gray-700 font-bold px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl transition-all active:scale-95 text-xs sm:text-sm">
                 View Syllabus
               </button>
-              <button className="border-2 border-violet-200 hover:border-violet-300 hover:bg-violet-50 text-violet-700 font-bold px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl transition-all active:scale-95 text-xs sm:text-sm flex items-center gap-2">
+              <button onClick={() => setWeaknessOpen(true)} className="border-2 border-violet-200 hover:border-violet-300 hover:bg-violet-50 text-violet-700 font-bold px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl transition-all active:scale-95 text-xs sm:text-sm flex items-center gap-2">
                 <Brain className="w-4 h-4" />
                 Weakness Predictor
               </button>
+              <WeaknessDetectionModal isOpen={weaknessOpen} onClose={() => setWeaknessOpen(false)} examId={examId} examName={examName} />
             </div>
           </div>
 

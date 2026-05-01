@@ -339,21 +339,12 @@ export const OverallAnalysisTab: React.FC<OverallAnalysisTabProps> = ({ analysis
       {/* ════════════════════════════════════════
           SECTION 1 — PRIMARY STAT CARDS (4 up)
       ════════════════════════════════════════ */}
+      {/* ── PRIMARY STAT CHIPS — single clean row ── */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <StatChip label="Score" value={`${totalScore}/${sumMaxScore}`} sub="your total score" icon="📈" accent="border-blue-200" />
-        <StatChip label="Rank" value={`${analysisData.rank}/${analysisData.totalStudents.toLocaleString()}`} sub="among all students" icon="🏅" accent="border-indigo-200" />
-        <StatChip label="Percentile" value={`${analysisData.percentile}%`} sub={`top ${100 - analysisData.percentile}% nationally`} icon="%" accent="border-sky-200" />
-        <StatChip label="Accuracy" value={`${overallAccuracy}%`} sub={`${totalCorrect} correct · ${totalWrong} wrong`} icon="✔" accent="border-green-200" />
-      </div>
-
-      {/* ── MINI STAT CARDS (6 count) — white, colored dot only ── */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
-        <MiniCard label="Total Attempted" value={totalAttempted}         icon="🎯" dotColor="bg-blue-500" />
-        <MiniCard label="Correct"         value={totalCorrect}           icon="✅" dotColor="bg-green-500" />
-        <MiniCard label="Wrong"           value={totalWrong}             icon="❌" dotColor="bg-red-500" />
-        <MiniCard label="Skipped"         value={analysisData.sectionWiseData.reduce((s, sec) => s + sec.skipped + sec.unseen, 0)} icon="⏭" dotColor="bg-amber-400" />
-        <MiniCard label="Avg Score"       value={analysisData.comparisonData.averageScore} icon="👥" dotColor="bg-purple-500" />
-        <MiniCard label="Topper Score"    value={analysisData.comparisonData.topperScore}  icon="🏆" dotColor="bg-orange-500" />
+        <StatChip label="Score" value={`${totalScore}/${sumMaxScore}`} sub={`Avg: ${analysisData.comparisonData.averageScore} · Topper: ${analysisData.comparisonData.topperScore}`} icon="📈" accent="border-blue-200" />
+        <StatChip label="Rank" value={`${analysisData.rank}/${analysisData.totalStudents.toLocaleString()}`} sub={`Beat ${Math.round((1 - analysisData.rank / analysisData.totalStudents) * 100)}% of students`} icon="🏅" accent="border-indigo-200" />
+        <StatChip label="Percentile" value={`${analysisData.percentile}%`} sub={`Top ${100 - analysisData.percentile}% nationally`} icon="%" accent="border-sky-200" />
+        <StatChip label="Accuracy" value={`${overallAccuracy}%`} sub={`✅ ${totalCorrect} correct · ❌ ${totalWrong} wrong · ⏭ ${totalSkipped} skipped`} icon="✔" accent="border-green-200" />
       </div>
 
       {/* ════════════════════════════════════════
@@ -886,159 +877,10 @@ export const OverallAnalysisTab: React.FC<OverallAnalysisTabProps> = ({ analysis
       })()}
 
 
-      {/* ════════════════════════════════════════
-          SECTION 7 — SCORE PERCENTILE DISTRIBUTION
-      ════════════════════════════════════════ */}
-      {(() => {
-        const maxMark = sumMaxScore;
-        const avgScore = analysisData.comparisonData.averageScore;
-        const spread = sumMaxScore * 0.18;
-        const rawPercentile = 100 / (1 + Math.exp(-(percentileSliderMarks - avgScore) / spread));
-        const predictedPercentile = Math.min(99.9, Math.max(0.1, Math.round(rawPercentile * 10) / 10));
-        const actualPercentile = analysisData.percentile;
-        const thumbPct = Math.round((percentileSliderMarks / maxMark) * 100);
-        const perColor = predictedPercentile >= 90 ? '#16a34a'
-          : predictedPercentile >= 75 ? '#2563eb'
-            : predictedPercentile >= 50 ? '#d97706' : '#dc2626';
-        const perLabel = predictedPercentile >= 90 ? 'Excellent ✨'
-          : predictedPercentile >= 75 ? 'Good 👍'
-            : predictedPercentile >= 50 ? 'Average 📊' : 'Below Avg ⚠️';
-        const isCustom = percentileSliderMarks !== totalScore;
-        const displayPct = isCustom ? predictedPercentile : actualPercentile;
-
-        // Comparison chips
-        const chips = [
-          { label: 'Top 1%',   threshold: 99, achieved: displayPct >= 99 },
-          { label: 'Top 5%',   threshold: 95, achieved: displayPct >= 95 },
-          { label: 'Top 10%',  threshold: 90, achieved: displayPct >= 90 },
-          { label: 'Top 25%',  threshold: 75, achieved: displayPct >= 75 },
-          { label: 'Top 50%',  threshold: 50, achieved: displayPct >= 50 },
-        ];
-
-        return (
-          <Card className="p-4 sm:p-5 shadow-sm border-[#e2e8f0]">
-            <SectionHeading
-              icon={BarChart2}
-              title="Score Percentile Distribution"
-              badge="Percentile Predictor"
-              badgeColor="bg-sky-100 text-sky-700 border-sky-200"
-            />
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {/* Left panel */}
-              <div className="space-y-4">
-                {/* Big percentile display */}
-                <div className="rounded-2xl border-2 p-5 flex items-center gap-5" style={{ borderColor: perColor + '60', background: perColor + '0a' }}>
-                  {/* Donut */}
-                  <div className="relative w-24 h-24 flex-shrink-0">
-                    <svg viewBox="0 0 36 36" className="w-24 h-24 -rotate-90">
-                      <circle cx="18" cy="18" r="15.9155" fill="none" stroke="#e2e8f0" strokeWidth="3.5" />
-                      <circle
-                        cx="18" cy="18" r="15.9155" fill="none"
-                        stroke={perColor} strokeWidth="3.5"
-                        strokeDasharray={`${displayPct} ${100 - displayPct}`}
-                        strokeLinecap="round"
-                        style={{ transition: 'stroke-dasharray 0.4s ease' }}
-                      />
-                    </svg>
-                    <div className="absolute inset-0 flex flex-col items-center justify-center">
-                      <span className="text-base font-extrabold leading-none" style={{ color: perColor }}>
-                        {typeof displayPct === 'number' ? (Number.isInteger(displayPct) ? displayPct : displayPct.toFixed(1)) : displayPct}
-                      </span>
-                      <span className="text-[8px] font-bold text-gray-400">%ILE</span>
-                    </div>
-                  </div>
-                  <div>
-                    <p className="text-[10px] text-gray-400 font-medium mb-0.5">
-                      {isCustom ? `At ${percentileSliderMarks} marks` : 'Your Percentile'}
-                    </p>
-                    <p className="text-4xl font-extrabold leading-none" style={{ color: perColor }}>
-                      {typeof displayPct === 'number' ? (Number.isInteger(displayPct) ? displayPct : displayPct.toFixed(1)) : displayPct}
-                    </p>
-                    <p className="text-sm text-gray-400 font-medium mt-0.5">Percentile</p>
-                    <span className="inline-block text-[10px] font-bold px-2.5 py-0.5 rounded-full mt-1.5"
-                      style={{ background: perColor + '18', color: perColor }}>
-                      {perLabel}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Achievement milestones */}
-                <div className="space-y-2">
-                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Milestone Tracker</p>
-                  {chips.map(({ label, threshold, achieved }) => (
-                    <div key={label}
-                      className={`flex items-center justify-between rounded-lg px-3 py-2 border ${achieved ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-100'}`}>
-                      <div className="flex items-center gap-2">
-                        <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${achieved ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-400'}`}>
-                          {achieved ? '✓' : '○'}
-                        </div>
-                        <span className={`text-xs font-semibold ${achieved ? 'text-green-700' : 'text-gray-400'}`}>{label}</span>
-                      </div>
-                      <span className="text-[9px] font-bold text-gray-400">&gt; {threshold}%ile</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Right: slider + scale */}
-              <div className="space-y-3">
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Predict at any score</p>
-                <div className="bg-[#f8fafc] rounded-xl border border-[#e2e8f0] p-4 space-y-4">
-                  <div className="relative pt-10 pb-2">
-                    <div className="absolute top-0 flex flex-col items-center pointer-events-none"
-                      style={{ left: `calc(${thumbPct}% - 42px)`, zIndex: 10 }}>
-                      <div className="text-white text-[10px] font-bold px-2.5 py-1 rounded-lg shadow-md whitespace-nowrap"
-                        style={{ background: perColor }}>
-                        {percentileSliderMarks} marks → {predictedPercentile.toFixed(1)}%ile
-                      </div>
-                      <div className="w-0 h-0 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent"
-                        style={{ borderTopColor: perColor }} />
-                    </div>
-                    <div className="relative h-3 bg-gray-200 rounded-full cursor-pointer">
-                      <div className="absolute inset-y-0 left-0 rounded-full transition-all duration-75"
-                        style={{ width: `${thumbPct}%`, background: 'linear-gradient(90deg,#dc2626,#d97706 40%,#22c55e 80%,#16a34a)' }} />
-                      <input
-                        type="range" min={0} max={maxMark} step={1} value={percentileSliderMarks}
-                        onChange={e => setPercentileSliderMarks(Number(e.target.value))}
-                        className="absolute inset-0 w-full opacity-0 cursor-pointer h-full" style={{ zIndex: 20 }}
-                      />
-                      <div className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-6 h-6 rounded-full bg-white border-4 shadow-lg pointer-events-none"
-                        style={{ left: `${thumbPct}%`, borderColor: perColor }} />
-                    </div>
-                  </div>
-                  <div className="flex justify-between text-[10px] text-gray-400 px-0.5 font-medium">
-                    {Array.from({ length: 6 }, (_, i) => (
-                      <span key={i}>{Math.round((maxMark / 5) * i)}</span>
-                    ))}
-                  </div>
-                  <p className="text-center text-[10px] text-gray-400">Slide to check percentile at any score</p>
-
-                  {/* Score zone labels */}
-                  <div className="grid grid-cols-4 gap-1 pt-1">
-                    {[
-                      { zone: 'Low',  color: '#dc2626', range: `0–${Math.round(avgScore * 0.7)}` },
-                      { zone: 'Avg',  color: '#d97706', range: `${Math.round(avgScore * 0.7)}–${avgScore}` },
-                      { zone: 'Good', color: '#22c55e', range: `${avgScore}–${Math.round(avgScore * 1.2)}` },
-                      { zone: 'Top',  color: '#16a34a', range: `${Math.round(avgScore * 1.2)}+` },
-                    ].map(({ zone, color, range }) => (
-                      <div key={zone} className="text-center">
-                        <div className="h-1.5 rounded-full mb-1" style={{ background: color }} />
-                        <p className="text-[9px] font-bold" style={{ color }}>{zone}</p>
-                        <p className="text-[8px] text-gray-400">{range}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </Card>
-        );
-      })()}
 
 
       {/* ════════════════════════════════════════
-          SECTION 8 — PREDICTED REAL EXAM SCORE
+          PREDICTED REAL EXAM SCORE
       ════════════════════════════════════════ */}
       <Card className="p-4 sm:p-5 shadow-sm border-[#e2e8f0]">
         <SectionHeading

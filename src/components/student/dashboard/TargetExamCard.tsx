@@ -15,6 +15,7 @@ import {
 import { getTargetExamRoute } from '@/utils/targetExamRoute';
 import { differenceInDays } from 'date-fns';
 import { getActiveAds, recordClick, recordImpression, getSlideDuration, AdBanner } from '@/data/adsStore';
+import { WeaknessDetectionModal } from '@/components/student/exam/WeaknessDetectionModal';
 
 interface TargetExamCardProps {
   targetExam: string;
@@ -418,6 +419,7 @@ const TargetExamCard: React.FC<TargetExamCardProps> = ({
   const navigate = useNavigate();
   const meta = getExamMeta(targetExam);
   const mockRoute = getTargetExamRoute(targetExam);
+  const [weaknessOpen, setWeaknessOpen] = useState(false);
 
   const daysLeft = (() => {
     try {
@@ -571,11 +573,12 @@ const TargetExamCard: React.FC<TargetExamCardProps> = ({
               size="sm"
               variant="outline"
               className="text-violet-700 border-violet-200 font-medium px-4 py-2 gap-2 rounded-xl text-xs hover:bg-violet-50"
-              onClick={() => navigate('/student/performance-analytics')}
+              onClick={() => setWeaknessOpen(true)}
             >
               <Brain className="h-3.5 w-3.5" />
               Weakness Predictor
             </Button>
+            <WeaknessDetectionModal isOpen={weaknessOpen} onClose={() => setWeaknessOpen(false)} examId={targetExam.toLowerCase().replace(/\s+/g, '-')} examName={targetExam} />
           </div>
         </div>
         </div>{/* ── end flex-1 left section ── */}
