@@ -94,6 +94,12 @@ export const TestAnalysisModal: React.FC<TestAnalysisModalProps> = ({
               maxScore={analysisData.sectionWiseData?.reduce((s, sec) => s + sec.maxScore, 0)}
               percentile={analysisData.percentile}
               rank={analysisData.rank}
+              totalStudents={analysisData.totalStudents}
+              accuracy={(() => {
+                const att = analysisData.sectionWiseData?.reduce((s, sec) => s + sec.attempted, 0) || 0;
+                const cor = analysisData.sectionWiseData?.reduce((s, sec) => s + sec.correct, 0) || 0;
+                return att > 0 ? Math.round((cor / att) * 100) : 0;
+              })()}
             />
           </div>
 

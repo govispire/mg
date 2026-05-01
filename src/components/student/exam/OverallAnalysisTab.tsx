@@ -336,16 +336,6 @@ export const OverallAnalysisTab: React.FC<OverallAnalysisTabProps> = ({ analysis
   return (
     <div className="space-y-5 p-1 pb-6">
 
-      {/* ════════════════════════════════════════
-          SECTION 1 — PRIMARY STAT CARDS (4 up)
-      ════════════════════════════════════════ */}
-      {/* ── PRIMARY STAT CHIPS — single clean row ── */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <StatChip label="Score" value={`${totalScore}/${sumMaxScore}`} sub={`Avg: ${analysisData.comparisonData.averageScore} · Topper: ${analysisData.comparisonData.topperScore}`} icon="📈" accent="border-blue-200" />
-        <StatChip label="Rank" value={`${analysisData.rank}/${analysisData.totalStudents.toLocaleString()}`} sub={`Beat ${Math.round((1 - analysisData.rank / analysisData.totalStudents) * 100)}% of students`} icon="🏅" accent="border-indigo-200" />
-        <StatChip label="Percentile" value={`${analysisData.percentile}%`} sub={`Top ${100 - analysisData.percentile}% nationally`} icon="%" accent="border-sky-200" />
-        <StatChip label="Accuracy" value={`${overallAccuracy}%`} sub={`✅ ${totalCorrect} correct · ❌ ${totalWrong} wrong · ⏭ ${totalSkipped} skipped`} icon="✔" accent="border-green-200" />
-      </div>
 
       {/* ════════════════════════════════════════
           SECTION 2 — SECTION-WISE ANALYSIS
