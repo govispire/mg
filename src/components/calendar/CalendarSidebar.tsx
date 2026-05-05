@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
   Calendar, 
@@ -103,7 +103,7 @@ export const CalendarSidebar: React.FC<CalendarSidebarProps> = ({
           <div className="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center text-white font-bold">
             P
           </div>
-          <span className="text-lg font-bold">PrepSmart</span>
+          <span className="text-lg font-bold">Examerit</span>
         </div>
       </div>
       

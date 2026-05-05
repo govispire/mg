@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { ClipboardList, UserCheck, CalendarCheck, TrendingUp } from 'lucide-react';
 
 const steps = [
@@ -45,7 +45,7 @@ const HowItWorks = () => {
     <section className="py-20 bg-white">
       <div className="max-w-7xl mx-auto px-4 lg:px-8">
         <h2 className="text-3xl md:text-4xl font-extrabold text-center text-slate-900 mb-16">
-          How <span className="text-indigo-600">PrepSmart</span> Mentorship Works
+          How <span className="text-indigo-600">Examerit</span> Mentorship Works
         </h2>
 
         <div className="relative">

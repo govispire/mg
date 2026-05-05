@@ -240,8 +240,8 @@ const FreeQuizzes = () => {
             </Card>
           ) : viewMode === 'grid' ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-              {filteredQuizzes.map(quiz => (
-                <QuizCard key={quiz.id} quiz={quiz} onStart={handleStartQuiz} todayStr={todayStr} />
+              {filteredQuizzes.map((quiz, idx) => (
+                <QuizCard key={quiz.id} quiz={quiz} onStart={handleStartQuiz} todayStr={todayStr} index={idx} />
               ))}
             </div>
           ) : (
@@ -250,14 +250,9 @@ const FreeQuizzes = () => {
                 const isLocked = quiz.isLocked;
                 const isFuture = quiz.scheduledDate > todayStr;
                 const isDisabled = isLocked || isFuture;
-                const typeColors: Record<string, string> = {
-                  'daily': 'bg-blue-500', 'rapid-fire': 'bg-orange-500',
-                  'speed-challenge': 'bg-purple-500', 'mini-test': 'bg-green-500',
-                  'sectional': 'bg-pink-500', 'full-prelims': 'bg-indigo-500', 'full-mains': 'bg-red-500',
-                };
                 return (
-                  <div key={quiz.id} className={`flex items-center gap-3 bg-white dark:bg-gray-900 border rounded-xl px-4 py-3 hover:shadow-md transition-all ${isDisabled ? 'opacity-60' : ''}`}>
-                    <span className={`shrink-0 text-[10px] font-bold text-white px-2 py-1 rounded-md uppercase tracking-wide ${typeColors[quiz.type] || 'bg-gray-500'}`}>
+                  <div key={quiz.id} className={`flex items-center gap-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700/60 rounded-xl px-4 py-3 hover:shadow-sm transition-all ${isDisabled ? 'opacity-60' : ''}`}>
+                    <span className="shrink-0 text-[10px] font-semibold text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-2 py-1 rounded-md uppercase tracking-wide">
                       {quiz.type.replace('-', ' ')}
                     </span>
                     <div className="flex-1 min-w-0">

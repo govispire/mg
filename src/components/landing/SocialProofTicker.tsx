@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle, TrendingUp, Award, Flame } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -17,7 +17,7 @@ const notifications: Notification[] = [
   { id: 2, type: 'achievement', name: 'Priya', location: 'Mumbai', message: 'cleared SBI Clerk exam', time: '5 mins ago' },
   { id: 3, type: 'streak', name: 'Amit', location: 'Bangalore', message: 'completed 30-day streak', time: '8 mins ago' },
   { id: 4, type: 'score', name: 'Sneha', location: 'Chennai', message: 'scored 92% in SSC CGL mock', time: '12 mins ago' },
-  { id: 5, type: 'signup', name: 'Vikram', location: 'Hyderabad', message: 'just joined PrepSmart', time: '15 mins ago' },
+  { id: 5, type: 'signup', name: 'Vikram', location: 'Hyderabad', message: 'just joined Examerit', time: '15 mins ago' },
   { id: 6, type: 'achievement', name: 'Anita', location: 'Pune', message: 'qualified for RRB NTPC interview', time: '18 mins ago' },
   { id: 7, type: 'score', name: 'Rajesh', location: 'Kolkata', message: 'scored 88% in RBI Grade B mock', time: '22 mins ago' },
   { id: 8, type: 'streak', name: 'Meera', location: 'Jaipur', message: 'achieved 50-day streak badge', time: '25 mins ago' },

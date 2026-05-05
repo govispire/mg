@@ -1,4 +1,4 @@
-
+﻿
 import React from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
@@ -96,7 +96,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({ onToggleSidebar }) => {
                     <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-purple-600 flex items-center justify-center text-white font-bold text-sm">
                       P
                     </div>
-                    <span className="text-base sm:text-lg font-bold">PrepSmart</span>
+                    <span className="text-base sm:text-lg font-bold">Examerit</span>
                   </div>
 
                   <div className="p-3 sm:p-4 border-b">
@@ -148,7 +148,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({ onToggleSidebar }) => {
             <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-purple-600 flex items-center justify-center text-white font-bold text-xs sm:text-sm">
               P
             </div>
-            <span className="text-base sm:text-lg font-bold hidden sm:inline">PrepSmart</span>
+            <span className="text-base sm:text-lg font-bold hidden sm:inline">Examerit</span>
           </div>
         </div>
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Calendar, Clock, Search, Home, Tag, Mail } from 'lucide-react';
 import { StepBreadcrumb } from '@/components/ui/step-breadcrumb';
@@ -175,7 +175,7 @@ const Blog = () => {
         <header className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 mb-12">
           <div>
             <h1 className="text-4xl md:text-5xl font-bold mb-2 bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-              PrepSmart Blog
+              Examerit Blog
             </h1>
             <p className="text-lg text-muted-foreground">
               Insights, tutorials, and updates for government exam preparation

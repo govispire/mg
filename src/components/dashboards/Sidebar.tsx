@@ -1,4 +1,4 @@
-
+﻿
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/app/providers';
@@ -315,7 +315,7 @@ const Sidebar: React.FC<SidebarProps> = ({ role, basePath, collapsed }) => {
         </div>
         {!collapsed && (
           <div>
-            <span className="text-[15px] font-bold text-slate-800 tracking-tight">PrepSmart</span>
+            <span className="text-[15px] font-bold text-slate-800 tracking-tight">Examerit</span>
             <div className="text-[10px] text-emerald-600 font-medium -mt-0.5">Exam Preparation</div>
           </div>
         )}
@@ -355,7 +355,7 @@ const Sidebar: React.FC<SidebarProps> = ({ role, basePath, collapsed }) => {
       {!collapsed && (
         <div className="px-4 py-3 border-t border-slate-100">
           <div className="text-[10px] text-slate-400 text-center">
-            PrepSmart © {new Date().getFullYear()}
+            Examerit © {new Date().getFullYear()}
           </div>
         </div>
       )}

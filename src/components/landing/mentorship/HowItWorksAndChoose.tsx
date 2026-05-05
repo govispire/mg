@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { ClipboardList, UserCheck, CalendarCheck, TrendingUp, User, Brain, Lightbulb, BookOpen, ArrowRight } from 'lucide-react';
 
 const steps = [
@@ -89,7 +89,7 @@ const HowItWorksAndChoose = () => {
           {/* ══ LEFT: How It Works ══ */}
           <div className="col-span-12 lg:col-span-7">
             <h2 className="text-2xl font-extrabold text-slate-900 mb-10 text-center">
-              How <span className="text-[#5b51ff]">PrepSmart</span> Mentorship Works
+              How <span className="text-[#5b51ff]">Examerit</span> Mentorship Works
             </h2>
 
             {/* Steps row */}

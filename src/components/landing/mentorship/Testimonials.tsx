@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { Star, Quote } from 'lucide-react';
 
 const testimonials = [
@@ -9,7 +9,7 @@ const testimonials = [
     avatar: 'https://i.pravatar.cc/150?u=kaviya',
     mentor: 'Mentored by Mr. Muniyarasan',
     rating: 5,
-    text: 'PrepSmart mentorship changed everything for me. I had failed SBI Clerk twice before. Mr. Muniyarasan gave me a personalized plan that focused on my weakest areas — Quant and Reasoning. Within 3 months, I was consistently scoring 80+. Cleared it in my third attempt!',
+    text: 'Examerit mentorship changed everything for me. I had failed SBI Clerk twice before. Mr. Muniyarasan gave me a personalized plan that focused on my weakest areas — Quant and Reasoning. Within 3 months, I was consistently scoring 80+. Cleared it in my third attempt!',
     score: '82 / 100',
     category: 'SBI Clerk',
   },
@@ -42,7 +42,7 @@ const testimonials = [
     avatar: 'https://i.pravatar.cc/150?u=rahul_t',
     mentor: 'Mentored by Mr. Sathish Kumar',
     rating: 5,
-    text: 'The GK capsules and current affairs digests from Mr. Sathish were exceptional. I used to lose marks in GA but now it\'s my scoring section. PrepSmart\'s mentorship is truly value for money.',
+    text: 'The GK capsules and current affairs digests from Mr. Sathish were exceptional. I used to lose marks in GA but now it\'s my scoring section. Examerit\'s mentorship is truly value for money.',
     score: '88 / 100',
     category: 'SSC CGL',
   },
@@ -61,7 +61,7 @@ const Testimonials = () => {
             Students Who <span className="text-[#5b51ff]">Made It</span>
           </h2>
           <p className="text-lg text-slate-600 max-w-xl mx-auto">
-            Join 25,000+ aspirants who cleared their dream exams with PrepSmart mentorship.
+            Join 25,000+ aspirants who cleared their dream exams with Examerit mentorship.
           </p>
           {/* Rating Row */}
           <div className="flex items-center justify-center gap-2 mt-4">

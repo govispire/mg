@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -10,7 +10,7 @@ const testimonials = [
     name: 'Anjali Verma',
     role: 'SBI PO Selected',
     image: 'https://randomuser.me/api/portraits/women/28.jpg',
-    quote: 'PrepSmart helped me crack SBI PO in my first attempt. The mock tests were exactly like the real exam!',
+    quote: 'Examerit helped me crack SBI PO in my first attempt. The mock tests were exactly like the real exam!',
     rating: 5
   },
   {
@@ -42,7 +42,7 @@ const VideoExplainer = () => {
             Watch Our Platform in Action
           </h2>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            Take a quick tour of PrepSmart and discover how our platform can transform your exam preparation
+            Take a quick tour of Examerit and discover how our platform can transform your exam preparation
           </p>
         </div>
 

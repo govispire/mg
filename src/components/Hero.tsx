@@ -1,4 +1,4 @@
-
+﻿
 import React from 'react';
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
@@ -229,7 +229,7 @@ const Hero = () => {
         <div className="mb-16">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              Why Choose PrepSmart?
+              Why Choose Examerit?
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
               Our comprehensive platform provides everything you need for exam success

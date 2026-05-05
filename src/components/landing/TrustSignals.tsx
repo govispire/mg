@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle, Users, TrendingUp, Award, Star } from 'lucide-react';
@@ -66,7 +66,7 @@ const TrustSignals = () => {
           </div>
           <div className="text-center md:text-left">
             <p className="font-semibold text-foreground">Join 50,000+ successful students</p>
-            <p className="text-sm text-muted-foreground">Who cleared their exams with PrepSmart</p>
+            <p className="text-sm text-muted-foreground">Who cleared their exams with Examerit</p>
           </div>
           <Badge className="bg-green-500 text-white animate-pulse">
             <CheckCircle className="h-3 w-3 mr-1" />

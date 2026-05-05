@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Award, Newspaper, Star, Trophy } from 'lucide-react';
@@ -83,7 +83,7 @@ const MediaMentions = () => {
           <Card className="max-w-3xl mx-auto bg-gradient-to-r from-primary/5 to-primary/10 border-primary/20">
             <CardContent className="p-8">
               <p className="text-lg italic text-muted-foreground mb-4">
-                "PrepSmart is revolutionizing exam preparation in India with its AI-powered 
+                "Examerit is revolutionizing exam preparation in India with its AI-powered 
                 personalized learning approach and comprehensive mentorship program."
               </p>
               <p className="font-semibold">— The Economic Times</p>

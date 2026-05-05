@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import {
-    Clock, Play, Lock, Calendar as CalendarIcon,
-    Trophy, Users, RotateCcw, BarChart3, FileText
+    Play, Lock, Calendar as CalendarIcon,
+    Bookmark, FileText, Clock, Users,
+    BarChart3, RotateCcw, BookOpen, Trophy
 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { ExtendedQuiz, QuizType } from '@/types/quizTypes';
 import QuizLeaderboardModal from './QuizLeaderboardModal';
 import { getQuizLeaderboard } from '@/services/quizLeaderboardService';
@@ -14,200 +13,201 @@ interface QuizCardProps {
     quiz: ExtendedQuiz;
     onStart: (quiz: ExtendedQuiz) => void;
     todayStr: string;
+    index?: number;
 }
 
-// Type colors matching the image
-const TYPE_COLORS: Record<QuizType, string> = {
-    'daily': 'bg-blue-500',
-    'rapid-fire': 'bg-orange-500',
-    'speed-challenge': 'bg-purple-500',
-    'mini-test': 'bg-green-500',
-    'sectional': 'bg-pink-500',
-    'full-prelims': 'bg-indigo-500',
-    'full-mains': 'bg-red-500',
+// Difficulty derived from quiz type (fallback mapping)
+const getDifficulty = (quiz: ExtendedQuiz): { label: string; color: string; bg: string } => {
+    if ((quiz as any).difficulty === 'easy')   return { label: 'Easy',   color: '#16a34a', bg: '#dcfce7' };
+    if ((quiz as any).difficulty === 'hard')   return { label: 'Hard',   color: '#dc2626', bg: '#fee2e2' };
+    if ((quiz as any).difficulty === 'medium') return { label: 'Medium', color: '#ca8a04', bg: '#fef9c3' };
+    // default by type
+    const hardTypes: QuizType[] = ['full-prelims', 'full-mains'];
+    const easyTypes: QuizType[] = ['daily', 'mini-test'];
+    if (hardTypes.includes(quiz.type))  return { label: 'Hard',   color: '#dc2626', bg: '#fee2e2' };
+    if (easyTypes.includes(quiz.type))  return { label: 'Easy',   color: '#16a34a', bg: '#dcfce7' };
+    return { label: 'Medium', color: '#ca8a04', bg: '#fef9c3' };
 };
 
-// Dynamic shadow colors matching each card header color
-const TYPE_SHADOWS: Record<QuizType, string> = {
-    'daily': '0 4px 14px rgba(59,130,246,0.45)',
-    'rapid-fire': '0 4px 14px rgba(249,115,22,0.45)',
-    'speed-challenge': '0 4px 14px rgba(168,85,247,0.45)',
-    'mini-test': '0 4px 14px rgba(34,197,94,0.45)',
-    'sectional': '0 4px 14px rgba(236,72,153,0.45)',
-    'full-prelims': '0 4px 14px rgba(99,102,241,0.45)',
-    'full-mains': '0 4px 14px rgba(239,68,68,0.45)',
-};
-
-const QuizCard: React.FC<QuizCardProps> = ({ quiz, onStart, todayStr }) => {
+const QuizCard: React.FC<QuizCardProps> = ({ quiz, onStart, todayStr, index = 0 }) => {
     const [showLeaderboard, setShowLeaderboard] = useState(false);
+    const [bookmarked, setBookmarked] = useState(false);
 
-    const isLocked = quiz.isLocked;
-    const isFuture = quiz.scheduledDate > todayStr;
+    const isLocked    = quiz.isLocked;
+    const isFuture    = quiz.scheduledDate > todayStr;
     const isCompleted = quiz.completed;
-    const isDisabled = isLocked || isFuture;
+    const isDisabled  = isLocked || isFuture;
 
     const leaderboard = isCompleted
         ? getQuizLeaderboard(quiz.id, quiz.title, { score: quiz.score || 0, timeTaken: quiz.duration * 60 * 0.7 })
         : getQuizLeaderboard(quiz.id, quiz.title);
 
-    const totalMarks = quiz.questions * 2;
-    const yourMarks = quiz.score || 0;
-    const timeSpent = quiz.duration ? Math.floor(quiz.duration * 0.7) : 0; // Mock time spent
-    const yourRank = isCompleted ? Math.floor(Math.random() * 50) + 1 : 0; // Mock rank
+    const totalMarks    = quiz.questions * 2;
+    const yourMarks     = quiz.score || 0;
+    const timeSpent     = quiz.duration ? Math.floor(quiz.duration * 0.7) : 0;
+    const yourRank      = isCompleted ? Math.floor(Math.random() * 50) + 1 : 0;
     const totalAttempts = quiz.totalUsers || 0;
+    const difficulty    = getDifficulty(quiz);
+
+    // Card number label: pad to 2 digits
+    const numLabel = String(index + 1).padStart(2, '0');
 
     return (
         <>
-            <Card className="overflow-hidden hover:shadow-lg transition-shadow duration-200 border border-gray-200">
-                {/* Colored Header with Quiz Type */}
-                <div className={`${TYPE_COLORS[quiz.type]} text-white px-3 py-2`}>
-                    <p className="text-xs font-semibold uppercase tracking-wide">
-                        {quiz.type.replace('-', ' ')}
-                    </p>
+            <div
+                className={`
+                    bg-white dark:bg-gray-900
+                    border border-gray-200 dark:border-gray-700
+                    rounded-xl shadow-sm
+                    hover:shadow-md hover:-translate-y-0.5
+                    transition-all duration-200
+                    flex flex-col
+                    ${isDisabled ? 'opacity-70' : ''}
+                `}
+            >
+                {/* ── Card body ── */}
+                <div className="p-4 flex flex-col gap-3 flex-1">
+
+                    {/* Row 1: number badge + bookmark */}
+                    <div className="flex items-start justify-between">
+                        {/* Number badge */}
+                        <span className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs font-bold">
+                            {numLabel}
+                        </span>
+
+                        {/* Bookmark */}
+                        <button
+                            onClick={() => setBookmarked(b => !b)}
+                            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors p-0.5"
+                            title="Bookmark"
+                        >
+                            <Bookmark
+                                className="h-4 w-4"
+                                style={bookmarked ? { fill: 'currentColor', color: '#1d4ed8' } : {}}
+                            />
+                        </button>
+                    </div>
+
+                    {/* Title */}
+                    <h3 className="font-bold text-sm text-gray-900 dark:text-gray-100 leading-snug line-clamp-2 min-h-[2.5rem]">
+                        {quiz.title}
+                    </h3>
+
+                    {/* Difficulty badge */}
+                    <div>
+                        <span
+                            className="inline-block text-[11px] font-semibold px-2.5 py-0.5 rounded-md"
+                            style={{ color: difficulty.color, backgroundColor: difficulty.bg }}
+                        >
+                            {difficulty.label}
+                        </span>
+                    </div>
+
+                    {/* Stats row */}
+                    {!isCompleted ? (
+                        <div className="flex items-center gap-4 text-[11px] text-gray-500 dark:text-gray-400">
+                            <span className="flex items-center gap-1">
+                                <FileText className="h-3 w-3 shrink-0" />
+                                <span>{quiz.questions}</span>
+                                <span className="text-gray-400">Qs</span>
+                            </span>
+                            <span className="flex items-center gap-1">
+                                <BookOpen className="h-3 w-3 shrink-0" />
+                                <span>{totalMarks}</span>
+                                <span className="text-gray-400">Marks</span>
+                            </span>
+                            <span className="flex items-center gap-1">
+                                <Clock className="h-3 w-3 shrink-0" />
+                                <span>{quiz.duration}</span>
+                                <span className="text-gray-400">Mins</span>
+                            </span>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-[11px]">
+                            <span className="text-gray-400">Score</span>
+                            <span className="font-semibold text-emerald-600 text-right">{yourMarks}/{totalMarks}</span>
+                            <span className="text-gray-400">Time</span>
+                            <span className="font-semibold text-gray-700 dark:text-gray-300 text-right">{timeSpent}m</span>
+                            <span className="text-gray-400">Rank</span>
+                            <span className="font-semibold text-violet-600 text-right flex items-center justify-end gap-0.5">
+                                <Trophy className="h-3 w-3" />#{yourRank}
+                            </span>
+                        </div>
+                    )}
+
+                    {/* Attempted count */}
+                    <div className="flex items-center gap-1 text-[11px] text-gray-400 dark:text-gray-500">
+                        <Users className="h-3 w-3 shrink-0" />
+                        <span>{totalAttempts.toLocaleString()} students attempted</span>
+                    </div>
                 </div>
 
-                <CardContent className="p-4">
+                {/* ── CTA / action buttons ── */}
+                <div className="px-4 pb-4">
                     {!isCompleted ? (
-                        // BEFORE ATTENDING - Not Completed State
-                        <>
-                            {/* Quiz Title */}
-                            <h3 className="font-bold text-sm mb-3 line-clamp-2 min-h-[2.5rem]">
-                                {quiz.title}
-                            </h3>
-
-                            {/* Stats Grid - 3 columns */}
-                            <div className="space-y-1.5 mb-3 text-xs">
-                                <div className="flex items-center justify-between">
-                                    <span className="text-muted-foreground">Questions:</span>
-                                    <span className="font-semibold">{quiz.questions}</span>
-                                </div>
-                                <div className="flex items-center justify-between">
-                                    <span className="text-muted-foreground">Total Marks:</span>
-                                    <span className="font-semibold">{totalMarks}</span>
-                                </div>
-                                <div className="flex items-center justify-between">
-                                    <span className="text-muted-foreground">Duration:</span>
-                                    <span className="font-semibold">{quiz.duration} mins</span>
-                                </div>
-                                <div className="flex items-center justify-between">
-                                    <span className="text-muted-foreground">Attempted:</span>
-                                    <span className="font-semibold">{totalAttempts}</span>
-                                </div>
-                            </div>
-
-                            {/* Start Button */}
-                            <button
-                                onClick={() => !isDisabled && onStart(quiz)}
-                                disabled={isDisabled}
-                                style={{
-                                    backgroundColor: 'hsl(0deg 0% 100%)',
-                                    border: '1px solid #e9e9e9',
-                                    boxShadow: isDisabled ? 'none' : TYPE_SHADOWS[quiz.type],
-                                }}
-                                className={`w-full h-9 rounded-md text-xs font-semibold flex items-center justify-center gap-1.5 transition-all duration-200
-                                    ${isDisabled
-                                        ? 'cursor-not-allowed opacity-60 text-gray-400'
-                                        : 'text-gray-900 hover:brightness-95 cursor-pointer'
-                                    }`}
-                            >
-                                {isLocked ? (
-                                    <>
-                                        <Lock className="h-3.5 w-3.5" />
-                                        Locked
-                                    </>
-                                ) : isFuture ? (
-                                    <>
-                                        <CalendarIcon className="h-3.5 w-3.5" />
-                                        Coming Soon
-                                    </>
-                                ) : (
-                                    <>
-                                        <Play className="h-3.5 w-3.5" style={{ fill: '#111827', color: '#111827' }} />
-                                        <span style={{ color: '#111827' }}>Start Quiz</span>
-                                    </>
-                                )}
-                            </button>
-                        </>
+                        <button
+                            onClick={() => !isDisabled && onStart(quiz)}
+                            disabled={isDisabled}
+                            className={`
+                                w-full h-10 rounded-lg text-sm font-semibold
+                                flex items-center justify-center gap-2
+                                transition-all duration-150
+                                ${isDisabled
+                                    ? 'bg-gray-100 dark:bg-gray-800 text-gray-400 cursor-not-allowed'
+                                    : 'bg-[#1a9e5c] hover:bg-[#168a50] text-white cursor-pointer shadow-sm hover:shadow'
+                                }
+                            `}
+                        >
+                            {isLocked ? (
+                                <><Lock className="h-4 w-4" /> Locked</>
+                            ) : isFuture ? (
+                                <><CalendarIcon className="h-4 w-4" /> Coming Soon</>
+                            ) : (
+                                <><Play className="h-4 w-4 fill-white" /> Start Quiz →</>
+                            )}
+                        </button>
                     ) : (
-                        // AFTER ATTENDING - Completed State
-                        <>
-                            {/* Quiz Title */}
-                            <h3 className="font-bold text-sm mb-3 line-clamp-2 min-h-[2.5rem]">
-                                {quiz.title}
-                            </h3>
+                        <div className="grid grid-cols-3 gap-2">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-9 text-xs gap-1 border-gray-200 dark:border-gray-700 font-medium"
+                                onClick={() =>
+                                    window.open(
+                                        `/student/exam-window?quizId=${quiz.id}&title=${encodeURIComponent(quiz.title)}&subject=${encodeURIComponent(quiz.subject)}&duration=${quiz.duration}&questions=${quiz.questions}&mode=solution`,
+                                        '_blank',
+                                        'width=1920,height=1080,menubar=no,toolbar=no,location=no,status=no'
+                                    )
+                                }
+                            >
+                                <BookOpen className="h-3 w-3" />
+                                Solution
+                            </Button>
 
-                            {/* Results Grid */}
-                            <div className="space-y-1.5 mb-3 text-xs">
-                                <div className="flex items-center justify-between">
-                                    <span className="text-muted-foreground">Max Mark:</span>
-                                    <span className="font-semibold">{totalMarks}</span>
-                                </div>
-                                <div className="flex items-center justify-between">
-                                    <span className="text-muted-foreground">Your Marks:</span>
-                                    <span className="font-semibold text-green-600">{yourMarks}</span>
-                                </div>
-                                <div className="flex items-center justify-between">
-                                    <span className="text-muted-foreground">Time Spent:</span>
-                                    <span className="font-semibold">{timeSpent} mins</span>
-                                </div>
-                                <div className="flex items-center justify-between">
-                                    <span className="text-muted-foreground">Your Rank:</span>
-                                    <span className="font-semibold text-purple-600">#{yourRank}</span>
-                                </div>
-                                <div className="flex items-center justify-between">
-                                    <span className="text-muted-foreground">Total Attempts:</span>
-                                    <span className="font-semibold">{totalAttempts}</span>
-                                </div>
-                            </div>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-9 text-xs gap-1 border-gray-200 dark:border-gray-700 font-medium"
+                                onClick={() => setShowLeaderboard(true)}
+                            >
+                                <BarChart3 className="h-3 w-3" />
+                                Analysis
+                            </Button>
 
-                            {/* Action Buttons Grid */}
-                            <div className="grid grid-cols-3 gap-2">
-                                {/* Solution Button */}
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="h-8 text-xs flex items-center justify-center gap-1"
-                                    onClick={() => {
-                                        // Launch quiz in solution mode
-                                        window.open(
-                                            `/student/exam-window?quizId=${quiz.id}&title=${encodeURIComponent(quiz.title)}&subject=${encodeURIComponent(quiz.subject)}&duration=${quiz.duration}&questions=${quiz.questions}&mode=solution`,
-                                            '_blank',
-                                            'width=1920,height=1080,menubar=no,toolbar=no,location=no,status=no'
-                                        );
-                                    }}
-                                >
-                                    <FileText className="h-3 w-3" />
-                                    Solution
-                                </Button>
-
-                                {/* Analysis Button */}
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="h-8 text-xs flex items-center justify-center gap-1"
-                                    onClick={() => setShowLeaderboard(true)}
-                                >
-                                    <BarChart3 className="h-3 w-3" />
-                                    Analysis
-                                </Button>
-
-                                {/* Retest Button (Icon) */}
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="h-8 w-full flex items-center justify-center"
-                                    onClick={() => onStart(quiz)}
-                                    title="Retake Quiz"
-                                >
-                                    <RotateCcw className="h-3.5 w-3.5" />
-                                </Button>
-                            </div>
-                        </>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-9 flex items-center justify-center border-gray-200 dark:border-gray-700"
+                                onClick={() => onStart(quiz)}
+                                title="Retry Quiz"
+                            >
+                                <RotateCcw className="h-3.5 w-3.5" />
+                            </Button>
+                        </div>
                     )}
-                </CardContent>
-            </Card>
+                </div>
+            </div>
 
-            {/* Leaderboard Modal */}
             <QuizLeaderboardModal
                 isOpen={showLeaderboard}
                 onClose={() => setShowLeaderboard(false)}

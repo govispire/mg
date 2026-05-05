@@ -1,4 +1,4 @@
-
+﻿
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,9 +10,9 @@ import { Settings, Shield, Bell, Globe, Database, Save } from 'lucide-react';
 
 const OwnerSettings: React.FC = () => {
   const [platformSettings, setPlatformSettings] = useState({
-    name: 'PrepSmart',
+    name: 'Examerit',
     description: 'Comprehensive exam preparation platform',
-    supportEmail: 'support@prepsmart.com',
+    supportEmail: 'support@Examerit.com',
     timezone: 'UTC-5',
     maintenanceMode: false,
     registrationOpen: true,

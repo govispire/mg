@@ -1,4 +1,4 @@
-
+﻿
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -16,7 +16,7 @@ const Dashboard = () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-full bg-brand-blue flex items-center justify-center text-white font-bold">P</div>
-              <span className="text-lg font-bold">PrepSmart</span>
+              <span className="text-lg font-bold">Examerit</span>
             </div>
             <Button variant="ghost" onClick={() => window.location.href = "/"}>Logout</Button>
           </div>

@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Trophy, Star, TrendingUp, Quote, Award } from 'lucide-react';
@@ -82,7 +82,7 @@ export const SuccessStoriesTab: React.FC<SuccessStoriesTabProps> = ({ examId, ex
         </p>
         {adminStories.length > 0 && (
           <p className="text-center text-xs text-amber-600/70 mt-2">
-            {adminStories.length} verified success {adminStories.length === 1 ? 'story' : 'stories'} from PrepSmart toppers
+            {adminStories.length} verified success {adminStories.length === 1 ? 'story' : 'stories'} from Examerit toppers
           </p>
         )}
       </div>

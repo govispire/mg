@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+﻿import { useState, useEffect, useCallback } from 'react';
 
 export interface SuccessStory {
   id: string;
@@ -14,7 +14,7 @@ export interface SuccessStory {
   createdAt: string;
 }
 
-const STORE_KEY = 'prepsmart_success_stories_v1';
+const STORE_KEY = 'Examerit_success_stories_v1';
 
 type StoriesMap = Record<string, SuccessStory[]>; // examId → stories[]
 

@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import {
   Accordion,
@@ -11,11 +11,11 @@ import { motion } from 'framer-motion';
 
 const faqs = [
   {
-    question: 'Will PrepSmart replace traditional coaching completely?',
-    answer: 'PrepSmart provides comprehensive exam preparation that rivals and often exceeds traditional coaching. With personalized study plans, expert mentorship, real exam simulations, and AI-powered analytics, many students find they don\'t need additional coaching. However, you can use PrepSmart alongside traditional coaching as a supplement for extra practice and personalized guidance.'
+    question: 'Will Examerit replace traditional coaching completely?',
+    answer: 'Examerit provides comprehensive exam preparation that rivals and often exceeds traditional coaching. With personalized study plans, expert mentorship, real exam simulations, and AI-powered analytics, many students find they don\'t need additional coaching. However, you can use Examerit alongside traditional coaching as a supplement for extra practice and personalized guidance.'
   },
   {
-    question: 'What if I fail even after using PrepSmart?',
+    question: 'What if I fail even after using Examerit?',
     answer: 'We offer a results guarantee! If you complete 80% of your study plan, attempt all mock tests, and don\'t clear your exam, we provide free access for the next attempt cycle. Our 98% success rate speaks for itself, but we stand by our commitment to your success.'
   },
   {
@@ -24,11 +24,11 @@ const faqs = [
   },
   {
     question: 'Can I access the platform on mobile?',
-    answer: 'Absolutely! PrepSmart is fully responsive and works seamlessly on smartphones, tablets, and desktops. You can study during your commute, in breaks, or anywhere you have internet access. We also offer offline access for downloaded materials.'
+    answer: 'Absolutely! Examerit is fully responsive and works seamlessly on smartphones, tablets, and desktops. You can study during your commute, in breaks, or anywhere you have internet access. We also offer offline access for downloaded materials.'
   },
   {
     question: 'What if I\'m preparing for multiple exams?',
-    answer: 'Great question! Many competitive exams share common topics. PrepSmart allows you to add multiple exam targets and creates an integrated study plan that covers common topics together while giving specific attention to unique sections of each exam.'
+    answer: 'Great question! Many competitive exams share common topics. Examerit allows you to add multiple exam targets and creates an integrated study plan that covers common topics together while giving specific attention to unique sections of each exam.'
   },
   {
     question: 'How current are the study materials and current affairs?',
@@ -36,7 +36,7 @@ const faqs = [
   },
   {
     question: 'Is there a free trial available?',
-    answer: 'Yes! You can try PrepSmart free for 7 days with full access to all features. No credit card required. After the trial, you can choose a plan that fits your needs, starting at just ₹499/month.'
+    answer: 'Yes! You can try Examerit free for 7 days with full access to all features. No credit card required. After the trial, you can choose a plan that fits your needs, starting at just ₹499/month.'
   },
   {
     question: 'How do the daily quizzes and streaks help?',
@@ -65,7 +65,7 @@ const FAQSection = () => {
             Frequently Asked Questions
           </h2>
           <p className="text-muted-foreground">
-            Everything you need to know about PrepSmart
+            Everything you need to know about Examerit
           </p>
         </div>
 
@@ -111,7 +111,7 @@ const FAQSection = () => {
           </p>
           <div className="flex flex-wrap justify-center gap-4">
             <Badge variant="outline" className="py-2 px-4 cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors">
-              📧 support@prepsmart.com
+              📧 support@Examerit.com
             </Badge>
             <Badge variant="outline" className="py-2 px-4 cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors">
               💬 Live Chat

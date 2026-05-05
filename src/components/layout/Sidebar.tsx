@@ -1,4 +1,4 @@
-
+﻿
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/app/providers';
@@ -269,7 +269,7 @@ const Sidebar: React.FC<SidebarProps> = ({ role, basePath, collapsed }) => {
     <div className={`h-full bg-white border-r flex flex-col ${collapsed ? 'items-center' : ''}`}>
       <div className={`p-4 border-b flex ${collapsed ? 'justify-center' : 'items-center gap-2'}`}>
         <div className="w-8 h-8 rounded-full bg-brand-blue flex items-center justify-center text-white font-bold">P</div>
-        {!collapsed && <span className="text-lg font-bold">PrepSmart</span>}
+        {!collapsed && <span className="text-lg font-bold">Examerit</span>}
       </div>
 
       {collapsed && (

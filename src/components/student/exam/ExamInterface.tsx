@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+﻿import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { ExamConfig } from '@/types/exam';
 import { useExamSession } from '@/hooks/exam/useExamSession';
 
@@ -490,7 +490,7 @@ export const ExamInterface: React.FC<ExamInterfaceProps> = ({
                     <div className="w-6 h-6 sm:w-8 sm:h-8 rounded bg-[#1976d2] flex items-center justify-center font-bold text-white text-xs sm:text-sm flex-shrink-0">
                         P
                     </div>
-                    <span className="text-[10px] sm:text-xs text-gray-300 font-semibold hidden sm:block">PrepSmart</span>
+                    <span className="text-[10px] sm:text-xs text-gray-300 font-semibold hidden sm:block">Examerit</span>
                 </div>
 
                 {/* Centre — Exam title + section name */}

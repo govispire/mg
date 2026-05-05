@@ -1,4 +1,4 @@
-
+﻿
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -175,7 +175,7 @@ const FeatureSection = () => {
         {/* Detailed Platform Benefits */}
         <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-8 md:p-12 text-white">
           <div className="text-center mb-8">
-            <h3 className="text-3xl font-bold mb-4">Why PrepSmart Guarantees Success?</h3>
+            <h3 className="text-3xl font-bold mb-4">Why Examerit Guarantees Success?</h3>
             <p className="text-xl opacity-90 max-w-3xl mx-auto">
               Our data-driven approach and comprehensive support system ensure you're always one step ahead
             </p>

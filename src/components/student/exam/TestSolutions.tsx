@@ -1,4 +1,4 @@
-/**
+﻿/**
  * TestSolutions — Solution review page after mock test submission.
  *
  * Mirrors ExamInterface exactly:
@@ -688,7 +688,7 @@ export const TestSolutions: React.FC<TestSolutionsProps> = ({
                 {/* Left — logo */}
                 <div className="flex items-center gap-2 w-1/4">
                     <div className="w-8 h-8 rounded bg-[#1976d2] flex items-center justify-center font-bold text-white text-sm flex-shrink-0">P</div>
-                    <span className="text-xs text-gray-300 font-semibold hidden sm:block">PrepSmart</span>
+                    <span className="text-xs text-gray-300 font-semibold hidden sm:block">Examerit</span>
                 </div>
                 {/* Centre — title */}
                 <div className="flex-1 text-center">

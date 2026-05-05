@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 
 const faqs = [
   {
-    q: 'How does PrepSmart Mentorship work?',
+    q: 'How does Examerit Mentorship work?',
     a: 'After your free assessment, you\'ll be matched with a mentor based on your target exam, strengths, weaknesses, and study schedule. Your mentor creates a personalized daily plan, reviews your progress weekly, and provides 1-on-1 guidance through our platform.',
   },
   {
@@ -11,8 +11,8 @@ const faqs = [
     a: 'We cover all major competitive exams including SBI PO/Clerk, IBPS PO/Clerk, RBI Grade B, SSC CGL/CHSL/MTS, RRB NTPC/Group D, UPSC, CTET, NDA, CAT, and more. Our 200+ mentors specialize across all these areas.',
   },
   {
-    q: 'How is PrepSmart Mentorship different from YouTube or coaching?',
-    a: 'Unlike generic YouTube videos or one-size-fits-all coaching, PrepSmart mentors give you a custom study plan based on YOUR specific weaknesses. You get daily tasks, weekly 1-on-1 reviews, and a dedicated mentor who tracks only your progress.',
+    q: 'How is Examerit Mentorship different from YouTube or coaching?',
+    a: 'Unlike generic YouTube videos or one-size-fits-all coaching, Examerit mentors give you a custom study plan based on YOUR specific weaknesses. You get daily tasks, weekly 1-on-1 reviews, and a dedicated mentor who tracks only your progress.',
   },
   {
     q: 'Can I change my mentor if it\'s not working?',
@@ -47,7 +47,7 @@ const FAQ = () => {
             Frequently Asked <span className="text-[#5b51ff]">Questions</span>
           </h2>
           <p className="text-lg text-slate-600 max-w-xl mx-auto">
-            Everything you need to know about PrepSmart Mentorship. Can't find an answer? Chat with us.
+            Everything you need to know about Examerit Mentorship. Can't find an answer? Chat with us.
           </p>
         </div>
 
@@ -84,8 +84,8 @@ const FAQ = () => {
             <a href="tel:+918012345678" className="inline-flex items-center gap-2 bg-white border border-slate-200 text-slate-700 font-bold px-6 py-3 rounded-2xl text-sm hover:shadow-md transition-all">
               📞 +91 80123 45678
             </a>
-            <a href="mailto:mentorship@prepsmart.in" className="inline-flex items-center gap-2 bg-[#5b51ff] text-white font-bold px-6 py-3 rounded-2xl text-sm hover:bg-[#4a42ff] transition-all">
-              ✉️ mentorship@prepsmart.in
+            <a href="mailto:mentorship@Examerit.in" className="inline-flex items-center gap-2 bg-[#5b51ff] text-white font-bold px-6 py-3 rounded-2xl text-sm hover:bg-[#4a42ff] transition-all">
+              ✉️ mentorship@Examerit.in
             </a>
           </div>
         </div>

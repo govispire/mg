@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { toast } from 'sonner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -198,7 +198,7 @@ const AuthModal = ({ activeTab, setActiveTab, selectedExam, onClose, onRegistrat
       <DialogDescription className="text-center text-gray-600 mb-6">
         {activeTab === 'login'
           ? 'Sign in to your account or try a demo account'
-          : 'Join PrepSmart to start your exam preparation journey'
+          : 'Join Examerit to start your exam preparation journey'
         }
       </DialogDescription>
 

@@ -1,4 +1,4 @@
-
+﻿
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
@@ -116,7 +116,7 @@ export function StudentSidebar() {
           <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center">
             <span className="text-primary-foreground font-bold text-sm">P</span>
           </div>
-          <span className="font-semibold text-foreground">PrepSmart</span>
+          <span className="font-semibold text-foreground">Examerit</span>
         </div>
       </SidebarHeader>
 
@@ -161,7 +161,7 @@ export function StudentSidebar() {
 
       <SidebarFooter>
         <div className="px-4 py-2 text-xs text-muted-foreground">
-          © 2025 PrepSmart
+          © 2025 Examerit
         </div>
       </SidebarFooter>
     </Sidebar>

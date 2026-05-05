@@ -1,4 +1,4 @@
-
+﻿
 import React, { useState } from 'react';
 import { useAuth } from '@/app/providers';
 import {
@@ -339,7 +339,7 @@ const ProfileButton: React.FC<ProfileButtonProps> = ({ showProfileCard = false, 
                     <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.6)]" />
                   </div>
                   <p className="text-xs text-muted-foreground truncate font-medium mb-2">
-                    {user?.email || 'user@prepsmart.com'}
+                    {user?.email || 'user@Examerit.com'}
                   </p>
                   <Badge
                     variant="outline"

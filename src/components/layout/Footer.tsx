@@ -1,4 +1,4 @@
-
+﻿
 import React from 'react';
 
 const Footer = () => {
@@ -10,7 +10,7 @@ const Footer = () => {
             <div className="w-6 h-6 rounded-full bg-brand-blue flex items-center justify-center text-white font-bold text-xs">
               P
             </div>
-            <span className="text-sm font-medium">PrepSmart</span>
+            <span className="text-sm font-medium">Examerit</span>
           </div>
           
           <div className="flex flex-col md:flex-row items-center gap-4 md:gap-8">
@@ -35,7 +35,7 @@ const Footer = () => {
             </nav>
             
             <div className="text-sm text-gray-500">
-              © 2025 PrepSmart. All rights reserved.
+              © 2025 Examerit. All rights reserved.
             </div>
           </div>
         </div>

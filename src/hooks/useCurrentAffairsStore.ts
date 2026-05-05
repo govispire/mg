@@ -1,8 +1,8 @@
-import { useState, useEffect, useCallback } from 'react';
+﻿import { useState, useEffect, useCallback } from 'react';
 import { ExtendedArticle, QuizItem } from '@/types/currentAffairs';
 import { allArticles as seedArticles } from '@/components/current-affairs/articlesData';
 
-const STORE_KEY = 'prepsmart_current_affairs_v1';
+const STORE_KEY = 'Examerit_current_affairs_v1';
 
 // Convert seed articles to ExtendedArticle format (all seeded as 'news')
 const convertSeedArticles = (): ExtendedArticle[] => {
