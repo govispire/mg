@@ -16,18 +16,17 @@ interface QuizCardProps {
     index?: number;
 }
 
-// Difficulty derived from quiz type (fallback mapping)
-const getDifficulty = (quiz: ExtendedQuiz): { label: string; color: string; bg: string } => {
-    if ((quiz as any).difficulty === 'easy')   return { label: 'Easy',   color: '#16a34a', bg: '#dcfce7' };
-    if ((quiz as any).difficulty === 'hard')   return { label: 'Hard',   color: '#dc2626', bg: '#fee2e2' };
-    if ((quiz as any).difficulty === 'medium') return { label: 'Medium', color: '#ca8a04', bg: '#fef9c3' };
-    // default by type
-    const hardTypes: QuizType[] = ['full-prelims', 'full-mains'];
-    const easyTypes: QuizType[] = ['daily', 'mini-test'];
-    if (hardTypes.includes(quiz.type))  return { label: 'Hard',   color: '#dc2626', bg: '#fee2e2' };
-    if (easyTypes.includes(quiz.type))  return { label: 'Easy',   color: '#16a34a', bg: '#dcfce7' };
-    return { label: 'Medium', color: '#ca8a04', bg: '#fef9c3' };
-};
+// Rotating accent colors for the top border / badge
+const ACCENT_COLORS = [
+    { border: "#ef4444", light: "#fef2f2", text: "#dc2626" },  // red
+    { border: "#f97316", light: "#fff7ed", text: "#ea580c" },  // orange
+    { border: "#22c55e", light: "#f0fdf4", text: "#16a34a" },  // green
+    { border: "#06b6d4", light: "#ecfeff", text: "#0891b2" },  // cyan
+    { border: "#8b5cf6", light: "#f5f3ff", text: "#7c3aed" },  // purple
+    { border: "#f59e0b", light: "#fffbeb", text: "#d97706" },  // amber
+    { border: "#ec4899", light: "#fdf2f8", text: "#db2777" },  // pink
+    { border: "#10b981", light: "#ecfdf5", text: "#059669" },  // emerald
+];
 
 const QuizCard: React.FC<QuizCardProps> = ({ quiz, onStart, todayStr, index = 0 }) => {
     const [showLeaderboard, setShowLeaderboard] = useState(false);
@@ -47,123 +46,140 @@ const QuizCard: React.FC<QuizCardProps> = ({ quiz, onStart, todayStr, index = 0 
     const timeSpent     = quiz.duration ? Math.floor(quiz.duration * 0.7) : 0;
     const yourRank      = isCompleted ? Math.floor(Math.random() * 50) + 1 : 0;
     const totalAttempts = quiz.totalUsers || 0;
-    const difficulty    = getDifficulty(quiz);
 
-    // Card number label: pad to 2 digits
-    const numLabel = String(index + 1).padStart(2, '0');
+    const accent = ACCENT_COLORS[index % ACCENT_COLORS.length];
+    const num = index + 1;
 
     return (
         <>
             <div
                 className={`
-                    bg-white dark:bg-gray-900
-                    border border-gray-200 dark:border-gray-700
+                    bg-white
                     rounded-xl shadow-sm
                     hover:shadow-md hover:-translate-y-0.5
                     transition-all duration-200
-                    flex flex-col
+                    flex flex-col overflow-hidden
+                    border border-gray-100
                     ${isDisabled ? 'opacity-70' : ''}
                 `}
+                style={{ borderTop: `3px solid ${accent.border}` }}
             >
-                {/* ── Card body ── */}
+                {/* Card body */}
                 <div className="p-4 flex flex-col gap-3 flex-1">
 
                     {/* Row 1: number badge + bookmark */}
                     <div className="flex items-start justify-between">
-                        {/* Number badge */}
-                        <span className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-xs font-bold">
-                            {numLabel}
+                        {/* Numbered badge */}
+                        <span
+                            className="inline-flex items-center justify-center w-9 h-9 rounded-full text-sm font-extrabold shadow-sm flex-shrink-0"
+                            style={{ background: accent.light, color: accent.text, border: `2px solid ${accent.border}` }}
+                        >
+                            {num}
                         </span>
 
                         {/* Bookmark */}
                         <button
                             onClick={() => setBookmarked(b => !b)}
-                            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors p-0.5"
+                            className="text-gray-300 hover:text-gray-500 transition-colors p-0.5"
                             title="Bookmark"
                         >
                             <Bookmark
                                 className="h-4 w-4"
-                                style={bookmarked ? { fill: 'currentColor', color: '#1d4ed8' } : {}}
+                                style={bookmarked ? { fill: accent.border, color: accent.border } : {}}
                             />
                         </button>
                     </div>
 
                     {/* Title */}
-                    <h3 className="font-bold text-sm text-gray-900 dark:text-gray-100 leading-snug line-clamp-2 min-h-[2.5rem]">
-                        {quiz.title}
-                    </h3>
-
-                    {/* Difficulty badge */}
                     <div>
-                        <span
-                            className="inline-block text-[11px] font-semibold px-2.5 py-0.5 rounded-md"
-                            style={{ color: difficulty.color, backgroundColor: difficulty.bg }}
-                        >
-                            {difficulty.label}
-                        </span>
+                        <h3 className="font-bold text-[15px] text-gray-900 leading-snug line-clamp-1">
+                            {quiz.title}
+                        </h3>
+                        <p className="text-xs text-gray-400 mt-0.5 font-medium">
+                            {quiz.type === 'full-prelims' || quiz.type === 'full-mains'
+                                ? 'Full Length Mock Test'
+                                : quiz.type === 'sectional'
+                                    ? 'Sectional Test'
+                                    : quiz.type === 'speed-challenge'
+                                        ? 'Speed Challenge'
+                                        : quiz.type === 'rapid-fire'
+                                            ? 'Rapid Fire Quiz'
+                                            : quiz.type === 'mini-test'
+                                                ? 'Mini Mock Test'
+                                                : 'Daily Quiz'}
+                        </p>
                     </div>
 
-                    {/* Stats row */}
+                    {/* Students row */}
+                    <div className="flex items-center gap-1.5 text-[12px] text-gray-500">
+                        <Users className="h-3.5 w-3.5 text-gray-400 flex-shrink-0" />
+                        <span className="font-medium">{totalAttempts.toLocaleString()} Students</span>
+                    </div>
+
+                    {/* Divider */}
+                    <div className="border-t border-gray-100" />
+
+                    {/* Stats grid: Questions / Marks / Min */}
                     {!isCompleted ? (
-                        <div className="flex items-center gap-4 text-[11px] text-gray-500 dark:text-gray-400">
-                            <span className="flex items-center gap-1">
-                                <FileText className="h-3 w-3 shrink-0" />
-                                <span>{quiz.questions}</span>
-                                <span className="text-gray-400">Qs</span>
-                            </span>
-                            <span className="flex items-center gap-1">
-                                <BookOpen className="h-3 w-3 shrink-0" />
-                                <span>{totalMarks}</span>
-                                <span className="text-gray-400">Marks</span>
-                            </span>
-                            <span className="flex items-center gap-1">
-                                <Clock className="h-3 w-3 shrink-0" />
-                                <span>{quiz.duration}</span>
-                                <span className="text-gray-400">Mins</span>
-                            </span>
+                        <div className="grid grid-cols-3 gap-2 text-center">
+                            {[
+                                { val: quiz.questions, label: "Questions" },
+                                { val: totalMarks,     label: "Marks" },
+                                { val: quiz.duration,  label: "Min" },
+                            ].map(stat => (
+                                <div key={stat.label}>
+                                    <p className="text-lg font-extrabold text-gray-800 leading-tight">{stat.val}</p>
+                                    <p className="text-[10px] text-gray-400 font-medium mt-0.5">{stat.label}</p>
+                                </div>
+                            ))}
                         </div>
                     ) : (
-                        <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-[11px]">
-                            <span className="text-gray-400">Score</span>
-                            <span className="font-semibold text-emerald-600 text-right">{yourMarks}/{totalMarks}</span>
-                            <span className="text-gray-400">Time</span>
-                            <span className="font-semibold text-gray-700 dark:text-gray-300 text-right">{timeSpent}m</span>
-                            <span className="text-gray-400">Rank</span>
-                            <span className="font-semibold text-violet-600 text-right flex items-center justify-end gap-0.5">
-                                <Trophy className="h-3 w-3" />#{yourRank}
-                            </span>
+                        <div className="grid grid-cols-3 gap-2 text-center">
+                            {[
+                                { val: `${yourMarks}/${totalMarks}`, label: "Score",   color: "#16a34a" },
+                                { val: `${timeSpent}m`,              label: "Time",    color: "#374151" },
+                                { val: `#${yourRank}`,               label: "Rank",    color: "#7c3aed" },
+                            ].map(stat => (
+                                <div key={stat.label}>
+                                    <p className="text-base font-extrabold leading-tight" style={{ color: stat.color }}>{stat.val}</p>
+                                    <p className="text-[10px] text-gray-400 font-medium mt-0.5">{stat.label}</p>
+                                </div>
+                            ))}
                         </div>
                     )}
-
-                    {/* Attempted count */}
-                    <div className="flex items-center gap-1 text-[11px] text-gray-400 dark:text-gray-500">
-                        <Users className="h-3 w-3 shrink-0" />
-                        <span>{totalAttempts.toLocaleString()} students attempted</span>
-                    </div>
                 </div>
 
-                {/* ── CTA / action buttons ── */}
+                {/* CTA */}
                 <div className="px-4 pb-4">
                     {!isCompleted ? (
                         <button
                             onClick={() => !isDisabled && onStart(quiz)}
                             disabled={isDisabled}
                             className={`
-                                w-full h-10 rounded-lg text-sm font-semibold
+                                w-full h-11 rounded-lg text-sm font-bold
                                 flex items-center justify-center gap-2
                                 transition-all duration-150
                                 ${isDisabled
-                                    ? 'bg-gray-100 dark:bg-gray-800 text-gray-400 cursor-not-allowed'
-                                    : 'bg-[#1a9e5c] hover:bg-[#168a50] text-white cursor-pointer shadow-sm hover:shadow'
+                                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                    : 'text-white cursor-pointer shadow-sm hover:shadow-md active:scale-[0.98]'
                                 }
                             `}
+                            style={!isDisabled ? {
+                                background: "linear-gradient(135deg, #16a34a 0%, #15803d 100%)"
+                            } : undefined}
                         >
                             {isLocked ? (
                                 <><Lock className="h-4 w-4" /> Locked</>
                             ) : isFuture ? (
                                 <><CalendarIcon className="h-4 w-4" /> Coming Soon</>
                             ) : (
-                                <><Play className="h-4 w-4 fill-white" /> Start Quiz →</>
+                                <>
+                                    {/* Play icon filled circle */}
+                                    <span className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
+                                        <Play className="h-3 w-3 fill-white text-white ml-0.5" />
+                                    </span>
+                                    Start Test
+                                </>
                             )}
                         </button>
                     ) : (
@@ -171,7 +187,7 @@ const QuizCard: React.FC<QuizCardProps> = ({ quiz, onStart, todayStr, index = 0 
                             <Button
                                 variant="outline"
                                 size="sm"
-                                className="h-9 text-xs gap-1 border-gray-200 dark:border-gray-700 font-medium"
+                                className="h-9 text-xs gap-1 border-gray-200 font-medium"
                                 onClick={() =>
                                     window.open(
                                         `/student/exam-window?quizId=${quiz.id}&title=${encodeURIComponent(quiz.title)}&subject=${encodeURIComponent(quiz.subject)}&duration=${quiz.duration}&questions=${quiz.questions}&mode=solution`,
@@ -187,7 +203,7 @@ const QuizCard: React.FC<QuizCardProps> = ({ quiz, onStart, todayStr, index = 0 
                             <Button
                                 variant="outline"
                                 size="sm"
-                                className="h-9 text-xs gap-1 border-gray-200 dark:border-gray-700 font-medium"
+                                className="h-9 text-xs gap-1 border-gray-200 font-medium"
                                 onClick={() => setShowLeaderboard(true)}
                             >
                                 <BarChart3 className="h-3 w-3" />
@@ -197,7 +213,7 @@ const QuizCard: React.FC<QuizCardProps> = ({ quiz, onStart, todayStr, index = 0 
                             <Button
                                 variant="outline"
                                 size="sm"
-                                className="h-9 flex items-center justify-center border-gray-200 dark:border-gray-700"
+                                className="h-9 flex items-center justify-center border-gray-200"
                                 onClick={() => onStart(quiz)}
                                 title="Retry Quiz"
                             >
