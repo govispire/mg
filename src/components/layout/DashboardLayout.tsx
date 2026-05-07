@@ -15,73 +15,110 @@ interface DashboardLayoutProps {
   basePath: string;
 }
 
+const SIDEBAR_EXPANDED_WIDTH = 240;
+const SIDEBAR_COLLAPSED_WIDTH = 64;
+
 const DashboardLayout: React.FC<DashboardLayoutProps> = ({ role, basePath }) => {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const { user } = useAuth();
 
+  const sidebarWidth = sidebarCollapsed ? SIDEBAR_COLLAPSED_WIDTH : SIDEBAR_EXPANDED_WIDTH;
+
   return (
-    <div className="flex h-screen bg-slate-100/80 w-full">
-        {/* Sidebar */}
-        <div className={`${sidebarOpen ? 'block' : 'hidden'} lg:block fixed lg:relative inset-y-0 left-0 z-50 w-64 bg-white border-r border-slate-200/70 shadow-[1px_0_12px_rgba(0,0,0,0.04)]`}>
-          <Sidebar role={role} basePath={basePath} collapsed={false} />
-        </div>
+    <div className="flex h-screen bg-slate-100/80 w-full overflow-hidden">
 
-        {/* Overlay for mobile */}
-        {sidebarOpen && (
-          <div
-            className="fixed inset-0 z-40 bg-black bg-opacity-50 lg:hidden"
-            onClick={() => setSidebarOpen(false)}
-          />
-        )}
-
-        {/* Main content */}
-        <div className="flex-1 flex flex-col min-w-0 w-full">
-          {/* Header */}
-          <header className="bg-white border-b border-slate-200/70 px-3 sm:px-4 lg:px-6 py-2 sm:py-3 h-[64px] flex items-center" style={{ boxShadow: '0 1px 0 0 rgba(0,0,0,0.05), 0 4px 16px rgba(0,0,0,0.04)' }}>
-            <div className="flex items-center justify-between w-full gap-3">
-              {/* Left: Mobile menu + Category selector */}
-              <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="lg:hidden h-8 w-8 sm:h-9 sm:w-9 p-0"
-                  onClick={() => setSidebarOpen(!sidebarOpen)}
-                >
-                  {sidebarOpen ? <X className="h-4 w-4 sm:h-5 sm:w-5" /> : <Menu className="h-4 w-4 sm:h-5 sm:w-5" />}
-                </Button>
-                {role === 'student' && <CategorySelector />}
-              </div>
-
-              {/* Center: Global Search Bar */}
-              <div className="flex-1 max-w-xl">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
-                  <input
-                    type="text"
-                    placeholder="Search exams, topics, quizzes..."
-                    className="w-full pl-9 pr-4 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all"
-                  />
-                </div>
-              </div>
-
-              {/* Right: Bell + Profile */}
-              <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
-                <Button variant="ghost" size="sm" className="h-8 w-8 sm:h-9 sm:w-9 p-0">
-                  <Bell className="h-4 w-4 sm:h-5 sm:w-5" />
-                </Button>
-                <ProfileButton showProfileCard={false} role={role} />
-              </div>
-            </div>
-          </header>
-
-          {/* Page content */}
-          <main className="flex-1 overflow-auto bg-slate-100/80 p-4 md:p-6">
-            <Outlet />
-          </main>
-        </div>
+      {/* ── Desktop sidebar ─────────────────────────────────────── */}
+      <div
+        className="hidden lg:block relative flex-shrink-0 h-full"
+        style={{
+          width: sidebarWidth,
+          transition: 'width 300ms cubic-bezier(0.4,0,0.2,1)',
+        }}
+      >
+        <Sidebar
+          role={role}
+          basePath={basePath}
+          collapsed={sidebarCollapsed}
+          onToggle={() => setSidebarCollapsed(prev => !prev)}
+        />
       </div>
 
-      {/* ── Floating timer widget (Zustand-powered, persists across all pages) ── */}
+      {/* ── Mobile sidebar (overlay) ─────────────────────────────── */}
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
+      <div
+        className={`
+          fixed inset-y-0 left-0 z-50 lg:hidden
+          transition-transform duration-300 ease-in-out
+          ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}
+        `}
+        style={{ width: SIDEBAR_EXPANDED_WIDTH }}
+      >
+        <Sidebar
+          role={role}
+          basePath={basePath}
+          collapsed={false}
+          onToggle={() => setMobileOpen(false)}
+        />
+      </div>
+
+      {/* ── Main content ─────────────────────────────────────────── */}
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+
+        {/* Header */}
+        <header
+          className="bg-white border-b border-slate-200/70 px-3 sm:px-4 lg:px-6 py-2 sm:py-3 h-[64px] flex items-center flex-shrink-0"
+          style={{ boxShadow: '0 1px 0 0 rgba(0,0,0,0.05), 0 4px 16px rgba(0,0,0,0.04)' }}
+        >
+          <div className="flex items-center justify-between w-full gap-3">
+
+            {/* Left: Mobile hamburger + Category selector */}
+            <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="lg:hidden h-8 w-8 sm:h-9 sm:w-9 p-0"
+                onClick={() => setMobileOpen(prev => !prev)}
+              >
+                {mobileOpen ? <X className="h-4 w-4 sm:h-5 sm:w-5" /> : <Menu className="h-4 w-4 sm:h-5 sm:w-5" />}
+              </Button>
+              {role === 'student' && <CategorySelector />}
+            </div>
+
+            {/* Center: Global search */}
+            <div className="flex-1 max-w-xl">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+                <input
+                  type="text"
+                  placeholder="Search exams, topics, quizzes..."
+                  className="w-full pl-9 pr-4 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all"
+                />
+              </div>
+            </div>
+
+            {/* Right: Bell + Profile */}
+            <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+              <Button variant="ghost" size="sm" className="h-8 w-8 sm:h-9 sm:w-9 p-0">
+                <Bell className="h-4 w-4 sm:h-5 sm:w-5" />
+              </Button>
+              <ProfileButton showProfileCard={false} role={role} />
+            </div>
+          </div>
+        </header>
+
+        {/* Page content */}
+        <main className="flex-1 overflow-auto bg-slate-100/80 p-4 md:p-6">
+          <Outlet />
+        </main>
+      </div>
+
+      {/* Floating timer widget */}
       {role === 'student' && <FloatingTimerWidget />}
     </div>
   );

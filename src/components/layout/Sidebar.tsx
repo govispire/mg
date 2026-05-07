@@ -1,4 +1,4 @@
-﻿
+
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/app/providers';
@@ -10,6 +10,7 @@ import {
   PieChart, CreditCard, Settings, UserCheck, MessageSquare,
   Target, Clock, TrendingUp, Gift, Flame, Trophy, Star, Award, Lock, Shield,
   Sparkles, FileEdit, GraduationCap, BarChart3, Newspaper,
+  ChevronLeft, ChevronRight,
 } from 'lucide-react';
 import { useContentItems } from '@/hooks/useEmployeePermissions';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -19,6 +20,12 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from '@/components/ui/hover-card';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { Progress } from '@/components/ui/progress';
 
 interface NavItem {
@@ -107,55 +114,94 @@ const StreakTooltipContent: React.FC<{ streak: number; longestStreak: number }> 
 };
 
 const SidebarItem: React.FC<SidebarItemProps> = ({ icon, label, to, active, collapsed, badge, highlight, streak, longestStreak, showStreak }) => {
-  return (
-    <li className="mb-2">
-      <Link
-        to={to}
-        className={cn(
-          "flex items-center justify-between gap-3 rounded-lg px-3 py-3 text-sm transition-all hover:bg-gray-100",
-          active ? "bg-brand-blue/10 text-brand-blue font-semibold" : "text-gray-700 font-medium",
-          highlight && !active && "bg-primary/5 border border-primary/20"
-        )}
-        title={label}
-      >
-        <div className="flex items-center gap-3">
-          <span className={cn(highlight && "text-primary")}>{icon}</span>
-          {!collapsed && <span className={cn("font-semibold", highlight && "text-primary")}>{label}</span>}
-        </div>
+  const linkContent = (
+    <Link
+      to={to}
+      className={cn(
+        "flex items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-sm transition-all duration-200",
+        "hover:bg-gray-100/80",
+        active
+          ? "bg-brand-blue/10 text-brand-blue font-semibold shadow-sm"
+          : "text-gray-600 font-medium",
+        highlight && !active && "bg-primary/5 border border-primary/20",
+        collapsed && "justify-center px-2"
+      )}
+      title={collapsed ? label : undefined}
+    >
+      <div className={cn("flex items-center gap-3", collapsed && "gap-0")}>
+        <span
+          className={cn(
+            "flex-shrink-0 transition-colors",
+            highlight && "text-primary",
+            active && "text-brand-blue"
+          )}
+        >
+          {icon}
+        </span>
         {!collapsed && (
-          <div className="flex items-center gap-1.5">
-            {showStreak && streak !== undefined && streak > 0 && (
-              <HoverCard openDelay={100} closeDelay={100}>
-                <HoverCardTrigger asChild>
-                  <div className="flex items-center gap-0.5 bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded-full cursor-pointer hover:bg-orange-200 transition-colors">
-                    <Flame size={12} className="text-orange-500" />
-                    <span className="text-[10px] font-bold">{streak}</span>
-                  </div>
-                </HoverCardTrigger>
-                <HoverCardContent side="right" align="start" className="w-auto p-3">
-                  <StreakTooltipContent streak={streak} longestStreak={longestStreak || streak} />
-                </HoverCardContent>
-              </HoverCard>
+          <span
+            className={cn(
+              "font-semibold whitespace-nowrap overflow-hidden transition-all duration-200",
+              highlight && "text-primary"
             )}
-            {badge && (
-              <Badge className="text-[10px] px-1.5 py-0 h-5 bg-primary text-primary-foreground animate-pulse">
-                {badge}
-              </Badge>
-            )}
-          </div>
+            style={{ opacity: collapsed ? 0 : 1 }}
+          >
+            {label}
+          </span>
         )}
-      </Link>
-    </li>
+      </div>
+      {!collapsed && (
+        <div className="flex items-center gap-1.5 flex-shrink-0">
+          {showStreak && streak !== undefined && streak > 0 && (
+            <HoverCard openDelay={100} closeDelay={100}>
+              <HoverCardTrigger asChild>
+                <div className="flex items-center gap-0.5 bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded-full cursor-pointer hover:bg-orange-200 transition-colors">
+                  <Flame size={12} className="text-orange-500" />
+                  <span className="text-[10px] font-bold">{streak}</span>
+                </div>
+              </HoverCardTrigger>
+              <HoverCardContent side="right" align="start" className="w-auto p-3">
+                <StreakTooltipContent streak={streak} longestStreak={longestStreak || streak} />
+              </HoverCardContent>
+            </HoverCard>
+          )}
+          {badge && (
+            <Badge className="text-[10px] px-1.5 py-0 h-5 bg-primary text-primary-foreground animate-pulse">
+              {badge}
+            </Badge>
+          )}
+        </div>
+      )}
+    </Link>
   );
+
+  if (collapsed) {
+    return (
+      <li className="mb-1">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            {linkContent}
+          </TooltipTrigger>
+          <TooltipContent side="right" sideOffset={8} className="font-medium text-xs">
+            {label}
+            {badge && <span className="ml-1.5 text-primary font-bold">• {badge}</span>}
+          </TooltipContent>
+        </Tooltip>
+      </li>
+    );
+  }
+
+  return <li className="mb-1">{linkContent}</li>;
 };
 
 interface SidebarProps {
   role: 'student' | 'instructor' | 'employee' | 'super-admin' | 'owner' | 'mentor';
   basePath: string;
   collapsed: boolean;
+  onToggle?: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ role, basePath, collapsed }) => {
+const Sidebar: React.FC<SidebarProps> = ({ role, basePath, collapsed, onToggle }) => {
   const location = useLocation();
   const { user } = useAuth();
   const [streak, setStreak] = useState(0);
@@ -181,7 +227,6 @@ const Sidebar: React.FC<SidebarProps> = ({ role, basePath, collapsed }) => {
   // Check if current path matches or is a sub-path of the nav item
   const isActive = (path: string) => {
     if (path === `${basePath}/mentorship`) {
-      // For mentorship, check if current path starts with mentorship
       return location.pathname.startsWith(`${basePath}/mentorship`);
     }
     return location.pathname === path;
@@ -195,13 +240,10 @@ const Sidebar: React.FC<SidebarProps> = ({ role, basePath, collapsed }) => {
           { icon: <LayoutDashboard size={18} />, label: 'Dashboard', to: `${basePath}/dashboard` },
           { icon: <BookOpen size={18} />, label: 'Know Your Syllabus', to: `${basePath}/syllabus` },
           { icon: <UserCheck size={18} />, label: 'Mentorship', to: `${basePath}/mentorship/dashboard` },
-          { icon: <BookOpen size={18} />, label: 'Courses', to: `${basePath}/courses` },
-
+          // { icon: <BookOpen size={18} />, label: 'Courses', to: `${basePath}/courses` }, // TODO: re-enable when ready
           { icon: <FileCheck size={18} />, label: 'Tests', to: `${basePath}/tests` },
           { icon: <FileText size={18} />, label: 'Current Affairs', to: `${basePath}/current-affairs` },
           { icon: <Gift size={18} />, label: 'Daily Free Quizzes', to: `${basePath}/daily-quizzes`, badge: 'TODAY', highlight: true, showStreak: true },
-
-
           { icon: <Bell size={18} />, label: 'Exam Alerts', to: `${basePath}/exam-notifications` },
           { icon: <Heart size={18} />, label: 'Exam Tracker', to: `${basePath}/self-care` },
           { icon: <FileText size={18} />, label: 'PDF Courses', to: `${basePath}/pdf-courses` },
@@ -266,42 +308,96 @@ const Sidebar: React.FC<SidebarProps> = ({ role, basePath, collapsed }) => {
   const navItems = getNavItems();
 
   return (
-    <div className={`h-full bg-white border-r flex flex-col ${collapsed ? 'items-center' : ''}`}>
-      <div className={`p-4 border-b flex ${collapsed ? 'justify-center' : 'items-center gap-2'}`}>
-        <div className="w-8 h-8 rounded-full bg-brand-blue flex items-center justify-center text-white font-bold">P</div>
-        {!collapsed && <span className="text-lg font-bold">Examerit</span>}
-      </div>
-
-      {collapsed && (
-        <div className="py-4 border-b flex justify-center">
-          <Avatar>
-            <AvatarFallback className="bg-brand-blue text-white">
-              {user?.name?.charAt(0) || 'U'}
-            </AvatarFallback>
-          </Avatar>
+    <TooltipProvider delayDuration={0}>
+      <div
+        className={cn(
+          "h-full bg-white border-r border-slate-200/70 flex flex-col relative",
+          "transition-all duration-300 ease-in-out",
+          collapsed ? "items-center" : ""
+        )}
+      >
+        {/* Logo / Brand Header */}
+        <div
+          className={cn(
+            "border-b border-slate-100 flex items-center h-[64px] flex-shrink-0 overflow-hidden",
+            collapsed ? "justify-center px-3" : "px-4 gap-2.5"
+          )}
+        >
+          {/* Logo mark */}
+          <div className="w-8 h-8 rounded-lg bg-brand-blue flex items-center justify-center text-white font-bold text-sm flex-shrink-0 shadow-sm">
+            E
+          </div>
+          {!collapsed && (
+            <span
+              className="flex-1 text-[17px] font-bold text-gray-900 whitespace-nowrap overflow-hidden"
+              style={{ transition: 'opacity 200ms', opacity: collapsed ? 0 : 1 }}
+            >
+              Examerit
+            </span>
+          )}
         </div>
-      )}
 
-      <nav className="flex-1 overflow-y-auto p-4">
-        <ul className={`space-y-1 ${collapsed ? 'items-center' : ''}`}>
-          {navItems.map((item: NavItem) => (
-            <SidebarItem
-              key={item.to}
-              icon={item.icon}
-              label={item.label}
-              to={item.to}
-              active={isActive(item.to)}
-              collapsed={collapsed}
-              badge={item.badge}
-              highlight={item.highlight}
-              streak={streak}
-              longestStreak={longestStreak}
-              showStreak={item.showStreak}
-            />
-          ))}
-        </ul>
-      </nav>
-    </div>
+        {/* Toggle button — floating handle on right edge, vertically centred in header */}
+        {onToggle && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={onToggle}
+                className={cn(
+                  "absolute top-[18px] -right-[14px] z-10",
+                  "flex items-center justify-center rounded-full",
+                  "w-7 h-7 border-2 border-slate-200 bg-white text-slate-500",
+                  "hover:bg-blue-50 hover:text-brand-blue hover:border-brand-blue/40 transition-all duration-200",
+                  "shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue/30"
+                )}
+                aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+              >
+                {collapsed
+                  ? <ChevronRight size={13} strokeWidth={2.5} />
+                  : <ChevronLeft size={13} strokeWidth={2.5} />
+                }
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="right" sideOffset={10} className="text-xs font-medium">
+              {collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            </TooltipContent>
+          </Tooltip>
+        )}
+
+        {/* Collapsed: avatar */}
+        {collapsed && (
+          <div className="py-3 border-b border-slate-100 flex justify-center flex-shrink-0">
+            <Avatar className="h-8 w-8">
+              <AvatarFallback className="bg-brand-blue/10 text-brand-blue font-semibold text-sm">
+                {user?.name?.charAt(0)?.toUpperCase() || 'U'}
+              </AvatarFallback>
+            </Avatar>
+          </div>
+        )}
+
+        {/* Nav */}
+        <nav className="flex-1 overflow-y-auto overflow-x-hidden py-3 px-2">
+          <ul className={cn("space-y-0.5", collapsed && "flex flex-col items-center w-full")}>
+            {navItems.map((item: NavItem) => (
+              <SidebarItem
+                key={item.to}
+                icon={item.icon}
+                label={item.label}
+                to={item.to}
+                active={isActive(item.to)}
+                collapsed={collapsed}
+                badge={item.badge}
+                highlight={item.highlight}
+                streak={streak}
+                longestStreak={longestStreak}
+                showStreak={item.showStreak}
+              />
+            ))}
+          </ul>
+        </nav>
+
+      </div>
+    </TooltipProvider>
   );
 };
 

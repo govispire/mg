@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, Target, Trophy, Zap, Clock, TrendingUp, Users, Grid3X3, List, CheckCircle2, ShoppingCart, Calendar, Award, PlayCircle, Shield, Brain } from 'lucide-react';
+import { ArrowLeft, Target, Trophy, Zap, Clock, TrendingUp, Users, Grid3X3, List, CheckCircle2, ShoppingCart, Calendar, Award, PlayCircle, Shield, Brain, HelpCircle, FileText, BookOpen } from 'lucide-react';
 import { TestTypeGrid } from '@/components/student/exam/TestTypeGrid';
 import { ExamPerformanceTab } from '@/components/student/exam/ExamPerformanceTab';
 import { SuccessStoriesTab } from '@/components/student/exam/SuccessStoriesTab';
@@ -16,6 +16,7 @@ import { getExamsByCategory } from '@/data/examData';
 import { useExamCatalog, type TestSubject } from '@/hooks/useExamCatalog';
 import { getExamTheme } from '@/utils/examTheme';
 import { WeaknessDetectionModal } from '@/components/student/exam/WeaknessDetectionModal';
+import { HowToStartModal } from '@/components/student/exam/HowToStartModal';
 
 /* ─── helpers ─────────────────────────────────────────────────────────────── */
 
@@ -28,7 +29,15 @@ const ExamDetail = () => {
   const [activeSubTab, setActiveSubTab] = useState("full");
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [weaknessOpen, setWeaknessOpen] = useState(false);
+  const [howToStartOpen, setHowToStartOpen] = useState(false);
+  const [countdownSlide, setCountdownSlide] = useState(0);
   const { progressData, getTypeProgress, setProgressData, updateTestProgress } = useExamProgress(examId!);
+
+  // Auto-slide countdown panel every 3 s
+  useEffect(() => {
+    const t = setInterval(() => setCountdownSlide(s => s + 1), 3000);
+    return () => clearInterval(t);
+  }, []);
 
   /* ─── purchase state ─── */
   const [isPurchased, setIsPurchased] = useState<boolean>(() => {
@@ -303,8 +312,72 @@ const ExamDetail = () => {
   // ── Exam theme (unique colour identity per exam) ──────────────────────────
   const theme = React.useMemo(() => getExamTheme(examId, examName), [examId, examName]);
 
+  // Compute per-slot test totals grouped by main tab (Prelims / Mains / Live)
+  // Total = ALL tests across ALL sub-tabs (full + sectional + speed + pyq) per main tab
+  const tabGroupProgress = React.useMemo(() => {
+    const getSlotData = (slotKey: string) => {
+      // 1. Find tests in catalog slot
+      let catalogTests: any[] = [];
+      for (const cat of catalog) {
+        for (const sec of cat.sections) {
+          const found = sec.exams.find(e => e.id === examId);
+          if (found) {
+            const slot = found.testSlots?.find((s: any) => s.key === slotKey);
+            if (slot) { catalogTests = (slot.tests || []).filter((t: any) => t.isVisible !== false); break; }
+          }
+        }
+        if (catalogTests.length > 0) break;
+      }
+      // 2. Map slot key → progressData key for completed tracking
+      const progKeyMap: Record<string, keyof typeof progressData.testTypes> = {
+        'prelims_full': 'prelims',     'mains_full': 'mains',
+        'prelims_sectional': 'sectional', 'mains_sectional': 'sectional',
+        'prelims_speed': 'speed',      'mains_speed': 'speed',
+        'prelims_pyq': 'pyq',          'mains_pyq': 'pyq',
+        'live': 'live',
+      };
+      const progKey = progKeyMap[slotKey];
+      const progressTests = progKey ? (progressData.testTypes[progKey] || []) : [];
+
+      if (catalogTests.length > 0) {
+        // Use catalog as source of truth for totals
+        return {
+          total: catalogTests.length,
+          completed: catalogTests.filter(ct =>
+            progressTests.find((p: any) => p.testId === ct.id)?.status === 'completed'
+          ).length,
+        };
+      }
+      // 3. Fallback to mock progressData for all slot types
+      return {
+        total: progressTests.length,
+        completed: progressTests.filter((t: any) => t.status === 'completed').length,
+      };
+    };
+
+    const p = {
+      full:      getSlotData('prelims_full'),
+      sectional: getSlotData('prelims_sectional'),
+      speed:     getSlotData('prelims_speed'),
+      pyq:       getSlotData('prelims_pyq'),
+    };
+    const m = {
+      full:      getSlotData('mains_full'),
+      sectional: getSlotData('mains_sectional'),
+      speed:     getSlotData('mains_speed'),
+      pyq:       getSlotData('mains_pyq'),
+    };
+    const live = getSlotData('live');
+    const sum = (obj: Record<string, { total: number; completed: number }>) =>
+      Object.values(obj).reduce((a, b) => ({ total: a.total + b.total, completed: a.completed + b.completed }), { total: 0, completed: 0 });
+    const pt = sum(p);
+    const mt = sum(m);
+    return { p, m, live, pt, mt, grand: { total: pt.total + mt.total + live.total, completed: pt.completed + mt.completed + live.completed } };
+  }, [catalog, examId, progressData.testTypes]);
+
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-7xl mx-auto">
       {/* ── Back link ── */}
       <div>
         <Link to={`/student/tests/${category}`} className="text-gray-500 flex items-center hover:text-gray-700 text-sm font-medium gap-1.5 group">
@@ -390,76 +463,64 @@ const ExamDetail = () => {
         </div>
       ) : (
         /* ── AFTER PURCHASE ── */
-        <div className="flex flex-col md:flex-row bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-          {/* LEFT SIDE */}
-          <div className="flex-1 p-5 sm:p-7 flex flex-col">
-            <div className="flex flex-col xl:flex-row gap-6 mb-6">
+        <div className="flex flex-col md:flex-row bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+
+          {/* ══ LEFT PANEL ══ */}
+          <div className="flex-1 p-6 sm:p-8 flex flex-col gap-5">
+
+            {/* Row 1: Identity + Progress Rings */}
+            <div className="flex flex-col sm:flex-row sm:items-start gap-6">
               <div className="flex-1">
-                <div className="flex items-center gap-4 mb-5">
-                  <div className="w-14 h-14 bg-gray-50 flex items-center justify-center rounded-xl border border-gray-100 flex-shrink-0">
-                    {isLogoUrl ? (
-                      <img src={examLogo as string} alt={examName} className="w-9 h-9 object-contain" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                    ) : (
-                      <span className="text-3xl">{examLogo}</span>
-                    )}
+                <div className="text-[10px] font-extrabold text-primary uppercase tracking-widest mb-2">Target Examination</div>
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-12 h-12 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm">
+                    {isLogoUrl
+                      ? <img src={examLogo as string} alt={examName} className="w-8 h-8 object-contain" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                      : <span className="text-2xl">{examLogo}</span>}
                   </div>
                   <div>
-                    <div className="text-[10px] font-bold text-primary uppercase tracking-wider mb-0.5">Target Examination</div>
-                    <h1 className="text-2xl sm:text-3xl font-black text-gray-900 leading-tight">{examName}</h1>
-                    <p className="text-sm font-semibold text-gray-500 mt-1">Preliminary Examination - {(Math.floor(Math.random() * 5000) + 5000).toLocaleString()} Vacancies</p>
+                    <h1 className="text-2xl sm:text-3xl font-black text-gray-900 leading-none">{examName}</h1>
+                    <p className="text-xs text-gray-400 font-medium mt-0.5">Preliminary Examination · {(Math.floor(Math.random() * 5000) + 5000).toLocaleString()} Vacancies</p>
                   </div>
                 </div>
-                {/* Meta details */}
-                <div className="flex flex-wrap gap-4 mt-5">
-                  <div className="flex items-center gap-1.5 bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100 text-gray-700">
-                    <Calendar className="w-4 h-4 text-primary" /> <span className="font-bold text-[13px]">5 Oct 2026</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100 text-gray-700">
-                    <Clock className="w-4 h-4 text-primary" /> <span className="font-bold text-[13px]">45 min</span>
-                  </div>
-                  <div className="flex items-center gap-1.5 bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100 text-gray-700">
-                    <Award className="w-4 h-4 text-primary" /> <span className="font-bold text-[13px]">80 Marks</span>
-                  </div>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    { icon: <Calendar className="w-3.5 h-3.5" />, label: '5 Oct 2026' },
+                    { icon: <Clock className="w-3.5 h-3.5" />, label: '45 min' },
+                    { icon: <Award className="w-3.5 h-3.5" />, label: '80 Marks' },
+                  ].map(({ icon, label }) => (
+                    <div key={label} className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 text-gray-600 px-3 py-1.5 rounded-lg text-xs font-semibold">
+                      <span className="text-primary">{icon}</span>{label}
+                    </div>
+                  ))}
                 </div>
               </div>
 
-              {/* Progress Rings */}
-              <div className="flex items-center flex-wrap gap-3 xl:justify-end shrink-0 overflow-x-auto">
+              {/* Progress rings — Overall prominent, subjects aligned */}
+              <div className="flex items-end gap-5 flex-wrap shrink-0">
                 {(() => {
-                  /* Calculate simple progress percentages for visual purposes based on the user's data */
-                  const typeKeys = Object.keys(progressData.testTypes) as (keyof typeof progressData.testTypes)[];
-                  const totalCompleted = typeKeys.reduce((s, k) => s + getTypeProgress(k).completed, 0);
-                  const totalTests = typeKeys.reduce((s, k) => s + getTypeProgress(k).total, 0) || 120;
-                  
-                  const ringData = [
-                    { label: 'Overall', pct: progressData.overallProgress || 0, color: '#10b981' },
-                    { label: 'Quantitative', pct: Math.min(Math.round((progressData.overallProgress || 0) * 0.9 + 5), 100), color: '#3b82f6' },
-                    { label: 'Reasoning', pct: Math.min(Math.round((progressData.overallProgress || 0) * 1.1), 100), color: '#8b5cf6' },
-                    { label: 'English', pct: Math.min(Math.round((progressData.overallProgress || 0) * 0.85 + 10), 100), color: '#f59e0b' },
-                    { label: 'Gen. Aware', pct: Math.min(Math.round((progressData.overallProgress || 0) * 0.75 + 15), 100), color: '#ec4899' },
+                  const rings = [
+                    { label: 'OVERALL',   pct: progressData.overallProgress || 0,                                          color: '#10b981', size: 82, stroke: 7, textSize: 14 },
+                    { label: 'QUANT',     pct: Math.min(Math.round((progressData.overallProgress || 0) * 0.9 + 5), 100),   color: '#3b82f6', size: 60, stroke: 5, textSize: 11 },
+                    { label: 'REASONING', pct: Math.min(Math.round((progressData.overallProgress || 0) * 1.1), 100),        color: '#8b5cf6', size: 60, stroke: 5, textSize: 11 },
+                    { label: 'ENGLISH',   pct: Math.min(Math.round((progressData.overallProgress || 0) * 0.85 + 10), 100), color: '#f59e0b', size: 60, stroke: 5, textSize: 11 },
+                    { label: 'GEN. AWR.', pct: Math.min(Math.round((progressData.overallProgress || 0) * 0.75 + 15), 100), color: '#ec4899', size: 60, stroke: 5, textSize: 11 },
                   ];
-
-                  return ringData.map((ring, idx) => {
-                    const size = 68;
-                    const stroke = 6;
-                    const r = (size - stroke) / 2;
+                  return rings.map((ring, idx) => {
+                    const r = (ring.size - ring.stroke) / 2;
                     const circ = 2 * Math.PI * r;
                     const dash = (Math.max(0, Math.min(ring.pct, 100)) / 100) * circ;
-                    
                     return (
-                      <div key={idx} className="flex flex-col items-center">
-                        <div className="relative" style={{ width: size, height: size }}>
-                          <svg width={size} height={size} className="block -rotate-90">
-                            <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="#f1f5f9" strokeWidth={stroke} />
-                            <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={ring.color} strokeWidth={stroke} strokeLinecap="round" 
-                              strokeDasharray={`${dash} ${circ - dash}`} 
-                              style={{ transition: 'stroke-dasharray 1s ease-out' }} />
+                      <div key={idx} className="flex flex-col items-center" style={{ gap: 5 }}>
+                        <div className="relative" style={{ width: ring.size, height: ring.size }}>
+                          <svg width={ring.size} height={ring.size} className="-rotate-90">
+                            <circle cx={ring.size/2} cy={ring.size/2} r={r} fill="none" stroke="#f1f5f9" strokeWidth={ring.stroke} />
+                            <circle cx={ring.size/2} cy={ring.size/2} r={r} fill="none" stroke={ring.color} strokeWidth={ring.stroke} strokeLinecap="round"
+                              strokeDasharray={`${dash} ${circ - dash}`} style={{ transition: 'stroke-dasharray 1s ease-out' }} />
                           </svg>
-                          <span className="absolute inset-0 flex items-center justify-center font-bold text-gray-800" style={{ fontSize: 13 }}>
-                            {ring.pct}%
-                          </span>
+                          <span className="absolute inset-0 flex items-center justify-center font-black text-gray-800" style={{ fontSize: ring.textSize }}>{ring.pct}%</span>
                         </div>
-                        <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mt-2">{ring.label}</span>
+                        <span className="font-bold text-gray-400 uppercase tracking-wider text-center whitespace-nowrap" style={{ fontSize: 8 }}>{ring.label}</span>
                       </div>
                     );
                   });
@@ -467,34 +528,58 @@ const ExamDetail = () => {
               </div>
             </div>
 
-            {/* Action Buttons */}
-            {/* Tests Completed Summary Cards */}
+            {/* Row 2: Test completion cards */}
             {(() => {
-              const typeKeys = Object.keys(progressData.testTypes) as (keyof typeof progressData.testTypes)[];
-              const totalCompleted = typeKeys.reduce((s, k) => s + getTypeProgress(k).completed, 0);
-              const totalTests = typeKeys.reduce((s, k) => s + getTypeProgress(k).total, 0) || 120;
-              const types = [
-                { label: 'Prelims', key: 'prelims' as const, color: 'bg-blue-50 border-blue-200 text-blue-700' },
-                { label: 'Mains', key: 'mains' as const, color: 'bg-purple-50 border-purple-200 text-purple-700' },
-                { label: 'Sectional', key: 'sectional' as const, color: 'bg-green-50 border-green-200 text-green-700' },
-                { label: 'Speed', key: 'speed' as const, color: 'bg-orange-50 border-orange-200 text-orange-700' },
+              const { p, m, live, pt, mt, grand } = tabGroupProgress;
+              const tabs = [
+                {
+                  label: 'Prelims', icon: <FileText className="w-4 h-4" />,
+                  total: pt.total, completed: pt.completed,
+                  accent: '#3b82f6', iconBg: '#eff6ff', iconColor: '#2563eb',
+                  subs: [{ label: 'Full Test', ...p.full }, { label: 'Sectional', ...p.sectional }, { label: 'Speed', ...p.speed }, { label: 'PYQ', ...p.pyq }],
+                },
+                {
+                  label: 'Mains', icon: <BookOpen className="w-4 h-4" />,
+                  total: mt.total, completed: mt.completed,
+                  accent: '#8b5cf6', iconBg: '#f5f3ff', iconColor: '#7c3aed',
+                  subs: [{ label: 'Full Test', ...m.full }, { label: 'Sectional', ...m.sectional }, { label: 'Speed', ...m.speed }, { label: 'PYQ', ...m.pyq }],
+                },
+                {
+                  label: 'Live Test', icon: <Zap className="w-4 h-4" />,
+                  total: live.total, completed: live.completed,
+                  accent: '#10b981', iconBg: '#ecfdf5', iconColor: '#059669',
+                  subs: [],
+                },
               ];
               return (
-                <div className="mb-4 pt-3 border-t border-gray-100">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Tests Completed</span>
-                    <span className="text-[11px] font-bold text-primary">{totalCompleted} / {totalTests} Total</span>
+                <div className="rounded-2xl bg-gray-50/60 px-4 py-3">
+                  {/* Header */}
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Preparation Progress</span>
+                    <span className="text-[10px] font-extrabold" style={{ color: '#16a34a' }}>{grand.completed} / {grand.total} Total</span>
                   </div>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                    {types.map(t => {
-                      const prog = getTypeProgress(t.key);
-                      const pct = prog.total > 0 ? Math.round((prog.completed / prog.total) * 100) : 0;
+                  {/* Horizontal 3-column white cards */}
+                  <div className="grid grid-cols-3 gap-3">
+                    {tabs.map(tab => {
+                      const pct = tab.total > 0 ? Math.round((tab.completed / tab.total) * 100) : 0;
                       return (
-                        <div key={t.key} className={`rounded-xl border px-3 py-2.5 ${t.color}`}>
-                          <div className="text-[10px] font-bold uppercase tracking-wide opacity-70 mb-1">{t.label}</div>
-                          <div className="text-lg font-black leading-none">{prog.completed}<span className="text-xs font-semibold opacity-60">/{prog.total}</span></div>
-                          <div className="mt-1.5 h-1 bg-black/10 rounded-full overflow-hidden">
-                            <div className="h-full bg-current rounded-full transition-all duration-700" style={{ width: `${pct}%` }} />
+                        <div key={tab.label} className="bg-white rounded-xl px-3 py-2.5" style={{ border: '1px solid #EEF2F7', boxShadow: '0 2px 8px rgba(15,23,42,0.04)' }}>
+                          {/* Top row: icon + label + fraction */}
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-2">
+                              <div className="w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0" style={{ background: tab.iconBg, color: tab.iconColor }}>
+                                {tab.icon}
+                              </div>
+                              <span className="text-[11px] font-extrabold uppercase tracking-wide" style={{ color: tab.iconColor }}>{tab.label}</span>
+                            </div>
+                            <div className="flex items-baseline gap-0.5">
+                              <span className="text-[18px] font-black" style={{ color: tab.iconColor }}>{tab.completed}</span>
+                              <span className="text-[11px] font-bold text-gray-400">/{tab.total}</span>
+                            </div>
+                          </div>
+                          {/* Progress bar */}
+                          <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                            <div className="h-full rounded-full transition-all duration-700" style={{ width: `${pct}%`, backgroundColor: tab.accent }} />
                           </div>
                         </div>
                       );
@@ -504,37 +589,83 @@ const ExamDetail = () => {
               );
             })()}
 
-            <div className="mt-auto flex flex-wrap items-center gap-2 sm:gap-3 pt-4 border-t border-gray-100">
-              <button onClick={() => setActiveTab('prelims')} className="bg-primary hover:bg-primary/90 text-white flex items-center gap-2 font-bold px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl shadow-md transition-all active:scale-95 text-xs sm:text-sm">
-                <PlayCircle className="w-4 sm:w-5 h-4 sm:h-5"/> Start Full Mock
+            {/* Row 3: Action buttons */}
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3 mt-5">
+              <button onClick={() => setActiveTab('prelims')} className="bg-primary hover:bg-primary/90 text-white flex items-center gap-2 font-bold px-5 py-2.5 rounded-xl shadow-md shadow-primary/20 transition-all active:scale-95 text-sm">
+                <PlayCircle className="w-4 h-4" /> Start Full Mock
               </button>
-              <button className="border-2 border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-gray-700 font-bold px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl transition-all active:scale-95 text-xs sm:text-sm">
-                View Syllabus
+              <button className="border border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-gray-700 font-semibold px-4 py-2.5 rounded-xl transition-all active:scale-95 text-sm flex items-center gap-2">
+                <BookOpen className="w-4 h-4 text-gray-500" /> View Syllabus
               </button>
-              <button onClick={() => setWeaknessOpen(true)} className="border-2 border-violet-200 hover:border-violet-300 hover:bg-violet-50 text-violet-700 font-bold px-4 sm:px-5 py-2 sm:py-2.5 rounded-xl transition-all active:scale-95 text-xs sm:text-sm flex items-center gap-2">
-                <Brain className="w-4 h-4" />
-                Weakness Predictor
+              <button onClick={() => setWeaknessOpen(true)} className="border border-violet-200 hover:border-violet-300 hover:bg-violet-50 text-violet-700 font-semibold px-4 py-2.5 rounded-xl transition-all active:scale-95 text-sm flex items-center gap-2">
+                <Brain className="w-4 h-4" /> Weakness Predictor
+                <span className="text-[9px] font-black bg-violet-600 text-white px-1.5 py-0.5 rounded">AI</span>
+              </button>
+              <button onClick={() => setHowToStartOpen(true)} className="border border-emerald-200 hover:border-emerald-300 hover:bg-emerald-50 text-emerald-700 font-semibold px-4 py-2.5 rounded-xl transition-all active:scale-95 text-sm flex items-center gap-2">
+                <HelpCircle className="w-4 h-4" /> How to Start
               </button>
               <WeaknessDetectionModal isOpen={weaknessOpen} onClose={() => setWeaknessOpen(false)} examId={examId} examName={examName} />
+              <HowToStartModal isOpen={howToStartOpen} onClose={() => setHowToStartOpen(false)} examName={examName} examId={examId} />
+
             </div>
           </div>
 
-          {/* RIGHT SIDE Gradient Countdown */}
-          <div className="md:w-[260px] bg-gradient-to-br from-blue-600 to-teal-400 p-8 flex flex-col justify-center items-center text-white relative overflow-hidden shrink-0">
-             {/* Decorative background circles */}
-             <div className="absolute -top-10 -right-10 w-32 h-32 bg-white/10 rounded-full blur-xl pointer-events-none"></div>
-             <div className="absolute -bottom-16 -left-16 w-48 h-48 bg-white/10 rounded-full blur-2xl pointer-events-none"></div>
-             
-             <div className="text-[72px] font-black leading-none drop-shadow-md pb-2 z-10 flex items-baseline">
-               170
-             </div>
-             <div className="text-sm font-black uppercase tracking-[0.25em] opacity-90 pb-1 z-10">Days Left</div>
-             <div className="text-[10px] uppercase font-bold opacity-75 tracking-wider mt-1 border-t border-white/20 pt-2 w-full text-center z-10">To Exam Day</div>
-          </div>
+          {/* ══ RIGHT PANEL — Auto-sliding Countdown ══ */}
+          {(() => {
+            const examPhases = [
+              { label: 'Prelims', date: '5 Oct 2026', days: 150, gradient: 'linear-gradient(160deg,#2563eb,#0ea5e9,#06b6d4)' },
+              { label: 'Mains',   date: '18 Jan 2027', days: 255, gradient: 'linear-gradient(160deg,#7c3aed,#6d28d9,#4f46e5)' },
+            ];
+            const slide = examPhases[countdownSlide % examPhases.length];
+            return (
+              <div className="md:w-[195px] flex flex-col items-center text-white relative overflow-hidden shrink-0 p-5 pt-4"
+                style={{ background: slide.gradient, transition: 'background 0.6s ease' }}>
+                {/* Decorative blobs */}
+                <div className="absolute -top-6 -right-6 w-24 h-24 bg-white/10 rounded-full blur-2xl pointer-events-none" />
+                <div className="absolute bottom-16 -left-8 w-28 h-28 bg-white/10 rounded-full blur-2xl pointer-events-none" />
+                {/* Top row: phase label + calendar */}
+                <div className="relative z-10 w-full flex items-center justify-between mb-2">
+                  <span className="text-[10px] font-extrabold uppercase tracking-widest bg-white/20 px-2 py-0.5 rounded-full">{slide.label}</span>
+                  <div className="w-7 h-7 rounded-xl bg-white/20 flex items-center justify-center">
+                    <Calendar className="w-3.5 h-3.5 text-white" />
+                  </div>
+                </div>
+                {/* Countdown block */}
+                <div className="relative z-10 text-center flex-1 flex flex-col justify-center">
+                  <div className="text-[11px] font-extrabold uppercase tracking-widest opacity-75 mb-1">Your Countdown</div>
+                  <div className="font-black leading-none tabular-nums drop-shadow-lg" style={{ fontSize: 62, transition: 'opacity 0.4s' }}>{slide.days}</div>
+                  <div className="text-[13px] font-black uppercase tracking-[0.2em] opacity-90 mt-1">Days Left</div>
+                  <div className="text-[10px] font-bold opacity-60 uppercase tracking-widest mt-0.5">To {slide.label} Day</div>
+                </div>
+                {/* Date pill */}
+                <div className="relative z-10 w-full bg-white/15 border border-white/25 rounded-xl px-3 py-2.5 flex items-center gap-2.5 mt-4">
+                  <div className="w-7 h-7 bg-white/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <Calendar className="w-3.5 h-3.5 text-white" />
+                  </div>
+                  <div>
+                    <div className="font-black text-white text-sm leading-tight">{slide.date}</div>
+                    <div className="text-[9px] text-white/65 font-semibold">{slide.label} Exam Date</div>
+                  </div>
+                </div>
+                {/* Dot indicators */}
+                <div className="relative z-10 flex items-center gap-1.5 mt-3">
+                  {examPhases.map((_, i) => (
+                    <button key={i} onClick={() => setCountdownSlide(i)}
+                      className="rounded-full transition-all duration-300"
+                      style={{ width: i === countdownSlide % examPhases.length ? 16 : 6, height: 6, background: i === countdownSlide % examPhases.length ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.35)' }} />
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
         </div>
       )}
 
+
+
+
       {/* ── Main card with tabs + inline progress ── */}
+
       <Card className="overflow-hidden" style={{ borderTop: `3px solid ${theme.borderColor}` }}>
         <Tabs defaultValue="prelims" value={activeTab} onValueChange={setActiveTab}>
           <div className="bg-gray-50 p-3 sm:p-4 border-b">

@@ -176,17 +176,16 @@ export const TestTypeGrid: React.FC<TestTypeGridProps> = ({
             return (
               <div
                 key={test.testId}
-                className={`flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 px-3 sm:px-5 py-3 sm:py-4 bg-white border border-gray-200 rounded-xl transition-all duration-200 hover:shadow-md hover:border-gray-300 ${
-                  isLocked
+                className={`flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 px-3 sm:px-5 py-3 sm:py-4 bg-white border border-gray-200 rounded-xl transition-all duration-200 hover:shadow-md hover:border-gray-300 ${isLocked
                     ? 'border-l-4 border-l-gray-200 bg-gray-50'
                     : effectiveCompleted
-                    ? (test.score !== undefined && test.maxScore > 0 && (test.score / test.maxScore) >= 0.5
-                      ? 'border-l-4 border-l-green-400'
-                      : 'border-l-4 border-l-red-400')
-                    : effectiveInProgress
-                    ? 'border-l-4 border-l-orange-400'
-                    : 'border-l-4 border-l-gray-200'
-                }`}
+                      ? (test.score !== undefined && test.maxScore > 0 && (test.score / test.maxScore) >= 0.5
+                        ? 'border-l-4 border-l-green-400'
+                        : 'border-l-4 border-l-red-400')
+                      : effectiveInProgress
+                        ? 'border-l-4 border-l-orange-400'
+                        : 'border-l-4 border-l-gray-200'
+                  }`}
               >
                 {/* ── Top row on mobile: icon + name/meta + button ── */}
                 <div className="flex items-start gap-2 sm:contents">
@@ -330,7 +329,7 @@ export const TestTypeGrid: React.FC<TestTypeGridProps> = ({
                         }}
                       >
                         {isLocked ? (
-                           <span className="flex items-center gap-1.5"><Lock className="h-3 w-3" /> Locked</span>
+                          <span className="flex items-center gap-1.5"><Lock className="h-3 w-3" /> Locked</span>
                         ) : effectiveInProgress ? 'Continue' : 'Start Test'}
                       </Button>
                     )}
@@ -341,38 +340,38 @@ export const TestTypeGrid: React.FC<TestTypeGridProps> = ({
                 <div className="sm:hidden pt-3 mt-1 border-t border-gray-100">
                   {effectiveCompleted ? (
                     <div className="space-y-2">
-                       <div className="flex gap-2">
-                         <Button
-                           size="sm"
-                           variant="outline"
-                           onClick={() => handleSolutionClick(test)}
-                           className="flex-1 h-9 text-xs border-gray-200 hover:border-primary hover:text-primary shadow-sm"
-                         >
-                           <BookOpen className="h-3.5 w-3.5 mr-1" />
-                           Solution
-                         </Button>
-                         <Button
-                           size="sm"
-                           variant="outline"
-                           onClick={() => handleAnalysisClick(test)}
-                           className="flex-1 h-9 text-xs border-gray-200 hover:border-primary hover:text-primary shadow-sm"
-                         >
-                           <BarChart3 className="h-3.5 w-3.5 mr-1" />
-                           Analysis
-                         </Button>
-                       </div>
-                       <Button
-                         size="sm"
-                         variant="outline"
-                         className="w-full h-9 text-xs border-gray-200 bg-gray-50/50 hover:bg-gray-100 text-gray-700 shadow-sm"
-                         onClick={() => {
-                           const currentPath = window.location.pathname;
-                           const url = `/student/test-window?category=${category}&examId=${examId}&testId=${test.testId}&returnUrl=${encodeURIComponent(currentPath)}`;
-                           stopTimerAndLaunchTest({ url, testName: test.testName });
-                         }}
-                       >
-                         Reattempt
-                       </Button>
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleSolutionClick(test)}
+                          className="flex-1 h-9 text-xs border-gray-200 hover:border-primary hover:text-primary shadow-sm"
+                        >
+                          <BookOpen className="h-3.5 w-3.5 mr-1" />
+                          Solution
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleAnalysisClick(test)}
+                          className="flex-1 h-9 text-xs border-gray-200 hover:border-primary hover:text-primary shadow-sm"
+                        >
+                          <BarChart3 className="h-3.5 w-3.5 mr-1" />
+                          Analysis
+                        </Button>
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="w-full h-9 text-xs border-gray-200 bg-gray-50/50 hover:bg-gray-100 text-gray-700 shadow-sm"
+                        onClick={() => {
+                          const currentPath = window.location.pathname;
+                          const url = `/student/test-window?category=${category}&examId=${examId}&testId=${test.testId}&returnUrl=${encodeURIComponent(currentPath)}`;
+                          stopTimerAndLaunchTest({ url, testName: test.testName });
+                        }}
+                      >
+                        Reattempt
+                      </Button>
                     </div>
                   ) : (
                     <Button
@@ -390,7 +389,7 @@ export const TestTypeGrid: React.FC<TestTypeGridProps> = ({
                       }}
                     >
                       {isLocked ? (
-                         <span className="flex items-center gap-1.5"><Lock className="h-3 w-3" /> Locked</span>
+                        <span className="flex items-center gap-1.5"><Lock className="h-3 w-3" /> Locked</span>
                       ) : effectiveInProgress ? 'Continue' : 'Start Test'}
                     </Button>
                   )}
@@ -541,137 +540,142 @@ export const TestTypeGrid: React.FC<TestTypeGridProps> = ({
                         </div>
                         <span className="text-[10px] font-medium text-gray-400 mt-1">Rank</span>
                       </div>
-                      {/* Percentile */}
-                      <div className="flex flex-col items-center py-3 px-3">
-                        <div className="flex items-baseline gap-0.5 whitespace-nowrap">
-                          <span className="text-base font-black text-gray-900">{test.percentile !== undefined ? `${test.percentile}%` : '—'}</span>
-                        </div>
-                        <span className="text-[10px] font-medium text-gray-400 mt-1">Percentile</span>
-                      </div>
-                    </div>
-                    {test.lastAttempted && (
-                      <div className="flex items-center gap-1 text-[11px] text-gray-400 mt-1">
-                        <Calendar className="h-3 w-3" />
-                        {formatDate(test.lastAttempted)}
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-3 mb-4">
-                    <div className="flex flex-col items-center py-3">
-                      <span className="text-base font-black text-gray-900">{totalQuestions}</span>
-                      <span className="text-xs font-medium text-gray-400 mt-1">Questions</span>
-                    </div>
-                    <div className="flex flex-col items-center py-3 border-x border-gray-200">
-                      <span className="text-base font-black text-gray-900">{totalMarks}</span>
-                      <span className="text-xs font-medium text-gray-400 mt-1">Marks</span>
-                    </div>
-                    <div className="flex flex-col items-center py-3">
-                      <span className="text-base font-black text-gray-900">{totalDuration}</span>
-                      <span className="text-xs font-medium text-gray-400 mt-1">Min</span>
-                    </div>
-                  </div>
-                )}
-
-                {/* ── Action Buttons ── */}
-                {effectiveStatus === 'completed' ? (
-                  <div className="space-y-2">
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleSolutionClick(test)}
-                        className="flex-1 text-xs h-9 border-gray-200 hover:border-primary hover:text-primary font-semibold"
-                      >
-                        <BookOpen className="h-3.5 w-3.5 mr-1" /> Solution
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleAnalysisClick(test)}
-                        className="flex-1 text-xs h-9 border-gray-200 hover:border-primary hover:text-primary font-semibold"
-                      >
-                        <BarChart3 className="h-3.5 w-3.5 mr-1" /> Analysis
-                      </Button>
-                    </div>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="w-full text-xs h-9 border-gray-200 hover:bg-gray-50 font-semibold"
-                      onClick={() => {
-                        const currentPath = window.location.pathname;
-                        const url = `/student/test-window?category=${category}&examId=${examId}&testId=${test.testId}&returnUrl=${encodeURIComponent(currentPath)}`;
-                        stopTimerAndLaunchTest({ url, testName: test.testName });
-                      }}
-                    >
-                      <RotateCcw className="h-3.5 w-3.5 mr-1.5" /> Reattempt
-                    </Button>
-                  </div>
-                ) : (
-                  <button
-                    className={`w-full flex items-center justify-center gap-2.5 py-3.5 rounded-xl font-bold text-base transition-all active:scale-95 ${
-                      isLocked
-                        ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                        : 'bg-primary hover:bg-primary/90 text-white shadow-md'
-                    }`}
-                    onClick={() => {
-                      if (isLocked) {
-                        alert('This test is locked. Please purchase the full package to unlock.');
-                        return;
-                      }
-                      const currentPath = window.location.pathname;
-                      const url = `/student/test-window?category=${category}&examId=${examId}&testId=${test.testId}&returnUrl=${encodeURIComponent(currentPath)}`;
-                      stopTimerAndLaunchTest({ url, testName: test.testName });
-                    }}
-                  >
-                    {isLocked ? (
-                      <><Lock className="h-4 w-4" /> Locked</>
-                    ) : (
-                      <>
-                        <span className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">
-                          <Play className="h-3.5 w-3.5 fill-white text-white" />
-                        </span>
-                        {test.status === 'in-progress' ? 'Continue' : 'Start Test'}
-                      </>
-                    )}
-                  </button>
-                )}
-
+              {/* Percentile */}
+              <div className="flex flex-col items-center py-3 px-3">
+                <div className="flex items-baseline gap-0.5 whitespace-nowrap">
+                  <span className="text-base font-black text-gray-900">{test.percentile !== undefined ? `${test.percentile}%` : '—'}</span>
+                </div>
+                <span className="text-[10px] font-medium text-gray-400 mt-1">Percentile</span>
               </div>
-            </Card>
+            </div>
+                    {
+            test.lastAttempted && (
+              <div className="flex items-center gap-1 text-[11px] text-gray-400 mt-1">
+                <Calendar className="h-3 w-3" />
+                {formatDate(test.lastAttempted)}
+              </div>
+            )
+          }
+                  </div>
+      ) : (
+      <div className="grid grid-cols-3 mb-4">
+        <div className="flex flex-col items-center py-3">
+          <span className="text-base font-black text-gray-900">{totalQuestions}</span>
+          <span className="text-xs font-medium text-gray-400 mt-1">Questions</span>
+        </div>
+        <div className="flex flex-col items-center py-3 border-x border-gray-200">
+          <span className="text-base font-black text-gray-900">{totalMarks}</span>
+          <span className="text-xs font-medium text-gray-400 mt-1">Marks</span>
+        </div>
+        <div className="flex flex-col items-center py-3">
+          <span className="text-base font-black text-gray-900">{totalDuration}</span>
+          <span className="text-xs font-medium text-gray-400 mt-1">Min</span>
+        </div>
+      </div>
+                )}
+
+      {/* ── Action Buttons ── */}
+      {effectiveStatus === 'completed' ? (
+        <div className="space-y-2">
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => handleSolutionClick(test)}
+              className="flex-1 text-xs h-9 border-gray-200 hover:border-primary hover:text-primary font-semibold"
+            >
+              <BookOpen className="h-3.5 w-3.5 mr-1" /> Solution
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => handleAnalysisClick(test)}
+              className="flex-1 text-xs h-9 border-gray-200 hover:border-primary hover:text-primary font-semibold"
+            >
+              <BarChart3 className="h-3.5 w-3.5 mr-1" /> Analysis
+            </Button>
+          </div>
+          <Button
+            size="sm"
+            variant="outline"
+            className="w-full text-xs h-9 border-gray-200 hover:bg-gray-50 font-semibold"
+            onClick={() => {
+              const currentPath = window.location.pathname;
+              const url = `/student/test-window?category=${category}&examId=${examId}&testId=${test.testId}&returnUrl=${encodeURIComponent(currentPath)}`;
+              stopTimerAndLaunchTest({ url, testName: test.testName });
+            }}
+          >
+            <RotateCcw className="h-3.5 w-3.5 mr-1.5" /> Reattempt
+          </Button>
+        </div>
+      ) : (
+        <button
+          className={`w-full flex items-center justify-center gap-2.5 py-3.5 rounded-xl font-bold text-base transition-all active:scale-95 ${isLocked
+              ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+              : 'bg-primary hover:bg-primary/90 text-white shadow-md'
+            }`}
+          onClick={() => {
+            if (isLocked) {
+              alert('This test is locked. Please purchase the full package to unlock.');
+              return;
+            }
+            const currentPath = window.location.pathname;
+            const url = `/student/test-window?category=${category}&examId=${examId}&testId=${test.testId}&returnUrl=${encodeURIComponent(currentPath)}`;
+            stopTimerAndLaunchTest({ url, testName: test.testName });
+          }}
+        >
+          {isLocked ? (
+            <><Lock className="h-4 w-4" /> Locked</>
+          ) : (
+            <>
+              <span className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">
+                <Play className="h-3.5 w-3.5 fill-white text-white" />
+              </span>
+              {test.status === 'in-progress' ? 'Continue' : 'Start Test'}
+            </>
+          )}
+        </button>
+      )}
+
+    </div>
+            </Card >
           );
         })}
-      </div>
+      </div >
 
-      {/* Solutions Modal */}
-      {selectedTestForSolutions && (() => {
-        const examConfig = generateTestExam(category || '', examId || '', selectedTestForSolutions.testId);
-        let storedResponses: Record<string, string | string[] | null> = {};
-        try {
-          const raw = localStorage.getItem(`exam-responses-${selectedTestForSolutions.testId}`);
-          if (raw) storedResponses = JSON.parse(raw);
-        } catch { /* ignore */ }
-        return (
-          <TestSolutions
-            isOpen={showSolutionsModal}
-            onClose={() => { setShowSolutionsModal(false); setSelectedTestForSolutions(null); }}
-            examConfig={examConfig}
-            responses={storedResponses}
-          />
-        );
-      })()}
+  {/* Solutions Modal */ }
+{
+  selectedTestForSolutions && (() => {
+    const examConfig = generateTestExam(category || '', examId || '', selectedTestForSolutions.testId);
+    let storedResponses: Record<string, string | string[] | null> = {};
+    try {
+      const raw = localStorage.getItem(`exam-responses-${selectedTestForSolutions.testId}`);
+      if (raw) storedResponses = JSON.parse(raw);
+    } catch { /* ignore */ }
+    return (
+      <TestSolutions
+        isOpen={showSolutionsModal}
+        onClose={() => { setShowSolutionsModal(false); setSelectedTestForSolutions(null); }}
+        examConfig={examConfig}
+        responses={storedResponses}
+      />
+    );
+  })()
+}
 
-      {/* Analysis Modal */}
-      {selectedTestForAnalysis && (
-        <TestAnalysisModal
-          isOpen={showAnalysisModal}
-          onClose={() => {
-            setShowAnalysisModal(false);
-            setSelectedTestForAnalysis(null);
-          }}
-          analysisData={generateMockAnalysisData(selectedTestForAnalysis.testId, selectedTestForAnalysis.testName)}
-        />
-      )}
-    </div>
+{/* Analysis Modal */ }
+{
+  selectedTestForAnalysis && (
+    <TestAnalysisModal
+      isOpen={showAnalysisModal}
+      onClose={() => {
+        setShowAnalysisModal(false);
+        setSelectedTestForAnalysis(null);
+      }}
+      analysisData={generateMockAnalysisData(selectedTestForAnalysis.testId, selectedTestForAnalysis.testName)}
+    />
+  )
+}
+    </div >
   );
 };

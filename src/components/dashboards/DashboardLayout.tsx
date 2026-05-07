@@ -15,30 +15,63 @@ interface DashboardLayoutProps {
   basePath: string;
 }
 
+const SIDEBAR_EXPANDED_WIDTH = 240;
+const SIDEBAR_COLLAPSED_WIDTH = 64;
+
 const DashboardLayout: React.FC<DashboardLayoutProps> = ({ role, basePath }) => {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+  const sidebarWidth = sidebarCollapsed ? SIDEBAR_COLLAPSED_WIDTH : SIDEBAR_EXPANDED_WIDTH;
 
   return (
     <>
-      <div className="flex h-screen bg-slate-100/80 w-full">
-        {/* Sidebar */}
-        <div className={`${sidebarOpen ? 'block' : 'hidden'} lg:block fixed lg:relative inset-y-0 left-0 z-50 w-64 bg-white border-r border-slate-200/70 shadow-[1px_0_12px_rgba(0,0,0,0.04)]`}>
-          <Sidebar role={role} basePath={basePath} collapsed={false} />
+      <div className="flex h-screen bg-slate-100/80 w-full overflow-hidden">
+
+        {/* ── Desktop sidebar ─────────────────────────────────────── */}
+        <div
+          className="hidden lg:block relative flex-shrink-0 h-full"
+          style={{
+            width: sidebarWidth,
+            transition: 'width 300ms cubic-bezier(0.4,0,0.2,1)',
+          }}
+        >
+          <Sidebar
+            role={role}
+            basePath={basePath}
+            collapsed={sidebarCollapsed}
+            onToggle={() => setSidebarCollapsed(prev => !prev)}
+          />
         </div>
 
-        {/* Overlay for mobile */}
-        {sidebarOpen && (
+        {/* ── Mobile sidebar (overlay) ─────────────────────────────── */}
+        {mobileOpen && (
           <div
-            className="fixed inset-0 z-40 bg-black bg-opacity-50 lg:hidden"
-            onClick={() => setSidebarOpen(false)}
+            className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+            onClick={() => setMobileOpen(false)}
           />
         )}
+        <div
+          className={`
+            fixed inset-y-0 left-0 z-50 lg:hidden
+            transition-transform duration-300 ease-in-out
+            ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}
+          `}
+          style={{ width: SIDEBAR_EXPANDED_WIDTH }}
+        >
+          <Sidebar
+            role={role}
+            basePath={basePath}
+            collapsed={false}
+            onToggle={() => setMobileOpen(false)}
+          />
+        </div>
 
-        {/* Main content */}
-        <div className="flex-1 flex flex-col min-w-0 w-full">
+        {/* ── Main content ─────────────────────────────────────────── */}
+        <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
           {/* Header */}
           <header
-            className="bg-white border-b border-slate-200/70 px-3 sm:px-4 lg:px-6 py-2 sm:py-3 h-[64px] flex items-center"
+            className="bg-white border-b border-slate-200/70 px-3 sm:px-4 lg:px-6 py-2 sm:py-3 h-[64px] flex items-center flex-shrink-0"
             style={{ boxShadow: '0 1px 0 0 rgba(0,0,0,0.05), 0 4px 16px rgba(0,0,0,0.04)' }}
           >
             <div className="flex items-center justify-between w-full gap-4">
@@ -48,9 +81,9 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ role, basePath }) => 
                   variant="ghost"
                   size="sm"
                   className="lg:hidden h-8 w-8 sm:h-9 sm:w-9 p-0 flex-shrink-0"
-                  onClick={() => setSidebarOpen(!sidebarOpen)}
+                  onClick={() => setMobileOpen(prev => !prev)}
                 >
-                  {sidebarOpen ? <X className="h-4 w-4 sm:h-5 sm:w-5" /> : <Menu className="h-4 w-4 sm:h-5 sm:w-5" />}
+                  {mobileOpen ? <X className="h-4 w-4 sm:h-5 sm:w-5" /> : <Menu className="h-4 w-4 sm:h-5 sm:w-5" />}
                 </Button>
                 <div className="hidden md:block">
                   {role === 'student' && <CategorySelector />}
@@ -78,11 +111,6 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ role, basePath }) => 
         </div>
       </div>
 
-      {/* ── Floating Timer Widget ─────────────────────────────────────────────────
-           Rendered OUTSIDE the flex container so position:fixed is never trapped.
-           FloatingTimerWidget uses ReactDOM.createPortal → mounts on document.body.
-           Triggered via timerBus.startWidget() from StudyTimerWidget.
-      ──────────────────────────────────────────────────────────────────────── */}
       {role === 'student' && <FloatingTimerWidget />}
     </>
   );

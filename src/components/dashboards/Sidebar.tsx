@@ -1,4 +1,4 @@
-﻿
+
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/app/providers';
@@ -9,7 +9,8 @@ import {
   HelpCircle, Upload, Eye, CheckCircle, Users, Bell,
   PieChart, CreditCard, Settings, UserCheck, MessageSquare,
   Target, Clock, TrendingUp, Gift, Flame, Trophy, Star, Award, Lock, Shield,
-  Sparkles, FileEdit, GraduationCap, Newspaper, Megaphone
+  Sparkles, FileEdit, GraduationCap, Newspaper, Megaphone,
+  ChevronLeft, ChevronRight,
 } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -18,6 +19,12 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from '@/components/ui/hover-card';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { Progress } from '@/components/ui/progress';
 
 interface NavItem {
@@ -106,86 +113,102 @@ const StreakTooltipContent: React.FC<{ streak: number; longestStreak: number }> 
 };
 
 const SidebarItem: React.FC<SidebarItemProps> = ({ icon, label, to, active, collapsed, badge, highlight, streak, longestStreak, showStreak }) => {
-  return (
-    <li className="mb-1">
-      <Link
-        to={to}
-        className={cn(
-          "flex items-center justify-between gap-2 rounded-xl px-3 py-2.5 text-sm transition-all duration-200 group relative",
-          "hover:bg-emerald-50 hover:text-emerald-700",
-          active
-            ? "bg-gradient-to-r from-emerald-50 to-emerald-50/40 text-emerald-700 font-semibold shadow-sm ring-1 ring-emerald-100"
-            : "text-slate-600 font-medium",
-          highlight && !active && "bg-primary/5 border border-primary/10"
-        )}
-        title={label}
-        style={{ transform: 'translateX(0)', transition: 'transform 0.15s ease, background 0.15s ease, box-shadow 0.15s ease' }}
-        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = 'translateX(2px)'; }}
-        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = 'translateX(0)'; }}
-      >
-        <div className="flex items-center gap-3">
+  const linkContent = (
+    <Link
+      to={to}
+      className={cn(
+        "flex items-center justify-between gap-2 rounded-xl px-3 py-2.5 text-sm transition-all duration-200 group relative",
+        "hover:bg-emerald-50 hover:text-emerald-700",
+        active
+          ? "bg-gradient-to-r from-emerald-50 to-emerald-50/40 text-emerald-700 font-semibold shadow-sm ring-1 ring-emerald-100"
+          : "text-slate-600 font-medium",
+        highlight && !active && "bg-primary/5 border border-primary/10",
+        collapsed && "justify-center px-2"
+      )}
+      title={collapsed ? label : undefined}
+      style={{ transform: 'translateX(0)', transition: 'transform 0.15s ease, background 0.15s ease, box-shadow 0.15s ease' }}
+      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = collapsed ? 'none' : 'translateX(2px)'; }}
+      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = 'translateX(0)'; }}
+    >
+      <div className={cn("flex items-center gap-3", collapsed && "gap-0")}>
+        <span
+          className={cn(
+            "flex items-center justify-center w-7 h-7 rounded-lg transition-all duration-200",
+            active
+              ? "bg-emerald-500 text-white shadow-sm"
+              : "text-slate-400 group-hover:text-emerald-600 group-hover:bg-emerald-50",
+            highlight && !active && "text-primary group-hover:text-primary"
+          )}
+        >
+          {icon}
+        </span>
+        {!collapsed && (
           <span
             className={cn(
-              "flex items-center justify-center w-7 h-7 rounded-lg transition-all duration-200",
-              active
-                ? "bg-emerald-500 text-white shadow-sm"
-                : "text-slate-400 group-hover:text-emerald-600 group-hover:bg-emerald-50",
-              highlight && !active && "text-primary group-hover:text-primary"
+              "font-semibold text-[13px] whitespace-nowrap",
+              active ? "text-emerald-700" : "group-hover:text-emerald-700",
+              highlight && !active && "text-primary"
             )}
           >
-            {icon}
+            {label}
           </span>
-          {!collapsed && (
-            <span
-              className={cn(
-                "font-semibold text-[13px]",
-                active ? "text-emerald-700" : "group-hover:text-emerald-700",
-                highlight && !active && "text-primary"
-              )}
-            >
-              {label}
-            </span>
+        )}
+      </div>
+      {!collapsed && (
+        <div className="flex items-center gap-1.5 flex-shrink-0">
+          {showStreak && streak !== undefined && streak > 0 && (
+            <HoverCard openDelay={100} closeDelay={100}>
+              <HoverCardTrigger asChild>
+                <div className="flex items-center gap-0.5 bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded-full cursor-pointer hover:bg-orange-200 transition-colors">
+                  <Flame size={12} className="text-orange-500" />
+                  <span className="text-[10px] font-bold">{streak}</span>
+                </div>
+              </HoverCardTrigger>
+              <HoverCardContent side="right" align="start" className="w-auto p-3">
+                <StreakTooltipContent streak={streak} longestStreak={longestStreak || streak} />
+              </HoverCardContent>
+            </HoverCard>
+          )}
+          {badge && (
+            <Badge className="text-[10px] px-1.5 py-0 h-5 bg-primary text-primary-foreground animate-pulse">
+              {badge}
+            </Badge>
           )}
         </div>
-        {!collapsed && (
-          <div className="flex items-center gap-1.5">
-            {showStreak && streak !== undefined && streak > 0 && (
-              <HoverCard openDelay={100} closeDelay={100}>
-                <HoverCardTrigger asChild>
-                  <div className="flex items-center gap-0.5 bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded-full cursor-pointer hover:bg-orange-200 transition-colors">
-                    <Flame size={12} className="text-orange-500" />
-                    <span className="text-[10px] font-bold">{streak}</span>
-                  </div>
-                </HoverCardTrigger>
-                <HoverCardContent side="right" align="start" className="w-auto p-3">
-                  <StreakTooltipContent streak={streak} longestStreak={longestStreak || streak} />
-                </HoverCardContent>
-              </HoverCard>
-            )}
-            {badge && (
-              <Badge className="text-[10px] px-1.5 py-0 h-5 bg-primary text-primary-foreground animate-pulse">
-                {badge}
-              </Badge>
-            )}
-          </div>
-        )}
+      )}
 
-        {/* Active left indicator bar */}
-        {active && (
-          <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-6 bg-emerald-500 rounded-r-full shadow-[0_0_6px_rgba(16,185,129,0.5)]" />
-        )}
-      </Link>
-    </li>
+      {/* Active left indicator bar */}
+      {active && (
+        <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-6 bg-emerald-500 rounded-r-full shadow-[0_0_6px_rgba(16,185,129,0.5)]" />
+      )}
+    </Link>
   );
+
+  if (collapsed) {
+    return (
+      <li className="mb-1">
+        <Tooltip>
+          <TooltipTrigger asChild>{linkContent}</TooltipTrigger>
+          <TooltipContent side="right" sideOffset={8} className="font-medium text-xs">
+            {label}
+            {badge && <span className="ml-1.5 text-primary font-bold">• {badge}</span>}
+          </TooltipContent>
+        </Tooltip>
+      </li>
+    );
+  }
+
+  return <li className="mb-1">{linkContent}</li>;
 };
 
 interface SidebarProps {
   role: 'student' | 'instructor' | 'employee' | 'super-admin' | 'owner' | 'mentor';
   basePath: string;
   collapsed: boolean;
+  onToggle?: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ role, basePath, collapsed }) => {
+const Sidebar: React.FC<SidebarProps> = ({ role, basePath, collapsed, onToggle }) => {
   const location = useLocation();
   const { user } = useAuth();
   const [streak, setStreak] = useState(0);
@@ -224,7 +247,7 @@ const Sidebar: React.FC<SidebarProps> = ({ role, basePath, collapsed }) => {
           { icon: <LayoutDashboard size={18} />, label: 'Dashboard', to: `${basePath}/dashboard` },
           { icon: <BookOpen size={18} />, label: 'Know Your Syllabus', to: `${basePath}/syllabus` },
           { icon: <UserCheck size={18} />, label: 'Mentorship', to: `${basePath}/mentorship/dashboard` },
-          { icon: <BookOpen size={18} />, label: 'Courses', to: `${basePath}/courses` },
+          // { icon: <BookOpen size={18} />, label: 'Courses', to: `${basePath}/courses` }, // TODO: re-enable when ready
 
           { icon: <FileCheck size={18} />, label: 'Tests', to: `${basePath}/tests` },
           { icon: <FileText size={18} />, label: 'Current Affairs', to: `${basePath}/current-affairs` },
@@ -295,71 +318,93 @@ const Sidebar: React.FC<SidebarProps> = ({ role, basePath, collapsed }) => {
   const navItems = getNavItems();
 
   return (
-    <div
-      className={`h-full flex flex-col border-r border-slate-100/80 ${collapsed ? 'items-center' : ''}`}
-      style={{ background: 'linear-gradient(180deg, #fafffe 0%, #ffffff 40%, #fafffe 100%)' }}
-    >
-      {/* Brand Logo Area */}
+    <TooltipProvider delayDuration={0}>
       <div
-        className={`px-4 py-4 border-b border-slate-100 flex ${collapsed ? 'justify-center' : 'items-center gap-2.5'}`}
-        style={{ background: 'linear-gradient(135deg, #ecfdf5 0%, #f0fdf8 50%, #ffffff 100%)' }}
+        className={cn(
+          "h-full flex flex-col border-r border-slate-100/80 transition-all duration-300 ease-in-out relative",
+          collapsed ? 'items-center' : ''
+        )}
+        style={{ background: 'linear-gradient(180deg, #fafffe 0%, #ffffff 40%, #fafffe 100%)' }}
       >
+        {/* Brand Logo Area */}
         <div
-          className="w-8 h-8 rounded-xl flex items-center justify-center text-white text-sm font-bold"
-          style={{
-            background: 'linear-gradient(135deg, #059669, #10b981)',
-            boxShadow: '0 2px 8px rgba(16,185,129,0.35), 0 1px 2px rgba(0,0,0,0.1)',
-          }}
+          className={cn(
+            "border-b border-slate-100 flex items-center h-[64px] flex-shrink-0 overflow-hidden",
+            collapsed ? 'justify-center px-3' : 'px-4 gap-2.5'
+          )}
+          style={{ background: 'linear-gradient(135deg, #ecfdf5 0%, #f0fdf8 50%, #ffffff 100%)' }}
         >
-          P
+          <div
+            className="w-8 h-8 rounded-xl flex items-center justify-center text-white text-sm font-bold flex-shrink-0"
+            style={{
+              background: 'linear-gradient(135deg, #059669, #10b981)',
+              boxShadow: '0 2px 8px rgba(16,185,129,0.35), 0 1px 2px rgba(0,0,0,0.1)',
+            }}
+          >
+            E
+          </div>
+          {!collapsed && (
+            <div className="flex-1 overflow-hidden">
+              <span className="text-[15px] font-bold text-slate-800 tracking-tight whitespace-nowrap">Examerit</span>
+              <div className="text-[10px] text-emerald-600 font-medium -mt-0.5 whitespace-nowrap">Exam Preparation</div>
+            </div>
+          )}
         </div>
+
+        {/* Toggle button — floating handle on right edge, vertically centred in header */}
+        {onToggle && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={onToggle}
+                className={cn(
+                  "absolute top-[18px] -right-[14px] z-10",
+                  "flex items-center justify-center rounded-full",
+                  "w-7 h-7 border-2 border-slate-200 bg-white text-slate-500",
+                  "hover:bg-emerald-50 hover:text-emerald-600 hover:border-emerald-300 transition-all duration-200",
+                  "shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
+                )}
+                aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+              >
+                {collapsed ? <ChevronRight size={13} strokeWidth={2.5} /> : <ChevronLeft size={13} strokeWidth={2.5} />}
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="right" sideOffset={10} className="text-xs font-medium">
+              {collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            </TooltipContent>
+          </Tooltip>
+        )}
+
+        <nav className="flex-1 overflow-y-auto overflow-x-hidden px-2 py-3">
+          <ul className={cn("space-y-0.5 relative", collapsed && "flex flex-col items-center w-full")}>
+            {navItems.map((item: NavItem) => (
+              <SidebarItem
+                key={item.to}
+                icon={item.icon}
+                label={item.label}
+                to={item.to}
+                active={isActive(item.to)}
+                collapsed={collapsed}
+                badge={item.badge}
+                highlight={item.highlight}
+                streak={streak}
+                longestStreak={longestStreak}
+                showStreak={item.showStreak}
+              />
+            ))}
+          </ul>
+        </nav>
+
+        {/* Footer: year text when expanded */}
         {!collapsed && (
-          <div>
-            <span className="text-[15px] font-bold text-slate-800 tracking-tight">Examerit</span>
-            <div className="text-[10px] text-emerald-600 font-medium -mt-0.5">Exam Preparation</div>
+          <div className="flex-shrink-0 border-t border-slate-100 px-4 py-3">
+            <div className="text-[10px] text-slate-400">
+              Examerit © {new Date().getFullYear()}
+            </div>
           </div>
         )}
       </div>
-
-      {collapsed && (
-        <div className="py-4 border-b border-slate-100 flex justify-center">
-          <Avatar>
-            <AvatarFallback className="bg-emerald-600 text-white text-sm">
-              {user?.name?.charAt(0) || 'U'}
-            </AvatarFallback>
-          </Avatar>
-        </div>
-      )}
-
-      <nav className="flex-1 overflow-y-auto px-3 py-3">
-        <ul className={`space-y-0.5 relative ${collapsed ? 'items-center' : ''}`}>
-          {navItems.map((item: NavItem) => (
-            <SidebarItem
-              key={item.to}
-              icon={item.icon}
-              label={item.label}
-              to={item.to}
-              active={isActive(item.to)}
-              collapsed={collapsed}
-              badge={item.badge}
-              highlight={item.highlight}
-              streak={streak}
-              longestStreak={longestStreak}
-              showStreak={item.showStreak}
-            />
-          ))}
-        </ul>
-      </nav>
-
-      {/* Footer hint */}
-      {!collapsed && (
-        <div className="px-4 py-3 border-t border-slate-100">
-          <div className="text-[10px] text-slate-400 text-center">
-            Examerit © {new Date().getFullYear()}
-          </div>
-        </div>
-      )}
-    </div>
+    </TooltipProvider>
   );
 };
 
