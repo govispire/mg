@@ -22,6 +22,7 @@ interface User {
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
+  isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
   register: (name: string, email: string, password: string, role?: UserRole) => Promise<void>;
@@ -143,16 +144,30 @@ const DEMO_USERS = [
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
+  // Initialize synchronously from localStorage so the first render already has user
+  const [user, setUser] = useState<User | null>(() => {
+    try {
+      const stored = localStorage.getItem('user');
+      return stored ? JSON.parse(stored) : null;
+    } catch {
+      return null;
+    }
+  });
+  const [isLoading] = useState(false); // localStorage read is sync, no loading needed
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Check if user is stored in localStorage on mount
+  // Keep localStorage in sync if the stored value changes from another tab
   useEffect(() => {
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === 'user') {
+        try {
+          setUser(e.newValue ? JSON.parse(e.newValue) : null);
+        } catch {}
+      }
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
   }, []);
 
   const login = async (email: string, password: string) => {
@@ -276,7 +291,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated: !!user, login, logout, register }}>
+    <AuthContext.Provider value={{ user, isAuthenticated: !!user, isLoading, login, logout, register }}>
       {children}
     </AuthContext.Provider>
   );

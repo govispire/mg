@@ -1,11 +1,10 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
-  BookOpen, Users, Zap, Star, ChevronRight, ChevronDown,
+  BookOpen, Users, Zap, Star, ChevronRight, ChevronLeft,
   ArrowUpDown, LayoutGrid, List
 } from 'lucide-react';
 import {
@@ -65,6 +64,39 @@ const StudentTests = () => {
   const [sortOrder, setSortOrder] = useState<'az' | 'za' | 'popular'>('popular');
   const [showAll, setShowAll] = useState(false);
   const INITIAL_SHOW = 10;
+  const tabScrollRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
+  const updateScrollState = () => {
+    const el = tabScrollRef.current;
+    if (!el) return;
+    setCanScrollLeft(el.scrollLeft > 0);
+    setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 1);
+  };
+
+  useEffect(() => {
+    const el = tabScrollRef.current;
+    if (!el) return;
+    updateScrollState();
+    el.addEventListener('scroll', updateScrollState);
+    const ro = new ResizeObserver(updateScrollState);
+    ro.observe(el);
+    return () => { el.removeEventListener('scroll', updateScrollState); ro.disconnect(); };
+  }, [selectedCategories]);
+
+  const scrollTabs = (dir: 'left' | 'right') => {
+    if (tabScrollRef.current) {
+      tabScrollRef.current.scrollBy({ left: dir === 'left' ? -200 : 200, behavior: 'smooth' });
+    }
+  };
+
+  const scrollActiveIntoView = (id: string) => {
+    if (tabScrollRef.current) {
+      const btn = tabScrollRef.current.querySelector(`[data-cat-id="${id}"]`) as HTMLElement;
+      btn?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    }
+  };
 
   useEffect(() => {
     if (selectedCategories.length > 0) {
@@ -160,7 +192,7 @@ const StudentTests = () => {
       return 0;
     });
 
-    const displayedExams = showAll ? sortedExams : sortedExams.slice(0, INITIAL_SHOW);
+    const displayedExams = sortedExams; // always show all
 
     return (
       <div className="space-y-6">
@@ -334,21 +366,11 @@ const StudentTests = () => {
                   })}
                 </div>
               ) : (
-                <>
-                  <AllExamsList
-                    exams={displayedExams}
-                    categoryId={categoryId}
-                    onNavigate={navigate}
-                  />
-                  {!showAll && sortedExams.length > INITIAL_SHOW && (
-                    <button
-                      onClick={() => setShowAll(true)}
-                      className="w-full mt-4 py-3 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-xl text-sm font-medium text-gray-600 flex items-center justify-center gap-2 transition-colors"
-                    >
-                      View more exams <ChevronDown className="w-4 h-4" />
-                    </button>
-                  )}
-                </>
+                <AllExamsList
+                  exams={displayedExams}
+                  categoryId={categoryId}
+                  onNavigate={navigate}
+                />
               )}
             </>
           )}
@@ -360,39 +382,68 @@ const StudentTests = () => {
   return (
     <div className="max-w-7xl mx-auto px-3 sm:px-4 space-y-0">
       {availableCategories.length > 0 && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-          <Tabs value={activeCategory} onValueChange={handleTabChange}>
-            {/* Tab list */}
-            <div className="border-b px-4 sm:px-6 pt-4">
-              <TabsList
-                className="flex w-full gap-1 bg-transparent p-0 overflow-x-auto"
-                style={{ scrollbarWidth: 'none' }}
+        <>
+          {/* Tab nav — pill style with conditional scroll arrows */}
+          <div className="bg-white border border-slate-200 rounded-xl shadow-sm mb-5 flex items-center gap-1 px-1 py-1">
+            {/* Left arrow — only when scrolled right */}
+            {canScrollLeft && (
+              <button
+                onClick={() => scrollTabs('left')}
+                className="flex-shrink-0 w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-all"
               >
-                {availableCategories.map(cat => (
-                  <TabsTrigger
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+            )}
+
+            {/* Scrollable tab list */}
+            <div
+              ref={tabScrollRef}
+              className="flex items-center gap-1 flex-1 overflow-x-auto"
+              style={{ scrollbarWidth: 'none' }}
+            >
+              {availableCategories.map(cat => {
+                const isActive = activeCategory === cat.id;
+                const isOverflowing = canScrollLeft || canScrollRight;
+                return (
+                  <button
                     key={cat.id}
-                    value={cat.id}
-                    className={`
-                      text-xs sm:text-sm px-3 sm:px-5 py-2 whitespace-nowrap font-medium rounded-none border-b-2
-                      data-[state=active]:border-emerald-600 data-[state=active]:text-emerald-700
-                      data-[state=inactive]:border-transparent data-[state=inactive]:text-gray-500
-                      data-[state=inactive]:hover:text-gray-700 bg-transparent
-                      ${availableCategories.length <= 4 ? 'flex-1' : 'flex-shrink-0'}
-                    `}
+                    data-cat-id={cat.id}
+                    onClick={() => { handleTabChange(cat.id); scrollActiveIntoView(cat.id); }}
+                    className={`py-2.5 px-3 sm:px-4 rounded-lg transition-all text-xs sm:text-sm font-medium whitespace-nowrap text-center ${
+                      isOverflowing ? 'flex-shrink-0' : 'flex-1'
+                    } ${
+                      isActive
+                        ? 'bg-emerald-500 text-white shadow-sm shadow-emerald-200 font-semibold'
+                        : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
+                    }`}
                   >
                     {cat.name}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
+                  </button>
+                );
+              })}
             </div>
 
-            {availableCategories.map(cat => (
-              <TabsContent key={cat.id} value={cat.id} className="p-4 sm:p-6">
+            {/* Right arrow — only when more content to the right */}
+            {canScrollRight && (
+              <button
+                onClick={() => scrollTabs('right')}
+                className="flex-shrink-0 w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-all"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+
+          {/* Tab content */}
+          {availableCategories
+            .filter(cat => cat.id === activeCategory)
+            .map(cat => (
+              <div key={cat.id}>
                 <CategoryContent categoryId={cat.id} />
-              </TabsContent>
-            ))}
-          </Tabs>
-        </div>
+              </div>
+            ))
+          }
+        </>
       )}
     </div>
   );

@@ -1,450 +1,122 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
 import {
-  Play,
-  BookOpen,
-  Target,
-  Brain,
-  Calendar,
-  Award,
-  ChevronLeft,
-  ChevronRight,
-  ExternalLink,
+  PlayCircle, BookOpen, Brain, Calendar, ChevronLeft, ChevronRight,
+  ExternalLink, HelpCircle, Users, Trophy, FileText, Zap,
 } from 'lucide-react';
 import { getTargetExamRoute } from '@/utils/targetExamRoute';
 import { differenceInDays } from 'date-fns';
 import { getActiveAds, recordClick, recordImpression, getSlideDuration, AdBanner } from '@/data/adsStore';
 import { WeaknessDetectionModal } from '@/components/student/exam/WeaknessDetectionModal';
+import { HowToStartModal } from '@/components/student/exam/HowToStartModal';
 
 interface TargetExamCardProps {
   targetExam: string;
   examCategory: string;
   userName: string;
   preparationStartDate: Date | null;
-  /** Live overall % from real quiz scores; overrides the static default when provided */
   liveOverallPct?: number;
 }
 
 interface ExamMeta {
-  subtitle: string;
   vacancies: string;
-  notification: string;
-  region: string;
-  duration: string;
-  marks: string;
-  sections: { name: string; color: string; pct: number }[];
-  overallPct: number;
-  gradient: string;
+  logo: string;
   examDate: string;
+  preliTotal: number;
+  mainsTotal: number;
+  liveTotal: number;
+  gradient: string;
 }
 
 const getExamMeta = (exam: string): ExamMeta => {
   const n = exam.toLowerCase();
-
-  if (n.includes('sbi clerk') || n.includes('sbi-clerk'))
-    return {
-      subtitle: 'Preliminary Examination',
-      vacancies: '13,735 Vacancies',
-      notification: 'Nov 2026',
-      region: 'All India',
-      duration: '60 min',
-      marks: '100 Marks',
-      sections: [
-        { name: 'Quantitative', color: '#38bdf8', pct: 62 },
-        { name: 'Reasoning', color: '#a78bfa', pct: 74 },
-        { name: 'English', color: '#34d399', pct: 78 },
-        { name: 'Gen. Awareness', color: '#fb923c', pct: 55 },
-      ],
-      overallPct: 64,
-      gradient: 'from-[#1a3a6e] via-[#1e4fa0] to-[#2563eb]',
-      examDate: '2026-08-15',
-    };
-
-  if (n.includes('sbi po') || n.includes('sbi-po'))
-    return {
-      subtitle: 'Phase I — Preliminary',
-      vacancies: '2,000 Vacancies',
-      notification: 'Jul 2026',
-      region: 'All India',
-      duration: '60 min',
-      marks: '100 Marks',
-      sections: [
-        { name: 'Quantitative', color: '#38bdf8', pct: 58 },
-        { name: 'Reasoning', color: '#a78bfa', pct: 70 },
-        { name: 'English', color: '#34d399', pct: 72 },
-        { name: 'Gen. Awareness', color: '#fb923c', pct: 48 },
-      ],
-      overallPct: 60,
-      gradient: 'from-[#1e3a5f] via-[#1d4e89] to-[#1e6a9f]',
-      examDate: '2026-10-05',
-    };
-
-  if (n.includes('ibps clerk') || n.includes('ibps-clerk'))
-    return {
-      subtitle: 'Preliminary Examination',
-      vacancies: '6,128 Vacancies',
-      notification: 'Jul 2026',
-      region: 'All India',
-      duration: '60 min',
-      marks: '100 Marks',
-      sections: [
-        { name: 'Quantitative', color: '#38bdf8', pct: 60 },
-        { name: 'Reasoning', color: '#a78bfa', pct: 72 },
-        { name: 'English', color: '#34d399', pct: 76 },
-        { name: 'Gen. Awareness', color: '#fb923c', pct: 50 },
-      ],
-      overallPct: 64,
-      gradient: 'from-[#1a2e5e] via-[#1e3f8c] to-[#2855c4]',
-      examDate: '2026-10-25',
-    };
-
-  if (n.includes('ibps po') || n.includes('ibps-po'))
-    return {
-      subtitle: 'Preliminary Examination',
-      vacancies: '4,455 Vacancies',
-      notification: 'Jun 2026',
-      region: 'All India',
-      duration: '60 min',
-      marks: '100 Marks',
-      sections: [
-        { name: 'Quantitative', color: '#38bdf8', pct: 65 },
-        { name: 'Reasoning', color: '#a78bfa', pct: 76 },
-        { name: 'English', color: '#34d399', pct: 80 },
-        { name: 'Gen. Awareness', color: '#fb923c', pct: 52 },
-      ],
-      overallPct: 68,
-      gradient: 'from-[#1a2e5e] via-[#1e3f8c] to-[#2855c4]',
-      examDate: '2026-09-10',
-    };
-
-  if (n.includes('ibps rrb') || n.includes('ibps-rrb') || n.includes('rrb po') || n.includes('rrb clerk'))
-    return {
-      subtitle: 'Preliminary Examination',
-      vacancies: '9,985 Vacancies',
-      notification: 'Jul 2026',
-      region: 'All India',
-      duration: '45 min',
-      marks: '80 Marks',
-      sections: [
-        { name: 'Quantitative', color: '#38bdf8', pct: 62 },
-        { name: 'Reasoning', color: '#a78bfa', pct: 70 },
-        { name: 'English', color: '#34d399', pct: 65 },
-        { name: 'Gen. Awareness', color: '#fb923c', pct: 58 },
-      ],
-      overallPct: 64,
-      gradient: 'from-[#1a2e5e] via-[#1e3f8c] to-[#2855c4]',
-      examDate: '2026-10-05',
-    };
-
-  if (n.includes('lic ado') || n.includes('lic-ado'))
-    return {
-      subtitle: 'Apprentice Development Officer',
-      vacancies: '5,000+ Vacancies',
-      notification: 'Mar 2026',
-      region: 'All India',
-      duration: '60 min',
-      marks: '300 Marks',
-      sections: [
-        { name: 'Reasoning', color: '#38bdf8', pct: 68 },
-        { name: 'Numeracy', color: '#a78bfa', pct: 72 },
-        { name: 'English', color: '#34d399', pct: 76 },
-        { name: 'Gen. Knowledge', color: '#fb923c', pct: 60 },
-      ],
-      overallPct: 69,
-      gradient: 'from-[#0f2b5b] via-[#1a4080] to-[#1d5c9e]',
-      examDate: '2026-06-15',
-    };
-
-  if (n.includes('lic aao') || n.includes('lic-aao'))
-    return {
-      subtitle: 'Assistant Administrative Officer',
-      vacancies: '300 Vacancies',
-      notification: 'Jun 2026',
-      region: 'All India',
-      duration: '120 min',
-      marks: '300 Marks',
-      sections: [
-        { name: 'Reasoning', color: '#38bdf8', pct: 70 },
-        { name: 'Quantitative', color: '#a78bfa', pct: 65 },
-        { name: 'English', color: '#34d399', pct: 78 },
-        { name: 'Gen. Knowledge', color: '#fb923c', pct: 55 },
-      ],
-      overallPct: 67,
-      gradient: 'from-[#0f2b5b] via-[#1a4080] to-[#1d5c9e]',
-      examDate: '2026-09-01',
-    };
-
-  if (n.includes('rbi grade b') || n.includes('rbi-grade-b'))
-    return {
-      subtitle: 'Grade B Officer',
-      vacancies: '291 Vacancies',
-      notification: 'May 2026',
-      region: 'All India',
-      duration: '120 min',
-      marks: '200 Marks',
-      sections: [
-        { name: 'Economics', color: '#38bdf8', pct: 58 },
-        { name: 'Reasoning', color: '#a78bfa', pct: 72 },
-        { name: 'English', color: '#34d399', pct: 75 },
-        { name: 'Gen. Awareness', color: '#fb923c', pct: 62 },
-      ],
-      overallPct: 66,
-      gradient: 'from-[#4a1508] via-[#7c2210] to-[#c0392b]',
-      examDate: '2026-08-01',
-    };
-
-  if (n.includes('rrb ntpc') || n.includes('rrb-ntpc'))
-    return {
-      subtitle: 'CBT Stage 1',
-      vacancies: '11,558 Vacancies',
-      notification: 'Aug 2026',
-      region: 'All India',
-      duration: '90 min',
-      marks: '100 Marks',
-      sections: [
-        { name: 'Mathematics', color: '#38bdf8', pct: 60 },
-        { name: 'Reasoning', color: '#a78bfa', pct: 72 },
-        { name: 'Gen. Awareness', color: '#34d399', pct: 65 },
-        { name: 'Gen. Science', color: '#fb923c', pct: 50 },
-      ],
-      overallPct: 62,
-      gradient: 'from-[#2d1b69] via-[#4a2d9c] to-[#6d3fd6]',
-      examDate: '2026-11-15',
-    };
-
-  if (n.includes('rrb group d') || n.includes('rrb-group-d'))
-    return {
-      subtitle: 'Computer Based Test',
-      vacancies: '32,438 Vacancies',
-      notification: 'Aug 2026',
-      region: 'All India',
-      duration: '90 min',
-      marks: '100 Marks',
-      sections: [
-        { name: 'Mathematics', color: '#38bdf8', pct: 55 },
-        { name: 'Reasoning', color: '#a78bfa', pct: 68 },
-        { name: 'Gen. Awareness', color: '#34d399', pct: 62 },
-        { name: 'Gen. Science', color: '#fb923c', pct: 58 },
-      ],
-      overallPct: 60,
-      gradient: 'from-[#2d1b69] via-[#4a2d9c] to-[#6d3fd6]',
-      examDate: '2026-11-25',
-    };
-
-  if (n.includes('ssc cgl') || n.includes('ssc-cgl'))
-    return {
-      subtitle: 'Tier I Examination',
-      vacancies: '17,727 Vacancies',
-      notification: 'Jun 2026',
-      region: 'All India',
-      duration: '60 min',
-      marks: '200 Marks',
-      sections: [
-        { name: 'Quantitative', color: '#38bdf8', pct: 58 },
-        { name: 'Reasoning', color: '#a78bfa', pct: 68 },
-        { name: 'English', color: '#34d399', pct: 75 },
-        { name: 'Gen. Studies', color: '#fb923c', pct: 55 },
-      ],
-      overallPct: 63,
-      gradient: 'from-[#1a4d2e] via-[#1e6b3c] to-[#22c55e]',
-      examDate: '2026-09-20',
-    };
-
-  if (n.includes('ssc chsl') || n.includes('ssc-chsl'))
-    return {
-      subtitle: 'Tier I Examination',
-      vacancies: '3,712 Vacancies',
-      notification: 'Jul 2026',
-      region: 'All India',
-      duration: '60 min',
-      marks: '200 Marks',
-      sections: [
-        { name: 'Quantitative', color: '#38bdf8', pct: 56 },
-        { name: 'Reasoning', color: '#a78bfa', pct: 65 },
-        { name: 'English', color: '#34d399', pct: 72 },
-        { name: 'Gen. Studies', color: '#fb923c', pct: 52 },
-      ],
-      overallPct: 61,
-      gradient: 'from-[#1a4d2e] via-[#1e6b3c] to-[#22c55e]',
-      examDate: '2026-10-15',
-    };
-
-  if (n.includes('ssc mts') || n.includes('ssc-mts'))
-    return {
-      subtitle: 'Multi-Tasking Staff',
-      vacancies: '8,326 Vacancies',
-      notification: 'Sep 2026',
-      region: 'All India',
-      duration: '90 min',
-      marks: '150 Marks',
-      sections: [
-        { name: 'Quantitative', color: '#38bdf8', pct: 55 },
-        { name: 'Reasoning', color: '#a78bfa', pct: 62 },
-        { name: 'English', color: '#34d399', pct: 68 },
-        { name: 'Gen. Studies', color: '#fb923c', pct: 50 },
-      ],
-      overallPct: 58,
-      gradient: 'from-[#1a4d2e] via-[#1e6b3c] to-[#22c55e]',
-      examDate: '2026-11-30',
-    };
-
-  if (n.includes('upsc'))
-    return {
-      subtitle: 'Preliminary Examination',
-      vacancies: '979 Vacancies',
-      notification: 'May 2026',
-      region: 'All India',
-      duration: '120 min',
-      marks: '200 Marks',
-      sections: [
-        { name: 'History', color: '#38bdf8', pct: 55 },
-        { name: 'Geography', color: '#a78bfa', pct: 62 },
-        { name: 'Polity', color: '#34d399', pct: 70 },
-        { name: 'Current Affairs', color: '#fb923c', pct: 48 },
-      ],
-      overallPct: 58,
-      gradient: 'from-[#4a1942] via-[#7b1f6e] to-[#c026d3]',
-      examDate: '2026-08-20',
-    };
-
-  return {
-    subtitle: 'Upcoming Examination',
-    vacancies: 'Multiple Vacancies',
-    notification: '2026',
-    region: 'All India',
-    duration: '60 min',
-    marks: '100 Marks',
-    sections: [
-      { name: 'Quantitative', color: '#38bdf8', pct: 60 },
-      { name: 'Reasoning', color: '#a78bfa', pct: 65 },
-      { name: 'English', color: '#34d399', pct: 72 },
-      { name: 'Gen. Awareness', color: '#fb923c', pct: 52 },
-    ],
-    overallPct: 62,
-    gradient: 'from-[#1a3a6e] via-[#1e4fa0] to-[#2563eb]',
-    examDate: '2026-12-31',
-  };
+  if (n.includes('sbi clerk'))    return { vacancies: '13,735', logo: '🏦', examDate: '2026-08-15', preliTotal: 20, mainsTotal: 20, liveTotal: 5, gradient: 'linear-gradient(160deg,#1a3a6e,#2563eb)' };
+  if (n.includes('sbi po'))       return { vacancies: '2,000',  logo: '🏦', examDate: '2026-10-05', preliTotal: 20, mainsTotal: 15, liveTotal: 5, gradient: 'linear-gradient(160deg,#1e3a5f,#1e6a9f)' };
+  if (n.includes('ibps clerk'))   return { vacancies: '6,128',  logo: '🏛️', examDate: '2026-10-25', preliTotal: 20, mainsTotal: 20, liveTotal: 5, gradient: 'linear-gradient(160deg,#1a2e5e,#2855c4)' };
+  if (n.includes('ibps po'))      return { vacancies: '4,455',  logo: '🏛️', examDate: '2026-09-10', preliTotal: 20, mainsTotal: 15, liveTotal: 5, gradient: 'linear-gradient(160deg,#1a2e5e,#2855c4)' };
+  if (n.includes('ibps rrb') || n.includes('rrb'))
+                                  return { vacancies: '9,985',  logo: '🚂', examDate: '2026-10-05', preliTotal: 20, mainsTotal: 20, liveTotal: 5, gradient: 'linear-gradient(160deg,#1a2e5e,#2855c4)' };
+  if (n.includes('lic ado'))      return { vacancies: '5,000+', logo: '🛡️', examDate: '2026-06-15', preliTotal: 15, mainsTotal: 0,  liveTotal: 5, gradient: 'linear-gradient(160deg,#0f2b5b,#1d5c9e)' };
+  if (n.includes('lic aao'))      return { vacancies: '300',    logo: '🛡️', examDate: '2026-09-01', preliTotal: 15, mainsTotal: 15, liveTotal: 5, gradient: 'linear-gradient(160deg,#0f2b5b,#1d5c9e)' };
+  if (n.includes('rbi grade b'))  return { vacancies: '291',    logo: '🏦', examDate: '2026-08-01', preliTotal: 15, mainsTotal: 15, liveTotal: 5, gradient: 'linear-gradient(160deg,#4a1508,#c0392b)' };
+  if (n.includes('rrb ntpc'))     return { vacancies: '11,558', logo: '🚂', examDate: '2026-11-15', preliTotal: 20, mainsTotal: 20, liveTotal: 5, gradient: 'linear-gradient(160deg,#2d1b69,#6d3fd6)' };
+  if (n.includes('ssc cgl'))      return { vacancies: '17,727', logo: '📋', examDate: '2026-09-20', preliTotal: 20, mainsTotal: 20, liveTotal: 5, gradient: 'linear-gradient(160deg,#1a4d2e,#22c55e)' };
+  if (n.includes('ssc chsl'))     return { vacancies: '3,712',  logo: '📋', examDate: '2026-10-15', preliTotal: 20, mainsTotal: 20, liveTotal: 5, gradient: 'linear-gradient(160deg,#1a4d2e,#22c55e)' };
+  if (n.includes('upsc'))         return { vacancies: '979',    logo: '🏛️', examDate: '2026-08-20', preliTotal: 15, mainsTotal: 15, liveTotal: 5, gradient: 'linear-gradient(160deg,#4a1942,#c026d3)' };
+  return                               { vacancies: 'Multiple', logo: '📝', examDate: '2026-12-31', preliTotal: 20, mainsTotal: 20, liveTotal: 5, gradient: 'linear-gradient(160deg,#1a3a6e,#2563eb)' };
 };
 
-// Responsive sizes: use smaller values on mobile via a viewport-aware approach
-const CircularProgress: React.FC<{
-  pct: number;
-  color: string;
-  label: string;
-  size?: number;
-  mobileSize?: number;
-  strokeWidth?: number;
-}> = ({ pct, color, label, size = 90, mobileSize, strokeWidth = 7 }) => {
-  // Use CSS custom properties via inline style for responsive sizing
-  const displaySize = mobileSize ?? Math.round(size * 0.78);
-  const r = (size - strokeWidth * 2) / 2;
-  const circ = 2 * Math.PI * r;
-  const offset = circ - (pct / 100) * circ;
-
-  return (
-    <div className="flex flex-col items-center gap-1">
-      {/* Wrapper scales the SVG via CSS on mobile */}
-      <div
-        className="relative shrink-0"
-        style={{
-          width: size,
-          height: size,
-          '--mobile-size': `${displaySize}px`,
-        } as React.CSSProperties}
-      >
-        {/* Track */}
-        <svg width={size} height={size} className="-rotate-90 absolute inset-0" viewBox={`0 0 ${size} ${size}`}>
-          <circle
-            cx={size / 2} cy={size / 2} r={r}
-            fill="none" stroke="#e2e8f0" strokeWidth={strokeWidth + 1}
-          />
-        </svg>
-        {/* Progress */}
-        <svg width={size} height={size} className="-rotate-90 absolute inset-0" viewBox={`0 0 ${size} ${size}`}>
-          <circle
-            cx={size / 2} cy={size / 2} r={r}
-            fill="none"
-            stroke={color}
-            strokeWidth={strokeWidth}
-            strokeLinecap="round"
-            strokeDasharray={circ}
-            strokeDashoffset={offset}
-            style={{ transition: `stroke-dashoffset 1.2s cubic-bezier(0.16,1,0.3,1)` }}
-          />
-        </svg>
-        {/* Percentage inside */}
-        <div className="absolute inset-0 flex items-center justify-center">
-          <span className="font-bold text-slate-800" style={{ fontSize: Math.round(size * 0.15) }}>{pct}%</span>
+// Small SVG ring used for progress indicators
+const Ring: React.FC<{ pct: number; color: string; size: number; stroke: number; textSize: number; label: string }> =
+  ({ pct, color, size, stroke, textSize, label }) => {
+    const r = (size - stroke) / 2;
+    const circ = 2 * Math.PI * r;
+    const dash = (Math.max(0, Math.min(pct, 100)) / 100) * circ;
+    return (
+      <div className="flex flex-col items-center" style={{ gap: 4 }}>
+        <div className="relative" style={{ width: size, height: size }}>
+          <svg width={size} height={size} className="-rotate-90">
+            <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#f1f5f9" strokeWidth={stroke} />
+            <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={color} strokeWidth={stroke}
+              strokeLinecap="round" strokeDasharray={`${dash} ${circ - dash}`}
+              style={{ transition: 'stroke-dasharray 1s ease-out' }} />
+          </svg>
+          <span className="absolute inset-0 flex items-center justify-center font-black text-gray-800" style={{ fontSize: textSize }}>{pct}%</span>
         </div>
+        <span className="font-bold text-gray-400 uppercase tracking-wider text-center whitespace-nowrap" style={{ fontSize: 8 }}>{label}</span>
       </div>
-      <span className="text-[10px] font-medium text-slate-600 text-center leading-tight">{label}</span>
-    </div>
-  );
-};
-
-// Responsive hook-free approach: render two sizes and show/hide via CSS
-const ResponsiveCircles: React.FC<{
-  sections: { name: string; color: string; pct: number }[];
-  overallPct: number;
-  labelOverall: string;
-}> = ({ sections, overallPct, labelOverall }) => (
-  <>
-    {/* Mobile layout: smaller circles in a horizontal scroll row */}
-    <div className="flex md:hidden flex-wrap items-end gap-3 mb-4">
-      <CircularProgress pct={overallPct} color="#10b981" label={labelOverall} size={80} strokeWidth={7} />
-      <div className="w-px h-14 bg-slate-200 self-center" />
-      {sections.map((s) => (
-        <CircularProgress key={s.name} pct={s.pct} color={s.color} label={s.name} size={64} strokeWidth={6} />
-      ))}
-    </div>
-    {/* Desktop layout: original sizes */}
-    <div className="hidden md:flex flex-wrap items-end gap-5 mb-5">
-      <CircularProgress pct={overallPct} color="#10b981" label={labelOverall} size={112} strokeWidth={9} />
-      <div className="h-20 w-px bg-slate-200 self-center" />
-      {sections.map((s) => (
-        <CircularProgress key={s.name} pct={s.pct} color={s.color} label={s.name} size={88} strokeWidth={7} />
-      ))}
-    </div>
-  </>
-);
+    );
+  };
 
 const TargetExamCard: React.FC<TargetExamCardProps> = ({
   targetExam,
   examCategory,
-  userName,
-  preparationStartDate,
   liveOverallPct,
 }) => {
   const navigate = useNavigate();
   const meta = getExamMeta(targetExam);
   const mockRoute = getTargetExamRoute(targetExam);
   const [weaknessOpen, setWeaknessOpen] = useState(false);
+  const [howToStartOpen, setHowToStartOpen] = useState(false);
 
+  // Days left
   const daysLeft = (() => {
     try {
       const d = differenceInDays(new Date(meta.examDate), new Date());
       return d > 0 ? d : null;
-    } catch {
-      return null;
-    }
+    } catch { return null; }
   })();
 
-  // ── Unified slide state: slot 0 = Days Left, slots 1..n = active ads ──────
-  const [ads, setAds] = useState<AdBanner[]>([]);
-  const [slideIdx, setSlideIdx] = useState(0);
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const impressionTracked = useRef<Set<string>>(new Set());
+  // Derive mock progress from liveOverallPct (or 0)
+  const overallPct = liveOverallPct && liveOverallPct > 0 ? Math.round(liveOverallPct) : 0;
+  const rings = [
+    { label: 'OVERALL',   pct: overallPct,                                                  color: '#10b981', size: 82, stroke: 7, textSize: 14 },
+    { label: 'QUANT',     pct: Math.min(Math.round(overallPct * 0.9 + 5), 100),             color: '#3b82f6', size: 60, stroke: 5, textSize: 11 },
+    { label: 'REASONING', pct: Math.min(Math.round(overallPct * 1.1), 100),                 color: '#8b5cf6', size: 60, stroke: 5, textSize: 11 },
+    { label: 'ENGLISH',   pct: Math.min(Math.round(overallPct * 0.85 + 10), 100),          color: '#f59e0b', size: 60, stroke: 5, textSize: 11 },
+    { label: 'GEN. AWR.', pct: Math.min(Math.round(overallPct * 0.75 + 15), 100),          color: '#ec4899', size: 60, stroke: 5, textSize: 11 },
+  ];
+
+  // Mock test completion counts (will wire to real data later)
+  const tabs = [
+    { label: 'Prelims',   icon: <FileText className="w-4 h-4" />, total: meta.preliTotal, completed: 0, accent: '#3b82f6', iconBg: '#eff6ff', iconColor: '#2563eb' },
+    { label: 'Mains',     icon: <BookOpen className="w-4 h-4" />, total: meta.mainsTotal, completed: 0, accent: '#8b5cf6', iconBg: '#f5f3ff', iconColor: '#7c3aed' },
+    { label: 'Live Test', icon: <Zap className="w-4 h-4" />,      total: meta.liveTotal,  completed: 0, accent: '#10b981', iconBg: '#ecfdf5', iconColor: '#059669' },
+  ];
+  const grandTotal     = tabs.reduce((s, t) => s + t.total, 0);
+  const grandCompleted = tabs.reduce((s, t) => s + t.completed, 0);
+
+  // ── Ads panel ──────────────────────────────────────────────────────────────
+  const [ads, setAds]             = useState<AdBanner[]>([]);
+  const [slideIdx, setSlideIdx]   = useState(0);
+  const timerRef                  = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const impressionTracked         = useRef<Set<string>>(new Set());
 
   const loadAds = useCallback(() => {
-    // Pass full student context so exam-level targeting works correctly
     const examId = targetExam
       ? `${examCategory.toLowerCase()}-${targetExam.toLowerCase().replace(/\s+/g, '-')}`
       : undefined;
-    setAds(getActiveAds(
-      { categoryId: examCategory.toLowerCase() || undefined, examId },
-      'days_left_panel',
-    ));
+    setAds(getActiveAds({ categoryId: examCategory.toLowerCase() || undefined, examId }, 'days_left_panel'));
   }, [examCategory, targetExam]);
 
   useEffect(() => {
@@ -454,10 +126,8 @@ const TargetExamCard: React.FC<TargetExamCardProps> = ({
     return () => window.removeEventListener('storage', h);
   }, [loadAds]);
 
-  // total slides = 1 (days-left) + ads.length
   const totalSlides = 1 + ads.length;
 
-  // Record impression when an ad slide is shown
   useEffect(() => {
     if (slideIdx === 0) return;
     const ad = ads[slideIdx - 1];
@@ -467,32 +137,18 @@ const TargetExamCard: React.FC<TargetExamCardProps> = ({
     }
   }, [slideIdx, ads]);
 
-  // Auto-advance
   useEffect(() => {
     if (totalSlides <= 1) return;
     if (timerRef.current) clearTimeout(timerRef.current);
     const currentAd = slideIdx > 0 ? ads[slideIdx - 1] : null;
     const ms = currentAd ? getSlideDuration(currentAd.adType) : 6000;
-    timerRef.current = setTimeout(() => {
-      setSlideIdx(prev => (prev + 1) % totalSlides);
-    }, ms);
+    timerRef.current = setTimeout(() => setSlideIdx(prev => (prev + 1) % totalSlides), ms);
     return () => { if (timerRef.current) clearTimeout(timerRef.current); };
   }, [slideIdx, totalSlides, ads]);
 
-  // ── Guard: if active ads change (e.g. admin disables all ads),
-  //    reset slideIdx to 0 so Days Left is always visible.
-  //    Without this, slideIdx stays at 1+ while totalSlides drops to 1
-  //    → Days Left gets opacity:0 and is stuck invisible forever.
   useEffect(() => {
-    if (slideIdx >= totalSlides) {
-      setSlideIdx(0);
-    }
+    if (slideIdx >= totalSlides) setSlideIdx(0);
   }, [totalSlides]); // eslint-disable-line react-hooks/exhaustive-deps
-
-
-  const goTo = (idx: number) => { setSlideIdx(idx); };
-  const goPrev = () => setSlideIdx(prev => (prev - 1 + totalSlides) % totalSlides);
-  const goNext = () => setSlideIdx(prev => (prev + 1) % totalSlides);
 
   const handleAdClick = (ad: AdBanner) => {
     recordClick(ad.id);
@@ -501,246 +157,225 @@ const TargetExamCard: React.FC<TargetExamCardProps> = ({
     }
   };
 
-  // Current ad (null for slide 0)
-  const currentAd = slideIdx > 0 ? ads[slideIdx - 1] : null;
-
   return (
-    <div className="rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
-      {/* ── Main card row: stacks on mobile, side-by-side on md+ ── */}
-      <div className="bg-white flex flex-col md:flex-row">
-        {/* ── LEFT: all content ── */}
-        <div className="flex-1 min-w-0">
-          {/* Top gradient accent */}
-          <div className={`h-1.5 bg-gradient-to-r ${meta.gradient}`} />
+    <div className="flex flex-col md:flex-row bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
 
-        <div className="p-5 sm:p-6">
+      {/* ══ LEFT PANEL ══ */}
+      <div className="flex-1 p-4 sm:p-5 flex flex-col gap-4">
 
-          {/* Header: icon + exam name */}
-          <div className="flex items-start gap-3 mb-4">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-sm flex-shrink-0">
-              <Target className="h-5 w-5 text-white" />
-            </div>
-            <div>
-              <span className="text-[10px] font-bold text-primary uppercase tracking-wider">Target Examination</span>
-              <h2 className="text-2xl font-bold text-slate-900 leading-tight">
-                {targetExam.toUpperCase()}
-              </h2>
-              <p className="text-xs text-slate-500 mt-0.5">{meta.subtitle} • {meta.vacancies}</p>
-            </div>
-          </div>
-
-          {/* Exam meta pills */}
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mb-5 text-xs text-slate-600">
-            <div className="flex items-center gap-1.5">
-              <Calendar className="h-3.5 w-3.5 text-slate-400" />
-              <span className="font-medium">{new Date(meta.examDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <Award className="h-3.5 w-3.5 text-slate-400" />
-              <span className="font-medium">{meta.duration} • {meta.marks}</span>
+        {/* Row 1: Identity + Progress Rings */}
+        <div className="flex flex-col sm:flex-row sm:items-start gap-6">
+          <div className="flex-1">
+            <div className="text-[10px] font-extrabold text-primary uppercase tracking-widest mb-2">Target Examination</div>
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-12 h-12 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm">
+                <span className="text-2xl">{meta.logo}</span>
+              </div>
+              <div>
+                <h2 className="text-2xl sm:text-3xl font-black text-gray-900 leading-none">{targetExam}</h2>
+                <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                  <div className="inline-flex items-center gap-1 bg-blue-50 border border-blue-100 text-blue-700 text-[11px] font-semibold px-2.5 py-1 rounded-full">
+                    <Users className="w-3 h-3" /> 3.4K+ Students Enrolled
+                  </div>
+                  <div className="inline-flex items-center gap-1 bg-amber-50 border border-amber-100 text-amber-700 text-[11px] font-semibold px-2.5 py-1 rounded-full">
+                    <Trophy className="w-3 h-3" /> {meta.vacancies} Vacancies
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* ── Circles Row: responsive via ResponsiveCircles ── */}
-          <ResponsiveCircles
-            sections={meta.sections}
-            overallPct={liveOverallPct !== undefined && liveOverallPct > 0 ? liveOverallPct : meta.overallPct}
-            labelOverall={liveOverallPct !== undefined && liveOverallPct > 0 ? 'Your Score' : 'Overall'}
-          />
-
-          {/* Action Buttons — wrap on small screens */}
-          <div className="flex flex-wrap items-center gap-2">
-            <Button
-              size="sm"
-              className="bg-primary hover:bg-primary/90 text-white font-semibold px-4 py-2 gap-2 rounded-xl text-xs shadow-sm"
-              onClick={() => navigate(mockRoute)}
-            >
-              <Play className="h-3.5 w-3.5" />
-              Start Full Mock
-            </Button>
-
-            <Button
-              size="sm"
-              variant="outline"
-              className="text-slate-700 border-slate-200 font-medium px-4 py-2 gap-2 rounded-xl text-xs hover:bg-slate-50"
-              onClick={() => navigate('/student/syllabus')}
-            >
-              <BookOpen className="h-3.5 w-3.5" />
-              View Syllabus
-            </Button>
-
-            <Button
-              size="sm"
-              variant="outline"
-              className="text-violet-700 border-violet-200 font-medium px-4 py-2 gap-2 rounded-xl text-xs hover:bg-violet-50"
-              onClick={() => setWeaknessOpen(true)}
-            >
-              <Brain className="h-3.5 w-3.5" />
-              Weakness Predictor
-            </Button>
-            <WeaknessDetectionModal isOpen={weaknessOpen} onClose={() => setWeaknessOpen(false)} examId={targetExam.toLowerCase().replace(/\s+/g, '-')} examName={targetExam} />
+          {/* Progress rings */}
+          <div className="flex items-end gap-4 flex-wrap shrink-0">
+            {rings.map((ring, idx) => (
+              <Ring key={idx} {...ring} />
+            ))}
           </div>
         </div>
-        </div>{/* ── end flex-1 left section ── */}
 
-        {/* ── RIGHT: Unified slide container (Days Left + Ads) ── */}
-        {/*
-          KEY LAYOUT RULES:
-          - Container always has the Days-Left gradient bg (ads overlay on top via absolute)
-          - self-stretch ensures it fills the full row height from flexbox
-          - min-h-[220px] gives absolute children a real height to fill
-          - Slides are absolute inset-0 and use opacity for transitions
-        */}
-        {/*
-          RIGHT PANEL:
-          - Mobile: full-width horizontal banner (h-36)
-          - md+: sidebar (w-80, self-stretch)
-        */}
-        <div
-          className="flex-shrink-0 w-full md:w-80 h-44 md:h-auto md:self-stretch relative overflow-hidden group select-none"
-          style={{ background: 'linear-gradient(160deg, #1e40af 0%, #0ea5e9 35%, #10b981 100%)' }}
-        >
-          {/* ── Slide 0: Days Left ── */}
-          <div
-            className="absolute inset-0 flex flex-col items-center justify-center text-white transition-opacity duration-500"
-            style={{ opacity: slideIdx === 0 ? 1 : 0, pointerEvents: slideIdx === 0 ? 'auto' : 'none' }}
+        {/* Row 2: Test completion cards */}
+        <div className="rounded-2xl bg-gray-50/60 px-4 py-3">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Preparation Progress</span>
+            <span className="text-[10px] font-extrabold" style={{ color: '#16a34a' }}>{grandCompleted} / {grandTotal} Total</span>
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            {tabs.map(tab => {
+              const pct = tab.total > 0 ? Math.round((tab.completed / tab.total) * 100) : 0;
+              return (
+                <div key={tab.label} className="bg-white rounded-xl px-3 py-2.5"
+                  style={{ border: '1px solid #EEF2F7', boxShadow: '0 2px 8px rgba(15,23,42,0.04)' }}>
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <div className="w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0"
+                        style={{ background: tab.iconBg, color: tab.iconColor }}>
+                        {tab.icon}
+                      </div>
+                      <span className="text-[11px] font-extrabold uppercase tracking-wide" style={{ color: tab.iconColor }}>{tab.label}</span>
+                    </div>
+                    <div className="flex items-baseline gap-0.5">
+                      <span className="text-[18px] font-black" style={{ color: tab.iconColor }}>{tab.completed}</span>
+                      <span className="text-[11px] font-bold text-gray-400">/{tab.total}</span>
+                    </div>
+                  </div>
+                  <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                    <div className="h-full rounded-full transition-all duration-700" style={{ width: `${pct}%`, backgroundColor: tab.accent }} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Row 3: Action buttons */}
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+          <button
+            onClick={() => navigate(mockRoute)}
+            className="bg-primary hover:bg-primary/90 text-white flex items-center gap-2 font-bold px-5 py-2.5 rounded-xl shadow-md shadow-primary/20 transition-all active:scale-95 text-sm"
           >
-            {/* Decorative blobs */}
-            <div className="absolute -top-6 -right-6 w-24 h-24 bg-white/10 rounded-full" />
-            <div className="absolute -bottom-6 -left-6 w-20 h-20 bg-white/10 rounded-full" />
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-28 h-28 border border-white/10 rounded-full" />
-            <div className="relative z-10 flex flex-col items-center">
-              <div
-                className="text-5xl sm:text-7xl font-black leading-none mb-1.5 drop-shadow-md"
-                style={{ fontFamily: "'Outfit', sans-serif", textShadow: '0 2px 12px rgba(0,0,0,0.2)' }}
-              >
-                {daysLeft !== null ? daysLeft : '—'}
-              </div>
-              <div className="text-[11px] sm:text-[13px] font-bold uppercase tracking-widest opacity-90 text-center px-2">
-                {daysLeft !== null ? 'Days Left' : 'TBA'}
-              </div>
-              <div className="mt-2 w-10 h-0.5 bg-white/40 rounded-full" />
-              <div className="mt-1.5 text-[9px] sm:text-[10px] opacity-70 tracking-wide font-medium">
-                to exam day
+            <PlayCircle className="w-4 h-4" /> Start Full Mock
+          </button>
+          <button
+            onClick={() => navigate('/student/syllabus')}
+            className="border border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-gray-700 font-semibold px-4 py-2.5 rounded-xl transition-all active:scale-95 text-sm flex items-center gap-2"
+          >
+            <BookOpen className="w-4 h-4 text-gray-500" /> View Syllabus
+          </button>
+          <button
+            onClick={() => setWeaknessOpen(true)}
+            className="border border-violet-200 hover:border-violet-300 hover:bg-violet-50 text-violet-700 font-semibold px-4 py-2.5 rounded-xl transition-all active:scale-95 text-sm flex items-center gap-2"
+          >
+            <Brain className="w-4 h-4" /> Weakness Predictor
+            <span className="text-[9px] font-black bg-violet-600 text-white px-1.5 py-0.5 rounded">AI</span>
+          </button>
+          <button
+            onClick={() => setHowToStartOpen(true)}
+            className="border border-emerald-200 hover:border-emerald-300 hover:bg-emerald-50 text-emerald-700 font-semibold px-4 py-2.5 rounded-xl transition-all active:scale-95 text-sm flex items-center gap-2"
+          >
+            <HelpCircle className="w-4 h-4" /> How to Start
+          </button>
+        </div>
+
+        <WeaknessDetectionModal
+          isOpen={weaknessOpen}
+          onClose={() => setWeaknessOpen(false)}
+          examId={targetExam.toLowerCase().replace(/\s+/g, '-')}
+          examName={targetExam}
+        />
+        <HowToStartModal
+          isOpen={howToStartOpen}
+          onClose={() => setHowToStartOpen(false)}
+          examName={targetExam}
+          examId={targetExam.toLowerCase().replace(/\s+/g, '-')}
+        />
+      </div>
+
+      {/* ══ RIGHT PANEL — Countdown + Superadmin Ads ══ */}
+      <div
+        className="md:w-[260px] flex-shrink-0 relative overflow-hidden group select-none"
+        style={{ background: 'linear-gradient(160deg,#2563eb,#0ea5e9,#06b6d4)', minHeight: 220 }}
+      >
+        {/* Slide 0 — Days Left */}
+        <div
+          className="absolute inset-0 flex flex-col items-center justify-center text-white transition-opacity duration-500 p-6"
+          style={{ opacity: slideIdx === 0 ? 1 : 0, pointerEvents: slideIdx === 0 ? 'auto' : 'none' }}
+        >
+          <div className="absolute -top-6 -right-6 w-24 h-24 bg-white/10 rounded-full blur-2xl pointer-events-none" />
+          <div className="absolute bottom-8 -left-8 w-28 h-28 bg-white/10 rounded-full blur-2xl pointer-events-none" />
+          <div className="relative z-10 flex flex-col items-center text-center">
+            <div className="text-[10px] font-extrabold uppercase tracking-widest opacity-75 mb-1">Your Countdown</div>
+            <div className="font-black leading-none tabular-nums drop-shadow-lg" style={{ fontSize: 68 }}>
+              {daysLeft !== null ? daysLeft : '—'}
+            </div>
+            <div className="text-[13px] font-black uppercase tracking-[0.2em] opacity-90 mt-1">Days Left</div>
+            <div className="mt-2 w-10 h-0.5 bg-white/40 rounded-full" />
+            <div className="mt-1.5 text-[10px] opacity-70 tracking-wide font-medium uppercase">To Exam Day</div>
+            <div className="mt-4 bg-white/15 border border-white/25 rounded-xl px-3 py-2 flex items-center gap-2 w-full">
+              <Calendar className="w-3.5 h-3.5 text-white flex-shrink-0" />
+              <div>
+                <div className="font-black text-white text-xs leading-tight">
+                  {new Date(meta.examDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                </div>
+                <div className="text-[9px] text-white/65 font-semibold">Prelims Exam Date</div>
               </div>
             </div>
           </div>
+        </div>
 
-          {/* ── Slides 1..n: Ads ── */}
-          {ads.map((ad, idx) => (
-            <div
-              key={ad.id}
-              className="absolute inset-0 flex flex-col transition-opacity duration-500"
-              style={{
-                opacity: slideIdx === idx + 1 ? 1 : 0,
-                pointerEvents: slideIdx === idx + 1 ? 'auto' : 'none',
-                background: ad.imageDataUrl ? undefined : (ad.bgColor || 'linear-gradient(135deg,#1e40af,#10b981)'),
-              }}
-            >
-              {/* Full-cover background image — object-contain so never cropped */}
-              {ad.imageDataUrl && (
-                <img
-                  src={ad.imageDataUrl}
-                  alt={ad.title || 'Ad'}
-                  className="absolute inset-0 w-full h-full object-cover"
-                  draggable={false}
-                />
-              )}
-
-              {/*
-                AD CONTENT LAYOUT:
-                IMAGE-ONLY MODE (no title): clean image, subtle dark bottom strip for CTA only.
-                TEXT MODE (title set): full 3-zone layout with gradient overlay.
-              */}
-              {ad.title ? (
-                // ── TEXT MODE: gradient overlay + 3-zone layout ──────────────
-                <>
-                  {ad.imageDataUrl && <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/10 to-black/65" />}
-                  <div className="relative z-10 flex flex-col h-full">
-                    {/* Zone 1 — type badge */}
-                    <div className="pt-3 px-3 shrink-0">
-                      <span className="text-[8px] font-bold uppercase tracking-widest text-white/70 bg-black/25 px-2 py-0.5 rounded-full">
-                        {ad.adType === 'exam' ? '🎯 Exam' : ad.adType === 'course' ? '📚 Course' : ad.adType === 'announcement' ? '📢 News' : '🔥 Offer'}
-                      </span>
-                    </div>
-                    {/* Zone 2 — title + subtitle centered */}
-                    <div className="flex-1 flex flex-col items-center justify-center text-center px-3 py-2 gap-1.5">
-                      <p className="font-black text-white text-sm leading-tight line-clamp-4"
-                        style={{ fontFamily: "'Outfit', sans-serif", textShadow: '0 1px 4px rgba(0,0,0,0.5)' }}>
-                        {ad.title}
-                      </p>
-                      {ad.subtitle && (
-                        <p className="text-white/80 text-[10px] leading-snug line-clamp-2" style={{ textShadow: '0 1px 3px rgba(0,0,0,0.4)' }}>
-                          {ad.subtitle}
-                        </p>
-                      )}
-                    </div>
-                    {/* Zone 3 — CTA pinned at bottom */}
-                    <div className="shrink-0 pb-8 px-3 flex justify-center">
-                      {ad.ctaText && (
-                        <button type="button" onClick={() => handleAdClick(ad)}
-                          className="inline-flex items-center gap-1 bg-white text-slate-900 font-bold text-[10px] px-3 py-1.5 rounded-full shadow-md hover:scale-105 transition-transform">
-                          {ad.ctaText} <ExternalLink className="h-2.5 w-2.5" />
-                        </button>
-                      )}
-                    </div>
+        {/* Slides 1..n — Superadmin Ads */}
+        {ads.map((ad, idx) => (
+          <div
+            key={ad.id}
+            className="absolute inset-0 flex flex-col transition-opacity duration-500"
+            style={{
+              opacity: slideIdx === idx + 1 ? 1 : 0,
+              pointerEvents: slideIdx === idx + 1 ? 'auto' : 'none',
+              background: ad.imageDataUrl ? undefined : (ad.bgColor || 'linear-gradient(135deg,#1e40af,#10b981)'),
+            }}
+          >
+            {ad.imageDataUrl && (
+              <img src={ad.imageDataUrl} alt={ad.title || 'Ad'} className="absolute inset-0 w-full h-full object-cover" draggable={false} />
+            )}
+            {ad.title ? (
+              <>
+                {ad.imageDataUrl && <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/10 to-black/65" />}
+                <div className="relative z-10 flex flex-col h-full">
+                  <div className="pt-3 px-3 shrink-0">
+                    <span className="text-[8px] font-bold uppercase tracking-widest text-white/70 bg-black/25 px-2 py-0.5 rounded-full">
+                      {ad.adType === 'exam' ? '🎯 Exam' : ad.adType === 'course' ? '📚 Course' : ad.adType === 'announcement' ? '📢 News' : '🔥 Offer'}
+                    </span>
                   </div>
-                </>
-              ) : (
-                // ── IMAGE-ONLY MODE: no text overlay, clean image ─────────────
-                // Just a subtle dark bottom strip so CTA button is readable
-                ad.ctaText && (
-                  <>
-                    <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-black/60 to-transparent z-10" />
-                    <div className="absolute bottom-2 left-0 right-0 z-20 flex justify-center" style={{ bottom: ads.length > 0 ? '1.75rem' : '0.5rem' }}>
+                  <div className="flex-1 flex flex-col items-center justify-center text-center px-3 py-2 gap-1.5">
+                    <p className="font-black text-white text-sm leading-tight line-clamp-4" style={{ textShadow: '0 1px 4px rgba(0,0,0,0.5)' }}>{ad.title}</p>
+                    {ad.subtitle && <p className="text-white/80 text-[10px] leading-snug line-clamp-2">{ad.subtitle}</p>}
+                  </div>
+                  <div className="shrink-0 pb-8 px-3 flex justify-center">
+                    {ad.ctaText && (
                       <button type="button" onClick={() => handleAdClick(ad)}
                         className="inline-flex items-center gap-1 bg-white text-slate-900 font-bold text-[10px] px-3 py-1.5 rounded-full shadow-md hover:scale-105 transition-transform">
                         {ad.ctaText} <ExternalLink className="h-2.5 w-2.5" />
                       </button>
-                    </div>
-                  </>
-                )
-              )}
+                    )}
+                  </div>
+                </div>
+              </>
+            ) : (
+              ad.ctaText && (
+                <>
+                  <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-black/60 to-transparent z-10" />
+                  <div className="absolute bottom-7 left-0 right-0 z-20 flex justify-center">
+                    <button type="button" onClick={() => handleAdClick(ad)}
+                      className="inline-flex items-center gap-1 bg-white text-slate-900 font-bold text-[10px] px-3 py-1.5 rounded-full shadow-md hover:scale-105 transition-transform">
+                      {ad.ctaText} <ExternalLink className="h-2.5 w-2.5" />
+                    </button>
+                  </div>
+                </>
+              )
+            )}
+          </div>
+        ))}
+
+        {/* Navigation — only when ads exist */}
+        {ads.length > 0 && (
+          <>
+            <button type="button" onClick={() => setSlideIdx(p => (p - 1 + totalSlides) % totalSlides)}
+              className="absolute left-1 top-1/2 -translate-y-1/2 w-6 h-6 bg-white/20 backdrop-blur-sm hover:bg-white/40 text-white rounded-full flex items-center justify-center z-20 opacity-0 group-hover:opacity-100 transition-opacity">
+              <ChevronLeft className="h-3 w-3" />
+            </button>
+            <button type="button" onClick={() => setSlideIdx(p => (p + 1) % totalSlides)}
+              className="absolute right-1 top-1/2 -translate-y-1/2 w-6 h-6 bg-white/20 backdrop-blur-sm hover:bg-white/40 text-white rounded-full flex items-center justify-center z-20 opacity-0 group-hover:opacity-100 transition-opacity">
+              <ChevronRight className="h-3 w-3" />
+            </button>
+            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-1 z-30">
+              {Array.from({ length: totalSlides }).map((_, i) => (
+                <button type="button" key={i} onClick={() => setSlideIdx(i)}
+                  className={`rounded-full transition-all duration-300 ${i === slideIdx ? 'w-4 h-1.5 bg-white' : 'w-1.5 h-1.5 bg-white/40 hover:bg-white/70'}`} />
+              ))}
             </div>
-          ))}
+          </>
+        )}
+      </div>
 
-          {/* ── Navigation (only when there are actual ads) ── */}
-          {ads.length > 0 && (
-            <>
-              {/* Prev / Next arrows — show on hover */}
-              <button
-                type="button"
-                onClick={goPrev}
-                className="absolute left-1 top-1/2 -translate-y-1/2 w-6 h-6 bg-white/20 backdrop-blur-sm hover:bg-white/40 text-white rounded-full flex items-center justify-center z-20 opacity-0 group-hover:opacity-100 transition-opacity"
-              >
-                <ChevronLeft className="h-3 w-3" />
-              </button>
-              <button
-                type="button"
-                onClick={goNext}
-                className="absolute right-1 top-1/2 -translate-y-1/2 w-6 h-6 bg-white/20 backdrop-blur-sm hover:bg-white/40 text-white rounded-full flex items-center justify-center z-20 opacity-0 group-hover:opacity-100 transition-opacity"
-              >
-                <ChevronRight className="h-3 w-3" />
-              </button>
-
-              {/* Dot indicators — pinned at very bottom */}
-              <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-1 z-30">
-                {Array.from({ length: totalSlides }).map((_, idx) => (
-                  <button
-                    type="button"
-                    key={idx}
-                    onClick={() => goTo(idx)}
-                    className={`rounded-full transition-all duration-300 ${
-                      idx === slideIdx ? 'w-4 h-1.5 bg-white' : 'w-1.5 h-1.5 bg-white/40 hover:bg-white/70'
-                    }`}
-                  />
-                ))}
-              </div>
-            </>
-          )}
-        </div>
-
-      </div>{/* ── end bg-white flex row ── */}
     </div>
   );
 };

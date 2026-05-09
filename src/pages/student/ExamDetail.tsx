@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowLeft, Target, Trophy, Zap, Clock, TrendingUp, Users, Grid3X3, List, CheckCircle2, ShoppingCart, Calendar, Award, PlayCircle, Shield, Brain, HelpCircle, FileText, BookOpen } from 'lucide-react';
+import { ArrowLeft, Target, Trophy, Zap, Clock, TrendingUp, Users, Grid3X3, List, CheckCircle2, ShoppingCart, Calendar, Award, PlayCircle, Shield, Brain, HelpCircle, FileText, BookOpen, ChevronLeft, ChevronRight, ExternalLink } from 'lucide-react';
+import { getActiveAds, recordClick, recordImpression, getSlideDuration, type AdBanner } from '@/data/adsStore';
 import { TestTypeGrid } from '@/components/student/exam/TestTypeGrid';
 import { ExamPerformanceTab } from '@/components/student/exam/ExamPerformanceTab';
 import { SuccessStoriesTab } from '@/components/student/exam/SuccessStoriesTab';
@@ -33,11 +34,61 @@ const ExamDetail = () => {
   const [countdownSlide, setCountdownSlide] = useState(0);
   const { progressData, getTypeProgress, setProgressData, updateTestProgress } = useExamProgress(examId!);
 
-  // Auto-slide countdown panel every 3 s
+  // ── Ads panel state (same system as TargetExamCard) ──────────────────────
+  const [panelAds, setPanelAds] = useState<AdBanner[]>([]);
+  const [panelSlideIdx, setPanelSlideIdx] = useState(0);
+  const panelTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const panelImpressionTracked = useRef<Set<string>>(new Set());
+
+  const loadPanelAds = useCallback(() => {
+    setPanelAds(getActiveAds(
+      { categoryId: category?.toLowerCase(), examId: examId?.toLowerCase() },
+      'days_left_panel',
+    ));
+  }, [category, examId]);
+
   useEffect(() => {
-    const t = setInterval(() => setCountdownSlide(s => s + 1), 3000);
-    return () => clearInterval(t);
-  }, []);
+    loadPanelAds();
+    const h = (e: StorageEvent) => { if (e.key === 'superadmin_ad_banners') loadPanelAds(); };
+    window.addEventListener('storage', h);
+    return () => window.removeEventListener('storage', h);
+  }, [loadPanelAds]);
+
+  const panelTotalSlides = 1 + panelAds.length;
+
+  // Track impressions for ads
+  useEffect(() => {
+    if (panelSlideIdx === 0) return;
+    const ad = panelAds[panelSlideIdx - 1];
+    if (ad && !panelImpressionTracked.current.has(ad.id)) {
+      panelImpressionTracked.current.add(ad.id);
+      recordImpression(ad.id);
+    }
+  }, [panelSlideIdx, panelAds]);
+
+  // Auto-advance panel slides
+  useEffect(() => {
+    if (panelTotalSlides <= 1) return;
+    if (panelTimerRef.current) clearTimeout(panelTimerRef.current);
+    const currentAd = panelSlideIdx > 0 ? panelAds[panelSlideIdx - 1] : null;
+    const ms = currentAd ? getSlideDuration(currentAd.adType) : 6000;
+    panelTimerRef.current = setTimeout(() => {
+      setPanelSlideIdx(prev => (prev + 1) % panelTotalSlides);
+    }, ms);
+    return () => { if (panelTimerRef.current) clearTimeout(panelTimerRef.current); };
+  }, [panelSlideIdx, panelTotalSlides, panelAds]);
+
+  // Guard: reset if ads removed
+  useEffect(() => {
+    if (panelSlideIdx >= panelTotalSlides) setPanelSlideIdx(0);
+  }, [panelTotalSlides]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handlePanelAdClick = (ad: AdBanner) => {
+    recordClick(ad.id);
+    if (ad.ctaUrl) {
+      ad.ctaUrl.startsWith('/') ? (window.location.href = ad.ctaUrl) : window.open(ad.ctaUrl, '_blank', 'noopener,noreferrer');
+    }
+  };
 
   /* ─── purchase state ─── */
   const [isPurchased, setIsPurchased] = useState<boolean>(() => {
@@ -48,6 +99,14 @@ const ExamDetail = () => {
   const handleBuy = () => {
     if (!examId) return;
     localStorage.setItem(PURCHASE_KEY(examId), 'true');
+    // ── Sync selected exam to dashboard TargetExamCard ───────────────────
+    localStorage.setItem('student_selected_exam', JSON.stringify({
+      examId,
+      examName: examName || examId,
+      category: category || '',
+      purchasedAt: new Date().toISOString(),
+    }));
+    window.dispatchEvent(new StorageEvent('storage', { key: 'student_selected_exam' }));
     setIsPurchased(true);
   };
 
@@ -390,83 +449,210 @@ const ExamDetail = () => {
           NEW EXAM HEADER CARD
       ══════════════════════════════════════════════════════════════════════ */}
       {!isPurchased ? (
-        /* ── BEFORE PURCHASE ── */
-        <div className="flex flex-col sm:flex-row bg-gradient-to-br from-blue-50 via-white to-indigo-50 rounded-2xl shadow-sm border border-blue-100 overflow-hidden">
-          {/* LEFT SIDE */}
-          <div className="flex-1 p-5 sm:p-7">
-            <div className="text-[10px] font-bold text-blue-600 mb-1 tracking-wider uppercase">TARGET EXAMINATION</div>
-            <div className="flex items-center gap-4">
-              <div className="w-14 h-14 bg-gray-50 flex items-center justify-center rounded-xl border border-gray-100 flex-shrink-0">
-                {isLogoUrl ? (
-                  <img src={examLogo as string} alt={examName} className="w-9 h-9 object-contain" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                ) : (
-                  <span className="text-3xl">{examLogo}</span>
-                )}
-              </div>
-              <h1 className="text-2xl sm:text-3xl font-black text-gray-900 leading-tight">{examName}</h1>
-            </div>
-            <p className="text-sm font-bold text-gray-500 mt-2 mb-6">Prelims + Mains + Interview</p>
+        /* ── BEFORE PURCHASE — Premium redesign ── */
+        <div className="flex flex-col lg:flex-row gap-5 items-start">
 
-            {/* STATS */}
-            <div className="flex flex-wrap gap-y-2 sm:divide-x divide-blue-100 py-3 border-t border-b border-blue-100 mb-4 bg-white/70 rounded-t-xl px-2 overflow-x-auto">
-              <div className="flex-1 min-w-[80px] text-center py-2 sm:py-1">
-                <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Total Users</div>
-                <div className="text-xl font-black text-gray-900 mt-1">3,435</div>
+          {/* ══ LEFT — Exam Info ══ */}
+          <div className="flex-1 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+
+            {/* ── Hero Section ── */}
+            <div className="p-6 pb-5 relative overflow-hidden bg-gradient-to-br from-emerald-50/50 via-white to-blue-50/30">
+              {/* Decorative blobs */}
+              <div className="absolute -top-8 -right-8 w-40 h-40 bg-emerald-100/40 rounded-full blur-2xl pointer-events-none" />
+              <div className="absolute bottom-0 right-20 w-24 h-24 bg-blue-100/30 rounded-full blur-xl pointer-events-none" />
+
+              {/* TARGET EXAMINATION badge */}
+              <div className="inline-flex items-center gap-1.5 bg-emerald-100 border border-emerald-200 text-emerald-700 text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-full mb-4">
+                <CheckCircle2 className="w-3 h-3" /> TARGET EXAMINATION
               </div>
-              <div className="flex-1 min-w-[80px] text-center py-2 sm:py-1">
-                <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Total Tests Available</div>
-                <div className="text-xl font-black text-gray-900 mt-1">120</div>
+
+              {/* Logo + Name + Cap row */}
+              <div className="flex items-start justify-between gap-3 relative z-10">
+                <div className="flex items-start gap-4 flex-1">
+                  <div className="w-16 h-16 bg-white border border-gray-200 rounded-xl flex items-center justify-center shadow-sm flex-shrink-0">
+                    {isLogoUrl ? (
+                      <img src={examLogo as string} alt={examName} className="w-11 h-11 object-contain"
+                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                    ) : (
+                      <span className="text-4xl">{examLogo}</span>
+                    )}
+                  </div>
+                  <div>
+                    <h1 className="text-3xl sm:text-4xl font-black text-gray-900 leading-tight">{examName}</h1>
+                    <p className="text-sm font-semibold text-gray-500 mt-0.5">Prelims + Mains</p>
+                    <p className="text-xs text-gray-400 mt-1.5 leading-relaxed">
+                      Crack {examName} with smart mock tests,<br />AI analysis &amp; structured preparation.
+                    </p>
+                  </div>
+                </div>
+                {/* Graduation cap decoration */}
+                <div className="hidden sm:flex flex-col items-center justify-center flex-shrink-0 relative">
+                  <div className="text-7xl select-none drop-shadow-md">🎓</div>
+                  <div className="absolute -top-1 -right-1 w-5 h-5 bg-emerald-400 rounded-full flex items-center justify-center shadow">
+                    <CheckCircle2 className="w-3 h-3 text-white" />
+                  </div>
+                </div>
               </div>
-              <div className="flex-1 min-w-[80px] text-center py-2 sm:py-1">
-                <div className="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Total People Cleared</div>
-                <div className="text-xl font-black text-gray-900 mt-1">567</div>
+
+              {/* Feature chips */}
+              <div className="flex flex-wrap gap-2 mt-4">
+                {[
+                  { icon: '📈', label: 'AI Performance Analysis' },
+                  { icon: '📄', label: 'Detailed Solutions' },
+                  { icon: '🏆', label: 'All India Ranking' },
+                  { icon: '🖥️', label: 'Real Exam Interface' },
+                ].map(chip => (
+                  <div key={chip.label} className="inline-flex items-center gap-1.5 bg-emerald-50 border border-emerald-100 text-emerald-700 text-xs font-semibold px-3 py-1.5 rounded-full">
+                    <span className="text-sm">{chip.icon}</span> {chip.label}
+                  </div>
+                ))}
               </div>
             </div>
 
-            {/* TEST TYPE COUNTS */}
-            <div className="flex flex-wrap py-3 border-b border-blue-100 px-2 gap-y-4 overflow-x-auto">
-              <div className="w-1/2 sm:flex-1 text-center py-1">
-                <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Full Test Prelims</div>
-                <div className="text-lg font-bold text-gray-700 mt-1">60</div>
+            {/* ── Compact Stats Row ── */}
+            <div className="grid grid-cols-3 border-t border-b border-gray-100 bg-slate-50/60">
+              {[
+                { icon: <Users className="w-4 h-4 text-blue-500" />, value: '3.4K+', label: 'Students Enrolled', color: 'text-blue-700' },
+                { icon: <FileText className="w-4 h-4 text-violet-500" />, value: '120', label: 'Mock Tests', color: 'text-violet-700' },
+                { icon: <Trophy className="w-4 h-4 text-amber-500" />, value: '567', label: 'Selections Achieved', color: 'text-amber-700' },
+              ].map((s, i) => (
+                <div key={s.label} className={`flex items-center gap-2.5 px-4 py-3 ${i < 2 ? 'border-r border-gray-100' : ''}`}>
+                  <div className="w-8 h-8 rounded-lg bg-white shadow-sm border border-gray-100 flex items-center justify-center flex-shrink-0">{s.icon}</div>
+                  <div>
+                    <div className={`text-xl font-black ${s.color} leading-none`}>{s.value}</div>
+                    <div className="text-[10px] text-gray-400 font-semibold mt-0.5">{s.label}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* ── Mock Tests Included ── */}
+            <div className="p-5">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-sm font-bold text-gray-800">Mock Tests Included</span>
+                <span className="text-xs font-bold text-gray-400">Total <span className="text-gray-700">210 Tests</span></span>
               </div>
-              <div className="hidden sm:block w-px bg-gray-200 mx-2"></div>
-              <div className="w-1/2 sm:flex-1 text-center py-1">
-                <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Full Test Mains</div>
-                <div className="text-lg font-bold text-gray-700 mt-1">60</div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {[
+                  { icon: <FileText className="w-5 h-5" />, label: 'Prelims Mock Tests', count: 60, sub: 'Full Length Tests', color: 'text-emerald-600', iconBg: 'bg-emerald-50', border: 'border-emerald-300', primary: true },
+                  { icon: <BookOpen className="w-5 h-5" />, label: 'Mains Mock Tests', count: 60, sub: 'Full Length Tests', color: 'text-violet-600', iconBg: 'bg-violet-50', border: 'border-gray-200', primary: false },
+                  { icon: <Grid3X3 className="w-5 h-5" />, label: 'Sectional Tests', count: 40, sub: 'Topic Wise Tests', color: 'text-amber-600', iconBg: 'bg-amber-50', border: 'border-gray-200', primary: false },
+                  { icon: <Zap className="w-5 h-5" />, label: 'Speed Tests', count: 30, sub: 'Time Based Tests', color: 'text-rose-600', iconBg: 'bg-rose-50', border: 'border-gray-200', primary: false },
+                ].map(t => (
+                  <div key={t.label}
+                    className={`rounded-xl border-2 ${t.border} p-3 flex flex-col gap-2 hover:shadow-md transition-shadow cursor-pointer ${t.primary ? 'bg-emerald-50/40' : 'bg-white'}`}>
+                    <div className={`w-9 h-9 rounded-lg ${t.iconBg} ${t.color} flex items-center justify-center`}>{t.icon}</div>
+                    <div className="text-[11px] font-bold text-gray-700 leading-tight">{t.label}</div>
+                    <div className={`text-lg font-black ${t.color}`}>{t.count} Tests</div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] text-gray-400 font-medium">{t.sub}</span>
+                      <div className={`w-5 h-5 rounded-full border-2 ${t.border} flex items-center justify-center`}>
+                        <ArrowLeft className={`w-3 h-3 ${t.color} rotate-180`} />
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
-              <div className="hidden sm:block w-px bg-gray-200 mx-2"></div>
-              <div className="w-1/2 sm:flex-1 text-center py-1">
-                <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Sectional Test</div>
-                <div className="text-lg font-bold text-gray-700 mt-1">40</div>
+            </div>
+
+            {/* ── Social Proof Bar ── */}
+            <div className="flex flex-wrap items-center gap-3 px-5 py-3 border-t border-gray-100 bg-gray-50/60">
+              <div className="flex -space-x-2">
+                {['🧑🏫', '👩‍💻', '👨‍🎓', '👩‍🏫'].map((e, i) => (
+                  <div key={i} className="w-7 h-7 rounded-full bg-white border-2 border-white shadow text-sm flex items-center justify-center">{e}</div>
+                ))}
               </div>
-              <div className="hidden sm:block w-px bg-gray-200 mx-2"></div>
-              <div className="w-1/2 sm:flex-1 text-center py-1">
-                <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Speed Test</div>
-                <div className="text-lg font-bold text-gray-700 mt-1">30</div>
+              <span className="text-xs text-gray-500 font-semibold flex-1">
+                Trusted by <span className="font-black text-gray-800">1,00,000+</span> aspirants across India
+              </span>
+              <div className="flex items-center gap-1 ml-auto">
+                <div className="flex">{'⭐⭐⭐⭐⭐'.split('').map((s, i) => <span key={i} className="text-sm">{s}</span>)}</div>
+                <span className="text-xs font-bold text-gray-600">4.8/5</span>
               </div>
+              <span className="text-xs text-gray-400 font-semibold hidden sm:block">12,000+ Reviews</span>
             </div>
           </div>
 
-          {/* RIGHT SIDE */}
-          <div className="sm:w-[280px] border-t-4 sm:border-t-0 sm:border-l-[6px] border-green-500 p-5 sm:p-6 flex flex-col justify-center items-center text-center bg-[#f8fafc]">
-            <div className="bg-green-500 text-white font-bold text-[11px] uppercase tracking-widest px-4 py-1.5 rounded-full mb-4">Validity : 12 Month</div>
-            <div className="font-semibold text-gray-500 text-sm">Prelims + Mains</div>
-            <div className="font-black text-gray-900 text-xl mt-1.5 mb-5">{examName.split(' ').slice(0, 3).join(' ')} Full Package</div>
-            <div className="flex items-center justify-center gap-3 mb-6">
-              <span className="text-gray-400 font-bold text-lg line-through">₹999</span>
-              <span className="text-gray-900 font-black text-4xl">₹299</span>
+          {/* ══ RIGHT — Pricing Card ══ */}
+          <div className="lg:w-[300px] w-full bg-white rounded-2xl border border-gray-200 shadow-lg overflow-hidden flex-shrink-0 flex flex-col">
+            {/* Validity header */}
+            <div className="flex items-center justify-center gap-1.5 bg-emerald-500 py-3">
+              <Shield className="w-3.5 h-3.5 text-white" />
+              <span className="text-xs font-bold text-white uppercase tracking-widest">12 Month Validity</span>
             </div>
-            <button onClick={handleBuy} className="bg-green-500 hover:bg-green-600 text-white font-bold text-lg py-3.5 px-6 rounded-full shadow-lg shadow-green-500/30 transition-all w-full flex items-center justify-center gap-2 active:scale-95">
-              <ShoppingCart className="w-5 h-5"/> Buy Now
-            </button>
+
+            <div className="p-5 flex flex-col">
+              {/* Most Popular badge */}
+              <div className="flex justify-center mb-3">
+                <div className="inline-flex items-center gap-1.5 bg-orange-50 border border-orange-200 text-orange-600 text-[11px] font-bold px-3 py-1 rounded-full">
+                  🔥 MOST POPULAR
+                </div>
+              </div>
+
+              {/* Package name */}
+              <div className="text-center mb-4">
+                <div className="font-black text-gray-900 text-lg leading-snug">{examName.split(' ').slice(0, 4).join(' ')} Full Package</div>
+                <div className="text-xs text-gray-400 font-semibold mt-0.5">Prelims + Mains</div>
+              </div>
+
+              {/* Pricing */}
+              <div className="flex items-center justify-center gap-3 mb-1">
+                <span className="text-gray-400 font-bold text-base line-through">₹1,999</span>
+                <span className="bg-red-500 text-white font-bold text-xs px-2.5 py-1 rounded-full">85% OFF</span>
+              </div>
+              <div className="text-center mb-2">
+                <span className="text-6xl font-black text-gray-900">₹<span>299</span></span>
+              </div>
+              <div className="flex justify-center mb-4">
+                <div className="inline-flex items-center gap-1.5 bg-emerald-50 border border-emerald-200 text-emerald-700 text-[11px] font-semibold px-3 py-1 rounded-full">
+                  🏷️ You Save ₹1,700
+                </div>
+              </div>
+
+              {/* Benefits checklist */}
+              <div className="space-y-2 mb-5">
+                {[
+                  'Instant Access After Payment',
+                  '12 Month Validity',
+                  'Updated as per latest syllabus',
+                  'Mock Tests + AI Performance Analysis',
+                  'Detailed Solutions & Explanations',
+                ].map(b => (
+                  <div key={b} className="flex items-start gap-2.5 text-xs text-gray-600">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5" />
+                    <span className="font-medium">{b}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* CTA */}
+              <button
+                onClick={handleBuy}
+                className="w-full bg-emerald-500 hover:bg-emerald-600 active:scale-[0.98] text-white font-bold text-base py-3.5 rounded-xl shadow-lg shadow-emerald-500/30 transition-all flex items-center justify-center gap-2"
+              >
+                <ShoppingCart className="w-5 h-5" /> Start Preparation →
+              </button>
+
+              <div className="flex items-center justify-center gap-1.5 mt-2.5 text-[11px] text-gray-400 font-semibold">
+                <Shield className="w-3 h-3 text-emerald-500" /> Secure &amp; Safe Payment
+              </div>
+
+              {/* Urgency strip */}
+              <div className="mt-4 bg-emerald-50 border border-emerald-100 rounded-xl px-3 py-2.5 flex items-center gap-2">
+                <Users className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                <span className="text-[11px] font-bold text-emerald-700">342 students enrolled this week</span>
+                <TrendingUp className="w-3.5 h-3.5 text-emerald-500 ml-auto flex-shrink-0" />
+              </div>
+            </div>
           </div>
         </div>
+
       ) : (
         /* ── AFTER PURCHASE ── */
         <div className="flex flex-col md:flex-row bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
 
           {/* ══ LEFT PANEL ══ */}
-          <div className="flex-1 p-6 sm:p-8 flex flex-col gap-5">
+          <div className="flex-1 p-4 sm:p-5 flex flex-col gap-4">
 
             {/* Row 1: Identity + Progress Rings */}
             <div className="flex flex-col sm:flex-row sm:items-start gap-6">
@@ -480,19 +666,15 @@ const ExamDetail = () => {
                   </div>
                   <div>
                     <h1 className="text-2xl sm:text-3xl font-black text-gray-900 leading-none">{examName}</h1>
-                    <p className="text-xs text-gray-400 font-medium mt-0.5">Preliminary Examination · {(Math.floor(Math.random() * 5000) + 5000).toLocaleString()} Vacancies</p>
-                  </div>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {[
-                    { icon: <Calendar className="w-3.5 h-3.5" />, label: '5 Oct 2026' },
-                    { icon: <Clock className="w-3.5 h-3.5" />, label: '45 min' },
-                    { icon: <Award className="w-3.5 h-3.5" />, label: '80 Marks' },
-                  ].map(({ icon, label }) => (
-                    <div key={label} className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 text-gray-600 px-3 py-1.5 rounded-lg text-xs font-semibold">
-                      <span className="text-primary">{icon}</span>{label}
+                    <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                      <div className="inline-flex items-center gap-1 bg-blue-50 border border-blue-100 text-blue-700 text-[11px] font-semibold px-2.5 py-1 rounded-full">
+                        <Users className="w-3 h-3" /> 3.4K+ Students Enrolled
+                      </div>
+                      <div className="inline-flex items-center gap-1 bg-amber-50 border border-amber-100 text-amber-700 text-[11px] font-semibold px-2.5 py-1 rounded-full">
+                        <Trophy className="w-3 h-3" /> 567 People Cleared
+                      </div>
                     </div>
-                  ))}
+                  </div>
                 </div>
               </div>
 
@@ -610,54 +792,107 @@ const ExamDetail = () => {
             </div>
           </div>
 
-          {/* ══ RIGHT PANEL — Auto-sliding Countdown ══ */}
-          {(() => {
-            const examPhases = [
-              { label: 'Prelims', date: '5 Oct 2026', days: 150, gradient: 'linear-gradient(160deg,#2563eb,#0ea5e9,#06b6d4)' },
-              { label: 'Mains',   date: '18 Jan 2027', days: 255, gradient: 'linear-gradient(160deg,#7c3aed,#6d28d9,#4f46e5)' },
-            ];
-            const slide = examPhases[countdownSlide % examPhases.length];
-            return (
-              <div className="md:w-[195px] flex flex-col items-center text-white relative overflow-hidden shrink-0 p-5 pt-4"
-                style={{ background: slide.gradient, transition: 'background 0.6s ease' }}>
-                {/* Decorative blobs */}
-                <div className="absolute -top-6 -right-6 w-24 h-24 bg-white/10 rounded-full blur-2xl pointer-events-none" />
-                <div className="absolute bottom-16 -left-8 w-28 h-28 bg-white/10 rounded-full blur-2xl pointer-events-none" />
-                {/* Top row: phase label + calendar */}
-                <div className="relative z-10 w-full flex items-center justify-between mb-2">
-                  <span className="text-[10px] font-extrabold uppercase tracking-widest bg-white/20 px-2 py-0.5 rounded-full">{slide.label}</span>
-                  <div className="w-7 h-7 rounded-xl bg-white/20 flex items-center justify-center">
-                    <Calendar className="w-3.5 h-3.5 text-white" />
-                  </div>
-                </div>
-                {/* Countdown block */}
-                <div className="relative z-10 text-center flex-1 flex flex-col justify-center">
-                  <div className="text-[11px] font-extrabold uppercase tracking-widest opacity-75 mb-1">Your Countdown</div>
-                  <div className="font-black leading-none tabular-nums drop-shadow-lg" style={{ fontSize: 62, transition: 'opacity 0.4s' }}>{slide.days}</div>
-                  <div className="text-[13px] font-black uppercase tracking-[0.2em] opacity-90 mt-1">Days Left</div>
-                  <div className="text-[10px] font-bold opacity-60 uppercase tracking-widest mt-0.5">To {slide.label} Day</div>
-                </div>
-                {/* Date pill */}
-                <div className="relative z-10 w-full bg-white/15 border border-white/25 rounded-xl px-3 py-2.5 flex items-center gap-2.5 mt-4">
-                  <div className="w-7 h-7 bg-white/20 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <Calendar className="w-3.5 h-3.5 text-white" />
-                  </div>
+          {/* ══ RIGHT PANEL — Countdown + Superadmin Ads ══ */}
+          <div
+            className="md:w-[260px] flex-shrink-0 relative overflow-hidden group select-none"
+            style={{ background: 'linear-gradient(160deg,#2563eb,#0ea5e9,#06b6d4)', minHeight: 220 }}
+          >
+            {/* Slide 0 — Days Left */}
+            <div
+              className="absolute inset-0 flex flex-col items-center justify-center text-white transition-opacity duration-500 p-6"
+              style={{ opacity: panelSlideIdx === 0 ? 1 : 0, pointerEvents: panelSlideIdx === 0 ? 'auto' : 'none' }}
+            >
+              <div className="absolute -top-6 -right-6 w-24 h-24 bg-white/10 rounded-full blur-2xl pointer-events-none" />
+              <div className="absolute bottom-8 -left-8 w-28 h-28 bg-white/10 rounded-full blur-2xl pointer-events-none" />
+              <div className="relative z-10 flex flex-col items-center text-center">
+                <div className="text-[10px] font-extrabold uppercase tracking-widest opacity-75 mb-1">Your Countdown</div>
+                <div className="font-black leading-none tabular-nums drop-shadow-lg" style={{ fontSize: 68 }}>150</div>
+                <div className="text-[13px] font-black uppercase tracking-[0.2em] opacity-90 mt-1">Days Left</div>
+                <div className="mt-2 w-10 h-0.5 bg-white/40 rounded-full" />
+                <div className="mt-1.5 text-[10px] opacity-70 tracking-wide font-medium uppercase">To Prelims Day</div>
+                <div className="mt-4 bg-white/15 border border-white/25 rounded-xl px-3 py-2 flex items-center gap-2 w-full">
+                  <Calendar className="w-3.5 h-3.5 text-white flex-shrink-0" />
                   <div>
-                    <div className="font-black text-white text-sm leading-tight">{slide.date}</div>
-                    <div className="text-[9px] text-white/65 font-semibold">{slide.label} Exam Date</div>
+                    <div className="font-black text-white text-xs leading-tight">5 Oct 2026</div>
+                    <div className="text-[9px] text-white/65 font-semibold">Prelims Exam Date</div>
                   </div>
-                </div>
-                {/* Dot indicators */}
-                <div className="relative z-10 flex items-center gap-1.5 mt-3">
-                  {examPhases.map((_, i) => (
-                    <button key={i} onClick={() => setCountdownSlide(i)}
-                      className="rounded-full transition-all duration-300"
-                      style={{ width: i === countdownSlide % examPhases.length ? 16 : 6, height: 6, background: i === countdownSlide % examPhases.length ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.35)' }} />
-                  ))}
                 </div>
               </div>
-            );
-          })()}
+            </div>
+
+            {/* Slides 1..n — Superadmin Ads */}
+            {panelAds.map((ad, idx) => (
+              <div
+                key={ad.id}
+                className="absolute inset-0 flex flex-col transition-opacity duration-500"
+                style={{
+                  opacity: panelSlideIdx === idx + 1 ? 1 : 0,
+                  pointerEvents: panelSlideIdx === idx + 1 ? 'auto' : 'none',
+                  background: ad.imageDataUrl ? undefined : (ad.bgColor || 'linear-gradient(135deg,#1e40af,#10b981)'),
+                }}
+              >
+                {ad.imageDataUrl && (
+                  <img src={ad.imageDataUrl} alt={ad.title || 'Ad'} className="absolute inset-0 w-full h-full object-cover" draggable={false} />
+                )}
+                {ad.title ? (
+                  <>
+                    {ad.imageDataUrl && <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/10 to-black/65" />}
+                    <div className="relative z-10 flex flex-col h-full">
+                      <div className="pt-3 px-3 shrink-0">
+                        <span className="text-[8px] font-bold uppercase tracking-widest text-white/70 bg-black/25 px-2 py-0.5 rounded-full">
+                          {ad.adType === 'exam' ? '🎯 Exam' : ad.adType === 'course' ? '📚 Course' : ad.adType === 'announcement' ? '📢 News' : '🔥 Offer'}
+                        </span>
+                      </div>
+                      <div className="flex-1 flex flex-col items-center justify-center text-center px-3 py-2 gap-1.5">
+                        <p className="font-black text-white text-sm leading-tight line-clamp-4" style={{ textShadow: '0 1px 4px rgba(0,0,0,0.5)' }}>{ad.title}</p>
+                        {ad.subtitle && <p className="text-white/80 text-[10px] leading-snug line-clamp-2">{ad.subtitle}</p>}
+                      </div>
+                      <div className="shrink-0 pb-8 px-3 flex justify-center">
+                        {ad.ctaText && (
+                          <button type="button" onClick={() => handlePanelAdClick(ad)}
+                            className="inline-flex items-center gap-1 bg-white text-slate-900 font-bold text-[10px] px-3 py-1.5 rounded-full shadow-md hover:scale-105 transition-transform">
+                            {ad.ctaText} <ExternalLink className="h-2.5 w-2.5" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  ad.ctaText && (
+                    <>
+                      <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-black/60 to-transparent z-10" />
+                      <div className="absolute bottom-7 left-0 right-0 z-20 flex justify-center">
+                        <button type="button" onClick={() => handlePanelAdClick(ad)}
+                          className="inline-flex items-center gap-1 bg-white text-slate-900 font-bold text-[10px] px-3 py-1.5 rounded-full shadow-md hover:scale-105 transition-transform">
+                          {ad.ctaText} <ExternalLink className="h-2.5 w-2.5" />
+                        </button>
+                      </div>
+                    </>
+                  )
+                )}
+              </div>
+            ))}
+
+            {/* Navigation — only when ads exist */}
+            {panelAds.length > 0 && (
+              <>
+                <button type="button" onClick={() => setPanelSlideIdx(p => (p - 1 + panelTotalSlides) % panelTotalSlides)}
+                  className="absolute left-1 top-1/2 -translate-y-1/2 w-6 h-6 bg-white/20 backdrop-blur-sm hover:bg-white/40 text-white rounded-full flex items-center justify-center z-20 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <ChevronLeft className="h-3 w-3" />
+                </button>
+                <button type="button" onClick={() => setPanelSlideIdx(p => (p + 1) % panelTotalSlides)}
+                  className="absolute right-1 top-1/2 -translate-y-1/2 w-6 h-6 bg-white/20 backdrop-blur-sm hover:bg-white/40 text-white rounded-full flex items-center justify-center z-20 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <ChevronRight className="h-3 w-3" />
+                </button>
+                <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-1 z-30">
+                  {Array.from({ length: panelTotalSlides }).map((_, i) => (
+                    <button type="button" key={i} onClick={() => setPanelSlideIdx(i)}
+                      className={`rounded-full transition-all duration-300 ${i === panelSlideIdx ? 'w-4 h-1.5 bg-white' : 'w-1.5 h-1.5 bg-white/40 hover:bg-white/70'}`} />
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
         </div>
       )}
 
@@ -671,20 +906,24 @@ const ExamDetail = () => {
           <div className="bg-gray-50 p-3 sm:p-4 border-b">
             {/* Gradient top stripe */}
             <div className={`h-0.5 w-full bg-gradient-to-r ${theme.gradientClass} mb-3 rounded-full opacity-60`} />
-            {/* Main Tabs */}
-            <div className="overflow-x-auto">
-              <TabsList className="grid w-full grid-cols-6 min-w-max lg:min-w-0">
-                {mainTabs.map((tab) => (
-                  <TabsTrigger
+            {/* Main Tabs — pill style matching dashboard */}
+            <div className="bg-white border border-slate-200 rounded-xl flex items-center gap-1 px-1 py-1 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+              {mainTabs.map((tab) => {
+                const isActive = activeTab === tab.value;
+                return (
+                  <button
                     key={tab.value}
-                    value={tab.value}
-                    className="whitespace-nowrap text-xs sm:text-sm"
-                    style={activeTab === tab.value ? { color: theme.borderColor, borderBottom: `2px solid ${theme.borderColor}` } : {}}
+                    onClick={() => setActiveTab(tab.value)}
+                    className={`flex-1 py-2.5 px-3 sm:px-4 rounded-lg transition-all text-xs sm:text-sm whitespace-nowrap text-center ${
+                      isActive
+                        ? 'bg-emerald-500 text-white shadow-sm shadow-emerald-200 font-semibold'
+                        : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50 font-medium'
+                    }`}
                   >
                     {tab.label}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
+                  </button>
+                );
+              })}
             </div>
 
             {/* Sub Tabs for Prelims and Mains */}

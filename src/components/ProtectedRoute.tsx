@@ -8,7 +8,17 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ allowedRoles }) => {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, isLoading } = useAuth();
+
+  // While auth is initialising (e.g. reading localStorage / verifying JWT),
+  // render nothing — prevents a flash-redirect to the landing page
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-100/80">
+        <div className="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   if (!isAuthenticated) {
     return <Navigate to="/" replace />;

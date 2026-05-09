@@ -17,6 +17,7 @@ interface User {
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
+  isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
   register: (name: string, email: string, password: string, role?: UserRole) => Promise<void>;
@@ -28,13 +29,17 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
   const { toast } = useToast();
 
   // Rehydrate user from stored JWT token on mount
   useEffect(() => {
     const token = localStorage.getItem('token');
-    if (!token) return;
+    if (!token) {
+      setIsLoading(false);
+      return;
+    }
     // Try to restore from cached user object first for instant render
     const cached = localStorage.getItem('user');
     if (cached) {
@@ -59,6 +64,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         setUser(null);
+      })
+      .finally(() => {
+        setIsLoading(false);
       });
   }, []);
 
@@ -157,7 +165,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated: !!user, login, logout, register }}>
+    <AuthContext.Provider value={{ user, isAuthenticated: !!user, isLoading, login, logout, register }}>
       {children}
     </AuthContext.Provider>
   );

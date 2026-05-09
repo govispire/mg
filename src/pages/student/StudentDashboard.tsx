@@ -377,9 +377,36 @@ const StudentDashboard = () => {
   };
 
   // Dynamic values from profile
-  const targetExamName = userProfile?.targetExam === 'others'
+  // ── Prefer exam selected via ExamDetail purchase over signup profile ──────
+  const [selectedExamOverride, setSelectedExamOverride] = React.useState<string | null>(() => {
+    try {
+      const raw = localStorage.getItem('student_selected_exam');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        return parsed.examName || null;
+      }
+    } catch { /* ignore */ }
+    return null;
+  });
+
+  React.useEffect(() => {
+    const handler = (e: StorageEvent) => {
+      if (e.key === 'student_selected_exam') {
+        try {
+          const parsed = e.newValue ? JSON.parse(e.newValue) : null;
+          setSelectedExamOverride(parsed?.examName || null);
+        } catch { /* ignore */ }
+      }
+    };
+    window.addEventListener('storage', handler);
+    return () => window.removeEventListener('storage', handler);
+  }, []);
+
+  const profileExamName = userProfile?.targetExam === 'others'
     ? userProfile?.customTargetExam || 'General'
     : userProfile?.targetExam?.toUpperCase().replace('-', ' ') || 'IBPS PO';
+
+  const targetExamName = selectedExamOverride || profileExamName;
 
   const examCategoryName = userProfile?.examCategory === 'others'
     ? userProfile?.customExamCategory || 'General'
@@ -585,8 +612,6 @@ const StudentDashboard = () => {
         <TargetExamCard
           targetExam={targetExamName}
           examCategory={examCategoryName}
-          userName={userProfile?.username || user?.name || 'Student'}
-          preparationStartDate={userProfile?.preparationStartDate || null}
           liveOverallPct={dashStats.avgScore}
         />
       </div>
