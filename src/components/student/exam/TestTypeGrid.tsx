@@ -120,7 +120,7 @@ export const TestTypeGrid: React.FC<TestTypeGridProps> = ({
         onClick={() => setActiveSubject(null)}
         className={`px-3 py-1 rounded-full text-xs font-medium border transition-all ${activeSubject === null
           ? 'bg-primary text-white border-primary shadow-sm'
-          : 'bg-white text-gray-600 border-gray-200 hover:border-primary hover:text-primary'
+          : 'bg-white text-gray-600 border-gray-300 bg-gray-100 text-gray-700 hover:border-primary hover:bg-primary/5 hover:text-primary'
           }`}
       >
         All
@@ -131,7 +131,7 @@ export const TestTypeGrid: React.FC<TestTypeGridProps> = ({
           onClick={() => setActiveSubject(s.id)}
           className={`px-3 py-1 rounded-full text-xs font-medium border transition-all ${activeSubject === s.id
             ? 'bg-primary text-white border-primary shadow-sm'
-            : 'bg-white text-gray-600 border-gray-200 hover:border-primary hover:text-primary'
+            : 'bg-white text-gray-600 border-gray-300 bg-gray-100 text-gray-700 hover:border-primary hover:bg-primary/5 hover:text-primary'
             }`}
         >
           {s.name}
@@ -286,7 +286,7 @@ export const TestTypeGrid: React.FC<TestTypeGridProps> = ({
                           size="sm"
                           variant="outline"
                           onClick={() => handleSolutionClick(test)}
-                          className="h-8 text-xs flex items-center gap-1 border-gray-200 hover:border-primary hover:text-primary"
+                          className="h-8 text-xs flex items-center gap-1 border-gray-300 bg-gray-100 text-gray-700 hover:border-primary hover:bg-primary/5 hover:text-primary"
                         >
                           <BookOpen className="h-3 w-3" />
                           Solution
@@ -295,7 +295,7 @@ export const TestTypeGrid: React.FC<TestTypeGridProps> = ({
                           size="sm"
                           variant="outline"
                           onClick={() => handleAnalysisClick(test)}
-                          className="h-8 text-xs flex items-center gap-1 border-gray-200 hover:border-primary hover:text-primary"
+                          className="h-8 text-xs flex items-center gap-1 border-gray-300 bg-gray-100 text-gray-700 hover:border-primary hover:bg-primary/5 hover:text-primary"
                         >
                           <BarChart3 className="h-3 w-3" />
                           Analysis
@@ -303,14 +303,15 @@ export const TestTypeGrid: React.FC<TestTypeGridProps> = ({
                         <Button
                           size="sm"
                           variant="outline"
-                          className="h-8 text-xs border-gray-200 hover:border-primary hover:text-primary"
+                          title="Reattempt"
+                          className="h-8 w-8 p-0 border-gray-300 bg-gray-100 text-gray-700 hover:border-primary hover:bg-primary/5 hover:text-primary flex-shrink-0"
                           onClick={() => {
                             const currentPath = window.location.pathname;
                             const url = `/student/test-window?category=${category}&examId=${examId}&testId=${test.testId}&returnUrl=${encodeURIComponent(currentPath)}`;
                             stopTimerAndLaunchTest({ url, testName: test.testName });
                           }}
                         >
-                          Reattempt
+                          <RotateCcw className="h-3 w-3" />
                         </Button>
                       </>
                     ) : (
@@ -339,38 +340,37 @@ export const TestTypeGrid: React.FC<TestTypeGridProps> = ({
                 {/* ── Action Buttons — mobile only (below stats) ── */}
                 <div className="sm:hidden pt-3 mt-1 border-t border-gray-100">
                   {effectiveCompleted ? (
-                    <div className="space-y-2">
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleSolutionClick(test)}
-                          className="flex-1 h-9 text-xs border-gray-200 hover:border-primary hover:text-primary shadow-sm"
-                        >
-                          <BookOpen className="h-3.5 w-3.5 mr-1" />
-                          Solution
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleAnalysisClick(test)}
-                          className="flex-1 h-9 text-xs border-gray-200 hover:border-primary hover:text-primary shadow-sm"
-                        >
-                          <BarChart3 className="h-3.5 w-3.5 mr-1" />
-                          Analysis
-                        </Button>
-                      </div>
+                    <div className="flex gap-2">
                       <Button
                         size="sm"
                         variant="outline"
-                        className="w-full h-9 text-xs border-gray-200 bg-gray-50/50 hover:bg-gray-100 text-gray-700 shadow-sm"
+                        onClick={() => handleSolutionClick(test)}
+                        className="flex-1 h-9 text-xs border-gray-300 bg-gray-100 text-gray-700 hover:border-primary hover:bg-primary/5 hover:text-primary shadow-sm"
+                      >
+                        <BookOpen className="h-3.5 w-3.5 mr-1" />
+                        Solution
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleAnalysisClick(test)}
+                        className="flex-1 h-9 text-xs border-gray-300 bg-gray-100 text-gray-700 hover:border-primary hover:bg-primary/5 hover:text-primary shadow-sm"
+                      >
+                        <BarChart3 className="h-3.5 w-3.5 mr-1" />
+                        Analysis
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        title="Reattempt"
+                        className="h-9 w-9 p-0 border-gray-300 bg-gray-100 text-gray-700 hover:border-primary hover:bg-primary/5 hover:text-primary flex-shrink-0 shadow-sm"
                         onClick={() => {
                           const currentPath = window.location.pathname;
                           const url = `/student/test-window?category=${category}&examId=${examId}&testId=${test.testId}&returnUrl=${encodeURIComponent(currentPath)}`;
                           stopTimerAndLaunchTest({ url, testName: test.testName });
                         }}
                       >
-                        Reattempt
+                        <RotateCcw className="h-3.5 w-3.5" />
                       </Button>
                     </div>
                   ) : (
@@ -462,10 +462,28 @@ export const TestTypeGrid: React.FC<TestTypeGridProps> = ({
           const isLocked = !isPurchased && idx >= 3;
           // When locked, treat the card as fresh regardless of stored status
           const effectiveStatus = isLocked ? 'not-attempted' : test.status;
+
+          // ── Result-based card tint ──────────────────────────────────────
+          const cutoff = Math.round(totalMarks * 0.5); // 50% cutoff threshold
+          const score  = test.score ?? 0;
+          const cutoffCleared = effectiveStatus === 'completed' && score >= cutoff;
+          const cutoffFailed  = effectiveStatus === 'completed' && score < cutoff;
+          const inProgress    = effectiveStatus === 'in-progress';
+
+          const cardBg    = cutoffCleared ? 'bg-green-50'
+                          : cutoffFailed  ? 'bg-red-50'
+                          : inProgress    ? 'bg-yellow-50'
+                          : 'bg-gray-50';
+          const cardBorder = cutoffCleared ? 'border-green-300'
+                           : cutoffFailed  ? 'border-red-300'
+                           : inProgress    ? 'border-yellow-300'
+                           : 'border-gray-300';
+          // ────────────────────────────────────────────────────────────────
+
           return (
             <Card
               key={test.testId}
-              className={`overflow-hidden transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 bg-white border border-gray-200 rounded-2xl ${isLocked ? 'opacity-75' : ''}`}
+              className={`overflow-hidden transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5 ${cardBg} border ${cardBorder} shadow-sm rounded-2xl ${isLocked ? 'opacity-75' : ''}`}
             >
               <div className="px-5 pt-5 pb-5 flex flex-col">
 
@@ -479,7 +497,6 @@ export const TestTypeGrid: React.FC<TestTypeGridProps> = ({
                   <div className="flex-1 min-w-0">
                     <h3 className="font-extrabold text-[18px] text-gray-900 leading-tight">
                       {test.testName}
-                      {isLocked && <Badge variant="secondary" className="text-[9px] px-1 ml-1 leading-none py-0.5 align-middle bg-gray-100 text-gray-400">Locked</Badge>}
                     </h3>
                     <p className="text-sm font-medium text-gray-500 mt-0.5">Full Length Mock Test</p>
                   </div>
@@ -548,14 +565,6 @@ export const TestTypeGrid: React.FC<TestTypeGridProps> = ({
                 <span className="text-[10px] font-medium text-gray-400 mt-1">Percentile</span>
               </div>
             </div>
-                    {
-            test.lastAttempted && (
-              <div className="flex items-center gap-1 text-[11px] text-gray-400 mt-1">
-                <Calendar className="h-3 w-3" />
-                {formatDate(test.lastAttempted)}
-              </div>
-            )
-          }
                   </div>
       ) : (
       <div className="grid grid-cols-3 mb-4">
@@ -574,67 +583,67 @@ export const TestTypeGrid: React.FC<TestTypeGridProps> = ({
       </div>
                 )}
 
-      {/* ── Action Buttons ── */}
+      {/* ── Action Buttons — always a single flex row ── */}
       {effectiveStatus === 'completed' ? (
-        <div className="space-y-2">
-          <div className="flex gap-2">
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => handleSolutionClick(test)}
-              className="flex-1 text-xs h-9 border-gray-200 hover:border-primary hover:text-primary font-semibold"
-            >
-              <BookOpen className="h-3.5 w-3.5 mr-1" /> Solution
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => handleAnalysisClick(test)}
-              className="flex-1 text-xs h-9 border-gray-200 hover:border-primary hover:text-primary font-semibold"
-            >
-              <BarChart3 className="h-3.5 w-3.5 mr-1" /> Analysis
-            </Button>
-          </div>
+        <div className="flex gap-2">
           <Button
             size="sm"
             variant="outline"
-            className="w-full text-xs h-9 border-gray-200 hover:bg-gray-50 font-semibold"
+            onClick={() => handleSolutionClick(test)}
+            className="flex-1 text-xs h-9 border-gray-300 bg-gray-100 text-gray-700 hover:border-primary hover:bg-primary/5 hover:text-primary font-semibold"
+          >
+            <BookOpen className="h-3.5 w-3.5 mr-1" /> Solution
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => handleAnalysisClick(test)}
+            className="flex-1 text-xs h-9 border-gray-300 bg-gray-100 text-gray-700 hover:border-primary hover:bg-primary/5 hover:text-primary font-semibold"
+          >
+            <BarChart3 className="h-3.5 w-3.5 mr-1" /> Analysis
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            title="Reattempt"
+            className="h-9 w-9 p-0 border-gray-300 bg-gray-100 text-gray-700 hover:border-primary hover:bg-primary/5 hover:text-primary flex-shrink-0"
             onClick={() => {
               const currentPath = window.location.pathname;
               const url = `/student/test-window?category=${category}&examId=${examId}&testId=${test.testId}&returnUrl=${encodeURIComponent(currentPath)}`;
               stopTimerAndLaunchTest({ url, testName: test.testName });
             }}
           >
-            <RotateCcw className="h-3.5 w-3.5 mr-1.5" /> Reattempt
+            <RotateCcw className="h-3.5 w-3.5" />
           </Button>
         </div>
       ) : (
-        <button
-          className={`w-full flex items-center justify-center gap-2.5 py-3.5 rounded-xl font-bold text-base transition-all active:scale-95 ${isLocked
-              ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-              : 'bg-primary hover:bg-primary/90 text-white shadow-md'
+        <div className="flex gap-2">
+          <button
+            className={`flex-1 h-9 flex items-center justify-center gap-1.5 rounded-lg font-semibold text-sm transition-all active:scale-95 ${
+              isLocked
+                ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                : 'bg-primary hover:bg-primary/90 text-white shadow-sm'
             }`}
-          onClick={() => {
-            if (isLocked) {
-              alert('This test is locked. Please purchase the full package to unlock.');
-              return;
-            }
-            const currentPath = window.location.pathname;
-            const url = `/student/test-window?category=${category}&examId=${examId}&testId=${test.testId}&returnUrl=${encodeURIComponent(currentPath)}`;
-            stopTimerAndLaunchTest({ url, testName: test.testName });
-          }}
-        >
-          {isLocked ? (
-            <><Lock className="h-4 w-4" /> Locked</>
-          ) : (
-            <>
-              <span className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">
+            onClick={() => {
+              if (isLocked) {
+                alert('This test is locked. Please purchase the full package to unlock.');
+                return;
+              }
+              const currentPath = window.location.pathname;
+              const url = `/student/test-window?category=${category}&examId=${examId}&testId=${test.testId}&returnUrl=${encodeURIComponent(currentPath)}`;
+              stopTimerAndLaunchTest({ url, testName: test.testName });
+            }}
+          >
+            {isLocked ? (
+              <><Lock className="h-3.5 w-3.5" /> Locked</>
+            ) : (
+              <>
                 <Play className="h-3.5 w-3.5 fill-white text-white" />
-              </span>
-              {test.status === 'in-progress' ? 'Continue' : 'Start Test'}
-            </>
-          )}
-        </button>
+                {test.status === 'in-progress' ? 'Continue' : 'Start Test'}
+              </>
+            )}
+          </button>
+        </div>
       )}
 
     </div>
@@ -679,3 +688,4 @@ export const TestTypeGrid: React.FC<TestTypeGridProps> = ({
     </div >
   );
 };
+

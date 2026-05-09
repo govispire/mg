@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import {
     Play, Lock, Calendar as CalendarIcon,
-    Bookmark, FileText, Clock, Users,
-    BarChart3, RotateCcw, BookOpen, Trophy
+    Bookmark, Clock, Users,
+    BarChart3, RotateCcw, BookOpen
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { ExtendedQuiz, QuizType } from '@/types/quizTypes';
+import { ExtendedQuiz } from '@/types/quizTypes';
 import QuizLeaderboardModal from './QuizLeaderboardModal';
 import { getQuizLeaderboard } from '@/services/quizLeaderboardService';
 
@@ -16,16 +16,16 @@ interface QuizCardProps {
     index?: number;
 }
 
-// Rotating accent colors for the top border / badge
+// Rotating accent colors for the top border / number badge
 const ACCENT_COLORS = [
-    { border: "#ef4444", light: "#fef2f2", text: "#dc2626" },  // red
-    { border: "#f97316", light: "#fff7ed", text: "#ea580c" },  // orange
-    { border: "#22c55e", light: "#f0fdf4", text: "#16a34a" },  // green
-    { border: "#06b6d4", light: "#ecfeff", text: "#0891b2" },  // cyan
-    { border: "#8b5cf6", light: "#f5f3ff", text: "#7c3aed" },  // purple
-    { border: "#f59e0b", light: "#fffbeb", text: "#d97706" },  // amber
-    { border: "#ec4899", light: "#fdf2f8", text: "#db2777" },  // pink
-    { border: "#10b981", light: "#ecfdf5", text: "#059669" },  // emerald
+    { border: "#ef4444", light: "#fef2f2", text: "#dc2626" },
+    { border: "#f97316", light: "#fff7ed", text: "#ea580c" },
+    { border: "#22c55e", light: "#f0fdf4", text: "#16a34a" },
+    { border: "#06b6d4", light: "#ecfeff", text: "#0891b2" },
+    { border: "#8b5cf6", light: "#f5f3ff", text: "#7c3aed" },
+    { border: "#f59e0b", light: "#fffbeb", text: "#d97706" },
+    { border: "#ec4899", light: "#fdf2f8", text: "#db2777" },
+    { border: "#10b981", light: "#ecfdf5", text: "#059669" },
 ];
 
 const QuizCard: React.FC<QuizCardProps> = ({ quiz, onStart, todayStr, index = 0 }) => {
@@ -50,34 +50,37 @@ const QuizCard: React.FC<QuizCardProps> = ({ quiz, onStart, todayStr, index = 0 
     const accent = ACCENT_COLORS[index % ACCENT_COLORS.length];
     const num = index + 1;
 
+    const quizTypeLabel =
+        quiz.type === 'full-prelims' || quiz.type === 'full-mains' ? 'Full Length Mock Test'
+        : quiz.type === 'sectional'       ? 'Sectional Test'
+        : quiz.type === 'speed-challenge' ? 'Speed Challenge'
+        : quiz.type === 'rapid-fire'      ? 'Rapid Fire Quiz'
+        : quiz.type === 'mini-test'       ? 'Mini Mock Test'
+        : 'Daily Quiz';
+
     return (
         <>
             <div
                 className={`
-                    bg-white
-                    rounded-xl shadow-sm
-                    hover:shadow-md hover:-translate-y-0.5
+                    bg-white rounded-2xl border border-gray-300 shadow-sm
+                    hover:shadow-lg hover:-translate-y-0.5
                     transition-all duration-200
                     flex flex-col overflow-hidden
-                    border border-gray-100
                     ${isDisabled ? 'opacity-70' : ''}
                 `}
                 style={{ borderTop: `3px solid ${accent.border}` }}
             >
                 {/* Card body */}
-                <div className="p-4 flex flex-col gap-3 flex-1">
+                <div className="px-5 pt-5 pb-4 flex flex-col gap-3 flex-1">
 
                     {/* Row 1: number badge + bookmark */}
-                    <div className="flex items-start justify-between">
-                        {/* Numbered badge */}
+                    <div className="flex items-center justify-between">
                         <span
-                            className="inline-flex items-center justify-center w-9 h-9 rounded-full text-sm font-extrabold shadow-sm flex-shrink-0"
+                            className="inline-flex items-center justify-center w-10 h-10 rounded-full text-base font-black shadow-sm flex-shrink-0"
                             style={{ background: accent.light, color: accent.text, border: `2px solid ${accent.border}` }}
                         >
                             {num}
                         </span>
-
-                        {/* Bookmark */}
                         <button
                             onClick={() => setBookmarked(b => !b)}
                             className="text-gray-300 hover:text-gray-500 transition-colors p-0.5"
@@ -90,104 +93,71 @@ const QuizCard: React.FC<QuizCardProps> = ({ quiz, onStart, todayStr, index = 0 
                         </button>
                     </div>
 
-                    {/* Title */}
+                    {/* Title + type */}
                     <div>
-                        <h3 className="font-bold text-[15px] text-gray-900 leading-snug line-clamp-1">
+                        <h3 className="font-extrabold text-[17px] text-gray-900 leading-tight line-clamp-1">
                             {quiz.title}
                         </h3>
-                        <p className="text-xs text-gray-400 mt-0.5 font-medium">
-                            {quiz.type === 'full-prelims' || quiz.type === 'full-mains'
-                                ? 'Full Length Mock Test'
-                                : quiz.type === 'sectional'
-                                    ? 'Sectional Test'
-                                    : quiz.type === 'speed-challenge'
-                                        ? 'Speed Challenge'
-                                        : quiz.type === 'rapid-fire'
-                                            ? 'Rapid Fire Quiz'
-                                            : quiz.type === 'mini-test'
-                                                ? 'Mini Mock Test'
-                                                : 'Daily Quiz'}
-                        </p>
+                        <p className="text-sm font-medium text-gray-500 mt-0.5">{quizTypeLabel}</p>
                     </div>
 
-                    {/* Students row */}
-                    <div className="flex items-center gap-1.5 text-[12px] text-gray-500">
-                        <Users className="h-3.5 w-3.5 text-gray-400 flex-shrink-0" />
+                    {/* Students count */}
+                    <div className="flex items-center justify-center gap-1.5 text-sm text-gray-500">
+                        <Users className="h-4 w-4 text-gray-400 flex-shrink-0" />
                         <span className="font-medium">{totalAttempts.toLocaleString()} Students</span>
                     </div>
 
                     {/* Divider */}
-                    <div className="border-t border-gray-100" />
+                    <hr className="border-gray-100" />
 
-                    {/* Stats grid: Questions / Marks / Min */}
+                    {/* Stats grid */}
                     {!isCompleted ? (
-                        <div className="grid grid-cols-3 gap-2 text-center">
-                            {[
-                                { val: quiz.questions, label: "Questions" },
-                                { val: totalMarks,     label: "Marks" },
-                                { val: quiz.duration,  label: "Min" },
-                            ].map(stat => (
-                                <div key={stat.label}>
-                                    <p className="text-lg font-extrabold text-gray-800 leading-tight">{stat.val}</p>
-                                    <p className="text-[10px] text-gray-400 font-medium mt-0.5">{stat.label}</p>
-                                </div>
-                            ))}
+                        <div className="grid grid-cols-3">
+                            <div className="flex flex-col items-center py-2">
+                                <span className="text-base font-black text-gray-900">{quiz.questions}</span>
+                                <span className="text-xs font-medium text-gray-400 mt-1">Questions</span>
+                            </div>
+                            <div className="flex flex-col items-center py-2 border-x border-gray-200">
+                                <span className="text-base font-black text-gray-900">{totalMarks}</span>
+                                <span className="text-xs font-medium text-gray-400 mt-1">Marks</span>
+                            </div>
+                            <div className="flex flex-col items-center py-2">
+                                <span className="text-base font-black text-gray-900">{quiz.duration}</span>
+                                <span className="text-xs font-medium text-gray-400 mt-1">Min</span>
+                            </div>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-3 gap-2 text-center">
-                            {[
-                                { val: `${yourMarks}/${totalMarks}`, label: "Score",   color: "#16a34a" },
-                                { val: `${timeSpent}m`,              label: "Time",    color: "#374151" },
-                                { val: `#${yourRank}`,               label: "Rank",    color: "#7c3aed" },
-                            ].map(stat => (
-                                <div key={stat.label}>
-                                    <p className="text-base font-extrabold leading-tight" style={{ color: stat.color }}>{stat.val}</p>
-                                    <p className="text-[10px] text-gray-400 font-medium mt-0.5">{stat.label}</p>
+                        <div className="grid grid-cols-3">
+                            <div className="flex flex-col items-center py-2">
+                                <div className="flex items-baseline gap-0.5 whitespace-nowrap">
+                                    <span className="text-base font-black text-gray-900">{yourMarks}</span>
+                                    <span className="text-[10px] font-medium text-gray-400">/{totalMarks}</span>
                                 </div>
-                            ))}
+                                <span className="text-[10px] font-medium text-gray-400 mt-1">Score</span>
+                            </div>
+                            <div className="flex flex-col items-center py-2 border-x border-gray-200">
+                                <div className="flex items-baseline gap-0.5 whitespace-nowrap">
+                                    <span className="text-base font-black text-gray-900">{yourRank}</span>
+                                    <span className="text-[10px] font-medium text-gray-400">/{totalAttempts > 0 ? totalAttempts : '—'}</span>
+                                </div>
+                                <span className="text-[10px] font-medium text-gray-400 mt-1">Rank</span>
+                            </div>
+                            <div className="flex flex-col items-center py-2">
+                                <span className="text-base font-black text-gray-900">{timeSpent}m</span>
+                                <span className="text-[10px] font-medium text-gray-400 mt-1">Time</span>
+                            </div>
                         </div>
                     )}
                 </div>
 
-                {/* CTA */}
-                <div className="px-4 pb-4">
-                    {!isCompleted ? (
-                        <button
-                            onClick={() => !isDisabled && onStart(quiz)}
-                            disabled={isDisabled}
-                            className={`
-                                w-full h-11 rounded-lg text-sm font-bold
-                                flex items-center justify-center gap-2
-                                transition-all duration-150
-                                ${isDisabled
-                                    ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                                    : 'text-white cursor-pointer shadow-sm hover:shadow-md active:scale-[0.98]'
-                                }
-                            `}
-                            style={!isDisabled ? {
-                                background: "linear-gradient(135deg, #16a34a 0%, #15803d 100%)"
-                            } : undefined}
-                        >
-                            {isLocked ? (
-                                <><Lock className="h-4 w-4" /> Locked</>
-                            ) : isFuture ? (
-                                <><CalendarIcon className="h-4 w-4" /> Coming Soon</>
-                            ) : (
-                                <>
-                                    {/* Play icon filled circle */}
-                                    <span className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
-                                        <Play className="h-3 w-3 fill-white text-white ml-0.5" />
-                                    </span>
-                                    Start Test
-                                </>
-                            )}
-                        </button>
-                    ) : (
-                        <div className="grid grid-cols-3 gap-2">
+                {/* ── CTA — always a single h-9 flex row ── */}
+                <div className="px-5 pb-5">
+                    {isCompleted ? (
+                        <div className="flex gap-2">
                             <Button
                                 variant="outline"
                                 size="sm"
-                                className="h-9 text-xs gap-1 border-gray-200 font-medium"
+                                className="flex-1 h-9 text-xs gap-1 border-gray-300 bg-gray-100 text-gray-700 hover:border-primary hover:bg-primary/5 hover:text-primary font-semibold"
                                 onClick={() =>
                                     window.open(
                                         `/student/exam-window?quizId=${quiz.id}&title=${encodeURIComponent(quiz.title)}&subject=${encodeURIComponent(quiz.subject)}&duration=${quiz.duration}&questions=${quiz.questions}&mode=solution`,
@@ -196,29 +166,52 @@ const QuizCard: React.FC<QuizCardProps> = ({ quiz, onStart, todayStr, index = 0 
                                     )
                                 }
                             >
-                                <BookOpen className="h-3 w-3" />
-                                Solution
+                                <BookOpen className="h-3.5 w-3.5" /> Solution
                             </Button>
-
                             <Button
                                 variant="outline"
                                 size="sm"
-                                className="h-9 text-xs gap-1 border-gray-200 font-medium"
+                                className="flex-1 h-9 text-xs gap-1 border-gray-300 bg-gray-100 text-gray-700 hover:border-primary hover:bg-primary/5 hover:text-primary font-semibold"
                                 onClick={() => setShowLeaderboard(true)}
                             >
-                                <BarChart3 className="h-3 w-3" />
-                                Analysis
+                                <BarChart3 className="h-3.5 w-3.5" /> Analysis
                             </Button>
-
                             <Button
                                 variant="outline"
                                 size="sm"
-                                className="h-9 flex items-center justify-center border-gray-200"
+                                title="Retry"
+                                className="h-9 w-9 p-0 border-gray-300 bg-gray-100 text-gray-700 hover:border-primary hover:bg-primary/5 hover:text-primary flex-shrink-0"
                                 onClick={() => onStart(quiz)}
-                                title="Retry Quiz"
                             >
                                 <RotateCcw className="h-3.5 w-3.5" />
                             </Button>
+                        </div>
+                    ) : (
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => !isDisabled && onStart(quiz)}
+                                disabled={isDisabled}
+                                className={`
+                                    flex-1 h-9 rounded-lg text-sm font-semibold
+                                    flex items-center justify-center gap-1.5
+                                    transition-all duration-150 active:scale-[0.98]
+                                    ${isDisabled
+                                        ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                                        : 'bg-primary hover:bg-primary/90 text-white shadow-sm'
+                                    }
+                                `}
+                            >
+                                {isLocked ? (
+                                    <><Lock className="h-3.5 w-3.5" /> Locked</>
+                                ) : isFuture ? (
+                                    <><CalendarIcon className="h-3.5 w-3.5" /> Coming Soon</>
+                                ) : (
+                                    <>
+                                        <Play className="h-3.5 w-3.5 fill-white text-white" />
+                                        Start Test
+                                    </>
+                                )}
+                            </button>
                         </div>
                     )}
                 </div>
