@@ -768,9 +768,9 @@ const StudentDashboard = () => {
                                   className="h-7 sm:h-8 px-2 sm:px-3 text-[10px] sm:text-[11px] font-semibold border-emerald-300 text-emerald-700 hover:bg-emerald-50"
                                   onClick={() => {
                                     window.open(
-                                      `/student/exam-window?quizId=${test.id}&title=${encodeURIComponent(test.title)}&subject=${encodeURIComponent(test.subject)}&duration=${test.duration}&questions=${test.questions}&mode=solution`,
+                                      `/student/solution-viewer?quizId=${test.id}&title=${encodeURIComponent(test.title)}&subject=${encodeURIComponent(test.subject || '')}&duration=${test.duration}&questions=${test.questions}`,
                                       '_blank',
-                                      'width=1920,height=1080,menubar=no,toolbar=no,location=no,status=no'
+                                      'width=1280,height=900,menubar=no,toolbar=no,location=no,status=no'
                                     );
                                   }}
                                 >

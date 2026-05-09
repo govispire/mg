@@ -216,9 +216,9 @@ const LiveTestCard = ({
               className="h-8 text-xs font-semibold gap-1.5"
               onClick={() => {
                 window.open(
-                  `/student/exam-window?testId=${test.id}&title=${encodeURIComponent(test.title)}&duration=${test.duration}&questions=${test.questions}&mode=solution`,
+                  `/student/solution-viewer?category=live&examId=live&testId=${test.id}&title=${encodeURIComponent(test.title)}&duration=${test.duration}&questions=${test.questions}`,
                   '_blank',
-                  'width=1920,height=1080,menubar=no,toolbar=no,location=no,status=no'
+                  'width=1280,height=900,menubar=no,toolbar=no,location=no,status=no'
                 );
               }}
             >
@@ -257,9 +257,9 @@ const LiveTestCard = ({
               className="h-8 text-xs font-semibold gap-1.5"
               onClick={() => {
                 window.open(
-                  `/student/exam-window?testId=${test.id}&title=${encodeURIComponent(test.title)}&duration=${test.duration}&questions=${test.questions}&mode=solution`,
+                  `/student/solution-viewer?category=live&examId=live&testId=${test.id}&title=${encodeURIComponent(test.title)}&duration=${test.duration}&questions=${test.questions}`,
                   '_blank',
-                  'width=1920,height=1080,menubar=no,toolbar=no,location=no,status=no'
+                  'width=1280,height=900,menubar=no,toolbar=no,location=no,status=no'
                 );
               }}
             >

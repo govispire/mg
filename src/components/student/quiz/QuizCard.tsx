@@ -160,9 +160,9 @@ const QuizCard: React.FC<QuizCardProps> = ({ quiz, onStart, todayStr, index = 0 
                                 className="flex-1 h-9 text-xs gap-1 border-gray-300 bg-gray-100 text-gray-700 hover:border-primary hover:bg-primary/5 hover:text-primary font-semibold"
                                 onClick={() =>
                                     window.open(
-                                        `/student/exam-window?quizId=${quiz.id}&title=${encodeURIComponent(quiz.title)}&subject=${encodeURIComponent(quiz.subject)}&duration=${quiz.duration}&questions=${quiz.questions}&mode=solution`,
+                                        `/student/solution-viewer?quizId=${quiz.id}&title=${encodeURIComponent(quiz.title)}&subject=${encodeURIComponent(quiz.subject)}&duration=${quiz.duration}&questions=${quiz.questions}`,
                                         '_blank',
-                                        'width=1920,height=1080,menubar=no,toolbar=no,location=no,status=no'
+                                        'width=1280,height=900,menubar=no,toolbar=no,location=no,status=no'
                                     )
                                 }
                             >

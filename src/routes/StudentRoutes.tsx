@@ -35,6 +35,7 @@ import ExamWindow from '@/pages/student/ExamWindow';
 import AllExams from '@/pages/student/AllExams';
 import StudentVocabulary from '@/pages/student/StudentVocabulary';
 
+import SolutionViewer from '@/pages/student/SolutionViewer';
 import TestWindow from '@/pages/student/TestWindow';
 import LiveTests from '@/pages/student/LiveTests';
 
@@ -58,6 +59,7 @@ const StudentRoutes = () => {
       {/* Exam windows - outside ProtectedRoute for new window compatibility */}
       <Route path="/exam-window" element={<ExamWindow />} />
       <Route path="/test-window" element={<TestWindow />} />
+      <Route path="/solution-viewer" element={<SolutionViewer />} />
 
       <Route element={<ProtectedRoute allowedRoles={['student']} />}>
         {/* Standalone pages */}

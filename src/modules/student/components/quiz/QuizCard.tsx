@@ -170,9 +170,9 @@ const QuizCard: React.FC<QuizCardProps> = ({ quiz, onStart, todayStr }) => {
                                     onClick={() => {
                                         // Launch quiz in solution mode
                                         window.open(
-                                            `/student/exam-window?quizId=${quiz.id}&title=${encodeURIComponent(quiz.title)}&subject=${encodeURIComponent(quiz.subject)}&duration=${quiz.duration}&questions=${quiz.questions}&mode=solution`,
+                                            `/student/solution-viewer?quizId=${quiz.id}&title=${encodeURIComponent(quiz.title)}&subject=${encodeURIComponent(quiz.subject)}&duration=${quiz.duration}&questions=${quiz.questions}`,
                                             '_blank',
-                                            'width=1920,height=1080,menubar=no,toolbar=no,location=no,status=no'
+                                            'width=1280,height=900,menubar=no,toolbar=no,location=no,status=no'
                                         );
                                     }}
                                 >

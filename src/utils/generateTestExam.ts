@@ -29,8 +29,10 @@ const RC_SET: QuestionSet = {
     questionIds: ['english-q1', 'english-q2', 'english-q3', 'english-q4', 'english-q5'],
 };
 
+import { courses, subjects as courseSubjects } from '@/data/courseData';
+
 export function generateTestExam(category: string, examId: string, testId: string): ExamConfig {
-    // ── REASONING: Q1-Q10 defined, Q11-Q35 auto-generated ──
+    // ── REASONING ──
     const reasoningQuestions: ExamQuestion[] = [
         { id: 'reasoning-q1', sectionId: 'reasoning', sectionName: 'Reasoning Ability', questionNumber: 1, type: 'mcq', setId: 'puzzle-set-1', set: PUZZLE_SET, topic: 'Seating Arrangement', difficulty: 'Medium', question: 'What is the position of A with respect to H?', options: [{ id: 'rq1-a', text: 'Third to the left' }, { id: 'rq1-b', text: 'Second to the right' }, { id: 'rq1-c', text: 'Immediate left' }, { id: 'rq1-d', text: 'Third to the right' }, { id: 'rq1-e', text: 'Cannot be determined' }], correctAnswer: 'rq1-a', marks: 1, negativeMarks: 0.25 },
         { id: 'reasoning-q2', sectionId: 'reasoning', sectionName: 'Reasoning Ability', questionNumber: 2, type: 'mcq', setId: 'puzzle-set-1', set: PUZZLE_SET, topic: 'Seating Arrangement', difficulty: 'Medium', question: 'Which colour does G like?', options: [{ id: 'rq2-a', text: 'Red' }, { id: 'rq2-b', text: 'Brown' }, { id: 'rq2-c', text: 'Orange' }, { id: 'rq2-d', text: 'Blue' }, { id: 'rq2-e', text: 'None of these' }], correctAnswer: 'rq2-c', marks: 1, negativeMarks: 0.25 },
@@ -128,16 +130,50 @@ export function generateTestExam(category: string, examId: string, testId: strin
         });
     });
 
+    const precomputedSections: Record<string, ExamQuestion[]> = {
+        reasoning: reasoningQuestions,
+        quantitative: quantitativeQuestions,
+        english: englishQuestions
+    };
+
+    const course = courses.find(c => c.id === examId);
+    let courseSubjectsList = course ? course.subjects : ['reasoning', 'quantitative', 'english'];
+    
+    const generatedSections = courseSubjectsList.map(subKey => {
+        const subjectDef = courseSubjects[subKey] || { id: subKey, name: subKey.charAt(0).toUpperCase() + subKey.slice(1).replace('-', ' ') };
+        let questions = precomputedSections[subKey];
+        if (!questions) {
+            // Generate mock questions for missing subjects
+            questions = [];
+            for (let i = 0; i < 35; i++) {
+                const opts = ['Option A', 'Option B', 'Option C', 'Option D'].map((t, idx) => ({ id: `${subKey}ext${i}-${idx}`, text: t }));
+                questions.push({
+                    id: `${subKey}-q${i + 1}`, sectionId: subKey, sectionName: subjectDef.name,
+                    questionNumber: i + 1, type: 'mcq', topic: 'General Topic', difficulty: 'Medium' as const,
+                    question: `${subjectDef.name} question ${i + 1}`, options: opts,
+                    correctAnswer: opts[0].id, marks: 1, negativeMarks: 0.25,
+                });
+            }
+        } else {
+            // make sure sectionId matches exactly for filtering
+            questions = questions.map(q => ({ ...q, sectionId: subKey, sectionName: subjectDef.name }));
+        }
+        
+        return {
+            id: subKey,
+            name: subjectDef.name,
+            questionsCount: questions.length,
+            duration: 20,
+            questions
+        };
+    });
+
     return {
         id: testId,
         title: `${category?.toUpperCase()} - ${examId?.toUpperCase()} Mock Test`,
         totalDuration: 60,
         languages: ['English', 'Hindi'],
         instructions: [],
-        sections: [
-            { id: 'reasoning', name: 'Reasoning Ability', questionsCount: 35, duration: 20, questions: reasoningQuestions },
-            { id: 'quantitative', name: 'Quantitative Aptitude', questionsCount: 35, duration: 20, questions: quantitativeQuestions },
-            { id: 'english', name: 'English Language', questionsCount: 30, duration: 20, questions: englishQuestions },
-        ],
+        sections: generatedSections,
     };
 }

@@ -8,7 +8,7 @@ import { Clock, CheckCircle, Play, PlayCircle, RotateCcw, Trophy, Calendar, BarC
 import { TestProgress } from '@/hooks/useExamProgress';
 import { Link, useParams } from 'react-router-dom';
 import { TestAnalysisModal } from './TestAnalysisModal';
-import { TestSolutions } from './TestSolutions';
+
 import { generateMockAnalysisData } from '@/data/testAnalysisData';
 import { generateTestExam } from '@/utils/generateTestExam';
 import { stopTimerAndLaunchTest } from '@/utils/stopTimerAndLaunchTest';
@@ -58,8 +58,11 @@ export const TestTypeGrid: React.FC<TestTypeGridProps> = ({
   };
 
   const handleSolutionClick = (test: TestProgress) => {
-    setSelectedTestForSolutions(test);
-    setShowSolutionsModal(true);
+    window.open(
+      `/student/solution-viewer?category=${category || ''}&examId=${examId || ''}&testId=${test.testId}&title=${encodeURIComponent(test.testName)}&duration=${test.totalDuration ?? 60}&questions=${test.totalQuestions ?? test.maxScore}`,
+      '_blank',
+      'width=1280,height=900,menubar=no,toolbar=no,location=no,status=no'
+    );
   };
 
   const getStatusIcon = (status: TestProgress['status'], isLocked?: boolean) => {
@@ -400,23 +403,7 @@ export const TestTypeGrid: React.FC<TestTypeGridProps> = ({
         </div>
 
 
-        {/* Solutions Modal */}
-        {selectedTestForSolutions && (() => {
-          const examConfig = generateTestExam(category || '', examId || '', selectedTestForSolutions.testId);
-          let storedResponses: Record<string, string | string[] | null> = {};
-          try {
-            const raw = localStorage.getItem(`exam-responses-${selectedTestForSolutions.testId}`);
-            if (raw) storedResponses = JSON.parse(raw);
-          } catch { /* ignore */ }
-          return (
-            <TestSolutions
-              isOpen={showSolutionsModal}
-              onClose={() => { setShowSolutionsModal(false); setSelectedTestForSolutions(null); }}
-              examConfig={examConfig}
-              responses={storedResponses}
-            />
-          );
-        })()}
+
 
         {/* Analysis Modal */}
         {selectedTestForAnalysis && (
@@ -652,25 +639,7 @@ export const TestTypeGrid: React.FC<TestTypeGridProps> = ({
         })}
       </div >
 
-  {/* Solutions Modal */ }
-{
-  selectedTestForSolutions && (() => {
-    const examConfig = generateTestExam(category || '', examId || '', selectedTestForSolutions.testId);
-    let storedResponses: Record<string, string | string[] | null> = {};
-    try {
-      const raw = localStorage.getItem(`exam-responses-${selectedTestForSolutions.testId}`);
-      if (raw) storedResponses = JSON.parse(raw);
-    } catch { /* ignore */ }
-    return (
-      <TestSolutions
-        isOpen={showSolutionsModal}
-        onClose={() => { setShowSolutionsModal(false); setSelectedTestForSolutions(null); }}
-        examConfig={examConfig}
-        responses={storedResponses}
-      />
-    );
-  })()
-}
+
 
 {/* Analysis Modal */ }
 {

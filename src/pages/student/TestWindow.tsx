@@ -9,8 +9,7 @@ import { generateAnalysisFromExam } from '@/utils/examAnalysis';
 import { generateTestExam } from '@/utils/generateTestExam';
 import { storeTestResult } from '@/utils/testWindowMonitor';
 import { toast } from 'sonner';
-
-
+import { getQuestionsForQuiz } from '@/data/quizQuestionsData';
 
 const TestWindow = () => {
     const [searchParams] = useSearchParams();
@@ -20,13 +19,52 @@ const TestWindow = () => {
     const [analysisData, setAnalysisData] = useState<any>(null);
 
     // Get test data from URL parameters
-    const category = searchParams.get('category') || 'general';
-    const examId = searchParams.get('examId') || 'test';
-    const testId = searchParams.get('testId') || `test-${Date.now()}`;
+    const category = searchParams.get('category');
+    const examId = searchParams.get('examId');
+    const testId = searchParams.get('testId') || searchParams.get('quizId') || `test-${Date.now()}`;
     const returnUrl = searchParams.get('returnUrl') || '/student/dashboard'; // Default to dashboard
 
+    const title = searchParams.get('title') || 'Mock Test';
+    const subject = searchParams.get('subject') || 'General';
+    const duration = parseInt(searchParams.get('duration') || '60', 10);
+    const questionCount = parseInt(searchParams.get('questions') || '30', 10);
+
     // Generate exam configuration
-    const examConfig = generateTestExam(category, examId, testId);
+    let examConfig: ExamConfig;
+    if (category && examId) {
+        examConfig = generateTestExam(category, examId, testId);
+    } else {
+        // Fallback for daily free quizzes or generic single-subject tests
+        const questions = getQuestionsForQuiz(subject, questionCount, testId);
+        
+        examConfig = {
+            id: testId,
+            title: title,
+            totalDuration: duration,
+            languages: ['English', 'Hindi'],
+            instructions: [],
+            sections: [{
+                id: 'main-section',
+                name: subject,
+                questionsCount: questions.length,
+                duration: duration,
+                questions: questions.map((q, idx) => ({
+                    id: q.id,
+                    sectionId: 'main-section',
+                    sectionName: subject,
+                    questionNumber: idx + 1,
+                    type: 'mcq' as const,
+                    topic: q.topic || 'General Topic',
+                    difficulty: 'Medium' as const,
+                    question: q.text,
+                    options: q.options.map((opt, oIdx) => ({ id: `opt-${oIdx}`, text: opt })),
+                    correctAnswer: `opt-${q.correctAnswer}`,
+                    marks: 1,
+                    negativeMarks: 0.25,
+                }))
+            }]
+        };
+    }
 
     // Enter fullscreen on mount
     useEffect(() => {

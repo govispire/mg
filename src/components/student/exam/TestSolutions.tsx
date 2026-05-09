@@ -1,4 +1,4 @@
-﻿/**
+/**
  * TestSolutions — Solution review page after mock test submission.
  *
  * Mirrors ExamInterface exactly:
@@ -22,8 +22,7 @@ import { Badge } from '@/components/ui/badge';
 import {
     CheckCircle, XCircle, Circle, ChevronLeft, ChevronRight, X,
     Bookmark, BookmarkCheck, BookOpen, Flag, MessageSquare, Zap,
-    AlertTriangle, Clock, Users, BarChart2, Target, TrendingUp,
-    Award, Percent, RotateCcw, Brain, Calculator
+    Clock, Brain, RotateCcw
 } from 'lucide-react';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -576,7 +575,6 @@ export const TestSolutions: React.FC<TestSolutionsProps> = ({
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [currentSectionIndex, setCurrentSectionIndex] = useState(0);
     const [isPaletteCollapsed, setIsPaletteCollapsed] = useState(false);
-    const [showSummary, setShowSummary] = useState(false);
     const [paletteFilter, setPaletteFilter] = useState<'all' | 'correct' | 'incorrect' | 'not-attempted'>('all');
     const [bookmarked, setBookmarked] = useState<Set<string>>(new Set());
     const [mistakeNotebook, setMistakeNotebook] = useState<Set<string>>(new Set());
@@ -656,14 +654,12 @@ export const TestSolutions: React.FC<TestSolutionsProps> = ({
         const q = allQuestions[index];
         const si = examConfig.sections.findIndex(s => s.id === q.sectionId);
         if (si !== -1) setCurrentSectionIndex(si);
-        setShowSummary(false);
     };
 
     const navigateToSection = (index: number) => {
         setCurrentSectionIndex(index);
         const firstQ = allQuestions.findIndex(q => q.sectionId === examConfig.sections[index].id);
         if (firstQ !== -1) setCurrentQuestionIndex(firstQ);
-        setShowSummary(false);
     };
 
     const toggleSet = (set: Set<string>, id: string) => {
@@ -681,9 +677,9 @@ export const TestSolutions: React.FC<TestSolutionsProps> = ({
     const isSet = !!(currentQuestion.setId || currentQuestion.set);
 
     return (
-        <div className="fixed inset-0 bg-white z-50 flex flex-col">
+        <div className="flex flex-col h-screen bg-white overflow-hidden">
 
-            {/* ── HEADER — exact match to ExamInterface ── */}
+            {/* ── HEADER ── */}
             <div className="bg-[#4a4a4a] text-white px-4 py-2.5 flex items-center border-b border-gray-600 flex-shrink-0">
                 {/* Left — logo */}
                 <div className="flex items-center gap-2 w-1/4">
@@ -693,135 +689,35 @@ export const TestSolutions: React.FC<TestSolutionsProps> = ({
                 {/* Centre — title */}
                 <div className="flex-1 text-center">
                     <h1 className="text-base font-bold leading-tight">Solutions — {examConfig.title}</h1>
-                    <div className="text-[10px] text-gray-400">{currentSection?.name}</div>
+                    <div className="text-[10px] text-gray-400">{currentSection?.name} · Review Mode</div>
                 </div>
-                {/* Right — summary toggle + close */}
+                {/* Right — close */}
                 <div className="w-1/4 flex justify-end items-center gap-2">
-                    <Button
-                        variant="ghost" size="sm"
-                        onClick={() => setShowSummary(v => !v)}
-                        className={`text-xs px-3 h-7 border rounded ${showSummary ? 'bg-blue-600 text-white border-blue-500 hover:bg-blue-700' : 'text-gray-200 border-gray-500 hover:bg-gray-700'}`}
-                    >
-                        <BarChart2 className="h-3.5 w-3.5 mr-1.5" />
-                        {showSummary ? 'Back to Questions' : 'Summary'}
-                    </Button>
                     <Button variant="ghost" size="sm" className="text-white hover:bg-gray-700 h-7 px-2" onClick={onClose}>
                         <X className="h-4 w-4 mr-1" /><span className="text-xs">Close</span>
                     </Button>
                 </div>
             </div>
 
-            {/* ── SECTION NAVIGATOR — identical to ExamInterface ── */}
+            {/* ── SECTION NAVIGATOR — all sections freely accessible in review ── */}
             <SectionNavigator
                 sections={examConfig.sections}
                 currentSectionIndex={currentSectionIndex}
                 onSectionChange={navigateToSection}
                 sectionStats={sectionStats}
+                sectionLockEnabled={false}
             />
 
-            {/* ── SECTIONS info strip — mirrors ExamInterface "Sections / Time Left" row ── */}
+            {/* Info strip */}
             <div className="bg-gray-100 border-b border-gray-300 px-4 py-1.5 flex items-center justify-between text-sm flex-shrink-0">
-                <span className="text-gray-600 font-medium">Sections</span>
+                <span className="text-gray-600 font-medium">All Sections Unlocked · Review Mode</span>
                 <span className="text-gray-700 font-semibold text-xs flex items-center gap-2">
-                    📖 Review Mode &nbsp;·&nbsp; Q {currentQuestionIndex + 1} / {allQuestions.length}
+                    Q {currentQuestionIndex + 1} / {allQuestions.length}
                 </span>
             </div>
 
             {/* ── MAIN AREA ── */}
-            {showSummary ? (
-                /* ── SUMMARY VIEW ── */
-                <div className="flex-1 overflow-y-auto bg-gray-50 p-5">
-                    <div className="max-w-4xl mx-auto space-y-5">
-                        {/* Score cards */}
-                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                            {[
-                                { label: 'Score', value: `${analytics.totalScore.toFixed(1)} / ${analytics.maxScore}`, color: 'from-blue-500 to-blue-600', icon: TrendingUp },
-                                { label: 'Accuracy', value: `${analytics.accuracy}%`, color: 'from-green-500 to-green-600', icon: Target },
-                                { label: 'Rank', value: `${analytics.rank} / 2400`, color: 'from-purple-500 to-purple-600', icon: Award },
-                                { label: 'Percentile', value: `${analytics.percentile}%`, color: 'from-orange-500 to-orange-600', icon: Percent },
-                            ].map(stat => (
-                                <div key={stat.label} className={`rounded-xl bg-gradient-to-br ${stat.color} p-4 text-white shadow-sm`}>
-                                    <div className="flex items-center justify-between mb-1">
-                                        <span className="text-[10px] font-semibold opacity-80 uppercase tracking-wide">{stat.label}</span>
-                                        <stat.icon className="h-4 w-4 opacity-70" />
-                                    </div>
-                                    <div className="text-2xl font-bold">{stat.value}</div>
-                                </div>
-                            ))}
-                        </div>
 
-                        {/* Q breakdown */}
-                        <div className="bg-white rounded-xl border p-5 shadow-sm">
-                            <h3 className="font-bold text-gray-800 mb-4 text-sm flex items-center gap-2"><BarChart2 className="h-4 w-4 text-blue-500" />Question Breakdown</h3>
-                            <div className="grid grid-cols-3 gap-4">
-                                {[
-                                    { n: analytics.correct, label: 'Correct', cls: 'bg-green-50 border-green-100 text-green-600' },
-                                    { n: analytics.wrong, label: 'Wrong', cls: 'bg-red-50 border-red-100 text-red-600' },
-                                    { n: analytics.notAttempted, label: 'Skipped', cls: 'bg-gray-50 border-gray-200 text-gray-500' },
-                                ].map(c => (
-                                    <div key={c.label} className={`text-center p-4 rounded-xl border ${c.cls}`}>
-                                        <div className="text-3xl font-bold">{c.n}</div>
-                                        <div className="text-xs font-semibold mt-1">{c.label}</div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* Section-wise */}
-                        <div className="bg-white rounded-xl border p-5 shadow-sm">
-                            <h3 className="font-bold text-gray-800 mb-4 text-sm flex items-center gap-2"><BarChart2 className="h-4 w-4 text-indigo-500" />Section-wise Analysis</h3>
-                            <div className="space-y-3">
-                                {sectionPerf.map(s => (
-                                    <div key={s.name}>
-                                        <div className="flex justify-between items-center mb-1">
-                                            <span className="text-sm font-semibold text-gray-700">{s.name}</span>
-                                            <div className="flex items-center gap-3 text-xs text-gray-500">
-                                                <span className="flex items-center gap-1"><Clock className="h-3 w-3" />Avg {s.avgTime}s</span>
-                                                <span className={`font-bold ${s.acc >= 60 ? 'text-green-600' : 'text-red-600'}`}>{s.acc}%</span>
-                                            </div>
-                                        </div>
-                                        <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                                            <div className={`h-full rounded-full ${s.acc >= 70 ? 'bg-green-500' : s.acc >= 50 ? 'bg-yellow-500' : 'bg-red-500'}`} style={{ width: `${s.acc}%` }} />
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* Strength / Weakness */}
-                        <div className="grid sm:grid-cols-2 gap-4">
-                            {[
-                                { title: 'Strong Areas', data: sectionPerf.filter(s => s.acc >= 60), color: 'text-green-700', icon: <CheckCircle className="h-4 w-4" />, dot: 'bg-green-500' },
-                                { title: 'Weak Areas', data: sectionPerf.filter(s => s.acc < 60), color: 'text-red-600', icon: <AlertTriangle className="h-4 w-4" />, dot: 'bg-red-500' },
-                            ].map(g => (
-                                <div key={g.title} className="bg-white rounded-xl border p-5 shadow-sm">
-                                    <h3 className={`font-bold mb-3 text-sm flex items-center gap-2 ${g.color}`}>{g.icon}{g.title}</h3>
-                                    {g.data.length > 0
-                                        ? <ul className="space-y-2">{g.data.map(s => (
-                                            <li key={s.name} className="flex items-center justify-between text-sm">
-                                                <span className="flex items-center gap-2 text-gray-700"><span className={`w-2 h-2 rounded-full ${g.dot} inline-block`} />{s.name}</span>
-                                                <span className={`font-bold text-xs ${g.color}`}>{s.acc}%</span>
-                                            </li>
-                                        ))}</ul>
-                                        : <p className="text-xs text-gray-400 italic">None</p>
-                                    }
-                                </div>
-                            ))}
-                        </div>
-
-                        {/* Quick actions */}
-                        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-xl p-4 flex flex-wrap gap-2">
-                            <Button size="sm" className="text-xs bg-blue-600 hover:bg-blue-700" onClick={() => navigateToQuestion(0)}>
-                                <BookOpen className="h-3.5 w-3.5 mr-1.5" /> Review All Questions
-                            </Button>
-                            <Button size="sm" variant="outline" className="text-xs border-red-200 text-red-600 hover:bg-red-50" onClick={goToFirstIncorrect}>
-                                <RotateCcw className="h-3.5 w-3.5 mr-1.5" /> Reattempt Incorrect
-                            </Button>
-                        </div>
-                    </div>
-                </div>
-            ) : (
-                /* ── QUESTION REVIEW — same split layout as ExamInterface ── */
                 <div className="flex flex-1 overflow-hidden">
 
                     {/* Question area */}
@@ -971,36 +867,26 @@ export const TestSolutions: React.FC<TestSolutionsProps> = ({
                         )}
                     </div>
                 </div>
-            )}
 
-            {/* ── BOTTOM NAV BAR — mirrors ExamInterface action buttons row ── */}
+            {/* ── BOTTOM NAV BAR ── */}
             <div className="bg-white border-t border-gray-300 px-4 py-2.5 flex items-center justify-between flex-shrink-0">
                 <Button
                     variant="outline" size="sm"
                     onClick={() => currentQuestionIndex > 0 && navigateToQuestion(currentQuestionIndex - 1)}
-                    disabled={currentQuestionIndex === 0 || showSummary}
+                    disabled={currentQuestionIndex === 0}
                     className="flex items-center gap-1.5 text-xs h-8"
                 >
                     <ChevronLeft className="h-4 w-4" /> Previous
                 </Button>
 
-                <div className="flex items-center gap-3">
-                    {!showSummary && (
-                        <button onClick={goToFirstIncorrect} className="text-xs px-3 py-1.5 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 flex items-center gap-1.5 transition-all h-8">
-                            <RotateCcw className="h-3 w-3" /> Reattempt Incorrect
-                        </button>
-                    )}
-                    {showSummary && (
-                        <span className="text-xs font-semibold text-blue-600 flex items-center gap-1.5">
-                            <BarChart2 className="h-3.5 w-3.5" /> Test Summary
-                        </span>
-                    )}
-                </div>
+                <button onClick={goToFirstIncorrect} className="text-xs px-3 py-1.5 rounded-lg border border-red-200 text-red-600 hover:bg-red-50 flex items-center gap-1.5 transition-all h-8">
+                    <RotateCcw className="h-3 w-3" /> Jump to First Incorrect
+                </button>
 
                 <Button
                     size="sm"
                     onClick={() => currentQuestionIndex < allQuestions.length - 1 && navigateToQuestion(currentQuestionIndex + 1)}
-                    disabled={currentQuestionIndex === allQuestions.length - 1 || showSummary}
+                    disabled={currentQuestionIndex === allQuestions.length - 1}
                     className="flex items-center gap-1.5 text-xs h-8 bg-[#1976d2] hover:bg-[#1565c0] text-white"
                 >
                     Next <ChevronRight className="h-4 w-4" />
