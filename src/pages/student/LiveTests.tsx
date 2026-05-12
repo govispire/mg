@@ -6,7 +6,8 @@ import { Badge } from '@/components/ui/badge';
 import {
   Radio, Clock, FileText, Users, ArrowLeft,
   CheckCircle, Timer, BarChart2, Target,
-  Award, TrendingUp, Calendar, Play
+  Award, TrendingUp, Calendar, Play,
+  LayoutGrid, List, Eye
 } from 'lucide-react';
 import { toast } from 'sonner';
 import LiveTestLeaderboardModal from '@/components/student/quiz/LiveTestLeaderboardModal';
@@ -27,68 +28,77 @@ interface LiveTest {
   status: TestStatus;
 }
 
+const now = new Date();
+const getRelDate = (daysOffset: number, hours: number = 9) => {
+  const d = new Date(now);
+  d.setDate(d.getDate() + daysOffset);
+  d.setHours(hours, 0, 0, 0);
+  return d;
+};
+const formatDate = (d: Date) => d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+
 const baseTests: LiveTest[] = [
   {
     id: 1, title: 'Target Bank PO Exams - Prelims (Skill Supremacy): Mini Live Test',
     questions: 30, duration: 20, marks: 30,
-    startDate: '13 Mar, 9:00', endDate: '15 Mar, 21:00',
-    examDateTime: new Date(2026, 2, 13, 9, 0, 0),
+    startDate: `${formatDate(getRelDate(1))} 9:00`, endDate: `${formatDate(getRelDate(3))} 21:00`,
+    examDateTime: getRelDate(1, 9),
     languages: ['English', 'Hindi'], status: 'registered',
   },
   {
     id: 2, title: 'LIC Assistant Prelims - (Learning Lab): Mini Live Test',
     questions: 30, duration: 20, marks: 30,
-    startDate: '14 Mar, 9:00', endDate: '16 Mar, 21:00',
-    examDateTime: new Date(2026, 2, 14, 9, 0, 0),
+    startDate: `${formatDate(getRelDate(2))} 9:00`, endDate: `${formatDate(getRelDate(4))} 21:00`,
+    examDateTime: getRelDate(2, 9),
     languages: ['English', 'Hindi'], status: 'register',
   },
   {
     id: 3, title: 'RBI Assistant Prelims - (Power Push): Mini Live Test',
     questions: 30, duration: 20, marks: 30,
-    startDate: '13 Mar, 9:00', endDate: '15 Mar, 21:00',
-    examDateTime: new Date(2026, 2, 13, 9, 0, 0),
+    startDate: `${formatDate(getRelDate(1))} 9:00`, endDate: `${formatDate(getRelDate(3))} 21:00`,
+    examDateTime: getRelDate(1, 9),
     languages: ['English', 'Hindi'], status: 'registered',
   },
   {
     id: 4, title: 'RBI Assistant (Current Affairs Special): Mini Live Test',
     questions: 20, duration: 8, marks: 20,
-    startDate: '12 Mar, 9:00', endDate: '14 Mar, 21:00',
-    examDateTime: new Date(2026, 2, 12, 9, 0, 0),
+    startDate: `${formatDate(getRelDate(0))} 9:00`, endDate: `${formatDate(getRelDate(2))} 21:00`,
+    examDateTime: getRelDate(0, 9),
     languages: ['English', 'Hindi'], status: 'start',
   },
   {
     id: 5, title: 'SBI PO Prelims - (Learning League): Mini Live Test',
     questions: 30, duration: 19, marks: 30,
-    startDate: '11 Mar, 9:00', endDate: '13 Mar, 21:00',
-    examDateTime: new Date(2026, 2, 11, 9, 0, 0),
+    startDate: `${formatDate(getRelDate(0))} 9:00`, endDate: `${formatDate(getRelDate(2))} 21:00`,
+    examDateTime: getRelDate(0, 9),
     languages: ['English', 'Hindi'], status: 'start',
   },
   {
     id: 6, title: 'SSC GD: हिंदी - PYQ Live Test',
     questions: 20, duration: 12, marks: 40,
-    startDate: '11 Mar, 9:00', endDate: '13 Mar, 21:00',
-    examDateTime: new Date(2026, 2, 11, 9, 0, 0),
+    startDate: `${formatDate(getRelDate(0))} 9:00`, endDate: `${formatDate(getRelDate(2))} 21:00`,
+    examDateTime: getRelDate(0, 9),
     languages: ['English', 'Hindi', '+4 More'], status: 'start',
   },
   {
     id: 7, title: 'IBPS Clerk Mains - Speed Booster Live Test',
     questions: 40, duration: 45, marks: 40,
-    startDate: '15 Mar, 10:00', endDate: '17 Mar, 21:00',
-    examDateTime: new Date(2026, 2, 15, 10, 0, 0),
+    startDate: `${formatDate(getRelDate(3))} 10:00`, endDate: `${formatDate(getRelDate(5))} 21:00`,
+    examDateTime: getRelDate(3, 10),
     languages: ['English', 'Hindi'], status: 'register',
   },
   {
     id: 8, title: 'NIACL AO Prelims: Full Mock Live Test',
     questions: 100, duration: 60, marks: 100,
-    startDate: '16 Mar, 9:00', endDate: '18 Mar, 21:00',
-    examDateTime: new Date(2026, 2, 16, 9, 0, 0),
+    startDate: `${formatDate(getRelDate(4))} 9:00`, endDate: `${formatDate(getRelDate(6))} 21:00`,
+    examDateTime: getRelDate(4, 9),
     languages: ['English'], status: 'register',
   },
   {
     id: 9, title: 'SBI Clerk - Current Affairs Booster Quiz',
     questions: 25, duration: 15, marks: 25,
-    startDate: '17 Mar, 9:00', endDate: '18 Mar, 21:00',
-    examDateTime: new Date(2026, 2, 17, 9, 0, 0),
+    startDate: `${formatDate(getRelDate(5))} 9:00`, endDate: `${formatDate(getRelDate(6))} 21:00`,
+    examDateTime: getRelDate(5, 9),
     languages: ['English', 'Hindi'], status: 'register',
   },
 ];
@@ -183,7 +193,10 @@ const LiveTestCard = ({
   onShowLeaderboard,
   isCompleted,
   isInProgress,
-  onContinueTest
+  onContinueTest,
+  viewMode = 'grid',
+  index = 0,
+  status
 }: { 
   test: LiveTest; 
   onRegister: (id: number) => void;
@@ -192,357 +205,496 @@ const LiveTestCard = ({
   isCompleted?: boolean;
   isInProgress?: boolean;
   onContinueTest?: (test: LiveTest) => void;
+  viewMode?: 'grid' | 'list';
+  index?: number;
+  status?: 'upcoming' | 'registered' | 'live' | 'submitted' | 'result';
 }) => {
-  const isLive = test.status === 'start';
+  const num = (index || 0) + 1;
   const isEnded = new Date() > new Date(test.examDateTime.getTime() + test.duration * 60000);
 
-  const getAction = () => {
-    // After test ends - Show only Leaderboard, Solution, Analysis
-    if (isEnded) {
-      return (
-        <div className="space-y-2">
-          <Button 
-            size="sm" 
-            className="w-full h-8 text-xs font-semibold gap-1.5 bg-slate-800 hover:bg-slate-900 text-white"
-            onClick={() => onShowLeaderboard(test)}
-          >
-            <TrendingUp className="h-3.5 w-3.5" />
-            View Leaderboard
-          </Button>
-          <div className="grid grid-cols-2 gap-2">
-            <Button 
-              size="sm" 
-              variant="outline"
-              className="h-8 text-xs font-semibold gap-1.5"
-              onClick={() => {
-                window.open(
-                  `/student/solution-viewer?category=live&examId=live&testId=${test.id}&title=${encodeURIComponent(test.title)}&duration=${test.duration}&questions=${test.questions}`,
-                  '_blank',
-                  'width=1280,height=900,menubar=no,toolbar=no,location=no,status=no'
-                );
-              }}
-            >
-              <FileText className="h-3.5 w-3.5" />
-              Solution
-            </Button>
-            <Button 
-              size="sm" 
-              variant="outline"
-              className="h-8 text-xs font-semibold gap-1.5"
-            >
-              <BarChart2 className="h-3.5 w-3.5" />
-              Analysis
-            </Button>
-          </div>
-        </div>
-      );
-    }
+  let currentStatus = status;
+  if (!currentStatus) {
+    if (isCompleted) currentStatus = 'result';
+    else if (isInProgress) currentStatus = 'live'; // or submitted
+    else if (test.status === 'start') currentStatus = 'live';
+    else if (test.status === 'registered') currentStatus = 'registered';
+    else currentStatus = 'upcoming';
+  }
 
-    // Test completed
-    if (isCompleted) {
-      return (
-        <div className="space-y-2">
-          <Button 
-            size="sm" 
-            className="w-full h-8 text-xs font-semibold gap-1.5 bg-slate-800 hover:bg-slate-900 text-white"
-            onClick={() => onShowLeaderboard(test)}
-          >
-            <TrendingUp className="h-3.5 w-3.5" />
-            View Leaderboard
-          </Button>
-          <div className="grid grid-cols-2 gap-2">
-            <Button 
-              size="sm" 
-              variant="outline"
-              className="h-8 text-xs font-semibold gap-1.5"
-              onClick={() => {
-                window.open(
-                  `/student/solution-viewer?category=live&examId=live&testId=${test.id}&title=${encodeURIComponent(test.title)}&duration=${test.duration}&questions=${test.questions}`,
-                  '_blank',
-                  'width=1280,height=900,menubar=no,toolbar=no,location=no,status=no'
-                );
-              }}
-            >
-              <FileText className="h-3.5 w-3.5" />
-              Solution
-            </Button>
-            <Button 
-              size="sm" 
-              variant="outline"
-              className="h-8 text-xs font-semibold gap-1.5"
-            >
-              <BarChart2 className="h-3.5 w-3.5" />
-              Analysis
-            </Button>
-          </div>
-        </div>
-      );
+  const stateConfig = {
+    upcoming: {
+      badge: 'UPCOMING',
+      badgeClass: 'bg-purple-100 text-purple-700',
+      topBorderColor: '#a855f7',
+      numBadge: { background: '#f3e8ff', color: '#7e22ce', border: '2px solid #e9d5ff' },
+      buttonText: 'Register Now',
+      buttonClass: 'bg-slate-800 hover:bg-slate-900 text-white',
+      studentsLabel: 'Students',
+      icon: Target
+    },
+    registered: {
+      badge: 'REGISTERED',
+      badgeClass: 'bg-blue-100 text-blue-700',
+      topBorderColor: '#3b82f6',
+      numBadge: { background: '#dbeafe', color: '#1d4ed8', border: '2px solid #bfdbfe' },
+      buttonText: 'Enter Waiting Room',
+      buttonClass: 'bg-blue-600 hover:bg-blue-700 text-white',
+      studentsLabel: 'Students Registered',
+      icon: Play
+    },
+    live: {
+      badge: 'LIVE NOW',
+      badgeClass: 'bg-red-100 text-red-700',
+      topBorderColor: '#ef4444',
+      numBadge: { background: '#fee2e2', color: '#b91c1c', border: '2px solid #fca5a5' },
+      buttonText: 'Start Test Now',
+      buttonClass: 'bg-red-600 hover:bg-red-700 text-white',
+      studentsLabel: 'Students Attempting',
+      icon: Play
+    },
+    submitted: {
+      badge: 'SUBMITTED',
+      badgeClass: 'bg-orange-100 text-orange-700',
+      topBorderColor: '#f97316',
+      numBadge: { background: '#ffedd5', color: '#c2410c', border: '2px solid #fed7aa' },
+      buttonText: 'Processing Results...',
+      buttonClass: 'bg-orange-100 text-orange-700 opacity-80 cursor-not-allowed',
+      studentsLabel: 'Participants',
+      icon: Clock
+    },
+    result: {
+      badge: 'RESULTS',
+      badgeClass: 'bg-emerald-100 text-emerald-700',
+      topBorderColor: '#10b981',
+      numBadge: { background: '#d1fae5', color: '#047857', border: '2px solid #a7f3d0' },
+      buttonText: 'View Analysis',
+      buttonClass: 'bg-emerald-700 hover:bg-emerald-800 text-white',
+      studentsLabel: 'Participants',
+      icon: BarChart2
     }
-
-    // In progress (paused)
-    if (isInProgress) {
-      return (
-        <div className="space-y-2">
-          <Button 
-            size="sm" 
-            className="w-full h-8 text-xs font-semibold gap-1.5 bg-slate-800 hover:bg-slate-900 text-white"
-            onClick={() => onContinueTest?.(test)}
-          >
-            <Play className="h-3.5 w-3.5" />
-            Continue Test
-          </Button>
-          <Button 
-            size="sm" 
-            variant="outline"
-            className="w-full h-8 text-xs font-semibold gap-1.5"
-            onClick={() => onShowLeaderboard(test)}
-          >
-            <TrendingUp className="h-3.5 w-3.5" />
-            View Leaderboard
-          </Button>
-        </div>
-      );
-    }
-
-    // Test is live - Show Leaderboard and Start
-    if (isLive) {
-      return (
-        <div className="space-y-2">
-          <Button 
-            size="sm" 
-            className="w-full h-8 text-xs font-semibold gap-1.5 bg-slate-800 hover:bg-slate-900 text-white"
-            onClick={() => onStartTest(test)}
-          >
-            <Play className="h-3.5 w-3.5" />
-            Start Test
-          </Button>
-          <Button 
-            size="sm" 
-            variant="outline"
-            className="w-full h-8 text-xs font-semibold gap-1.5"
-            onClick={() => onShowLeaderboard(test)}
-          >
-            <TrendingUp className="h-3.5 w-3.5" />
-            View Leaderboard
-          </Button>
-        </div>
-      );
-    }
-
-    // Registered - Show Start Test
-    if (test.status === 'registered') {
-      return (
-        <div className="space-y-2">
-          <Button 
-            size="sm" 
-            className="w-full h-8 text-xs font-semibold gap-1.5 bg-slate-800 hover:bg-slate-900 text-white"
-            onClick={() => onStartTest(test)}
-          >
-            <Play className="h-3.5 w-3.5" />
-            Start Test
-          </Button>
-          <Button 
-            size="sm" 
-            variant="outline"
-            className="w-full h-8 text-xs font-semibold gap-1.5"
-            onClick={() => onShowLeaderboard(test)}
-          >
-            <TrendingUp className="h-3.5 w-3.5" />
-            View Leaderboard
-          </Button>
-        </div>
-      );
-    }
-
-    // Not registered - Show Register
-    return (
-      <Button 
-        size="sm" 
-        className="w-full h-8 text-xs font-semibold gap-1.5 bg-slate-800 hover:bg-slate-900 text-white" 
-        onClick={() => onRegister(test.id)}
-      >
-        <Target className="h-3.5 w-3.5" />
-        Register Now
-      </Button>
-    );
   };
 
-  return (
-    <Card className="group relative border-2 border-slate-200 bg-white transition-all duration-200 hover:shadow-lg hover:border-slate-300">
-      <div className="p-3">
-        {/* Header: Badges */}
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-1.5">
-            {isLive && (
-              <Badge className="bg-red-500 text-white text-[10px] font-bold flex items-center gap-1 h-5 px-2">
-                <span className="relative flex h-1.5 w-1.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75" />
-                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-white" />
-                </span>
-                LIVE
+  const config = stateConfig[currentStatus || 'upcoming'];
+  const ActionIcon = config.icon;
+
+  const handleAction = () => {
+    if (currentStatus === 'upcoming') onRegister(test.id);
+    else if (currentStatus === 'registered' || currentStatus === 'live') onStartTest(test);
+    else if (currentStatus === 'result') onShowLeaderboard(test);
+  };
+
+  if (viewMode === 'list') {
+    return (
+      <div
+        className={`
+            bg-white rounded-xl border border-gray-200 shadow-sm
+            hover:shadow-md transition-all duration-200
+            flex flex-col sm:flex-row items-center gap-4 p-4
+            ${currentStatus === 'live' ? 'border-red-200 hover:border-red-300 bg-red-50/10' : 'hover:border-slate-300'}
+        `}
+        style={{ borderLeft: `4px solid ${config.topBorderColor}` }}
+      >
+        {/* Left: Badge & Title */}
+        <div className="flex items-center gap-4 flex-1 min-w-0 w-full">
+          <span
+            className="hidden sm:flex items-center justify-center w-10 h-10 rounded-full text-base font-black shadow-sm flex-shrink-0"
+            style={config.numBadge}
+          >
+            {num}
+          </span>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <h3 className={`font-extrabold text-[16px] leading-tight truncate ${currentStatus === 'live' ? 'text-red-700' : 'text-gray-900'}`}>
+                {test.title}
+              </h3>
+              <Badge className={`${config.badgeClass} border-none text-[10px] uppercase shrink-0 px-2 py-0`}>
+                {currentStatus === 'live' && (
+                  <span className="relative flex h-1.5 w-1.5 mr-1.5">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-red-600" />
+                  </span>
+                )}
+                {config.badge}
               </Badge>
-            )}
-            <Badge className="bg-slate-600 text-white text-[10px] font-bold h-5 px-2">
-              FREE
-            </Badge>
+            </div>
+            <div className="flex items-center gap-3 mt-1 flex-wrap">
+              <div className="flex items-center gap-1 text-xs text-gray-500">
+                <Users className="h-3.5 w-3.5 text-gray-400" />
+                <span className="font-medium">12,438 {config.studentsLabel}</span>
+              </div>
+            </div>
           </div>
-          <div className="text-[10px] font-semibold text-slate-400">
-            #{test.id}
+        </div>
+
+        {/* Middle: Stats or Countdown */}
+        <div className="flex flex-col items-center justify-center gap-2 sm:px-4 sm:border-x border-gray-100 w-full sm:w-[200px] shrink-0 py-1 min-h-[60px]">
+          {currentStatus === 'upcoming' && (
+            <div className="grid grid-cols-2 gap-4 w-full">
+              <div className="flex flex-col items-center">
+                <span className="text-[15px] font-black text-gray-900">{test.questions}</span>
+                <span className="text-[10px] font-medium text-gray-400">Questions</span>
+              </div>
+              <div className="flex flex-col items-center">
+                <span className="text-[15px] font-black text-gray-900">{test.duration}</span>
+                <span className="text-[10px] font-medium text-gray-400">Min</span>
+              </div>
+            </div>
+          )}
+          {currentStatus === 'registered' && (
+            <CountdownStrip targetDate={test.examDateTime} />
+          )}
+          {currentStatus === 'live' && (
+            <div className="flex items-center gap-1.5 text-red-600 font-bold bg-red-50 px-3 py-1.5 rounded-lg border border-red-100">
+              <Radio className="h-4 w-4 animate-pulse" /> 
+              <span>Test is LIVE</span>
+            </div>
+          )}
+          {currentStatus === 'submitted' && (
+            <div className="flex items-center gap-1.5 text-orange-600 font-bold bg-orange-50 px-3 py-1.5 rounded-lg border border-orange-100">
+              <Radio className="h-4 w-4 animate-pulse" /> 
+              <span>Calculating...</span>
+            </div>
+          )}
+          {currentStatus === 'result' && (
+            <div className="flex flex-col items-center">
+              <div className="flex items-baseline gap-0.5 whitespace-nowrap">
+                  <span className="text-xl font-black text-emerald-600">82.75</span>
+                  <span className="text-[10px] font-medium text-gray-400">/100</span>
+              </div>
+              <span className="text-[10px] font-medium text-gray-400 mt-1">Score</span>
+            </div>
+          )}
+        </div>
+
+        {/* Right: CTA */}
+        <div className="flex flex-col sm:justify-center gap-2 w-full sm:w-[220px] shrink-0 mt-2 sm:mt-0">
+          <Button 
+            size="sm" 
+            className={`w-full h-8 text-xs font-semibold gap-1.5 ${config.buttonClass}`}
+            onClick={currentStatus !== 'submitted' ? handleAction : undefined}
+            disabled={currentStatus === 'submitted'}
+          >
+            <ActionIcon className="h-3.5 w-3.5" />
+            {config.buttonText}
+          </Button>
+          {currentStatus === 'result' && (
+             <Button 
+               size="sm" 
+               variant="outline"
+               className="h-8 text-xs font-semibold gap-1.5"
+             >
+               <FileText className="h-3.5 w-3.5" />
+               Solution
+             </Button>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className={`
+          bg-white rounded-2xl border shadow-sm
+          hover:shadow-lg hover:-translate-y-0.5
+          transition-all duration-200
+          flex flex-col overflow-hidden
+          ${currentStatus === 'live' ? 'border-red-300' : 'border-gray-200'}
+      `}
+      style={{ borderTop: `3px solid ${config.topBorderColor}` }}
+    >
+      {/* Card body */}
+      <div className="px-5 pt-5 pb-4 flex flex-col gap-3 flex-1 relative">
+        {/* Row 1: number badge + free/status badge */}
+        <div className="flex items-center justify-between">
+          <span
+            className="inline-flex items-center justify-center w-10 h-10 rounded-full text-base font-black shadow-sm flex-shrink-0"
+            style={config.numBadge}
+          >
+            {num}
+          </span>
+          <div className="flex items-center gap-1.5">
+            <Badge className={`${config.badgeClass} text-[10px] font-bold flex items-center gap-1 h-6 px-2.5 shadow-sm border-none uppercase`}>
+              {currentStatus === 'live' && (
+                <span className="relative flex h-1.5 w-1.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-red-600" />
+                </span>
+              )}
+              {config.badge}
+            </Badge>
           </div>
         </div>
 
         {/* Title */}
-        <h3 className="font-semibold text-xs leading-tight text-slate-800 mb-2 line-clamp-2 min-h-[2rem]">
-          {test.title}
-        </h3>
-
-        {/* Stats Row */}
-        <div className="flex items-center gap-2 mb-2 text-xs text-slate-600">
-          <div className="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded">
-            <FileText className="h-3 w-3" />
-            <span className="font-medium">{test.questions} Qs</span>
-          </div>
-          <div className="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded">
-            <Clock className="h-3 w-3" />
-            <span className="font-medium">{test.duration} Min</span>
-          </div>
-          <div className="flex items-center gap-1 bg-slate-50 px-2 py-1 rounded">
-            <Award className="h-3 w-3" />
-            <span className="font-medium">{test.marks} Marks</span>
+        <div>
+          <h3 className={`font-extrabold text-[17px] leading-tight line-clamp-2 min-h-[2.5rem] mt-1 ${currentStatus === 'live' ? 'text-red-700' : 'text-gray-900'}`}>
+            {test.title}
+          </h3>
+          <div className="text-xs text-gray-500 mt-1.5">
+            {test.title.includes('Scholarship') ? 'Live Scholarship Test' : 'Mega Live Test'}
           </div>
         </div>
 
-        {/* Date Range */}
-        <div className="flex items-center gap-1.5 text-[11px] text-slate-500 mb-3">
-          <Calendar className="h-3.5 w-3.5" />
-          <span className="truncate">{test.startDate} to {test.endDate}</span>
+        {/* Dynamic Context Area (Date, Countdown, Score, Processing) */}
+        <div className="bg-slate-50 rounded-lg p-3 min-h-[70px] flex items-center justify-center">
+          {currentStatus === 'upcoming' && (
+             <div className="flex items-center gap-2 text-sm text-gray-700 font-medium">
+               <Calendar className="h-4 w-4 text-purple-500" />
+               <span>🗓 25 May • 7:00 PM</span>
+             </div>
+          )}
+          {currentStatus === 'registered' && (
+             <div className="flex flex-col items-center w-full">
+               <span className="text-xs font-semibold text-gray-500 mb-1">⏳ Starts In:</span>
+               <div className="flex items-center gap-1 text-blue-700 font-bold text-lg">
+                 <span>01<span className="text-xs text-blue-400">h</span></span> :
+                 <span>12<span className="text-xs text-blue-400">m</span></span> :
+                 <span>45<span className="text-xs text-blue-400">s</span></span>
+               </div>
+             </div>
+          )}
+          {currentStatus === 'live' && (
+             <div className="flex flex-col items-center w-full">
+               <span className="text-xs font-semibold text-gray-500 mb-1">⏰ Time Left:</span>
+               <div className="flex items-center gap-1 text-red-600 font-bold text-lg">
+                 <span>58<span className="text-xs text-red-400">m</span></span> :
+                 <span>12<span className="text-xs text-red-400">s</span></span>
+               </div>
+               <div className="mt-1.5 flex items-center gap-1 text-[10px] font-bold text-red-700 bg-red-100 px-2 py-0.5 rounded uppercase">
+                 <Radio className="h-3 w-3 animate-pulse" /> AIR Ranking Active
+               </div>
+             </div>
+          )}
+          {currentStatus === 'submitted' && (
+             <div className="flex flex-col items-center w-full">
+               <div className="flex items-center gap-1.5 text-sm font-bold text-emerald-600 mb-1">
+                 <CheckCircle className="h-4 w-4" /> Test Submitted
+               </div>
+               <div className="flex items-center gap-1.5 text-xs font-medium text-orange-600 animate-pulse">
+                 ⚡ Calculating Rank...
+               </div>
+             </div>
+          )}
+          {currentStatus === 'result' && (
+             <div className="grid grid-cols-3 gap-2 w-full text-center">
+               <div className="flex flex-col">
+                 <span className="text-xs text-gray-500 font-medium">Score</span>
+                 <span className="text-sm font-black text-emerald-600">82<span className="text-[10px] text-gray-400">/100</span></span>
+               </div>
+               <div className="flex flex-col border-x border-gray-200">
+                 <span className="text-xs text-gray-500 font-medium">AIR</span>
+                 <span className="text-sm font-black text-gray-900">521</span>
+               </div>
+               <div className="flex flex-col">
+                 <span className="text-xs text-gray-500 font-medium">%ile</span>
+                 <span className="text-sm font-black text-emerald-600">96.2%</span>
+               </div>
+             </div>
+          )}
         </div>
 
-        {/* Countdown for registered tests */}
-        {test.status === 'registered' && !isLive && (
-          <div className="mb-3">
-            <CountdownStrip targetDate={test.examDateTime} />
-          </div>
-        )}
+        {/* Divider */}
+        <hr className="border-gray-100 my-1" />
 
-        {/* Action Buttons */}
-        <div className="border-t border-slate-100 pt-3">
-          {getAction()}
+        {/* Students Count & Stats */}
+        <div className="flex items-center justify-between text-xs font-medium text-gray-500">
+          <div className="flex items-center gap-1.5">
+            <Users className="h-4 w-4 text-gray-400" />
+            <span>12,438 {config.studentsLabel}</span>
+          </div>
         </div>
 
-        {/* Completed badge */}
-        {isCompleted && (
-          <div className="absolute top-2 right-2">
-            <div className="flex items-center gap-1 text-slate-600 font-semibold text-[10px] bg-slate-100 px-2 py-1 rounded border border-slate-200">
-              <CheckCircle className="h-3 w-3" />
-              <span>Done</span>
-            </div>
-          </div>
-        )}
+        <div className="flex items-center gap-2 text-xs font-medium text-gray-400 mt-1">
+          <span>{test.questions} Questions</span>
+          <span className="w-1 h-1 rounded-full bg-gray-300" />
+          <span>{test.marks} Marks</span>
+          <span className="w-1 h-1 rounded-full bg-gray-300" />
+          <span>{test.duration} Min</span>
+        </div>
       </div>
-    </Card>
+
+      {/* CTA */}
+      <div className="px-5 pb-5">
+        <Button 
+          size="sm" 
+          className={`w-full h-9 text-sm font-bold gap-1.5 ${config.buttonClass} transition-all`}
+          onClick={currentStatus !== 'submitted' ? handleAction : undefined}
+          disabled={currentStatus === 'submitted'}
+        >
+          <ActionIcon className={`h-4 w-4 ${currentStatus === 'submitted' ? 'animate-spin' : ''}`} />
+          {config.buttonText}
+        </Button>
+      </div>
+    </div>
   );
 };
 
 // ── Attempted Card ─────────────────────────────────────────────────────────────
-const AttemptedCard = ({ test }: { test: AttemptedTest }) => {
+const AttemptedCard = ({ test, viewMode = 'grid', index = 0 }: { test: AttemptedTest, viewMode?: 'grid' | 'list', index?: number }) => {
   const percentage = Math.round((test.score / test.totalMarks) * 100);
-  const scoreColor = percentage >= 70 ? 'text-emerald-600' : percentage >= 50 ? 'text-amber-600' : 'text-red-500';
+  const scoreColor = percentage >= 70 ? 'text-emerald-600' : percentage >= 50 ? 'text-amber-500' : 'text-red-500';
   const scoreGradient = percentage >= 70 
-    ? 'from-emerald-500 to-emerald-600 bg-gradient-to-br' 
+    ? 'bg-gradient-to-r from-emerald-400 to-emerald-500' 
     : percentage >= 50 
-    ? 'from-amber-500 to-amber-600 bg-gradient-to-br'
-    : 'from-red-500 to-red-600 bg-gradient-to-br';
+    ? 'bg-gradient-to-r from-amber-400 to-amber-500' 
+    : 'bg-gradient-to-r from-red-400 to-red-500';
   const scoreBg = percentage >= 70 
     ? 'bg-emerald-50 border-emerald-200' 
     : percentage >= 50 
     ? 'bg-amber-50 border-amber-200' 
     : 'bg-red-50 border-red-200';
+  const accent = { border: "#cbd5e1", light: "#f8fafc", text: "#64748b" };
+  const num = index + 1;
+
+  if (viewMode === 'list') {
+    return (
+      <div
+        className={`
+            bg-white rounded-xl border border-gray-200 shadow-sm
+            hover:shadow-md transition-all duration-200
+            flex flex-col sm:flex-row items-center gap-4 p-4 hover:border-slate-300
+        `}
+        style={{ borderLeft: `4px solid ${accent.border}` }}
+      >
+        {/* Left: Badge & Title */}
+        <div className="flex items-center gap-4 flex-1 min-w-0 w-full">
+          <span
+            className="hidden sm:flex items-center justify-center w-10 h-10 rounded-full text-base font-black shadow-sm flex-shrink-0"
+            style={{ background: accent.light, color: accent.text, border: `2px solid ${accent.border}` }}
+          >
+            {num}
+          </span>
+          <div className="flex-1 min-w-0">
+            <h3 className="font-extrabold text-[16px] leading-tight truncate text-gray-900">
+              {test.title}
+            </h3>
+            <div className="flex items-center gap-3 mt-1 flex-wrap">
+              <div className="flex items-center gap-1 text-xs text-gray-500">
+                <Calendar className="h-3.5 w-3.5 text-gray-400" />
+                <span className="font-medium">Attempted {test.attemptedDate}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Middle: Stats */}
+        <div className="flex flex-col items-center justify-center gap-2 sm:px-4 sm:border-x border-gray-100 w-full sm:w-[200px] shrink-0 py-1 min-h-[60px]">
+           <div className="flex items-baseline gap-1">
+             <span className={`text-2xl font-black ${scoreColor}`}>{percentage}</span>
+             <span className={`text-sm font-semibold ${scoreColor}`}>%</span>
+           </div>
+           <div className="text-[10px] text-slate-500 font-medium">
+             Score: {test.score}/{test.totalMarks} • Rank: #{test.rank}
+           </div>
+        </div>
+
+        {/* Right: CTA */}
+        <div className="flex flex-col sm:justify-center gap-2 w-full sm:w-[220px] shrink-0 mt-2 sm:mt-0">
+          <div className="grid grid-cols-2 gap-2">
+            <Button variant="outline" size="sm" className="h-8 text-xs font-semibold gap-1 hover:bg-slate-50 border-gray-200">
+              <Eye className="h-3.5 w-3.5" />
+              Result
+            </Button>
+            <Button size="sm" className="h-8 text-xs font-semibold gap-1 bg-slate-800 hover:bg-slate-900 text-white shadow-sm transition-all">
+              <TrendingUp className="h-3.5 w-3.5" />
+              Analysis
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <Card className="group relative overflow-hidden border-2 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 bg-white">
+    <div
+      className={`
+          bg-white rounded-2xl border border-gray-300 shadow-sm
+          hover:shadow-lg hover:-translate-y-0.5
+          transition-all duration-200
+          flex flex-col overflow-hidden
+      `}
+      style={{ borderTop: `3px solid ${accent.border}` }}
+    >
       {/* Top gradient bar */}
       <div className={`h-1.5 ${scoreGradient}`} />
       
-      <div className="p-4">
+      {/* Card body */}
+      <div className="px-5 pt-5 pb-4 flex flex-col gap-3 flex-1">
+        
+        {/* Row 1: number badge + free badge */}
+        <div className="flex items-center justify-between">
+          <span
+            className="inline-flex items-center justify-center w-10 h-10 rounded-full text-base font-black shadow-sm flex-shrink-0"
+            style={{ background: accent.light, color: accent.text, border: `2px solid ${accent.border}` }}
+          >
+            {num}
+          </span>
+          <span className="px-2 py-1 bg-emerald-100 text-emerald-700 text-[10px] font-bold rounded uppercase tracking-wider">
+            Free
+          </span>
+        </div>
+
         {/* Title */}
-        <h3 className="font-bold text-sm leading-snug text-slate-800 mb-3 line-clamp-2 min-h-[2.5rem] group-hover:text-primary transition-colors">
-          {test.title}
-        </h3>
-
-        {/* Meta Info */}
-        <div className="flex items-center gap-3 text-xs text-slate-600 mb-4 flex-wrap">
-          <div className="flex items-center gap-1.5">
-            <FileText className="h-4 w-4 text-slate-500" />
-            <span className="font-medium">{test.questions} Questions</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <Clock className="h-4 w-4 text-slate-500" />
-            <span className="font-medium">{test.duration} Minutes</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <Users className="h-4 w-4 text-slate-500" />
-            <span className="font-medium">{test.totalAttempts.toLocaleString()} Attempts</span>
+        <div>
+          <h3 className="font-extrabold text-[17px] text-gray-900 leading-tight line-clamp-2 min-h-[2.5rem]">
+            {test.title}
+          </h3>
+          <div className="flex items-center gap-1.5 text-xs text-gray-500 mt-1.5">
+            <Calendar className="h-3.5 w-3.5 text-gray-400" />
+            <span className="font-medium">Attempted {test.attemptedDate}</span>
           </div>
         </div>
 
-        {/* Score Card */}
-        <div className={`rounded-xl p-4 border-2 mb-4 ${scoreBg}`}>
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="flex items-baseline gap-1 mb-1">
-                <span className={`text-3xl font-black ${scoreColor}`}>{percentage}</span>
-                <span className={`text-lg font-semibold ${scoreColor}`}>%</span>
-              </div>
-              <div className="text-xs text-slate-600 font-medium">
-                Score: <span className="font-bold">{test.score}</span> / {test.totalMarks}
-              </div>
-            </div>
-            <div className="text-right">
-              <div className="flex items-center gap-1.5 mb-1">
-                <Award className="h-5 w-5 text-primary" />
-                <span className="text-xl font-black text-slate-800">#{test.rank}</span>
-              </div>
-              <div className="text-xs text-slate-600 font-medium">
-                Accuracy: <span className="font-bold">{test.accuracy}%</span>
-              </div>
-            </div>
-          </div>
-          
-          {/* Progress bar */}
-          <div className="mt-3 pt-3 border-t border-slate-200">
-            <div className="flex items-center justify-between text-xs text-slate-600 mb-2">
-              <span className="font-medium">Performance</span>
-              <span className="font-bold">{percentage}%</span>
-            </div>
-            <div className="w-full h-2 bg-white rounded-full overflow-hidden border border-slate-200">
-              <div 
-                className={`h-full ${scoreGradient} transition-all duration-500`}
-                style={{ width: `${percentage}%` }}
-              />
-            </div>
-          </div>
-        </div>
+        {/* Divider */}
+        <hr className="border-gray-100 my-1" />
 
-        {/* Attempt Date */}
-        <div className="flex items-center gap-2 text-xs text-slate-600 mb-4 bg-slate-50 rounded-lg px-3 py-2 border border-slate-200">
-          <Calendar className="h-4 w-4 text-slate-500" />
-          <span className="font-medium">Attempted on {test.attemptedDate}</span>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="grid grid-cols-2 gap-2">
-          <Button variant="outline" size="sm" className="h-10 text-xs font-semibold gap-2 hover:bg-slate-50 border-2">
-            <Eye className="h-4 w-4" />
-            Result
-          </Button>
-          <Button size="sm" className="h-10 text-xs font-semibold gap-2 bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-md hover:shadow-lg transition-all">
-            <TrendingUp className="h-4 w-4" />
-            Analysis
-          </Button>
+        {/* Stats grid */}
+        <div className="grid grid-cols-3">
+            <div className="flex flex-col items-center py-2">
+                <div className="flex items-baseline gap-0.5 whitespace-nowrap">
+                    <span className="text-base font-black text-gray-900">{test.score}</span>
+                    <span className="text-[10px] font-medium text-gray-400">/{test.totalMarks}</span>
+                </div>
+                <span className="text-[10px] font-medium text-gray-400 mt-1">Score</span>
+            </div>
+            <div className="flex flex-col items-center py-2 border-x border-gray-200">
+                <div className="flex items-baseline gap-0.5 whitespace-nowrap">
+                    <span className="text-base font-black text-gray-900">{test.rank}</span>
+                    <span className="text-[10px] font-medium text-gray-400">/{test.totalAttempts > 0 ? test.totalAttempts.toLocaleString() : '—'}</span>
+                </div>
+                <span className="text-[10px] font-medium text-gray-400 mt-1">Rank</span>
+            </div>
+            <div className="flex flex-col items-center py-2">
+                <div className="flex items-baseline gap-0.5 whitespace-nowrap">
+                    <span className={`text-base font-black ${scoreColor}`}>{percentage}</span>
+                    <span className={`text-[10px] font-medium ${scoreColor}`}>%</span>
+                </div>
+                <span className="text-[10px] font-medium text-gray-400 mt-1">Accuracy</span>
+            </div>
         </div>
       </div>
-    </Card>
+
+      {/* CTA */}
+      <div className="px-5 pb-5">
+        <div className="flex gap-2">
+            <Button
+                variant="outline"
+                size="sm"
+                className="flex-1 h-9 text-xs gap-1 border-gray-300 bg-gray-100 text-gray-700 hover:border-primary hover:bg-primary/5 hover:text-primary font-semibold"
+            >
+                <Eye className="h-3.5 w-3.5" /> Result
+            </Button>
+            <Button
+                variant="outline"
+                size="sm"
+                className="flex-1 h-9 text-xs gap-1 border-gray-300 bg-gray-100 text-gray-700 hover:border-primary hover:bg-primary/5 hover:text-primary font-semibold"
+            >
+                <BarChart2 className="h-3.5 w-3.5" /> Analysis
+            </Button>
+        </div>
+      </div>
+    </div>
   );
 };
 
@@ -555,6 +707,7 @@ const LiveTests = () => {
   const [selectedTestForLeaderboard, setSelectedTestForLeaderboard] = useState<LiveTest | null>(null);
   const [testCompletions, setTestCompletions] = useState<Record<number, { score: number; completedAt: string }>>({});
   const [inProgressTests, setInProgressTests] = useState<Record<number, { startTime: string; lastSaved: string }>>({});
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
   // Load test completions from localStorage
   React.useEffect(() => {
@@ -697,27 +850,54 @@ const LiveTests = () => {
         </p>
       </div>
 
-      {/* Tabs */}
-      <div className="flex items-center gap-1 sm:gap-2 flex-wrap border-b">
-        {tabs.map(tab => (
+      {/* Tabs and View Toggle */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-2 sm:pb-0">
+        <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
+          {tabs.map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`px-2.5 sm:px-4 py-1.5 sm:py-2 text-[11px] sm:text-sm font-medium border-b-2 transition-all sm:-mb-[1px] ${
+                activeTab === tab.id
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+        
+        <div className="flex items-center bg-slate-100/80 p-1 rounded-lg self-start sm:self-auto border border-slate-200">
           <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={`px-2.5 sm:px-4 py-1.5 sm:py-2 text-[11px] sm:text-sm font-medium border-b-2 transition-all -mb-px ${
-              activeTab === tab.id
-                ? 'border-primary text-primary'
-                : 'border-transparent text-muted-foreground hover:text-foreground'
+            onClick={() => setViewMode('grid')}
+            className={`p-1.5 sm:p-2 rounded-md transition-all ${
+              viewMode === 'grid'
+                ? 'bg-white text-emerald-600 shadow-sm border border-slate-200'
+                : 'text-slate-500 hover:text-slate-700'
             }`}
+            title="Grid View"
           >
-            {tab.label}
+            <LayoutGrid className="h-4 w-4" />
           </button>
-        ))}
+          <button
+            onClick={() => setViewMode('list')}
+            className={`p-1.5 sm:p-2 rounded-md transition-all ${
+              viewMode === 'list'
+                ? 'bg-white text-emerald-600 shadow-sm border border-slate-200'
+                : 'text-slate-500 hover:text-slate-700'
+            }`}
+            title="List View"
+          >
+            <List className="h-4 w-4" />
+          </button>
+        </div>
       </div>
 
       {/* Cards */}
       {activeTab === 'attempted' ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5">
-          {attemptedTests.map(test => <AttemptedCard key={test.id} test={test} />)}
+        <div className={viewMode === 'grid' ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5" : "flex flex-col gap-3"}>
+          {attemptedTests.map((test, index) => <AttemptedCard key={test.id} test={test} viewMode={viewMode} index={index} />)}
         </div>
       ) : (
         filteredTests.length === 0 ? (
@@ -726,11 +906,13 @@ const LiveTests = () => {
             <p className="text-sm">No tests in this category</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5">
-            {filteredTests.map(test => (
+          <div className={viewMode === 'grid' ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5" : "flex flex-col gap-3"}>
+            {filteredTests.map((test, index) => (
               <LiveTestCard
                 key={test.id}
                 test={test}
+                index={index}
+                viewMode={viewMode}
                 onRegister={handleRegister}
                 onStartTest={handleStartTest}
                 onContinueTest={handleContinueTest}

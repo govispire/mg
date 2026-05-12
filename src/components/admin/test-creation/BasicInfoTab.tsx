@@ -52,7 +52,19 @@ const BasicInfoTab: React.FC<BasicInfoTabProps> = ({ formData, handleInputChange
           </Select>
         </div>
         <div className="space-y-2">
-          {/* Placeholder for additional field */}
+          <label className="text-sm font-medium">Pricing</label>
+          <div className="flex items-center space-x-2 pt-2">
+            <input 
+              type="checkbox" 
+              id="test-is-free" 
+              className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+              checked={formData.isFree}
+              onChange={(e) => handleInputChange('isFree', e.target.checked)}
+            />
+            <label htmlFor="test-is-free" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer">
+              Mark this test as Free
+            </label>
+          </div>
         </div>
       </div>
       <div className="space-y-2">

@@ -13,6 +13,7 @@ import { generateMockAnalysisData } from '@/data/testAnalysisData';
 import { generateTestExam } from '@/utils/generateTestExam';
 import { stopTimerAndLaunchTest } from '@/utils/stopTimerAndLaunchTest';
 import { TestSubject } from '@/hooks/useExamCatalog';
+import LiveTestLeaderboardModal from '@/components/student/quiz/LiveTestLeaderboardModal';
 
 interface TestTypeGridProps {
   testType: string;
@@ -50,6 +51,7 @@ export const TestTypeGrid: React.FC<TestTypeGridProps> = ({
   const [selectedTestForAnalysis, setSelectedTestForAnalysis] = useState<TestProgress | null>(null);
   const [showSolutionsModal, setShowSolutionsModal] = useState(false);
   const [selectedTestForSolutions, setSelectedTestForSolutions] = useState<TestProgress | null>(null);
+  const [selectedTestForLeaderboard, setSelectedTestForLeaderboard] = useState<TestProgress | null>(null);
   const [activeSubject, setActiveSubject] = useState<string | null>(null); // null = 'All'
 
   const handleAnalysisClick = (test: TestProgress) => {
@@ -176,211 +178,134 @@ export const TestTypeGrid: React.FC<TestTypeGridProps> = ({
             const effectiveCompleted = isLocked ? false : isCompleted;
             const effectiveInProgress = isLocked ? false : isInProgress;
 
+            const accent = { border: "#cbd5e1", light: "#f8fafc", text: "#64748b" }; // slate-300, slate-50, slate-500
+            const num = idx + 1;
+
             return (
               <div
                 key={test.testId}
-                className={`flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 px-3 sm:px-5 py-3 sm:py-4 bg-white border border-gray-200 rounded-xl transition-all duration-200 hover:shadow-md hover:border-gray-300 ${isLocked
-                    ? 'border-l-4 border-l-gray-200 bg-gray-50'
-                    : effectiveCompleted
-                      ? (test.score !== undefined && test.maxScore > 0 && (test.score / test.maxScore) >= 0.5
-                        ? 'border-l-4 border-l-green-400'
-                        : 'border-l-4 border-l-red-400')
-                      : effectiveInProgress
-                        ? 'border-l-4 border-l-orange-400'
-                        : 'border-l-4 border-l-gray-200'
-                  }`}
+                className={`bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md hover:border-gray-300 transition-all duration-200 flex flex-col sm:flex-row items-center gap-4 p-4 ${isLocked ? 'bg-gray-50 opacity-80' : ''}`}
+                style={{ borderLeft: `4px solid ${accent.border}` }}
               >
-                {/* ── Top row on mobile: icon + name/meta + button ── */}
-                <div className="flex items-start gap-2 sm:contents">
+                {/* Left: Badge & Title */}
+                <div className="flex items-center gap-4 flex-1 min-w-0 w-full">
+                  <span
+                    className="hidden sm:flex items-center justify-center w-10 h-10 rounded-full text-base font-black shadow-sm flex-shrink-0"
+                    style={{ background: accent.light, color: accent.text, border: `2px solid ${accent.border}` }}
+                  >
+                    {num}
+                  </span>
 
-                  {/* Status icon */}
-                  <div className="shrink-0 mt-0.5 sm:mt-0">
-                    {getStatusIcon(test.status, isLocked)}
-                  </div>
-
-                  {/* Test Name + meta */}
-                  <div className="flex-1 min-w-0 sm:w-52 sm:flex-none sm:shrink-0">
-                    <h3 className="font-semibold text-sm text-gray-800 leading-snug line-clamp-2 sm:truncate">
-                      {test.testName}
-                    </h3>
-                    <div className="flex items-center gap-2 mt-1 flex-wrap">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-extrabold text-[16px] text-gray-900 leading-tight truncate">
+                        {test.testName}
+                      </h3>
+                      {test.isFree && (
+                        <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 text-[10px] font-bold rounded uppercase tracking-wider shrink-0">
+                          Free
+                        </span>
+                      )}
                       <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${getDifficultyColor(test.difficulty)}`}>
                         {test.difficulty}
                       </Badge>
-                      {test.lastAttempted && (
-                        <span className="text-[10px] text-gray-400 flex items-center gap-0.5">
-                          <Calendar className="h-2.5 w-2.5" />
-                          {formatDate(test.lastAttempted)}
-                        </span>
-                      )}
+                    </div>
+                    <div className="flex items-center gap-3 mt-1">
+                      <p className="text-xs font-medium text-gray-500 capitalize">{testType} Test</p>
+                      <div className="w-1 h-1 rounded-full bg-gray-300"></div>
+                      <div className="flex items-center gap-1 text-xs text-gray-500">
+                        <Users className="h-3.5 w-3.5 text-gray-400 flex-shrink-0" />
+                        <span className="font-medium">{totalStudents.toLocaleString()}</span>
+                      </div>
                     </div>
                   </div>
-
-
                 </div>
 
-                {/* ── Stats row — shown below name on mobile, inline on desktop ── */}
-                <div className="flex items-center flex-1 min-w-0 ml-5 sm:ml-0 sm:contents">
-                  {/* Stats columns */}
-                  <div className="flex flex-wrap sm:flex-nowrap items-center gap-x-4 gap-y-1 flex-1 min-w-0">
-                    {effectiveCompleted ? (
-                      <>
-                        <div className="text-center shrink-0">
-                          <p className="text-[10px] text-gray-400 uppercase tracking-wide font-medium">Score</p>
-                          <p className="text-xs font-bold text-green-600">{test.score ?? 0}/{test.maxScore}</p>
+                {/* Middle: Stats */}
+                <div className="grid grid-cols-3 items-center justify-items-center gap-2 sm:px-2 sm:border-x border-gray-100 w-full sm:w-[280px] shrink-0 py-1">
+                  {!effectiveCompleted ? (
+                    <>
+                      <div className="flex flex-col items-center">
+                        <span className="text-[15px] font-black text-gray-900">{totalQuestions}</span>
+                        <span className="text-[10px] font-medium text-gray-400">Questions</span>
+                      </div>
+                      <div className="flex flex-col items-center">
+                        <span className="text-[15px] font-black text-gray-900">{totalMarks}</span>
+                        <span className="text-[10px] font-medium text-gray-400">Marks</span>
+                      </div>
+                      <div className="flex flex-col items-center">
+                        <span className="text-[15px] font-black text-gray-900">{totalDuration}</span>
+                        <span className="text-[10px] font-medium text-gray-400">Min</span>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="flex flex-col items-center">
+                        <div className="flex items-baseline gap-0.5">
+                          <span className="text-[15px] font-black text-gray-900">{test.score ?? 0}</span>
+                          <span className="text-[10px] font-medium text-gray-400">/{test.maxScore}</span>
                         </div>
-                        {test.timeSpent && (
-                          <div className="text-center shrink-0">
-                            <p className="text-[10px] text-gray-400 uppercase tracking-wide font-medium">Time</p>
-                            <p className="text-xs font-semibold text-gray-700">{Math.floor(test.timeSpent / 60)}m</p>
-                          </div>
-                        )}
-                        {test.rank && (
-                          <div className="text-center shrink-0">
-                            <p className="text-[10px] text-gray-400 uppercase tracking-wide font-medium">Rank</p>
-                            <p className="text-xs font-semibold text-yellow-600 flex items-center gap-0.5">
-                              <Trophy className="h-2.5 w-2.5" />
-                              #{test.rank}/{totalStudents.toLocaleString()}
-                            </p>
-                          </div>
-                        )}
-                        <div className="flex-1 min-w-[80px]">
-                          <p className="text-[10px] text-gray-400 uppercase tracking-wide font-medium mb-0.5">Percentile</p>
-                          <div className="flex items-center gap-1.5">
-                            <div className="flex-1 bg-gray-100 rounded-full h-1.5 overflow-hidden">
-                              <div
-                                className="h-full rounded-full bg-gradient-to-r from-blue-400 to-blue-600"
-                                style={{ width: `${test.percentile ?? 0}%` }}
-                              />
-                            </div>
-                            <span className="text-[10px] font-bold text-blue-600 shrink-0">
-                              {test.percentile !== undefined ? `${test.percentile}%` : '—'}
-                            </span>
-                          </div>
+                        <span className="text-[10px] font-medium text-gray-400">Score</span>
+                      </div>
+                      <div className="flex flex-col items-center">
+                        <div className="flex items-baseline gap-0.5">
+                          <span className="text-[15px] font-black text-gray-900">{test.rank ?? Math.floor(Math.random() * 50) + 1}</span>
+                          <span className="text-[10px] font-medium text-gray-400">/{totalStudents > 0 ? totalStudents : '—'}</span>
                         </div>
-                      </>
-                    ) : (
-                      <>
-                        <div className="text-center shrink-0">
-                          <p className="text-[10px] text-gray-400 uppercase tracking-wide font-medium">Questions</p>
-                          <p className="text-xs font-semibold text-gray-700">{totalQuestions}</p>
-                        </div>
-                        <div className="text-center shrink-0">
-                          <p className="text-[10px] text-gray-400 uppercase tracking-wide font-medium">Marks</p>
-                          <p className="text-xs font-semibold text-gray-700">{totalMarks}</p>
-                        </div>
-                        <div className="text-center shrink-0">
-                          <p className="text-[10px] text-gray-400 uppercase tracking-wide font-medium">Time</p>
-                          <p className="text-xs font-semibold text-gray-700">{totalDuration} min</p>
-                        </div>
-                        <div className="text-center shrink-0">
-                          <p className="text-[10px] text-gray-400 uppercase tracking-wide font-medium">Students</p>
-                          <p className="text-xs font-semibold text-gray-700">{totalStudents.toLocaleString()}</p>
-                        </div>
-                      </>
-                    )}
-                  </div>
-
-                  {/* ── Action Buttons — desktop only (mobile shows them inline above) ── */}
-                  <div className="hidden sm:flex items-center gap-2 shrink-0">
-                    {effectiveCompleted ? (
-                      <>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleSolutionClick(test)}
-                          className="h-8 text-xs flex items-center gap-1 border-gray-300 bg-gray-100 text-gray-700 hover:border-primary hover:bg-primary/5 hover:text-primary"
-                        >
-                          <BookOpen className="h-3 w-3" />
-                          Solution
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleAnalysisClick(test)}
-                          className="h-8 text-xs flex items-center gap-1 border-gray-300 bg-gray-100 text-gray-700 hover:border-primary hover:bg-primary/5 hover:text-primary"
-                        >
-                          <BarChart3 className="h-3 w-3" />
-                          Analysis
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          title="Reattempt"
-                          className="h-8 w-8 p-0 border-gray-300 bg-gray-100 text-gray-700 hover:border-primary hover:bg-primary/5 hover:text-primary flex-shrink-0"
-                          onClick={() => {
-                            const currentPath = window.location.pathname;
-                            const url = `/student/test-window?category=${category}&examId=${examId}&testId=${test.testId}&returnUrl=${encodeURIComponent(currentPath)}`;
-                            stopTimerAndLaunchTest({ url, testName: test.testName });
-                          }}
-                        >
-                          <RotateCcw className="h-3 w-3" />
-                        </Button>
-                      </>
-                    ) : (
-                      <Button
-                        size="sm"
-                        className="h-8 text-xs font-semibold min-w-[96px]"
-                        variant={isLocked ? 'secondary' : 'default'}
-                        onClick={() => {
-                          if (isLocked) {
-                            alert('This test is locked. Please purchase the full package to unlock.');
-                            return;
-                          }
-                          const currentPath = window.location.pathname;
-                          const url = `/student/test-window?category=${category}&examId=${examId}&testId=${test.testId}&returnUrl=${encodeURIComponent(currentPath)}`;
-                          stopTimerAndLaunchTest({ url, testName: test.testName });
-                        }}
-                      >
-                        {isLocked ? (
-                          <span className="flex items-center gap-1.5"><Lock className="h-3 w-3" /> Locked</span>
-                        ) : effectiveInProgress ? 'Continue' : 'Start Test'}
-                      </Button>
-                    )}
-                  </div>
+                        <span className="text-[10px] font-medium text-gray-400">Rank</span>
+                      </div>
+                      <div className="flex flex-col items-center">
+                        <span className="text-[15px] font-black text-gray-900">{test.timeSpent ? Math.floor(test.timeSpent / 60) : 0}m</span>
+                        <span className="text-[10px] font-medium text-gray-400">Time</span>
+                      </div>
+                    </>
+                  )}
                 </div>
 
-                {/* ── Action Buttons — mobile only (below stats) ── */}
-                <div className="sm:hidden pt-3 mt-1 border-t border-gray-100">
+                {/* Right: CTA */}
+                <div className="flex items-center sm:justify-end gap-2 w-full sm:w-[220px] shrink-0 mt-2 sm:mt-0">
                   {effectiveCompleted ? (
-                    <div className="flex gap-2">
+                    <>
                       <Button
                         size="sm"
                         variant="outline"
+                        className="flex-1 sm:flex-none h-9 text-xs gap-1 border-gray-200 bg-white text-gray-700 hover:border-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 font-semibold"
                         onClick={() => handleSolutionClick(test)}
-                        className="flex-1 h-9 text-xs border-gray-300 bg-gray-100 text-gray-700 hover:border-primary hover:bg-primary/5 hover:text-primary shadow-sm"
                       >
-                        <BookOpen className="h-3.5 w-3.5 mr-1" />
+                        <BookOpen className="h-3.5 w-3.5" />
                         Solution
                       </Button>
                       <Button
                         size="sm"
                         variant="outline"
+                        className="flex-1 sm:flex-none h-9 text-xs gap-1 border-gray-200 bg-white text-gray-700 hover:border-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 font-semibold"
                         onClick={() => handleAnalysisClick(test)}
-                        className="flex-1 h-9 text-xs border-gray-300 bg-gray-100 text-gray-700 hover:border-primary hover:bg-primary/5 hover:text-primary shadow-sm"
                       >
-                        <BarChart3 className="h-3.5 w-3.5 mr-1" />
+                        <BarChart3 className="h-3.5 w-3.5" />
                         Analysis
                       </Button>
                       <Button
                         size="sm"
                         variant="outline"
-                        title="Reattempt"
-                        className="h-9 w-9 p-0 border-gray-300 bg-gray-100 text-gray-700 hover:border-primary hover:bg-primary/5 hover:text-primary flex-shrink-0 shadow-sm"
-                        onClick={() => {
-                          const currentPath = window.location.pathname;
-                          const url = `/student/test-window?category=${category}&examId=${examId}&testId=${test.testId}&returnUrl=${encodeURIComponent(currentPath)}`;
-                          stopTimerAndLaunchTest({ url, testName: test.testName });
-                        }}
+                        title="Leaderboard"
+                        className="h-9 w-9 p-0 border-gray-200 bg-white text-gray-700 hover:border-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 shrink-0"
+                        onClick={() => setSelectedTestForLeaderboard(test)}
                       >
-                        <RotateCcw className="h-3.5 w-3.5" />
+                        <Trophy className="h-4 w-4" />
                       </Button>
-                    </div>
+                    </>
                   ) : (
                     <Button
                       size="sm"
-                      className="w-full h-9 text-xs font-bold shadow-sm"
-                      variant={isLocked ? 'secondary' : 'default'}
+                      className={`
+                        flex-1 sm:flex-none sm:w-[120px] h-9 rounded-lg text-sm font-semibold
+                        flex items-center justify-center gap-1.5
+                        transition-all duration-150 active:scale-[0.98]
+                        ${isLocked
+                          ? 'bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200'
+                          : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm'
+                        }
+                      `}
                       onClick={() => {
                         if (isLocked) {
                           alert('This test is locked. Please purchase the full package to unlock.');
@@ -392,8 +317,15 @@ export const TestTypeGrid: React.FC<TestTypeGridProps> = ({
                       }}
                     >
                       {isLocked ? (
-                        <span className="flex items-center gap-1.5"><Lock className="h-3 w-3" /> Locked</span>
-                      ) : effectiveInProgress ? 'Continue' : 'Start Test'}
+                        <><Lock className="h-3.5 w-3.5" /> Locked</>
+                      ) : effectiveInProgress ? (
+                        'Continue'
+                      ) : (
+                        <>
+                          <Play className="h-3.5 w-3.5 fill-white text-white" />
+                          Start
+                        </>
+                      )}
                     </Button>
                   )}
                 </div>
@@ -457,14 +389,8 @@ export const TestTypeGrid: React.FC<TestTypeGridProps> = ({
           const cutoffFailed  = effectiveStatus === 'completed' && score < cutoff;
           const inProgress    = effectiveStatus === 'in-progress';
 
-          const cardBg    = cutoffCleared ? 'bg-green-50'
-                          : cutoffFailed  ? 'bg-red-50'
-                          : inProgress    ? 'bg-yellow-50'
-                          : 'bg-gray-50';
-          const cardBorder = cutoffCleared ? 'border-green-300'
-                           : cutoffFailed  ? 'border-red-300'
-                           : inProgress    ? 'border-yellow-300'
-                           : 'border-gray-300';
+          const cardBg     = 'bg-white';
+          const cardBorder = 'border-slate-300';
           // ────────────────────────────────────────────────────────────────
 
           return (
@@ -477,7 +403,7 @@ export const TestTypeGrid: React.FC<TestTypeGridProps> = ({
                 {/* ── Header: badge + title ── */}
                 <div className="flex items-center gap-4 mb-4">
                   <div
-                    className="shrink-0 w-10 h-10 rounded-full flex items-center justify-center text-white font-black text-base shadow bg-primary"
+                    className="shrink-0 w-10 h-10 rounded-full flex items-center justify-center text-slate-500 font-black text-base shadow-sm bg-slate-50 border-2 border-slate-300"
                   >
                     {idx + 1}
                   </div>
@@ -592,15 +518,11 @@ export const TestTypeGrid: React.FC<TestTypeGridProps> = ({
           <Button
             size="sm"
             variant="outline"
-            title="Reattempt"
-            className="h-9 w-9 p-0 border-gray-300 bg-gray-100 text-gray-700 hover:border-primary hover:bg-primary/5 hover:text-primary flex-shrink-0"
-            onClick={() => {
-              const currentPath = window.location.pathname;
-              const url = `/student/test-window?category=${category}&examId=${examId}&testId=${test.testId}&returnUrl=${encodeURIComponent(currentPath)}`;
-              stopTimerAndLaunchTest({ url, testName: test.testName });
-            }}
+            title="Leaderboard"
+            className="h-9 w-9 p-0 border-gray-300 bg-gray-100 text-gray-700 hover:border-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 flex-shrink-0"
+            onClick={() => setSelectedTestForLeaderboard(test)}
           >
-            <RotateCcw className="h-3.5 w-3.5" />
+            <Trophy className="h-4 w-4" />
           </Button>
         </div>
       ) : (
@@ -654,6 +576,24 @@ export const TestTypeGrid: React.FC<TestTypeGridProps> = ({
     />
   )
 }
+      {/* Leaderboard Modal */}
+      {selectedTestForLeaderboard && (
+        <LiveTestLeaderboardModal
+          test={{
+            id: parseInt(selectedTestForLeaderboard.testId) || Math.floor(Math.random() * 1000),
+            title: selectedTestForLeaderboard.testName,
+            questions: selectedTestForLeaderboard.totalQuestions ?? selectedTestForLeaderboard.maxScore ?? 100,
+            duration: selectedTestForLeaderboard.totalDuration ?? 60,
+            marks: selectedTestForLeaderboard.totalMarks ?? selectedTestForLeaderboard.maxScore ?? 100,
+            examDateTime: new Date()
+          }}
+          onClose={() => setSelectedTestForLeaderboard(null)}
+          userCompletion={{
+            score: selectedTestForLeaderboard.score ?? 0,
+            completedAt: new Date().toISOString()
+          }}
+        />
+      )}
     </div >
   );
 };

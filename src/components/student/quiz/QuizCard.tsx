@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import {
     Play, Lock, Calendar as CalendarIcon,
     Bookmark, Clock, Users,
-    BarChart3, RotateCcw, BookOpen
+    BarChart3, RotateCcw, BookOpen, Trophy
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ExtendedQuiz } from '@/types/quizTypes';
 import QuizLeaderboardModal from './QuizLeaderboardModal';
@@ -14,21 +15,16 @@ interface QuizCardProps {
     onStart: (quiz: ExtendedQuiz) => void;
     todayStr: string;
     index?: number;
+    viewMode?: 'grid' | 'list';
 }
 
-// Rotating accent colors for the top border / number badge
+// Grey accent for the top border / number badge
 const ACCENT_COLORS = [
-    { border: "#ef4444", light: "#fef2f2", text: "#dc2626" },
-    { border: "#f97316", light: "#fff7ed", text: "#ea580c" },
-    { border: "#22c55e", light: "#f0fdf4", text: "#16a34a" },
-    { border: "#06b6d4", light: "#ecfeff", text: "#0891b2" },
-    { border: "#8b5cf6", light: "#f5f3ff", text: "#7c3aed" },
-    { border: "#f59e0b", light: "#fffbeb", text: "#d97706" },
-    { border: "#ec4899", light: "#fdf2f8", text: "#db2777" },
-    { border: "#10b981", light: "#ecfdf5", text: "#059669" },
+    { border: "#cbd5e1", light: "#f8fafc", text: "#64748b" }, // slate-300, slate-50, slate-500
 ];
 
-const QuizCard: React.FC<QuizCardProps> = ({ quiz, onStart, todayStr, index = 0 }) => {
+const QuizCard: React.FC<QuizCardProps> = ({ quiz, onStart, todayStr, index = 0, viewMode = 'grid' }) => {
+    const navigate = useNavigate();
     const [showLeaderboard, setShowLeaderboard] = useState(false);
     const [bookmarked, setBookmarked] = useState(false);
 
@@ -58,6 +54,162 @@ const QuizCard: React.FC<QuizCardProps> = ({ quiz, onStart, todayStr, index = 0 
         : quiz.type === 'mini-test'       ? 'Mini Mock Test'
         : 'Daily Quiz';
 
+    if (viewMode === 'list') {
+        return (
+            <>
+                <div
+                    className={`
+                        bg-white rounded-xl border border-gray-200 shadow-sm
+                        hover:shadow-md hover:border-emerald-200
+                        transition-all duration-200
+                        flex flex-col sm:flex-row items-center gap-4 p-4
+                        ${isDisabled ? 'opacity-70' : ''}
+                    `}
+                    style={{ borderLeft: `4px solid ${accent.border}` }}
+                >
+                    {/* Left: Badge & Title */}
+                    <div className="flex items-center gap-4 flex-1 min-w-0 w-full">
+                         <span
+                             className="hidden sm:flex items-center justify-center w-10 h-10 rounded-full text-base font-black shadow-sm flex-shrink-0"
+                             style={{ background: accent.light, color: accent.text, border: `2px solid ${accent.border}` }}
+                         >
+                             {num}
+                         </span>
+                         <div className="flex-1 min-w-0">
+                             <div className="flex items-center gap-2">
+                                 <h3 className="font-extrabold text-[16px] text-gray-900 leading-tight truncate">
+                                     {quiz.title}
+                                 </h3>
+                                 <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 text-[10px] font-bold rounded uppercase tracking-wider shrink-0">
+                                     Free
+                                 </span>
+                             </div>
+                             <div className="flex items-center gap-3 mt-1">
+                                 <p className="text-xs font-medium text-gray-500">{quizTypeLabel}</p>
+                                 <div className="w-1 h-1 rounded-full bg-gray-300"></div>
+                                 <div className="flex items-center gap-1 text-xs text-gray-500">
+                                     <Users className="h-3.5 w-3.5 text-gray-400 flex-shrink-0" />
+                                     <span className="font-medium">{totalAttempts.toLocaleString()}</span>
+                                 </div>
+                             </div>
+                         </div>
+                    </div>
+
+                    {/* Middle: Stats */}
+                    <div className="grid grid-cols-3 items-center justify-items-center gap-2 sm:px-2 sm:border-x border-gray-100 w-full sm:w-[280px] shrink-0 py-1">
+                        {!isCompleted ? (
+                            <>
+                                <div className="flex flex-col items-center">
+                                    <span className="text-[15px] font-black text-gray-900">{quiz.questions}</span>
+                                    <span className="text-[10px] font-medium text-gray-400">Questions</span>
+                                </div>
+                                <div className="flex flex-col items-center">
+                                    <span className="text-[15px] font-black text-gray-900">{totalMarks}</span>
+                                    <span className="text-[10px] font-medium text-gray-400">Marks</span>
+                                </div>
+                                <div className="flex flex-col items-center">
+                                    <span className="text-[15px] font-black text-gray-900">{quiz.duration}</span>
+                                    <span className="text-[10px] font-medium text-gray-400">Min</span>
+                                </div>
+                            </>
+                        ) : (
+                            <>
+                                <div className="flex flex-col items-center">
+                                    <div className="flex items-baseline gap-0.5">
+                                        <span className="text-[15px] font-black text-gray-900">{yourMarks}</span>
+                                        <span className="text-[10px] font-medium text-gray-400">/{totalMarks}</span>
+                                    </div>
+                                    <span className="text-[10px] font-medium text-gray-400">Score</span>
+                                </div>
+                                <div className="flex flex-col items-center">
+                                    <div className="flex items-baseline gap-0.5">
+                                        <span className="text-[15px] font-black text-gray-900">{yourRank}</span>
+                                        <span className="text-[10px] font-medium text-gray-400">/{totalAttempts > 0 ? totalAttempts : '—'}</span>
+                                    </div>
+                                    <span className="text-[10px] font-medium text-gray-400">Rank</span>
+                                </div>
+                                <div className="flex flex-col items-center">
+                                    <span className="text-[15px] font-black text-gray-900">{timeSpent}m</span>
+                                    <span className="text-[10px] font-medium text-gray-400">Time</span>
+                                </div>
+                            </>
+                        )}
+                    </div>
+
+                    {/* Right: CTA */}
+                    <div className="flex items-center sm:justify-end gap-2 w-full sm:w-[220px] shrink-0 mt-2 sm:mt-0">
+                        {isCompleted ? (
+                            <>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="flex-1 sm:flex-none h-9 text-xs gap-1 border-gray-200 bg-white text-gray-700 hover:border-primary hover:bg-primary/5 hover:text-primary font-semibold"
+                                    onClick={() =>
+                                        window.open(
+                                            `/student/solution-viewer?quizId=${quiz.id}&title=${encodeURIComponent(quiz.title)}&subject=${encodeURIComponent(quiz.subject)}&duration=${quiz.duration}&questions=${quiz.questions}`,
+                                            '_blank',
+                                            'width=1280,height=900,menubar=no,toolbar=no,location=no,status=no'
+                                        )
+                                    }
+                                >
+                                    <BookOpen className="h-3.5 w-3.5" /> Solution
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="flex-1 sm:flex-none h-9 text-xs gap-1 border-gray-200 bg-white text-gray-700 hover:border-primary hover:bg-primary/5 hover:text-primary font-semibold"
+                                    onClick={() => navigate('/student/test-analysis')}
+                                >
+                                    <BarChart3 className="h-3.5 w-3.5" /> Analysis
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    title="Leaderboard"
+                                    className="h-9 w-9 p-0 border-gray-200 bg-white text-gray-700 hover:border-primary hover:bg-primary/5 hover:text-primary shrink-0"
+                                    onClick={() => setShowLeaderboard(true)}
+                                >
+                                    <Trophy className="h-4 w-4" />
+                                </Button>
+                            </>
+                        ) : (
+                            <button
+                                onClick={() => !isDisabled && onStart(quiz)}
+                                disabled={isDisabled}
+                                className={`
+                                    flex-1 sm:flex-none sm:w-[120px] h-9 rounded-lg text-sm font-semibold
+                                    flex items-center justify-center gap-1.5
+                                    transition-all duration-150 active:scale-[0.98]
+                                    ${isDisabled
+                                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200'
+                                        : 'bg-primary hover:bg-primary/90 text-white shadow-sm'
+                                    }
+                                `}
+                            >
+                                {isLocked ? (
+                                    <><Lock className="h-3.5 w-3.5" /> Locked</>
+                                ) : isFuture ? (
+                                    <><CalendarIcon className="h-3.5 w-3.5" /> Soon</>
+                                ) : (
+                                    <>
+                                        <Play className="h-3.5 w-3.5 fill-white text-white" />
+                                        Start
+                                    </>
+                                )}
+                            </button>
+                        )}
+                    </div>
+                </div>
+
+                <QuizLeaderboardModal
+                    isOpen={showLeaderboard}
+                    onClose={() => setShowLeaderboard(false)}
+                    leaderboard={leaderboard}
+                />
+            </>
+        );
+    }
+
     return (
         <>
             <div
@@ -81,16 +233,9 @@ const QuizCard: React.FC<QuizCardProps> = ({ quiz, onStart, todayStr, index = 0 
                         >
                             {num}
                         </span>
-                        <button
-                            onClick={() => setBookmarked(b => !b)}
-                            className="text-gray-300 hover:text-gray-500 transition-colors p-0.5"
-                            title="Bookmark"
-                        >
-                            <Bookmark
-                                className="h-4 w-4"
-                                style={bookmarked ? { fill: accent.border, color: accent.border } : {}}
-                            />
-                        </button>
+                        <span className="px-2 py-1 bg-emerald-100 text-emerald-700 text-[10px] font-bold rounded uppercase tracking-wider">
+                            Free
+                        </span>
                     </div>
 
                     {/* Title + type */}
@@ -172,18 +317,18 @@ const QuizCard: React.FC<QuizCardProps> = ({ quiz, onStart, todayStr, index = 0 
                                 variant="outline"
                                 size="sm"
                                 className="flex-1 h-9 text-xs gap-1 border-gray-300 bg-gray-100 text-gray-700 hover:border-primary hover:bg-primary/5 hover:text-primary font-semibold"
-                                onClick={() => setShowLeaderboard(true)}
+                                onClick={() => navigate('/student/test-analysis')}
                             >
                                 <BarChart3 className="h-3.5 w-3.5" /> Analysis
                             </Button>
                             <Button
                                 variant="outline"
                                 size="sm"
-                                title="Retry"
+                                title="Leaderboard"
                                 className="h-9 w-9 p-0 border-gray-300 bg-gray-100 text-gray-700 hover:border-primary hover:bg-primary/5 hover:text-primary flex-shrink-0"
-                                onClick={() => onStart(quiz)}
+                                onClick={() => setShowLeaderboard(true)}
                             >
-                                <RotateCcw className="h-3.5 w-3.5" />
+                                <Trophy className="h-4 w-4" />
                             </Button>
                         </div>
                     ) : (

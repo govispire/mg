@@ -19,6 +19,7 @@ export const useTestCreationForm = (onClose: () => void) => {
     passingMarks: 35,
     negativeMarking: false,
     testType: 'prelims',
+    isFree: false,
     sections: [
       { name: 'General Awareness', questions: 25, marks: 25 }
     ]

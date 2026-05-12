@@ -903,7 +903,7 @@ const ExamDetail = () => {
 
       <Card className="overflow-hidden" style={{ borderTop: `3px solid ${theme.borderColor}` }}>
         <Tabs defaultValue="prelims" value={activeTab} onValueChange={setActiveTab}>
-          <div className="bg-gray-50 p-3 sm:p-4 border-b">
+          <div className="bg-slate-50 p-3 sm:p-4 border-b">
             {/* Gradient top stripe */}
             <div className={`h-0.5 w-full bg-gradient-to-r ${theme.gradientClass} mb-3 rounded-full opacity-60`} />
             {/* Main Tabs — pill style matching dashboard */}
@@ -999,7 +999,7 @@ const ExamDetail = () => {
             )}
           </div>
 
-          <div className="p-4 sm:p-5">
+          <div className="p-4 sm:p-5 bg-slate-50">
             {/* Prelims / Mains / Live tabs */}
             {['prelims', 'mains', 'live'].map((tabVal) => (
               <TabsContent key={tabVal} value={tabVal} className="mt-0">

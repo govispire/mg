@@ -1,4 +1,4 @@
-﻿
+
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
@@ -67,11 +67,11 @@ const menuItems = [
     icon: Newspaper,
   },
   {
-    title: 'Daily Free Quizzes',
+    title: 'Free Quizzes',
     url: '/student/daily-quizzes',
     icon: Gift,
     isHighlighted: true,
-    badge: 'TODAY',
+    badge: 'NEW',
   },
 
   {

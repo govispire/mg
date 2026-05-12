@@ -181,29 +181,29 @@ const LiveTestLeaderboardModal: React.FC<LiveTestLeaderboardModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
-      <div className="bg-white rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden shadow-2xl">
+      <div className="bg-white rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden shadow-2xl flex flex-col">
         {/* Header */}
-        <div className="bg-gradient-to-r from-slate-800 to-slate-900 text-white p-4 sm:p-6">
+        <div className="bg-white border-b-2 border-slate-100 p-4 sm:p-6">
           <div className="flex items-start justify-between">
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-2">
-                <Trophy className="h-5 w-5 sm:h-6 sm:w-6" />
-                <Badge className="bg-white/20 text-white text-xs font-semibold border-0">
+                <Trophy className="h-5 w-5 sm:h-6 sm:w-6 text-emerald-600" />
+                <Badge className="bg-emerald-50 text-emerald-700 text-xs font-semibold border-0">
                   LIVE TEST LEADERBOARD
                 </Badge>
                 {/* Live indicator */}
                 {new Date() >= test.examDateTime && new Date() <= new Date(test.examDateTime.getTime() + test.duration * 60000) && (
-                  <Badge className="bg-red-500 text-white text-xs font-semibold border-0 flex items-center gap-1">
+                  <Badge className="bg-red-50 text-red-600 text-xs font-semibold border border-red-200 flex items-center gap-1">
                     <span className="relative flex h-2 w-2">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75" />
-                      <span className="relative inline-flex rounded-full h-2 w-2 bg-white" />
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500" />
                     </span>
                     LIVE
                   </Badge>
                 )}
               </div>
-              <h2 className="text-base sm:text-lg font-bold mb-1 line-clamp-2">{test.title}</h2>
-              <div className="flex items-center gap-4 text-xs sm:text-sm text-white/90">
+              <h2 className="text-base sm:text-xl font-black text-slate-900 mb-1 line-clamp-2">{test.title}</h2>
+              <div className="flex items-center gap-4 text-xs sm:text-sm text-slate-500 font-medium mt-2">
                 <div className="flex items-center gap-1">
                   <Target className="h-4 w-4" />
                   <span>{test.questions} Questions</span>
@@ -221,7 +221,7 @@ const LiveTestLeaderboardModal: React.FC<LiveTestLeaderboardModalProps> = ({
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 text-white hover:bg-white/20 shrink-0"
+              className="h-8 w-8 text-slate-400 hover:bg-slate-100 hover:text-slate-600 shrink-0"
               onClick={onClose}
             >
               <X className="h-5 w-5" />
@@ -231,33 +231,33 @@ const LiveTestLeaderboardModal: React.FC<LiveTestLeaderboardModalProps> = ({
 
         {/* User Stats Summary */}
         {userEntry && (
-          <div className="bg-gradient-to-r from-emerald-50 to-emerald-100/50 border-b-2 border-emerald-200 p-4 sm:p-5">
+          <div className="bg-slate-50 border-b-2 border-slate-100 p-4 sm:p-5">
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-white font-bold text-lg sm:text-xl shadow-lg">
+              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 font-bold text-lg sm:text-xl shadow-sm">
                 {userEntry.userName[0]}
               </div>
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-1">
                   <Crown className="h-4 w-4 text-emerald-600" />
-                  <h3 className="font-bold text-base sm:text-lg text-emerald-800">Your Performance</h3>
+                  <h3 className="font-bold text-base sm:text-lg text-slate-800">Your Performance</h3>
                 </div>
-                <p className="text-xs sm:text-sm text-emerald-700">
-                  You ranked <span className="font-black text-lg sm:text-xl">#{userEntry.rank}</span> out of {leaderboard.length.toLocaleString()}+ participants
+                <p className="text-xs sm:text-sm text-slate-500 font-medium">
+                  You ranked <span className="font-black text-emerald-600 text-base sm:text-lg">#{userEntry.rank}</span> out of {leaderboard.length.toLocaleString()}+ participants
                 </p>
               </div>
             </div>
             <div className="grid grid-cols-3 gap-3">
-              <div className="bg-white rounded-lg p-3 text-center border-2 border-emerald-200">
-                <div className="text-2xl sm:text-3xl font-black text-emerald-600">{userEntry.score}%</div>
-                <div className="text-[10px] sm:text-xs text-slate-600 font-medium">Score</div>
+              <div className="bg-white rounded-xl p-3 text-center border-2 border-slate-100 shadow-sm">
+                <div className="text-xl sm:text-2xl font-black text-slate-900">{userEntry.score}%</div>
+                <div className="text-[10px] sm:text-xs text-slate-400 font-bold uppercase tracking-wider mt-1">Score</div>
               </div>
-              <div className="bg-white rounded-lg p-3 text-center border-2 border-emerald-200">
-                <div className="text-2xl sm:text-3xl font-black text-emerald-600">#{userEntry.rank}</div>
-                <div className="text-[10px] sm:text-xs text-slate-600 font-medium">Rank</div>
+              <div className="bg-white rounded-xl p-3 text-center border-2 border-slate-100 shadow-sm">
+                <div className="text-xl sm:text-2xl font-black text-slate-900">#{userEntry.rank}</div>
+                <div className="text-[10px] sm:text-xs text-slate-400 font-bold uppercase tracking-wider mt-1">Rank</div>
               </div>
-              <div className="bg-white rounded-lg p-3 text-center border-2 border-emerald-200">
-                <div className="text-2xl sm:text-3xl font-black text-emerald-600">{userEntry.accuracy}%</div>
-                <div className="text-[10px] sm:text-xs text-slate-600 font-medium">Accuracy</div>
+              <div className="bg-white rounded-xl p-3 text-center border-2 border-slate-100 shadow-sm">
+                <div className="text-xl sm:text-2xl font-black text-slate-900">{userEntry.accuracy}%</div>
+                <div className="text-[10px] sm:text-xs text-slate-400 font-bold uppercase tracking-wider mt-1">Accuracy</div>
               </div>
             </div>
           </div>
@@ -303,8 +303,8 @@ const LiveTestLeaderboardModal: React.FC<LiveTestLeaderboardModalProps> = ({
         </div>
 
         {/* Leaderboard List */}
-        <div className="overflow-y-auto max-h-[400px] sm:max-h-[500px] p-4 sm:p-6">
-          <div className="space-y-2">
+        <div className="overflow-y-auto flex-1 min-h-0">
+          <div className="space-y-2 p-4 sm:p-6">
             {entriesWithRanks.slice(0, 20).map((entry, idx) => {
               const isTop3 = idx < 3;
               const isCurrentUser = entry.isCurrentUser;
@@ -315,10 +315,10 @@ const LiveTestLeaderboardModal: React.FC<LiveTestLeaderboardModalProps> = ({
                   key={entry.userId}
                   className={`relative rounded-xl border-2 p-3 sm:p-4 transition-all hover:shadow-md ${
                     isCurrentUser
-                      ? 'bg-gradient-to-r from-emerald-50 to-emerald-100/50 border-emerald-300 shadow-md'
+                      ? 'bg-slate-50 border-emerald-200 shadow-sm'
                       : isTop3
-                      ? 'bg-gradient-to-r from-amber-50/50 to-white border-amber-200'
-                      : 'bg-white border-slate-200'
+                      ? 'bg-slate-50/50 border-slate-200'
+                      : 'bg-white border-slate-100 hover:border-slate-200'
                   }`}
                 >
                   <div className="flex items-center gap-3">
@@ -367,14 +367,29 @@ const LiveTestLeaderboardModal: React.FC<LiveTestLeaderboardModalProps> = ({
                       </div>
                     </div>
 
-                    {/* Score Badge */}
-                    <div className="shrink-0">
-                      <div className={`text-xl sm:text-2xl font-black ${
-                        entry.score >= 80 ? 'text-emerald-600' :
-                        entry.score >= 60 ? 'text-amber-600' : 'text-slate-600'
-                      }`}>
-                        {entry.score}%
-                      </div>
+                    {/* Primary Metric Badge */}
+                    <div className="shrink-0 text-right">
+                      {activeTab === 'toppers' && (
+                        <div className={`text-xl sm:text-2xl font-black ${
+                          entry.score >= 80 ? 'text-emerald-600' :
+                          entry.score >= 60 ? 'text-amber-600' : 'text-slate-600'
+                        }`}>
+                          {entry.score}%
+                        </div>
+                      )}
+                      {activeTab === 'fastest' && (
+                        <div className="text-xl sm:text-2xl font-black text-blue-600">
+                          {formatTime(entry.timeTaken)}
+                        </div>
+                      )}
+                      {activeTab === 'accuracy' && (
+                        <div className={`text-xl sm:text-2xl font-black ${
+                          entry.accuracy >= 90 ? 'text-emerald-600' :
+                          entry.accuracy >= 75 ? 'text-amber-600' : 'text-slate-600'
+                        }`}>
+                          {entry.accuracy}%
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
