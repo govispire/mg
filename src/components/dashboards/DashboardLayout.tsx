@@ -59,11 +59,10 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ role, basePath }) => 
           `}
           style={{ width: SIDEBAR_EXPANDED_WIDTH }}
         >
-          <Sidebar
+        <Sidebar
             role={role}
             basePath={basePath}
             collapsed={false}
-            onToggle={() => setMobileOpen(false)}
           />
         </div>
 
@@ -85,9 +84,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ role, basePath }) => 
                 >
                   {mobileOpen ? <X className="h-4 w-4 sm:h-5 sm:w-5" /> : <Menu className="h-4 w-4 sm:h-5 sm:w-5" />}
                 </Button>
-                <div className="hidden md:block">
-                  {role === 'student' && <CategorySelector />}
-                </div>
+              {role === 'student' && <CategorySelector />}
               </div>
 
               {/* Right: Bell + Profile */}

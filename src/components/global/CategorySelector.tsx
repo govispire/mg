@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
@@ -278,10 +278,29 @@ export const CategorySelector: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [filter, setFilter] = useState<FilterType>('all');
 
-  // Merge catalog categories (superadmin-managed) with hardcoded list,
-  // so newly created categories appear instantly in the selector.
+  // Build a visibility map from the catalog (admin-managed).
+  // If a category exists in the catalog, use its isVisible flag;
+  // if it's not in the catalog yet, default to visible.
+  const catalogVisibilityMap = useMemo<Map<string, boolean>>(() => {
+    const map = new Map<string, boolean>();
+    catalog.forEach(c => map.set(c.id, c.isVisible));
+    return map;
+  }, [catalog]);
+
+  // Merge catalog categories (superadmin-managed) with hardcoded list.
+  // Static categories are included only if they are visible in the catalog.
+  // Newly created catalog categories that aren't in the static list are appended.
   const allCategories = useMemo<ExamCategory[]>(() => {
     const staticIds = new Set(staticAllCategories.map(c => c.id));
+
+    // Filter static categories: show only those visible in catalog (or not yet tracked)
+    const visibleStatics = staticAllCategories.filter(c => {
+      const catalogVisible = catalogVisibilityMap.get(c.id);
+      // If catalog has an entry, respect its isVisible; otherwise show by default
+      return catalogVisible === undefined ? true : catalogVisible;
+    });
+
+    // Add catalog-only categories (not in static list) that are visible
     const catalogExtras: ExamCategory[] = catalog
       .filter(c => c.isVisible && !staticIds.has(c.id))
       .map(c => ({
@@ -295,8 +314,20 @@ export const CategorySelector: React.FC = () => {
         isCombo: false,
         isPopular: c.isPopular,
       } as RegularCategory));
-    return [...staticAllCategories, ...catalogExtras];
-  }, [catalog]);
+
+    return [...visibleStatics, ...catalogExtras];
+  }, [catalog, catalogVisibilityMap]);
+
+  // When categories become hidden, automatically remove them from selectedCategories
+  // so the header button and "Selected Categories" badge stay in sync.
+  useEffect(() => {
+    if (selectedCategories.length === 0) return;
+    const visibleIds = new Set(allCategories.map(c => c.id));
+    const filtered = selectedCategories.filter(id => visibleIds.has(id));
+    if (filtered.length !== selectedCategories.length) {
+      setSelectedCategories(filtered);
+    }
+  }, [allCategories, selectedCategories, setSelectedCategories]);
 
   const filteredCategories = allCategories.filter(category => {
     if (filter === 'regular') return !category.isCombo;

@@ -180,11 +180,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.removeItem('userProfile');
       localStorage.removeItem('studentPresence');
       localStorage.removeItem('quizCompletions');
+      localStorage.removeItem('globalSelectedExamCategories');
 
       // Dispatch events to notify useLocalStorage hooks
       window.dispatchEvent(new CustomEvent('local-storage-update', { detail: { key: 'userProfile', value: null } }));
       window.dispatchEvent(new CustomEvent('local-storage-update', { detail: { key: 'studentPresence', value: null } }));
       window.dispatchEvent(new CustomEvent('local-storage-update', { detail: { key: 'quizCompletions', value: null } }));
+      window.dispatchEvent(new CustomEvent('local-storage-update', { detail: { key: 'globalSelectedExamCategories', value: [] } }));
 
       setUser(userWithoutPassword);
       localStorage.setItem('user', JSON.stringify(userWithoutPassword));
@@ -230,11 +232,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.removeItem('userProfile');
     localStorage.removeItem('studentPresence');
     localStorage.removeItem('quizCompletions');
+    localStorage.removeItem('globalSelectedExamCategories');
 
     // Dispatch events to notify useLocalStorage hooks
     window.dispatchEvent(new CustomEvent('local-storage-update', { detail: { key: 'userProfile', value: null } }));
     window.dispatchEvent(new CustomEvent('local-storage-update', { detail: { key: 'studentPresence', value: null } }));
     window.dispatchEvent(new CustomEvent('local-storage-update', { detail: { key: 'quizCompletions', value: null } }));
+    window.dispatchEvent(new CustomEvent('local-storage-update', { detail: { key: 'globalSelectedExamCategories', value: [] } }));
 
     toast({
       title: "Logged out",

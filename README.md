@@ -1,34 +1,36 @@
-<<<<<<< HEAD
-# Welcome to your Lovable project
-https://jovial-liger-a071ab.netlify.app/
-## Project info
+# Examerit — Smart Exam Preparation Platform
 
-**URL**: https://lovable.dev/projects/a2a6c414-12cd-436d-b92f-0e3273a4ef5b
+A modern exam preparation platform with daily quizzes, live mock tests, and performance analytics.
 
-## How can I edit this code?
+## Tech Stack
 
-There are several ways of editing your application.
+- **Vite** — fast build tool
+- **React** + **TypeScript**
+- **Tailwind CSS**
+- **shadcn-ui** — component library
+- **Supabase** — backend & auth
 
-**Use Lovable**
+## Getting Started
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/a2a6c414-12cd-436d-b92f-0e3273a4ef5b) and start prompting.
+Make sure you have Node.js & npm installed.
 
-Changes made via Lovable will be committed automatically to this repo.
+```bash
+# Install dependencies
+npm install
 
-**Use your preferred IDE**
+# Start dev server
+npm run dev
+```
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+## Project Structure
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
+```
+src/
+  app/          # App-level config (providers, router)
+  components/   # Shared UI components
+  features/     # Feature modules
+  pages/        # Route-level pages
+  services/     # API / Supabase service layer
+  hooks/        # Shared custom hooks
+  shared/       # Utilities, types, constants
+```

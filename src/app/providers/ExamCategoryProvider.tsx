@@ -16,14 +16,29 @@ const ExamCategoryContext = createContext<ExamCategoryContextType | undefined>(u
 export const ExamCategoryProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [selectedCategories, setStoredCategories] = useLocalStorage<string[]>('globalSelectedExamCategories', []);
 
-  // Sync with exam category selection data on mount
+  // Sync with exam category selection data on mount.
+  // Priority: globalSelectedExamCategories (already set) → userProfile.examCategory → examCategorySelection
   useEffect(() => {
+    if (selectedCategories.length > 0) return; // already hydrated, skip
+
+    // Try userProfile first (set by signup form)
+    const profileRaw = localStorage.getItem('userProfile');
+    if (profileRaw) {
+      try {
+        const profile = JSON.parse(profileRaw);
+        if (profile?.examCategory && profile.examCategory !== 'others') {
+          setStoredCategories([profile.examCategory]);
+          return;
+        }
+      } catch {}
+    }
+
+    // Fallback: legacy examCategorySelection key
     const examSelectionData = localStorage.getItem('examCategorySelection');
-    if (examSelectionData && selectedCategories.length === 0) {
+    if (examSelectionData) {
       try {
         const parsedData = JSON.parse(examSelectionData);
         if (parsedData?.selectedCategories?.length > 0) {
-          console.log('Syncing global categories with exam selection data:', parsedData.selectedCategories);
           setStoredCategories(parsedData.selectedCategories);
         }
       } catch (error) {

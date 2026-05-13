@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { toast } from 'sonner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -182,6 +182,20 @@ const AuthModal = ({ activeTab, setActiveTab, selectedExam, onClose, onRegistrat
       state: data.state
     };
     setUserProfile(profileData);
+
+    // Sync the chosen exam category to the global category context so the
+    // top-bar CategorySelector immediately reflects the student's selection.
+    // REPLACE any existing selection (e.g. from a previous session).
+    if (data.examCategory && data.examCategory !== 'others') {
+      const updated = [data.examCategory];
+      localStorage.setItem('globalSelectedExamCategories', JSON.stringify(updated));
+      // Notify useLocalStorage hooks in-tab
+      window.dispatchEvent(
+        new CustomEvent('local-storage-update', {
+          detail: { key: 'globalSelectedExamCategories', value: updated },
+        })
+      );
+    }
 
     // Hide compulsory form and show welcome message
     setShowCompulsoryForm(false);

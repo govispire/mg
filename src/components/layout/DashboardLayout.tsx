@@ -63,7 +63,6 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ role, basePath }) => 
           role={role}
           basePath={basePath}
           collapsed={false}
-          onToggle={() => setMobileOpen(false)}
         />
       </div>
 

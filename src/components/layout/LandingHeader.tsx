@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
@@ -59,6 +59,20 @@ const LandingHeader = () => {
       avatar: data.avatar
     };
     setUserProfile(profileData);
+
+    // Sync the chosen exam category to the global category context so the
+    // top-bar CategorySelector immediately reflects the student's selection.
+    // REPLACE any existing selection (e.g. from a previous session).
+    if (data.examCategory && data.examCategory !== 'others') {
+      const updated = [data.examCategory];
+      localStorage.setItem('globalSelectedExamCategories', JSON.stringify(updated));
+      // Notify useLocalStorage hooks in-tab
+      window.dispatchEvent(
+        new CustomEvent('local-storage-update', {
+          detail: { key: 'globalSelectedExamCategories', value: updated },
+        })
+      );
+    }
 
     setShowCompulsoryForm(false);
     setShowWelcomeMessage(true);

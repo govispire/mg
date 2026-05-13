@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import { CalendarIcon, User, Shield, UserCheck, Crown, Building, CheckCircle2, F
 import { format } from "date-fns";
 import { useAuth, UserRole } from '@/app/providers';
 import { examCategories, getExamsByCategory } from '@/data/examData';
+import { useExamCatalog } from '@/hooks/useExamCatalog';
 import { indiaStates } from '@/data/indiaStates';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { cn } from '@/lib/utils';
@@ -50,6 +51,19 @@ const AVATAR_PRESETS = [
 ];
 
 const CompulsoryFormModal = ({ open, onOpenChange, username, onComplete, initialData, onInstantUpdate, role }: CompulsoryFormModalProps) => {
+    const { catalog } = useExamCatalog();
+
+    // Build a visibility map from the admin-managed catalog and filter the static list.
+    // Categories hidden in TestCatalogManager will not appear here.
+    const visibleCategories = useMemo(() => {
+        const visibilityMap = new Map(catalog.map(c => [c.id, c.isVisible]));
+        return examCategories.filter(cat => {
+            const catalogVisible = visibilityMap.get(cat.id);
+            // If not tracked in catalog yet, show by default
+            return catalogVisible === undefined ? true : catalogVisible;
+        });
+    }, [catalog]);
+
     const [examCategory, setExamCategory] = useState(initialData?.examCategory || 'banking');
     const [customExamCategory, setCustomExamCategory] = useState(initialData?.customExamCategory || '');
     const [targetExam, setTargetExam] = useState(initialData?.targetExam || '');
@@ -223,7 +237,7 @@ const CompulsoryFormModal = ({ open, onOpenChange, username, onComplete, initial
                                             <SelectValue placeholder="Choose exam category" />
                                         </SelectTrigger>
                                         <SelectContent className="max-h-[300px] bg-white border shadow-lg z-50">
-                                            {examCategories.map((category) => (
+                                            {visibleCategories.map((category) => (
                                                 <SelectItem key={category.id} value={category.id} className="text-base py-3">
                                                     {category.name}
                                                 </SelectItem>
