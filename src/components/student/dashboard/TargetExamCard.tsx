@@ -3,7 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import {
   PlayCircle, BookOpen, Brain, Calendar, ChevronLeft, ChevronRight,
   ExternalLink, HelpCircle, Users, Trophy, FileText, Zap,
+  List, MoreVertical, RefreshCw, Trash2, UserCog, ArrowLeft, ArrowRight, Plus
 } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { ChangeTargetDrawer } from './ChangeTargetDrawer';
+import { UpdateExamDateModal, ChangePriorityModal, RemoveTargetModal, ViewAllTargetsModal, KeepAsSecondaryModal } from './TargetExamModals';
 import { getTargetExamRoute } from '@/utils/targetExamRoute';
 import { differenceInDays } from 'date-fns';
 import { getActiveAds, recordClick, recordImpression, getSlideDuration, AdBanner } from '@/data/adsStore';
@@ -74,10 +78,43 @@ const TargetExamCard: React.FC<TargetExamCardProps> = ({
   liveOverallPct,
 }) => {
   const navigate = useNavigate();
-  const meta = getExamMeta(targetExam);
-  const mockRoute = getTargetExamRoute(targetExam);
+  
+  const [targets, setTargets] = useState([
+    { exam: targetExam, category: examCategory, type: 'Primary Target' }
+  ]);
+  const [activeIndex, setActiveIndex] = useState(0);
+  
+  const currentTarget = targets[activeIndex] || targets[0];
+  const meta = getExamMeta(currentTarget.exam);
+  const mockRoute = getTargetExamRoute(currentTarget.exam);
+  
   const [weaknessOpen, setWeaknessOpen] = useState(false);
   const [howToStartOpen, setHowToStartOpen] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [viewAllOpen, setViewAllOpen] = useState(false);
+  const [updateDateOpen, setUpdateDateOpen] = useState(false);
+  const [changePriorityOpen, setChangePriorityOpen] = useState(false);
+  const [removeTargetOpen, setRemoveTargetOpen] = useState(false);
+  const [keepSecondaryOpen, setKeepSecondaryOpen] = useState(false);
+  const [pendingNewTarget, setPendingNewTarget] = useState<any>(null);
+
+  const makePrimary = () => {
+    setTargets(prev => {
+      const newTargets = [...prev];
+      const primaryIdx = newTargets.findIndex(t => t.type === 'Primary Target');
+      if (primaryIdx !== -1 && primaryIdx !== activeIndex) {
+        newTargets[primaryIdx].type = 'Secondary Target';
+        newTargets[activeIndex].type = 'Primary Target';
+        
+        // Swap positions so Primary is always at index 0
+        const temp = newTargets[primaryIdx];
+        newTargets[primaryIdx] = newTargets[activeIndex];
+        newTargets[activeIndex] = temp;
+      }
+      return newTargets;
+    });
+    setActiveIndex(0);
+  };
 
   // Days left
   const daysLeft = (() => {
@@ -158,21 +195,109 @@ const TargetExamCard: React.FC<TargetExamCardProps> = ({
   };
 
   return (
-    <div className="flex flex-col md:flex-row bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+    <div className="flex flex-col gap-4">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <h2 className="text-xl font-bold text-slate-900">{currentTarget.type}</h2>
+            <span className="text-[10px] font-bold text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full">{activeIndex + 1}/{targets.length}</span>
+          </div>
+          <p className="text-sm text-slate-500">Your focus exam</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <button 
+            className="hidden sm:flex items-center text-slate-700 h-9 px-3 rounded-lg border border-slate-200 font-semibold text-sm hover:bg-slate-50" 
+            onClick={() => setViewAllOpen(true)}
+          >
+            <List className="w-4 h-4 mr-2" /> View All Targets
+          </button>
+          <button 
+            onClick={() => setActiveIndex(p => Math.max(0, p - 1))}
+            disabled={activeIndex === 0}
+            className="flex items-center justify-center h-9 w-9 text-slate-700 rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+          <button 
+            onClick={() => setActiveIndex(p => Math.min(targets.length - 1, p + 1))}
+            disabled={activeIndex === targets.length - 1}
+            className="flex items-center justify-center h-9 w-9 text-slate-700 rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
 
-      {/* ══ LEFT PANEL ══ */}
+      <div className="flex flex-col md:flex-row bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+
+        {/* ══ LEFT PANEL ══ */}
       <div className="flex-1 p-4 sm:p-5 flex flex-col gap-4">
 
         {/* Row 1: Identity + Progress Rings */}
-        <div className="flex flex-col sm:flex-row sm:items-start gap-6">
+        <div className="flex flex-col sm:flex-row sm:items-start gap-6 relative">
+          
           <div className="flex-1">
-            <div className="text-[10px] font-extrabold text-primary uppercase tracking-widest mb-2">Target Examination</div>
+            <div className="flex items-center justify-between mb-3">
+              <div className="inline-flex items-center px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-600 font-extrabold text-[9px] uppercase tracking-widest">
+                {currentTarget.type}
+              </div>
+              
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="h-8 w-8 rounded-lg hover:bg-slate-100 flex items-center justify-center text-slate-500 absolute -top-1 -right-1 sm:-top-2 sm:-right-2">
+                    <MoreVertical className="w-4 h-4" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48 rounded-xl p-1 shadow-lg border-slate-100 z-50">
+                  {currentTarget.type === 'Primary Target' ? (
+                    <>
+                      {targets.length < 3 && (
+                        <DropdownMenuItem onSelect={(e) => { e.preventDefault(); setDrawerOpen(true); }} className="gap-2 py-2.5 cursor-pointer font-medium text-[#16a34a]">
+                          <Plus className="w-4 h-4 text-[#16a34a]" /> Add Target Exam
+                        </DropdownMenuItem>
+                      )}
+                      <DropdownMenuItem onSelect={(e) => { e.preventDefault(); setDrawerOpen(true); }} className="gap-2 py-2.5 cursor-pointer font-medium text-slate-700">
+                        <RefreshCw className="w-4 h-4 text-slate-500" /> Change Target
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onSelect={(e) => { e.preventDefault(); setUpdateDateOpen(true); }} className="gap-2 py-2.5 cursor-pointer font-medium text-slate-700">
+                        <Calendar className="w-4 h-4 text-slate-500" /> Update Exam Date
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onSelect={(e) => { e.preventDefault(); setChangePriorityOpen(true); }} className="gap-2 py-2.5 cursor-pointer font-medium text-slate-700">
+                        <UserCog className="w-4 h-4 text-slate-500" /> Change Priority
+                      </DropdownMenuItem>
+                      <div className="h-px bg-slate-100 my-1 mx-2" />
+                      <DropdownMenuItem 
+                        disabled={targets.length === 1}
+                        onSelect={(e) => { e.preventDefault(); setRemoveTargetOpen(true); }} 
+                        className="gap-2 py-2.5 cursor-pointer font-semibold text-red-600 hover:bg-red-50 focus:bg-red-50 focus:text-red-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <Trash2 className="w-4 h-4" /> Remove Target
+                      </DropdownMenuItem>
+                    </>
+                  ) : (
+                    <>
+                      <DropdownMenuItem onSelect={(e) => { e.preventDefault(); makePrimary(); }} className="gap-2 py-2.5 cursor-pointer font-bold text-amber-600 hover:bg-amber-50">
+                        ⭐ Make Primary
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onSelect={(e) => { e.preventDefault(); setDrawerOpen(true); }} className="gap-2 py-2.5 cursor-pointer font-medium text-slate-700">
+                        <RefreshCw className="w-4 h-4 text-slate-500" /> Change Exam
+                      </DropdownMenuItem>
+                      <div className="h-px bg-slate-100 my-1 mx-2" />
+                      <DropdownMenuItem onSelect={(e) => { e.preventDefault(); setRemoveTargetOpen(true); }} className="gap-2 py-2.5 cursor-pointer font-semibold text-red-600 hover:bg-red-50 focus:bg-red-50 focus:text-red-700 rounded-lg">
+                        <Trash2 className="w-4 h-4" /> Remove Target
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
             <div className="flex items-center gap-3 mb-3">
               <div className="w-12 h-12 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm">
                 <span className="text-2xl">{meta.logo}</span>
               </div>
               <div>
-                <h2 className="text-2xl sm:text-3xl font-black text-gray-900 leading-none">{targetExam}</h2>
+                <h2 className="text-2xl sm:text-3xl font-black text-gray-900 leading-none">{currentTarget.exam}</h2>
                 <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                   <div className="inline-flex items-center gap-1 bg-blue-50 border border-blue-100 text-blue-700 text-[11px] font-semibold px-2.5 py-1 rounded-full">
                     <Users className="w-3 h-3" /> 3.4K+ Students Enrolled
@@ -259,123 +384,144 @@ const TargetExamCard: React.FC<TargetExamCardProps> = ({
         <WeaknessDetectionModal
           isOpen={weaknessOpen}
           onClose={() => setWeaknessOpen(false)}
-          examId={targetExam.toLowerCase().replace(/\s+/g, '-')}
-          examName={targetExam}
+          examId={currentTarget.exam.toLowerCase().replace(/\s+/g, '-')}
+          examName={currentTarget.exam}
         />
         <HowToStartModal
           isOpen={howToStartOpen}
           onClose={() => setHowToStartOpen(false)}
-          examName={targetExam}
-          examId={targetExam.toLowerCase().replace(/\s+/g, '-')}
+          examName={currentTarget.exam}
+          examId={currentTarget.exam.toLowerCase().replace(/\s+/g, '-')}
         />
       </div>
 
-      {/* ══ RIGHT PANEL — Countdown + Superadmin Ads ══ */}
-      <div
-        className="md:w-[260px] flex-shrink-0 relative overflow-hidden group select-none"
-        style={{ background: 'linear-gradient(160deg,#2563eb,#0ea5e9,#06b6d4)', minHeight: 220 }}
+      {/* ══ RIGHT PANEL (Countdown) ══ */}
+      <div 
+        className="w-full md:w-[280px] lg:w-[320px] shrink-0 p-6 flex flex-col items-center justify-center text-center relative overflow-hidden" 
+        style={{ background: 'linear-gradient(135deg, #0ea5e9, #0284c7)' }}
       >
-        {/* Slide 0 — Days Left */}
-        <div
-          className="absolute inset-0 flex flex-col items-center justify-center text-white transition-opacity duration-500 p-6"
-          style={{ opacity: slideIdx === 0 ? 1 : 0, pointerEvents: slideIdx === 0 ? 'auto' : 'none' }}
-        >
-          <div className="absolute -top-6 -right-6 w-24 h-24 bg-white/10 rounded-full blur-2xl pointer-events-none" />
-          <div className="absolute bottom-8 -left-8 w-28 h-28 bg-white/10 rounded-full blur-2xl pointer-events-none" />
-          <div className="relative z-10 flex flex-col items-center text-center">
-            <div className="text-[10px] font-extrabold uppercase tracking-widest opacity-75 mb-1">Your Countdown</div>
-            <div className="font-black leading-none tabular-nums drop-shadow-lg" style={{ fontSize: 68 }}>
-              {daysLeft !== null ? daysLeft : '—'}
-            </div>
-            <div className="text-[13px] font-black uppercase tracking-[0.2em] opacity-90 mt-1">Days Left</div>
-            <div className="mt-2 w-10 h-0.5 bg-white/40 rounded-full" />
-            <div className="mt-1.5 text-[10px] opacity-70 tracking-wide font-medium uppercase">To Exam Day</div>
-            <div className="mt-4 bg-white/15 border border-white/25 rounded-xl px-3 py-2 flex items-center gap-2 w-full">
-              <Calendar className="w-3.5 h-3.5 text-white flex-shrink-0" />
-              <div>
-                <div className="font-black text-white text-xs leading-tight">
-                  {new Date(meta.examDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
-                </div>
-                <div className="text-[9px] text-white/65 font-semibold">Prelims Exam Date</div>
-              </div>
+        <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
+        <div className="relative z-10 w-full flex flex-col items-center">
+          <p className="text-white/80 font-extrabold tracking-[0.2em] text-[10px] uppercase mb-6">Your Countdown</p>
+          
+          <div className="flex flex-col items-center justify-center mb-8">
+            <span className="text-7xl font-black text-white leading-none tracking-tighter mb-3" style={{ textShadow: '0 4px 12px rgba(0,0,0,0.15)' }}>
+              {daysLeft !== null ? daysLeft : '--'}
+            </span>
+            <span className="text-white font-black tracking-[0.15em] text-xs uppercase mb-1">Days Left</span>
+            <span className="text-white/70 font-bold text-[9px] uppercase tracking-wider">To Exam Day</span>
+          </div>
+          
+          <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl py-3.5 px-4 flex items-center justify-center gap-3 w-full max-w-[220px]">
+            <Calendar className="w-5 h-5 text-white/90" />
+            <div className="text-left">
+              <p className="text-white font-bold text-sm leading-tight">
+                {new Date(meta.examDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+              </p>
+              <p className="text-white/70 text-[10px] font-bold">Prelims Exam Date</p>
             </div>
           </div>
         </div>
-
-        {/* Slides 1..n — Superadmin Ads */}
-        {ads.map((ad, idx) => (
-          <div
-            key={ad.id}
-            className="absolute inset-0 flex flex-col transition-opacity duration-500"
-            style={{
-              opacity: slideIdx === idx + 1 ? 1 : 0,
-              pointerEvents: slideIdx === idx + 1 ? 'auto' : 'none',
-              background: ad.imageDataUrl ? undefined : (ad.bgColor || 'linear-gradient(135deg,#1e40af,#10b981)'),
-            }}
-          >
-            {ad.imageDataUrl && (
-              <img src={ad.imageDataUrl} alt={ad.title || 'Ad'} className="absolute inset-0 w-full h-full object-cover" draggable={false} />
-            )}
-            {ad.title ? (
-              <>
-                {ad.imageDataUrl && <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/10 to-black/65" />}
-                <div className="relative z-10 flex flex-col h-full">
-                  <div className="pt-3 px-3 shrink-0">
-                    <span className="text-[8px] font-bold uppercase tracking-widest text-white/70 bg-black/25 px-2 py-0.5 rounded-full">
-                      {ad.adType === 'exam' ? '🎯 Exam' : ad.adType === 'course' ? '📚 Course' : ad.adType === 'announcement' ? '📢 News' : '🔥 Offer'}
-                    </span>
-                  </div>
-                  <div className="flex-1 flex flex-col items-center justify-center text-center px-3 py-2 gap-1.5">
-                    <p className="font-black text-white text-sm leading-tight line-clamp-4" style={{ textShadow: '0 1px 4px rgba(0,0,0,0.5)' }}>{ad.title}</p>
-                    {ad.subtitle && <p className="text-white/80 text-[10px] leading-snug line-clamp-2">{ad.subtitle}</p>}
-                  </div>
-                  <div className="shrink-0 pb-8 px-3 flex justify-center">
-                    {ad.ctaText && (
-                      <button type="button" onClick={() => handleAdClick(ad)}
-                        className="inline-flex items-center gap-1 bg-white text-slate-900 font-bold text-[10px] px-3 py-1.5 rounded-full shadow-md hover:scale-105 transition-transform">
-                        {ad.ctaText} <ExternalLink className="h-2.5 w-2.5" />
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </>
-            ) : (
-              ad.ctaText && (
-                <>
-                  <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-black/60 to-transparent z-10" />
-                  <div className="absolute bottom-7 left-0 right-0 z-20 flex justify-center">
-                    <button type="button" onClick={() => handleAdClick(ad)}
-                      className="inline-flex items-center gap-1 bg-white text-slate-900 font-bold text-[10px] px-3 py-1.5 rounded-full shadow-md hover:scale-105 transition-transform">
-                      {ad.ctaText} <ExternalLink className="h-2.5 w-2.5" />
-                    </button>
-                  </div>
-                </>
-              )
-            )}
-          </div>
-        ))}
-
-        {/* Navigation — only when ads exist */}
-        {ads.length > 0 && (
-          <>
-            <button type="button" onClick={() => setSlideIdx(p => (p - 1 + totalSlides) % totalSlides)}
-              className="absolute left-1 top-1/2 -translate-y-1/2 w-6 h-6 bg-white/20 backdrop-blur-sm hover:bg-white/40 text-white rounded-full flex items-center justify-center z-20 opacity-0 group-hover:opacity-100 transition-opacity">
-              <ChevronLeft className="h-3 w-3" />
-            </button>
-            <button type="button" onClick={() => setSlideIdx(p => (p + 1) % totalSlides)}
-              className="absolute right-1 top-1/2 -translate-y-1/2 w-6 h-6 bg-white/20 backdrop-blur-sm hover:bg-white/40 text-white rounded-full flex items-center justify-center z-20 opacity-0 group-hover:opacity-100 transition-opacity">
-              <ChevronRight className="h-3 w-3" />
-            </button>
-            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-1 z-30">
-              {Array.from({ length: totalSlides }).map((_, i) => (
-                <button type="button" key={i} onClick={() => setSlideIdx(i)}
-                  className={`rounded-full transition-all duration-300 ${i === slideIdx ? 'w-4 h-1.5 bg-white' : 'w-1.5 h-1.5 bg-white/40 hover:bg-white/70'}`} />
-              ))}
-            </div>
-          </>
-        )}
+      </div>
+      {/* End of md:flex-row wrapper */}
       </div>
 
+      <ChangeTargetDrawer 
+        isOpen={drawerOpen} 
+        onClose={() => setDrawerOpen(false)}
+        onSuccess={(details) => {
+          console.log("Updated target:", details);
+          if (currentTarget.type === 'Primary Target' && targets.length < 3) {
+            // Case 1: Changing primary but we have room for a secondary.
+            // Ask user if they want to keep old primary as secondary
+            setPendingNewTarget(details);
+            setDrawerOpen(false);
+            setKeepSecondaryOpen(true);
+          } else {
+            // Normal update
+            setTargets(prev => {
+              const newTargets = [...prev];
+              if (newTargets.length < 3 && currentTarget.type !== 'Primary Target') {
+                newTargets.push({ exam: details.exam || 'New Exam', category: details.category || 'Banking', type: 'Secondary Target' });
+                setActiveIndex(newTargets.length - 1);
+              } else {
+                newTargets[activeIndex] = { exam: details.exam || 'New Exam', category: details.category || 'Banking', type: newTargets[activeIndex].type };
+              }
+              return newTargets;
+            });
+            setDrawerOpen(false);
+          }
+        }}
+      />
+      {/* Modals */}
+      <KeepAsSecondaryModal
+        isOpen={keepSecondaryOpen}
+        onClose={() => setKeepSecondaryOpen(false)}
+        oldExam={currentTarget.exam}
+        onKeep={() => {
+          if (pendingNewTarget) {
+            setTargets(prev => {
+              const newTargets = [...prev];
+              newTargets.push({ exam: newTargets[activeIndex].exam, category: newTargets[activeIndex].category, type: 'Secondary Target' });
+              newTargets[activeIndex] = { exam: pendingNewTarget.exam || 'New Exam', category: pendingNewTarget.category || 'Banking', type: 'Primary Target' };
+              return newTargets;
+            });
+          }
+          setPendingNewTarget(null);
+        }}
+        onRemove={() => {
+          if (pendingNewTarget) {
+            setTargets(prev => {
+              const newTargets = [...prev];
+              newTargets[activeIndex] = { exam: pendingNewTarget.exam || 'New Exam', category: pendingNewTarget.category || 'Banking', type: 'Primary Target' };
+              return newTargets;
+            });
+          }
+          setPendingNewTarget(null);
+        }}
+      />
+      <UpdateExamDateModal 
+        isOpen={updateDateOpen} 
+        onClose={() => setUpdateDateOpen(false)} 
+        currentExam={currentTarget.exam}
+        currentDate={new Date(meta.examDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+      />
+      <ChangePriorityModal 
+        isOpen={changePriorityOpen} 
+        onClose={() => setChangePriorityOpen(false)} 
+        currentExam={currentTarget.exam}
+        currentType={currentTarget.type}
+        onSave={(newType) => {
+          setTargets(prev => {
+            const newTargets = [...prev];
+            if (newType === 'Primary Target') {
+              newTargets.forEach(t => {
+                if (t.type === 'Primary Target') t.type = 'Secondary Target';
+              });
+            }
+            newTargets[activeIndex].type = newType;
+            return newTargets;
+          });
+        }}
+      />
+      <RemoveTargetModal 
+        isOpen={removeTargetOpen} 
+        onClose={() => {
+          setRemoveTargetOpen(false);
+          if (targets.length > 1) {
+            setTargets(prev => prev.filter((_, i) => i !== activeIndex));
+            setActiveIndex(p => Math.max(0, p - 1));
+          }
+        }} 
+        currentExam={currentTarget.exam} 
+      />
+      <ViewAllTargetsModal 
+        isOpen={viewAllOpen}
+        onClose={() => setViewAllOpen(false)}
+        targets={targets}
+        activeIndex={activeIndex}
+        setActiveIndex={setActiveIndex}
+      />
     </div>
   );
 };

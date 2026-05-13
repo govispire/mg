@@ -24,7 +24,10 @@ import {
   RotateCcw,
   LayoutGrid,
   List,
+  Plus,
+  ArrowLeft,
 } from 'lucide-react';
+import { ChangeTargetDrawer } from '@/components/student/dashboard/ChangeTargetDrawer';
 import NewsArticleDialog from '@/components/student/NewsArticleDialog';
 import StatCardDialog from '@/components/student/StatCardDialog';
 import QuizLeaderboardModal from '@/components/student/quiz/QuizLeaderboardModal';
@@ -279,6 +282,7 @@ const StudentDashboard = () => {
   // Post-signup modal states
   const [showCompulsoryForm, setShowCompulsoryForm] = useState(false);
   const [showWelcomeMessage, setShowWelcomeMessage] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   // Load presence and completions from localStorage
   const formatDateLocal = (date: Date) => {
@@ -672,6 +676,7 @@ const StudentDashboard = () => {
               onCardClick={setStatDialogType}
             />
 
+
             {/* Goals + Timer */}
             <div className="flex flex-col xl:flex-row gap-4 sm:gap-6 items-stretch">
               <div className="flex-1 xl:w-[70%]">
@@ -1044,6 +1049,13 @@ const StudentDashboard = () => {
         userAvatar={userProfile?.avatar}
       />
     </div>
+      <ChangeTargetDrawer 
+        isOpen={drawerOpen} 
+        onClose={() => setDrawerOpen(false)}
+        onSuccess={(details) => {
+          console.log("Added new target:", details);
+        }}
+      />
     </div>
   );
 };
