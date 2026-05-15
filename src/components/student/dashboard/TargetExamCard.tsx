@@ -26,6 +26,7 @@ interface ExamMeta {
   vacancies: string;
   logo: string;
   examDate: string;
+  mainsDate: string;
   preliTotal: number;
   mainsTotal: number;
   liveTotal: number;
@@ -34,20 +35,20 @@ interface ExamMeta {
 
 const getExamMeta = (exam: string): ExamMeta => {
   const n = exam.toLowerCase();
-  if (n.includes('sbi clerk'))    return { vacancies: '13,735', logo: '🏦', examDate: '2026-08-15', preliTotal: 20, mainsTotal: 20, liveTotal: 5, gradient: 'linear-gradient(160deg,#1a3a6e,#2563eb)' };
-  if (n.includes('sbi po'))       return { vacancies: '2,000',  logo: '🏦', examDate: '2026-10-05', preliTotal: 20, mainsTotal: 15, liveTotal: 5, gradient: 'linear-gradient(160deg,#1e3a5f,#1e6a9f)' };
-  if (n.includes('ibps clerk'))   return { vacancies: '6,128',  logo: '🏛️', examDate: '2026-10-25', preliTotal: 20, mainsTotal: 20, liveTotal: 5, gradient: 'linear-gradient(160deg,#1a2e5e,#2855c4)' };
-  if (n.includes('ibps po'))      return { vacancies: '4,455',  logo: '🏛️', examDate: '2026-09-10', preliTotal: 20, mainsTotal: 15, liveTotal: 5, gradient: 'linear-gradient(160deg,#1a2e5e,#2855c4)' };
+  if (n.includes('sbi clerk'))    return { vacancies: '13,735', logo: '🏦', examDate: '2026-08-15', mainsDate: '2026-10-05', preliTotal: 20, mainsTotal: 20, liveTotal: 5, gradient: 'linear-gradient(160deg,#1a3a6e,#2563eb)' };
+  if (n.includes('sbi po'))       return { vacancies: '2,000',  logo: '🏦', examDate: '2026-10-05', mainsDate: '2026-11-30', preliTotal: 20, mainsTotal: 15, liveTotal: 5, gradient: 'linear-gradient(160deg,#1e3a5f,#1e6a9f)' };
+  if (n.includes('ibps clerk'))   return { vacancies: '6,128',  logo: '🏛️', examDate: '2026-10-25', mainsDate: '2026-12-14', preliTotal: 20, mainsTotal: 20, liveTotal: 5, gradient: 'linear-gradient(160deg,#1a2e5e,#2855c4)' };
+  if (n.includes('ibps po'))      return { vacancies: '4,455',  logo: '🏛️', examDate: '2026-09-10', mainsDate: '2026-11-02', preliTotal: 20, mainsTotal: 15, liveTotal: 5, gradient: 'linear-gradient(160deg,#1a2e5e,#2855c4)' };
   if (n.includes('ibps rrb') || n.includes('rrb'))
-                                  return { vacancies: '9,985',  logo: '🚂', examDate: '2026-10-05', preliTotal: 20, mainsTotal: 20, liveTotal: 5, gradient: 'linear-gradient(160deg,#1a2e5e,#2855c4)' };
-  if (n.includes('lic ado'))      return { vacancies: '5,000+', logo: '🛡️', examDate: '2026-06-15', preliTotal: 15, mainsTotal: 0,  liveTotal: 5, gradient: 'linear-gradient(160deg,#0f2b5b,#1d5c9e)' };
-  if (n.includes('lic aao'))      return { vacancies: '300',    logo: '🛡️', examDate: '2026-09-01', preliTotal: 15, mainsTotal: 15, liveTotal: 5, gradient: 'linear-gradient(160deg,#0f2b5b,#1d5c9e)' };
-  if (n.includes('rbi grade b'))  return { vacancies: '291',    logo: '🏦', examDate: '2026-08-01', preliTotal: 15, mainsTotal: 15, liveTotal: 5, gradient: 'linear-gradient(160deg,#4a1508,#c0392b)' };
-  if (n.includes('rrb ntpc'))     return { vacancies: '11,558', logo: '🚂', examDate: '2026-11-15', preliTotal: 20, mainsTotal: 20, liveTotal: 5, gradient: 'linear-gradient(160deg,#2d1b69,#6d3fd6)' };
-  if (n.includes('ssc cgl'))      return { vacancies: '17,727', logo: '📋', examDate: '2026-09-20', preliTotal: 20, mainsTotal: 20, liveTotal: 5, gradient: 'linear-gradient(160deg,#1a4d2e,#22c55e)' };
-  if (n.includes('ssc chsl'))     return { vacancies: '3,712',  logo: '📋', examDate: '2026-10-15', preliTotal: 20, mainsTotal: 20, liveTotal: 5, gradient: 'linear-gradient(160deg,#1a4d2e,#22c55e)' };
-  if (n.includes('upsc'))         return { vacancies: '979',    logo: '🏛️', examDate: '2026-08-20', preliTotal: 15, mainsTotal: 15, liveTotal: 5, gradient: 'linear-gradient(160deg,#4a1942,#c026d3)' };
-  return                               { vacancies: 'Multiple', logo: '📝', examDate: '2026-12-31', preliTotal: 20, mainsTotal: 20, liveTotal: 5, gradient: 'linear-gradient(160deg,#1a3a6e,#2563eb)' };
+                                  return { vacancies: '9,985',  logo: '🚂', examDate: '2026-10-05', mainsDate: '2026-11-23', preliTotal: 20, mainsTotal: 20, liveTotal: 5, gradient: 'linear-gradient(160deg,#1a2e5e,#2855c4)' };
+  if (n.includes('lic ado'))      return { vacancies: '5,000+', logo: '🛡️', examDate: '2026-06-15', mainsDate: '',           preliTotal: 15, mainsTotal: 0,  liveTotal: 5, gradient: 'linear-gradient(160deg,#0f2b5b,#1d5c9e)' };
+  if (n.includes('lic aao'))      return { vacancies: '300',    logo: '🛡️', examDate: '2026-09-01', mainsDate: '2026-11-08', preliTotal: 15, mainsTotal: 15, liveTotal: 5, gradient: 'linear-gradient(160deg,#0f2b5b,#1d5c9e)' };
+  if (n.includes('rbi grade b'))  return { vacancies: '291',    logo: '🏦', examDate: '2026-08-01', mainsDate: '2026-09-28', preliTotal: 15, mainsTotal: 15, liveTotal: 5, gradient: 'linear-gradient(160deg,#4a1508,#c0392b)' };
+  if (n.includes('rrb ntpc'))     return { vacancies: '11,558', logo: '🚂', examDate: '2026-11-15', mainsDate: '2027-01-18', preliTotal: 20, mainsTotal: 20, liveTotal: 5, gradient: 'linear-gradient(160deg,#2d1b69,#6d3fd6)' };
+  if (n.includes('ssc cgl'))      return { vacancies: '17,727', logo: '📋', examDate: '2026-09-20', mainsDate: '2026-11-10', preliTotal: 20, mainsTotal: 20, liveTotal: 5, gradient: 'linear-gradient(160deg,#1a4d2e,#22c55e)' };
+  if (n.includes('ssc chsl'))     return { vacancies: '3,712',  logo: '📋', examDate: '2026-10-15', mainsDate: '2026-12-07', preliTotal: 20, mainsTotal: 20, liveTotal: 5, gradient: 'linear-gradient(160deg,#1a4d2e,#22c55e)' };
+  if (n.includes('upsc'))         return { vacancies: '979',    logo: '🏛️', examDate: '2026-08-20', mainsDate: '2026-09-19', preliTotal: 15, mainsTotal: 15, liveTotal: 5, gradient: 'linear-gradient(160deg,#4a1942,#c026d3)' };
+  return                               { vacancies: 'Multiple', logo: '📝', examDate: '2026-12-31', mainsDate: '',           preliTotal: 20, mainsTotal: 20, liveTotal: 5, gradient: 'linear-gradient(160deg,#1a3a6e,#2563eb)' };
 };
 
 // Small SVG ring used for progress indicators
@@ -212,6 +213,24 @@ const TargetExamCard: React.FC<TargetExamCardProps> = ({
     timerRef.current = setTimeout(() => setSlideIdx(prev => (prev + 1) % totalSlides), ms);
     return () => { if (timerRef.current) clearTimeout(timerRef.current); };
   }, [slideIdx, totalSlides, ads]);
+
+  // ── Countdown auto-slide (Prelims ↔ Mains, 10s each) ─────────────────────
+  const countdownSlides = [
+    { label: 'Prelims', date: meta.examDate },
+    ...(meta.mainsDate ? [{ label: 'Mains', date: meta.mainsDate }] : []),
+  ];
+  const [countdownSlide, setCountdownSlide] = useState(0);
+
+  useEffect(() => {
+    // Always reset to Prelims when the exam changes
+    setCountdownSlide(0);
+    // Only auto-slide if Mains date exists
+    if (!meta.mainsDate) return;
+    const id = setInterval(() => {
+      setCountdownSlide(p => (p === 0 ? 1 : 0));
+    }, 10000);
+    return () => clearInterval(id);
+  }, [meta.examDate, meta.mainsDate]); // re-runs when exam changes
 
   useEffect(() => {
     if (slideIdx >= totalSlides) setSlideIdx(0);
@@ -493,39 +512,79 @@ const TargetExamCard: React.FC<TargetExamCardProps> = ({
       {/* ══ RIGHT PANEL — Countdown + Superadmin Ads ══ */}
       <div
         className="lg:w-[260px] flex-shrink-0 relative overflow-hidden group select-none"
-        style={{ background: 'linear-gradient(160deg,#2563eb,#0ea5e9,#06b6d4)', minHeight: 120 }}
+        style={{ background: '#1e1b4b', minHeight: 120 }}
       >
-        {/* Slide 0 — Days Left */}
+        {/* Slide 0 — Countdown (auto-cycles Prelims ↔ Mains) */}
         <div
-          className="absolute inset-0 flex flex-row lg:flex-col items-center justify-center text-white transition-opacity duration-500 px-4 py-4 sm:px-6 lg:p-6 gap-4 lg:gap-0"
+          className="absolute inset-0 transition-opacity duration-500"
           style={{ opacity: slideIdx === 0 ? 1 : 0, pointerEvents: slideIdx === 0 ? 'auto' : 'none' }}
         >
+          {/* Per-slide background layers — cross-fade between them */}
+          <div
+            className="absolute inset-0 transition-all duration-700 pointer-events-none"
+            style={{ background: 'linear-gradient(160deg,#1e40af,#2563eb,#0ea5e9)', opacity: countdownSlide === 0 ? 1 : 0 }}
+          />
+          <div
+            className="absolute inset-0 transition-all duration-700 pointer-events-none"
+            style={{ background: 'linear-gradient(160deg,#4c1d95,#7c3aed,#a855f7)', opacity: countdownSlide === 1 ? 1 : 0 }}
+          />
           <div className="absolute -top-6 -right-6 w-24 h-24 bg-white/10 rounded-full blur-2xl pointer-events-none" />
           <div className="absolute bottom-8 -left-8 w-28 h-28 bg-white/10 rounded-full blur-2xl pointer-events-none" />
 
-          {/* Left: countdown number (mobile: left side, lg: top center) */}
-          <div className="relative z-10 flex flex-col items-center text-center shrink-0">
-            <div className="text-[9px] sm:text-[10px] font-extrabold uppercase tracking-widest opacity-75 mb-0.5 lg:mb-1">Your Countdown</div>
-            <div className="font-black leading-none tabular-nums drop-shadow-lg text-5xl sm:text-6xl lg:text-[68px]">
-              {daysLeft !== null ? daysLeft : '—'}
-            </div>
-            <div className="text-[11px] sm:text-[13px] font-black uppercase tracking-[0.2em] opacity-90 mt-0.5 lg:mt-1">Days Left</div>
-          </div>
-
-          {/* Right: to exam day + date badge (mobile: right side, lg: below number) */}
-          <div className="relative z-10 flex flex-col items-center gap-1.5 lg:mt-2 lg:w-full">
-            <div className="hidden lg:block w-10 h-0.5 bg-white/40 rounded-full" />
-            <div className="text-[9px] sm:text-[10px] opacity-70 tracking-wide font-medium uppercase">To Exam Day</div>
-            <div className="bg-white/15 border border-white/25 rounded-xl px-3 py-1.5 sm:py-2 flex items-center gap-2 w-full">
-              <Calendar className="w-3.5 h-3.5 text-white flex-shrink-0" />
-              <div>
-                <div className="font-black text-white text-[11px] sm:text-xs leading-tight">
-                  {new Date(meta.examDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+          {/* Each countdown sub-slide fades in/out */}
+          {countdownSlides.map((cs, i) => {
+            const dLeft = differenceInDays(new Date(cs.date), new Date());
+            return (
+              <div
+                key={cs.label}
+                className="absolute inset-0 flex flex-row lg:flex-col items-center justify-center text-white px-4 py-4 sm:px-6 lg:p-6 gap-4 lg:gap-0 transition-all duration-500"
+                style={{
+                  opacity: countdownSlide === i ? 1 : 0,
+                  pointerEvents: countdownSlide === i ? 'auto' : 'none',
+                  transform: countdownSlide === i ? 'translateX(0)' : (i < countdownSlide ? 'translateX(-12px)' : 'translateX(12px)'),
+                }}
+              >
+                {/* Number */}
+                <div className="relative z-10 flex flex-col items-center text-center shrink-0">
+                  <div className="text-[9px] sm:text-[10px] font-extrabold uppercase tracking-widest opacity-75 mb-0.5 lg:mb-1">Your Countdown</div>
+                  <div className="font-black leading-none tabular-nums drop-shadow-lg text-5xl sm:text-6xl lg:text-[68px]">
+                    {dLeft > 0 ? dLeft : '0'}
+                  </div>
+                  <div className="text-[11px] sm:text-[13px] font-black uppercase tracking-[0.2em] opacity-90 mt-0.5 lg:mt-1">Days Left</div>
                 </div>
-                <div className="text-[9px] text-white/65 font-semibold">Prelims Exam Date</div>
+
+                {/* Date badge */}
+                <div className="relative z-10 flex flex-col items-center gap-2 lg:mt-2 lg:w-full">
+                  <div className="hidden lg:block w-10 h-0.5 bg-white/40 rounded-full" />
+                  <div className="text-[9px] sm:text-[10px] opacity-70 tracking-wide font-medium uppercase text-center">To Exam Day</div>
+                  <div className="bg-white/15 border border-white/25 rounded-xl px-3 py-1.5 sm:py-2 flex items-center gap-2 w-full">
+                    <Calendar className="w-3.5 h-3.5 text-white flex-shrink-0" />
+                    <div className="flex-1">
+                      <div className="font-black text-white text-[11px] sm:text-xs leading-tight text-center">
+                        {new Date(cs.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                      </div>
+                      <div className="text-[9px] text-white/65 font-semibold text-center">{cs.label} Exam Date</div>
+                    </div>
+                  </div>
+                </div>
               </div>
+            );
+          })}
+
+          {/* Dot indicator (only when Mains exists) */}
+          {countdownSlides.length > 1 && (
+            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-1 z-20">
+              {countdownSlides.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setCountdownSlide(i)}
+                  className={`rounded-full transition-all duration-300 ${
+                    i === countdownSlide ? 'w-4 h-1.5 bg-white' : 'w-1.5 h-1.5 bg-white/40 hover:bg-white/70'
+                  }`}
+                />
+              ))}
             </div>
-          </div>
+          )}
         </div>
 
         {/* Slides 1..n — Superadmin Ads */}

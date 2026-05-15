@@ -82,10 +82,10 @@ const ExamPicker: React.FC<{
 
   const filtered: PickerExam[] = search
     ? allExamsFlat.filter(e =>
-        !excludeNames.includes(e.name) &&
-        (e.name.toLowerCase().includes(search.toLowerCase()) ||
-         e.categoryName.toLowerCase().includes(search.toLowerCase()))
-      )
+      !excludeNames.includes(e.name) &&
+      (e.name.toLowerCase().includes(search.toLowerCase()) ||
+        e.categoryName.toLowerCase().includes(search.toLowerCase()))
+    )
     : allExamsForCat.filter(e => !excludeNames.includes(e.name));
 
   const pickedExam = allExamsFlat.find(e => e.name === picked);
@@ -121,14 +121,12 @@ const ExamPicker: React.FC<{
       <div className="px-5 pt-3 pb-1 flex items-center gap-2 shrink-0">
         {['Category', 'Exam'].map((s, i) => (
           <React.Fragment key={s}>
-            <div className={`text-[11px] font-bold flex items-center gap-1.5 ${
-              (step === 'cat' && i === 0) || (step === 'exam' && i === 1) ? 'text-emerald-600' :
-              i === 0 && step === 'exam' ? 'text-slate-400' : 'text-slate-300'
-            }`}>
-              <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black ${
-                (step === 'cat' && i === 0) || (step === 'exam' && i === 1) ? 'bg-emerald-500 text-white' :
-                i === 0 && step === 'exam' ? 'bg-slate-200 text-slate-500' : 'bg-slate-100 text-slate-300'
-              }`}>{i + 1}</div>
+            <div className={`text-[11px] font-bold flex items-center gap-1.5 ${(step === 'cat' && i === 0) || (step === 'exam' && i === 1) ? 'text-emerald-600' :
+                i === 0 && step === 'exam' ? 'text-slate-400' : 'text-slate-300'
+              }`}>
+              <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black ${(step === 'cat' && i === 0) || (step === 'exam' && i === 1) ? 'bg-emerald-500 text-white' :
+                  i === 0 && step === 'exam' ? 'bg-slate-200 text-slate-500' : 'bg-slate-100 text-slate-300'
+                }`}>{i + 1}</div>
               {s}
             </div>
             {i === 0 && <div className="flex-1 h-px bg-slate-200" />}
@@ -187,9 +185,8 @@ const ExamPicker: React.FC<{
           <div className="flex-1 overflow-y-auto px-4 pb-4 space-y-1">
             {filtered.map(ex => (
               <button key={ex.id} onClick={() => setPicked(ex.name)}
-                className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-all text-left ${
-                  picked === ex.name ? 'bg-emerald-50 border border-emerald-200' : 'hover:bg-slate-50 border border-transparent'
-                }`}>
+                className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-all text-left ${picked === ex.name ? 'bg-emerald-50 border border-emerald-200' : 'hover:bg-slate-50 border border-transparent'
+                  }`}>
                 <div className="w-8 h-8 flex items-center justify-center shrink-0">
                   {renderLogo(ex.logo)}
                 </div>
@@ -197,9 +194,8 @@ const ExamPicker: React.FC<{
                   <div className="font-semibold text-slate-800 text-sm truncate">{ex.name}</div>
                   <div className="text-[11px] text-slate-400 truncate">{ex.subtitle}</div>
                 </div>
-                <div className={`w-4 h-4 rounded-full border-2 shrink-0 ${
-                  picked === ex.name ? 'bg-emerald-500 border-emerald-500' : 'border-slate-300'
-                }`} />
+                <div className={`w-4 h-4 rounded-full border-2 shrink-0 ${picked === ex.name ? 'bg-emerald-500 border-emerald-500' : 'border-slate-300'
+                  }`} />
               </button>
             ))}
             {filtered.length === 0 && (
@@ -349,9 +345,9 @@ export const ChangePriorityPanel: React.FC<{ onClose: () => void; onDone: () => 
   };
 
   const colors = [
-    { bg: '#10b981', label: 'Main Focus',      num: '#ecfdf5', numText: '#065f46' },
-    { bg: '#3b82f6', label: 'Secondary Focus',  num: '#eff6ff', numText: '#1e3a8a' },
-    { bg: '#f59e0b', label: 'Backup Goal',      num: '#fffbeb', numText: '#78350f' },
+    { bg: '#10b981', label: 'Main Focus', num: '#ecfdf5', numText: '#065f46' },
+    { bg: '#3b82f6', label: 'Secondary Focus', num: '#eff6ff', numText: '#1e3a8a' },
+    { bg: '#f59e0b', label: 'Backup Goal', num: '#fffbeb', numText: '#78350f' },
   ];
 
   if (confirming) {
