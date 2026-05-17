@@ -1,12 +1,11 @@
 import React, { useState } from 'react';
-import { Check, Zap, Crown, ArrowRight } from 'lucide-react';
+import { ArrowRight, Check, Crown, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const plans = [
   {
     name: 'Starter',
-    price: '₹299',
-    period: '/month',
+    priceMonthly: 299,
     desc: 'Perfect for beginners who want to explore mentorship',
     icon: Zap,
     color: 'text-teal-600',
@@ -14,20 +13,19 @@ const plans = [
     borderColor: 'border-teal-200',
     buttonColor: 'border-teal-500 text-teal-600 hover:bg-teal-50',
     features: [
-      'Access to 1 Subject Mentor',
-      'Personalized Study Plan',
-      'Daily Task Tracking',
-      'Weekly Progress Report',
-      'Doubt Clearing (5 sessions/month)',
-      'Subject Mock Tests',
+      'Access to 1 subject mentor',
+      'Personalized study plan',
+      'Daily task tracking',
+      'Weekly progress report',
+      'Doubt clearing: 5 sessions/month',
+      'Subject mock tests',
     ],
-    missing: ['Overall Mentorship', '1-on-1 Sessions', 'Priority Support'],
+    missing: ['Overall mentorship', '1-on-1 review sessions', 'Priority support'],
   },
   {
     name: 'Pro',
-    price: '₹499',
-    period: '/month',
-    desc: 'Most popular — complete exam preparation support',
+    priceMonthly: 499,
+    desc: 'Most popular plan for complete exam preparation support',
     icon: Crown,
     color: 'text-white',
     bgColor: 'bg-[#5b51ff]',
@@ -35,21 +33,20 @@ const plans = [
     buttonColor: 'bg-white text-[#5b51ff] hover:bg-slate-50',
     popular: true,
     features: [
-      'Dedicated Overall Mentor',
-      'Data-driven Personalized Plan',
-      'Daily Task Tracking & Reminders',
-      'Weekly 1-on-1 Review Sessions',
-      'Unlimited Doubt Clearing',
-      'All Subject Mock Tests',
-      '24/7 Mentor Chat Access',
-      'Performance Analytics Dashboard',
+      'Dedicated overall mentor',
+      'Data-driven personalized plan',
+      'Daily task tracking and reminders',
+      'Weekly 1-on-1 review sessions',
+      'Unlimited doubt clearing',
+      'All subject mock tests',
+      '24/7 mentor chat access',
+      'Performance analytics dashboard',
     ],
     missing: [],
   },
   {
     name: 'Elite',
-    price: '₹799',
-    period: '/month',
+    priceMonthly: 799,
     desc: 'For serious aspirants targeting top selections',
     icon: Crown,
     color: 'text-amber-600',
@@ -58,105 +55,119 @@ const plans = [
     buttonColor: 'border-amber-500 text-amber-600 hover:bg-amber-50',
     features: [
       'Everything in Pro',
-      '2 Expert Mentors (Overall + Subject)',
-      'Interview Guidance',
-      'GK & Current Affairs Live Classes',
-      'Exam-day Strategy Session',
-      'Emergency 24/7 Support',
-      'Career Counseling',
-      'Bank Job Alert & Notification',
+      '2 expert mentors: overall + subject',
+      'Interview guidance',
+      'GK and current affairs live classes',
+      'Exam-day strategy session',
+      'Emergency 24/7 support',
+      'Career counseling',
+      'Bank job alerts and notifications',
     ],
     missing: [],
   },
 ];
 
+const scrollToAssessment = () => {
+  document.getElementById('free-assessment')?.scrollIntoView({ behavior: 'smooth' });
+};
+
+const formatPrice = (value: number) => `Rs. ${value.toLocaleString('en-IN')}`;
+
 const MentorshipPlans = () => {
   const [billing, setBilling] = useState<'monthly' | 'quarterly'>('monthly');
 
   return (
-    <section className="py-24 bg-gradient-to-br from-indigo-50 via-white to-purple-50">
-      <div className="max-w-6xl mx-auto px-4 lg:px-8">
-        {/* Header */}
-        <div className="text-center mb-12">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-100 border border-indigo-200 mb-5">
-            <span className="text-sm font-semibold text-indigo-900">💰 Affordable Mentorship Plans</span>
+    <section className="bg-gradient-to-br from-indigo-50 via-white to-purple-50 py-24">
+      <div className="mx-auto max-w-6xl px-4 lg:px-8">
+        <div className="mb-12 text-center">
+          <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-indigo-200 bg-indigo-100 px-4 py-2">
+            <span className="text-sm font-semibold text-indigo-900">Affordable mentorship plans</span>
           </div>
-          <h2 className="text-4xl md:text-5xl font-extrabold text-slate-900 mb-4">
+          <h2 className="mb-4 text-4xl font-extrabold text-slate-900 md:text-5xl">
             Choose Your <span className="text-[#5b51ff]">Mentorship Plan</span>
           </h2>
-          <p className="text-lg text-slate-600 max-w-xl mx-auto mb-8">
-            Start with a free assessment and then choose a plan that fits your exam timeline and budget.
+          <p className="mx-auto mb-8 max-w-xl text-lg text-slate-600">
+            Start with a free assessment, then choose the support level that fits your exam timeline and budget.
           </p>
-          {/* Billing Toggle */}
-          <div className="inline-flex items-center bg-white border border-slate-200 rounded-full p-1 shadow-sm">
+
+          <div className="inline-flex items-center rounded-full border border-slate-200 bg-white p-1 shadow-sm">
             <button
               onClick={() => setBilling('monthly')}
-              className={`px-5 py-2 rounded-full text-sm font-bold transition-all ${billing === 'monthly' ? 'bg-[#5b51ff] text-white' : 'text-slate-600'}`}
+              className={`rounded-full px-5 py-2 text-sm font-bold transition-all ${billing === 'monthly' ? 'bg-[#5b51ff] text-white' : 'text-slate-600'}`}
             >
               Monthly
             </button>
             <button
               onClick={() => setBilling('quarterly')}
-              className={`px-5 py-2 rounded-full text-sm font-bold transition-all flex items-center gap-2 ${billing === 'quarterly' ? 'bg-[#5b51ff] text-white' : 'text-slate-600'}`}
+              className={`flex items-center gap-2 rounded-full px-5 py-2 text-sm font-bold transition-all ${billing === 'quarterly' ? 'bg-[#5b51ff] text-white' : 'text-slate-600'}`}
             >
-              Quarterly <span className="text-[10px] font-bold bg-green-500 text-white px-1.5 py-0.5 rounded-full">Save 20%</span>
+              Quarterly <span className="rounded-full bg-green-500 px-1.5 py-0.5 text-[10px] font-bold text-white">Save 20%</span>
             </button>
           </div>
         </div>
 
-        {/* Plan Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {plans.map((plan, i) => {
+        <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
+          {plans.map(plan => {
             const Icon = plan.icon;
-            const isPro = plan.popular;
+            const isPro = Boolean(plan.popular);
+            const monthlyEquivalent = billing === 'quarterly'
+              ? Math.round(plan.priceMonthly * 0.8)
+              : plan.priceMonthly;
+            const quarterlyTotal = Math.round(plan.priceMonthly * 3 * 0.8);
+
             return (
               <div
-                key={i}
-                className={`relative rounded-3xl border-2 ${plan.borderColor} ${isPro ? plan.bgColor : 'bg-white'} p-8 transition-all hover:shadow-xl ${isPro ? 'shadow-2xl shadow-indigo-200 scale-105' : 'shadow-sm'}`}
+                key={plan.name}
+                className={`relative rounded-3xl border-2 p-8 transition-all hover:shadow-xl ${plan.borderColor} ${isPro ? `${plan.bgColor} scale-105 shadow-2xl shadow-indigo-200` : 'bg-white shadow-sm'}`}
               >
                 {isPro && (
-                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-orange-400 to-yellow-400 text-white text-xs font-extrabold px-5 py-1.5 rounded-full shadow-md">
-                    ⭐ Most Popular
+                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 rounded-full bg-gradient-to-r from-orange-400 to-yellow-400 px-5 py-1.5 text-xs font-extrabold text-white shadow-md">
+                    Most Popular
                   </div>
                 )}
 
-                <div className={`w-12 h-12 rounded-2xl ${isPro ? 'bg-white/20' : plan.bgColor} flex items-center justify-center mb-6`}>
-                  <Icon className={`w-6 h-6 ${plan.color}`} />
+                <div className={`mb-6 flex h-12 w-12 items-center justify-center rounded-2xl ${isPro ? 'bg-white/20' : plan.bgColor}`}>
+                  <Icon className={`h-6 w-6 ${plan.color}`} />
                 </div>
 
-                <h3 className={`text-2xl font-extrabold mb-1 ${isPro ? 'text-white' : 'text-slate-900'}`}>{plan.name}</h3>
-                <p className={`text-sm mb-6 ${isPro ? 'text-indigo-200' : 'text-slate-500'}`}>{plan.desc}</p>
+                <h3 className={`mb-1 text-2xl font-extrabold ${isPro ? 'text-white' : 'text-slate-900'}`}>{plan.name}</h3>
+                <p className={`mb-6 text-sm ${isPro ? 'text-indigo-200' : 'text-slate-500'}`}>{plan.desc}</p>
 
-                <div className="flex items-baseline gap-1 mb-6">
-                  <span className={`text-4xl font-extrabold ${isPro ? 'text-white' : 'text-slate-900'}`}>
-                    {billing === 'quarterly' 
-                      ? `₹${Math.round(parseInt(plan.price.replace('₹','')) * 0.8)}`
-                      : plan.price}
-                  </span>
-                  <span className={`text-sm ${isPro ? 'text-indigo-200' : 'text-slate-500'}`}>{plan.period}</span>
+                <div className="mb-6">
+                  <div className="flex items-baseline gap-1">
+                    <span className={`text-4xl font-extrabold ${isPro ? 'text-white' : 'text-slate-900'}`}>
+                      {formatPrice(monthlyEquivalent)}
+                    </span>
+                    <span className={`text-sm ${isPro ? 'text-indigo-200' : 'text-slate-500'}`}>/month</span>
+                  </div>
+                  {billing === 'quarterly' && (
+                    <p className={`mt-1 text-xs ${isPro ? 'text-indigo-200' : 'text-slate-500'}`}>
+                      Billed quarterly: {formatPrice(quarterlyTotal)}
+                    </p>
+                  )}
                 </div>
 
                 <Button
-                  className={`w-full h-12 rounded-2xl font-bold mb-8 border-2 ${plan.buttonColor}`}
+                  className={`mb-8 h-12 w-full rounded-2xl border-2 font-bold ${plan.buttonColor}`}
                   variant={isPro ? 'default' : 'outline'}
-                  onClick={() => document.getElementById('free-assessment')?.scrollIntoView({ behavior: 'smooth' })}
+                  onClick={scrollToAssessment}
                 >
                   Get Started <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
 
                 <div className="space-y-3">
-                  {plan.features.map((feature, j) => (
-                    <div key={j} className="flex items-center gap-3">
-                      <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 ${isPro ? 'bg-white/20' : 'bg-green-100'}`}>
-                        <Check className={`w-3 h-3 ${isPro ? 'text-white' : 'text-green-600'}`} strokeWidth={3} />
+                  {plan.features.map(feature => (
+                    <div key={feature} className="flex items-center gap-3">
+                      <div className={`flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full ${isPro ? 'bg-white/20' : 'bg-green-100'}`}>
+                        <Check className={`h-3 w-3 ${isPro ? 'text-white' : 'text-green-600'}`} strokeWidth={3} />
                       </div>
                       <span className={`text-sm font-semibold ${isPro ? 'text-white/90' : 'text-slate-700'}`}>{feature}</span>
                     </div>
                   ))}
-                  {plan.missing.map((feature, j) => (
-                    <div key={j} className="flex items-center gap-3 opacity-40">
-                      <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 bg-slate-100">
-                        <span className="text-slate-400 text-xs">✕</span>
+                  {plan.missing.map(feature => (
+                    <div key={feature} className="flex items-center gap-3 opacity-40">
+                      <div className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-slate-100">
+                        <span className="text-xs text-slate-400">x</span>
                       </div>
                       <span className="text-sm font-semibold text-slate-500 line-through">{feature}</span>
                     </div>
@@ -167,8 +178,8 @@ const MentorshipPlans = () => {
           })}
         </div>
 
-        <p className="text-center text-slate-500 text-sm mt-10">
-          🔒 All plans include a <strong>7-day free trial</strong>. Cancel anytime. No hidden charges.
+        <p className="mt-10 text-center text-sm text-slate-500">
+          All plans include a <strong>7-day free trial</strong>. Cancel anytime. No hidden charges.
         </p>
       </div>
     </section>

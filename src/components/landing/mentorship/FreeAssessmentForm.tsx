@@ -1,8 +1,32 @@
-import React, { useState } from 'react';
-import { ArrowRight, ChevronDown, CheckCircle2, BookOpen, Brain, Lightbulb, Globe2, Hash, Monitor } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import {
+  ArrowRight,
+  BarChart3,
+  BookOpen,
+  Brain,
+  CheckCircle2,
+  ChevronDown,
+  Globe2,
+  Hash,
+  Monitor,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
-const exams = ['SBI Clerk', 'SBI PO', 'IBPS PO', 'IBPS Clerk', 'RBI Grade B', 'SSC CGL', 'SSC CHSL', 'SSC MTS', 'UPSC CSE', 'RRB NTPC', 'CTET', 'NDA', 'CAT'];
+const exams = [
+  'SBI Clerk',
+  'SBI PO',
+  'IBPS PO',
+  'IBPS Clerk',
+  'RBI Grade B',
+  'SSC CGL',
+  'SSC CHSL',
+  'SSC MTS',
+  'UPSC CSE',
+  'RRB NTPC',
+  'CTET',
+  'NDA',
+  'CAT',
+];
 
 const subjects = [
   { name: 'Quantitative Aptitude', icon: Hash, color: 'text-purple-600' },
@@ -13,14 +37,23 @@ const subjects = [
 ];
 
 type LevelType = 'Weak' | 'Average' | 'Strong' | '';
+type StudyTime = 'Morning' | 'Afternoon' | 'Night';
+type DistractionLevel = 'Low' | 'Average' | 'High';
+type MockFrequency = 'Not started' | 'Monthly' | 'Weekly' | '2+ per week';
 
 const steps = [
   { id: 1, label: 'Basic Info' },
   { id: 2, label: 'Exam Profile' },
-  { id: 3, label: 'Strength & Weakness' },
+  { id: 3, label: 'Strengths' },
   { id: 4, label: 'Study Behavior' },
   { id: 5, label: 'Test Analysis' },
 ];
+
+const getInitialStrengths = () =>
+  subjects.reduce<Record<string, LevelType>>((acc, subject) => {
+    acc[subject.name] = '';
+    return acc;
+  }, {});
 
 const FreeAssessmentForm = () => {
   const [currentStep, setCurrentStep] = useState(1);
@@ -30,41 +63,70 @@ const FreeAssessmentForm = () => {
   const [selectedExam, setSelectedExam] = useState('SBI Clerk');
   const [language, setLanguage] = useState<'English' | 'Tamil' | 'Hindi'>('English');
   const [attemptType, setAttemptType] = useState<'first' | 'repeat' | ''>('');
-  const [strengths, setStrengths] = useState<Record<string, LevelType>>({
-    'Quantitative Aptitude': '',
-    'Reasoning': '',
-    'English': '',
-    'General Awareness': 'Strong',
-    'Computer Awareness': 'Weak',
-  });
+  const [strengths, setStrengths] = useState<Record<string, LevelType>>(getInitialStrengths);
   const [studyHours, setStudyHours] = useState(3);
-  const [studyTime, setStudyTime] = useState<'Morning' | 'Afternoon' | 'Night'>('Morning');
-  const [distractionLevel, setDistractionLevel] = useState<'Low' | 'Average' | 'High'>('Average');
+  const [studyTime, setStudyTime] = useState<StudyTime>('Morning');
+  const [distractionLevel, setDistractionLevel] = useState<DistractionLevel>('Average');
+  const [lastMockScore, setLastMockScore] = useState(55);
+  const [mockFrequency, setMockFrequency] = useState<MockFrequency>('Weekly');
+  const [toughestSection, setToughestSection] = useState('Quantitative Aptitude');
   const [submitted, setSubmitted] = useState(false);
+
+  const weakSubjects = useMemo(
+    () => Object.entries(strengths).filter(([, level]) => level === 'Weak').map(([subject]) => subject),
+    [strengths],
+  );
+
+  const strongSubjects = useMemo(
+    () => Object.entries(strengths).filter(([, level]) => level === 'Strong').map(([subject]) => subject),
+    [strengths],
+  );
+
+  const recommendations = useMemo(() => {
+    const items = [
+      `Start with a ${selectedExam} roadmap in ${language}.`,
+      weakSubjects.length > 0
+        ? `Spend the first week repairing ${weakSubjects.slice(0, 2).join(' and ')}.`
+        : 'Take a diagnostic test so the mentor can identify your weak areas.',
+      lastMockScore < 60
+        ? 'Prioritize accuracy review before full-length mock frequency increases.'
+        : 'Use weekly mock analysis to convert your current score into a repeatable strategy.',
+    ];
+
+    if (distractionLevel === 'High') {
+      items.push('Use shorter 45-minute study blocks with mentor accountability.');
+    }
+
+    return items;
+  }, [distractionLevel, language, lastMockScore, selectedExam, weakSubjects]);
 
   const handleStrengthChange = (subject: string, level: LevelType) => {
     setStrengths(prev => ({ ...prev, [subject]: level }));
   };
 
-  const handleSubmit = () => {
-    setSubmitted(true);
-  };
+  const nextStep = () => setCurrentStep(step => Math.min(step + 1, steps.length));
+  const prevStep = () => setCurrentStep(step => Math.max(step - 1, 1));
 
   if (submitted) {
     return (
-      <section id="free-assessment" className="py-20 bg-gradient-to-br from-indigo-50 via-white to-purple-50">
-        <div className="max-w-4xl mx-auto px-4 text-center">
-          <div className="bg-white rounded-3xl p-12 shadow-xl border border-indigo-100 flex flex-col items-center">
-            <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mb-6">
-              <CheckCircle2 className="w-10 h-10 text-green-600" />
+      <section id="free-assessment" className="bg-gradient-to-br from-indigo-50 via-white to-purple-50 py-20">
+        <div className="mx-auto max-w-4xl px-4 text-center">
+          <div className="flex flex-col items-center rounded-3xl border border-indigo-100 bg-white p-12 shadow-xl">
+            <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-green-100">
+              <CheckCircle2 className="h-10 w-10 text-green-600" />
             </div>
-            <h2 className="text-3xl font-extrabold text-slate-900 mb-4">🎉 Assessment Submitted!</h2>
-            <p className="text-lg text-slate-600 mb-6 max-w-md">Your personalized study plan is being prepared. Our team will reach out within 24 hours to match you with the perfect mentor.</p>
-            <Button 
-              className="bg-[#5b51ff] hover:bg-[#4a42ff] px-10 py-4 rounded-2xl text-lg font-bold"
-              onClick={() => setSubmitted(false)}
+            <h2 className="mb-4 text-3xl font-extrabold text-slate-900">Assessment submitted</h2>
+            <p className="mb-6 max-w-md text-lg text-slate-600">
+              Your study profile is ready. We will match your exam, weak areas, study capacity, and mock score with the right mentor.
+            </p>
+            <Button
+              className="rounded-2xl bg-[#5b51ff] px-10 py-4 text-lg font-bold hover:bg-[#4a42ff]"
+              onClick={() => {
+                setSubmitted(false);
+                setCurrentStep(1);
+              }}
             >
-              Take Again
+              Review Assessment
             </Button>
           </div>
         </div>
@@ -73,115 +135,111 @@ const FreeAssessmentForm = () => {
   }
 
   return (
-    <section id="free-assessment" className="py-20 bg-gradient-to-br from-indigo-50 via-white to-purple-50">
-      <div className="max-w-6xl mx-auto px-4 lg:px-8">
-        {/* Section Header */}
-        <div className="text-center mb-12">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-100 border border-indigo-200 mb-5">
-            <span className="text-sm font-semibold text-indigo-900">✨ Free — No Credit Card Required</span>
+    <section id="free-assessment" className="bg-gradient-to-br from-indigo-50 via-white to-purple-50 py-20">
+      <div className="mx-auto max-w-6xl px-4 lg:px-8">
+        <div className="mb-12 text-center">
+          <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-indigo-200 bg-indigo-100 px-4 py-2">
+            <span className="text-sm font-semibold text-indigo-900">Free assessment - no credit card required</span>
           </div>
-          <h2 className="text-4xl md:text-5xl font-extrabold text-slate-900 mb-4">
+          <h2 className="mb-4 text-4xl font-extrabold text-slate-900 md:text-5xl">
             Start Your <span className="text-[#5b51ff]">Free Assessment</span>
           </h2>
-          <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-            Answer a few questions and we'll personalize your entire study plan based on your strengths, goals, and daily habits.
+          <p className="mx-auto max-w-2xl text-lg text-slate-600">
+            Answer a few questions and we will personalize your study plan around your goal, weak areas, daily schedule, and test data.
           </p>
         </div>
 
-        <div className="grid lg:grid-cols-5 gap-8 items-start">
-          {/* LEFT: Form */}
-          <div className="lg:col-span-3 bg-white rounded-3xl shadow-xl border border-slate-100 overflow-hidden">
-            {/* Step Tabs */}
-            <div className="flex border-b border-slate-100 overflow-x-auto">
-              {steps.map((step) => (
+        <div className="grid items-start gap-8 lg:grid-cols-5">
+          <div className="overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-xl lg:col-span-3">
+            <div className="flex overflow-x-auto border-b border-slate-100">
+              {steps.map(step => (
                 <button
                   key={step.id}
                   onClick={() => currentStep > step.id && setCurrentStep(step.id)}
-                  className={`flex-1 min-w-[100px] py-4 text-xs font-bold transition-colors whitespace-nowrap px-3 ${
+                  className={`min-w-[112px] flex-1 whitespace-nowrap px-3 py-4 text-xs font-bold transition-colors ${
                     currentStep === step.id
-                      ? 'border-b-2 border-[#5b51ff] text-[#5b51ff] bg-indigo-50/50'
+                      ? 'border-b-2 border-[#5b51ff] bg-indigo-50/50 text-[#5b51ff]'
                       : currentStep > step.id
-                      ? 'text-green-600 border-b-2 border-green-200'
-                      : 'text-slate-400'
+                        ? 'border-b-2 border-green-200 text-green-600'
+                        : 'text-slate-400'
                   }`}
                 >
-                  {currentStep > step.id ? '✓ ' : ''}{step.label}
+                  {currentStep > step.id ? 'Done - ' : ''}{step.label}
                 </button>
               ))}
             </div>
 
             <div className="p-8">
-              {/* Step 1: Basic Info */}
               {currentStep === 1 && (
                 <div className="space-y-5">
                   <div>
-                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Step 1</p>
-                    <h3 className="text-2xl font-extrabold text-slate-900">Tell Us About You</h3>
-                    <p className="text-slate-500 mt-1">We'll personalize your study plan based on this.</p>
+                    <p className="mb-1 text-xs font-bold uppercase tracking-widest text-slate-400">Step 1</p>
+                    <h3 className="text-2xl font-extrabold text-slate-900">Tell us about you</h3>
+                    <p className="mt-1 text-slate-500">This helps us personalize the mentor match.</p>
                   </div>
 
                   <div className="space-y-4">
                     <div>
-                      <label className="text-sm font-semibold text-slate-700 mb-1 block">Full Name</label>
+                      <label className="mb-1 block text-sm font-semibold text-slate-700">Full Name</label>
                       <input
                         type="text"
                         value={name}
-                        onChange={(e) => setName(e.target.value)}
+                        onChange={event => setName(event.target.value)}
                         placeholder="Enter your full name"
-                        className="w-full px-4 py-3 border border-slate-200 rounded-xl text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 transition-all"
+                        className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-900 transition-all focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-300"
                       />
                     </div>
                     <div>
-                      <label className="text-sm font-semibold text-slate-700 mb-1 block">Mobile Number</label>
+                      <label className="mb-1 block text-sm font-semibold text-slate-700">Mobile Number</label>
                       <div className="flex gap-2">
-                        <div className="px-3 py-3 border border-slate-200 rounded-xl text-sm text-slate-500 bg-slate-50">+91</div>
+                        <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-500">+91</div>
                         <input
                           type="tel"
                           value={mobile}
-                          onChange={(e) => setMobile(e.target.value)}
-                          placeholder="OTP will be Sent"
-                          className="flex-1 px-4 py-3 border border-slate-200 rounded-xl text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 transition-all"
+                          onChange={event => setMobile(event.target.value)}
+                          placeholder="Enter mobile number"
+                          className="flex-1 rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-900 transition-all focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-300"
                         />
                       </div>
                     </div>
                     <div>
-                      <label className="text-sm font-semibold text-slate-700 mb-1 block">Email</label>
+                      <label className="mb-1 block text-sm font-semibold text-slate-700">Email</label>
                       <input
                         type="email"
                         value={email}
-                        onChange={(e) => setEmail(e.target.value)}
+                        onChange={event => setEmail(event.target.value)}
                         placeholder="your@email.com"
-                        className="w-full px-4 py-3 border border-slate-200 rounded-xl text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 transition-all"
+                        className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-900 transition-all focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-300"
                       />
                     </div>
                     <div>
-                      <label className="text-sm font-semibold text-slate-700 mb-1 block">Target Exam</label>
+                      <label className="mb-1 block text-sm font-semibold text-slate-700">Target Exam</label>
                       <div className="relative">
                         <select
                           value={selectedExam}
-                          onChange={(e) => setSelectedExam(e.target.value)}
-                          className="w-full px-4 py-3 border border-slate-200 rounded-xl text-slate-900 text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-indigo-300 bg-white"
+                          onChange={event => setSelectedExam(event.target.value)}
+                          className="w-full appearance-none rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-300"
                         >
-                          {exams.map(e => <option key={e}>{e}</option>)}
+                          {exams.map(exam => <option key={exam}>{exam}</option>)}
                         </select>
-                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
+                        <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                       </div>
                     </div>
                     <div>
-                      <label className="text-sm font-semibold text-slate-700 mb-2 block">Preferred Language</label>
-                      <div className="flex gap-3">
-                        {(['English', 'Tamil', 'Hindi'] as const).map((lang) => (
+                      <label className="mb-2 block text-sm font-semibold text-slate-700">Preferred Language</label>
+                      <div className="flex flex-wrap gap-3">
+                        {(['English', 'Tamil', 'Hindi'] as const).map(lang => (
                           <button
                             key={lang}
                             onClick={() => setLanguage(lang)}
-                            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 text-sm font-semibold transition-all ${
+                            className={`flex items-center gap-2 rounded-xl border-2 px-4 py-2.5 text-sm font-semibold transition-all ${
                               language === lang
                                 ? 'border-[#5b51ff] bg-indigo-50 text-[#5b51ff]'
                                 : 'border-slate-200 text-slate-600 hover:border-slate-300'
                             }`}
                           >
-                            <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${language === lang ? 'border-[#5b51ff]' : 'border-slate-300'}`}>
-                              {language === lang && <div className="w-2 h-2 bg-[#5b51ff] rounded-full"></div>}
+                            <div className={`flex h-4 w-4 items-center justify-center rounded-full border-2 ${language === lang ? 'border-[#5b51ff]' : 'border-slate-300'}`}>
+                              {language === lang && <div className="h-2 w-2 rounded-full bg-[#5b51ff]" />}
                             </div>
                             {lang}
                           </button>
@@ -190,124 +248,118 @@ const FreeAssessmentForm = () => {
                     </div>
                   </div>
 
-                  <Button
-                    className="w-full h-14 bg-[#5b51ff] hover:bg-[#4a42ff] rounded-2xl font-bold text-lg"
-                    onClick={() => setCurrentStep(2)}
-                  >
+                  <Button className="h-14 w-full rounded-2xl bg-[#5b51ff] text-lg font-bold hover:bg-[#4a42ff]" onClick={nextStep}>
                     Next <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>
                 </div>
               )}
 
-              {/* Step 2: Exam Profile */}
               {currentStep === 2 && (
                 <div className="space-y-6">
                   <div>
-                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Step 2</p>
-                    <h3 className="text-2xl font-extrabold text-slate-900">Exam & Attempt Profile</h3>
-                    <p className="text-slate-500 mt-1">Is this your <strong>first attempt</strong> or a <strong>repeat attempt?</strong></p>
+                    <p className="mb-1 text-xs font-bold uppercase tracking-widest text-slate-400">Step 2</p>
+                    <h3 className="text-2xl font-extrabold text-slate-900">Exam and attempt profile</h3>
+                    <p className="mt-1 text-slate-500">Tell us whether you are beginning fresh or fixing a previous attempt.</p>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid gap-4 sm:grid-cols-2">
                     {[
-                      { type: 'first' as const, label: 'First Attempt', sub: 'New Aspirant', desc: 'I want to take & clear exam', emoji: '📚' },
-                      { type: 'repeat' as const, label: 'Repeat Attempt', sub: 'Retaking Exam', desc: 'I want to retake & clear the exam', emoji: '🎯' },
-                    ].map((opt) => (
+                      { type: 'first' as const, label: 'First Attempt', sub: 'New aspirant', desc: 'I need a clear foundation and weekly discipline.' },
+                      { type: 'repeat' as const, label: 'Repeat Attempt', sub: 'Retaking exam', desc: 'I need targeted repair for repeated mistakes.' },
+                    ].map(opt => (
                       <button
                         key={opt.type}
                         onClick={() => setAttemptType(opt.type)}
-                        className={`p-5 rounded-2xl border-2 text-left transition-all hover:shadow-md ${
-                          attemptType === opt.type
-                            ? 'border-[#5b51ff] bg-indigo-50 shadow-sm'
-                            : 'border-slate-200 hover:border-slate-300'
+                        className={`rounded-2xl border-2 p-5 text-left transition-all hover:shadow-md ${
+                          attemptType === opt.type ? 'border-[#5b51ff] bg-indigo-50 shadow-sm' : 'border-slate-200 hover:border-slate-300'
                         }`}
                       >
-                        <span className="text-3xl mb-3 block">{opt.emoji}</span>
-                        <h4 className="font-bold text-slate-900 text-base leading-tight">{opt.label}</h4>
-                        <p className={`text-xs font-semibold mt-1 ${attemptType === opt.type ? 'text-[#5b51ff]' : 'text-slate-400'}`}>● {opt.sub}</p>
-                        <p className="text-xs text-slate-500 mt-2">{opt.desc}</p>
+                        <h4 className="text-base font-bold leading-tight text-slate-900">{opt.label}</h4>
+                        <p className={`mt-1 text-xs font-semibold ${attemptType === opt.type ? 'text-[#5b51ff]' : 'text-slate-400'}`}>{opt.sub}</p>
+                        <p className="mt-2 text-xs text-slate-500">{opt.desc}</p>
                       </button>
                     ))}
                   </div>
 
                   <div className="flex gap-3">
-                    <Button variant="outline" className="flex-1 h-12 rounded-xl border-slate-200" onClick={() => setCurrentStep(1)}>Back</Button>
-                    <Button className="flex-1 h-12 bg-[#5b51ff] hover:bg-[#4a42ff] rounded-xl font-bold" onClick={() => setCurrentStep(3)}>
+                    <Button variant="outline" className="h-12 flex-1 rounded-xl border-slate-200" onClick={prevStep}>Back</Button>
+                    <Button className="h-12 flex-1 rounded-xl bg-[#5b51ff] font-bold hover:bg-[#4a42ff]" onClick={nextStep}>
                       Next <ArrowRight className="ml-2 h-5 w-5" />
                     </Button>
                   </div>
                 </div>
               )}
 
-              {/* Step 3: Strength & Weakness */}
               {currentStep === 3 && (
                 <div className="space-y-6">
                   <div>
-                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Step 3</p>
-                    <h3 className="text-2xl font-extrabold text-slate-900">Strength & Weakness</h3>
-                    <p className="text-slate-500 mt-1">Mark your <strong>strength</strong> level in each subject</p>
+                    <p className="mb-1 text-xs font-bold uppercase tracking-widest text-slate-400">Step 3</p>
+                    <h3 className="text-2xl font-extrabold text-slate-900">Strength and weakness map</h3>
+                    <p className="mt-1 text-slate-500">Mark each subject honestly so the mentor can sequence your plan.</p>
                   </div>
 
                   <div className="space-y-4">
-                    {subjects.map((subj) => (
-                      <div key={subj.name} className="flex items-center justify-between gap-4">
-                        <div className="flex items-center gap-2 min-w-[160px]">
-                          <subj.icon className={`w-4 h-4 ${subj.color}`} />
-                          <span className="text-sm font-semibold text-slate-700">{subj.name}</span>
+                    {subjects.map(subject => {
+                      const Icon = subject.icon;
+                      return (
+                        <div key={subject.name} className="flex flex-col gap-3 rounded-xl border border-slate-100 p-3 sm:flex-row sm:items-center sm:justify-between">
+                          <div className="flex min-w-[180px] items-center gap-2">
+                            <Icon className={`h-4 w-4 ${subject.color}`} />
+                            <span className="text-sm font-semibold text-slate-700">{subject.name}</span>
+                          </div>
+                          <div className="flex gap-2">
+                            {(['Weak', 'Average', 'Strong'] as const).map(level => (
+                              <button
+                                key={level}
+                                onClick={() => handleStrengthChange(subject.name, level)}
+                                className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-all ${
+                                  strengths[subject.name] === level
+                                    ? level === 'Weak'
+                                      ? 'bg-red-500 text-white'
+                                      : level === 'Average'
+                                        ? 'bg-yellow-400 text-white'
+                                        : 'bg-green-500 text-white'
+                                    : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                                }`}
+                              >
+                                {level}
+                              </button>
+                            ))}
+                          </div>
                         </div>
-                        <div className="flex gap-2">
-                          {(['Weak', 'Average', 'Strong'] as const).map((level) => (
-                            <button
-                              key={level}
-                              onClick={() => handleStrengthChange(subj.name, level)}
-                              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                                strengths[subj.name] === level
-                                  ? level === 'Weak'
-                                    ? 'bg-red-500 text-white'
-                                    : level === 'Average'
-                                    ? 'bg-yellow-400 text-white'
-                                    : 'bg-green-500 text-white'
-                                  : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
-                              }`}
-                            >
-                              {level}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
 
                   <div className="flex gap-3">
-                    <Button variant="outline" className="flex-1 h-12 rounded-xl border-slate-200" onClick={() => setCurrentStep(2)}>Back</Button>
-                    <Button className="flex-1 h-12 bg-[#5b51ff] hover:bg-[#4a42ff] rounded-xl font-bold" onClick={() => setCurrentStep(4)}>
+                    <Button variant="outline" className="h-12 flex-1 rounded-xl border-slate-200" onClick={prevStep}>Back</Button>
+                    <Button className="h-12 flex-1 rounded-xl bg-[#5b51ff] font-bold hover:bg-[#4a42ff]" onClick={nextStep}>
                       Next <ArrowRight className="ml-2 h-5 w-5" />
                     </Button>
                   </div>
                 </div>
               )}
 
-              {/* Step 4: Study Behavior */}
               {currentStep === 4 && (
                 <div className="space-y-6">
                   <div>
-                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Step 4</p>
-                    <h3 className="text-2xl font-extrabold text-slate-900">Study Behavior</h3>
-                    <p className="text-slate-500 mt-1">Tell us about your <strong>daily habits & distractions</strong></p>
+                    <p className="mb-1 text-xs font-bold uppercase tracking-widest text-slate-400">Step 4</p>
+                    <h3 className="text-2xl font-extrabold text-slate-900">Study behavior</h3>
+                    <p className="mt-1 text-slate-500">Your mentor will use this to create a realistic daily schedule.</p>
                   </div>
 
                   <div className="space-y-6">
                     <div>
-                      <label className="text-sm font-semibold text-slate-700 mb-3 block">Daily Study Hours</label>
+                      <label className="mb-3 block text-sm font-semibold text-slate-700">Daily Study Hours</label>
                       <input
                         type="range"
                         min={1}
                         max={12}
                         value={studyHours}
-                        onChange={(e) => setStudyHours(Number(e.target.value))}
+                        onChange={event => setStudyHours(Number(event.target.value))}
                         className="w-full accent-[#5b51ff]"
                       />
-                      <div className="flex justify-between mt-1">
+                      <div className="mt-1 flex justify-between">
                         <span className="text-xs text-slate-400">1 hr</span>
                         <span className="text-sm font-bold text-[#5b51ff]">{studyHours} hrs/day</span>
                         <span className="text-xs text-slate-400">12 hrs</span>
@@ -315,42 +367,40 @@ const FreeAssessmentForm = () => {
                     </div>
 
                     <div>
-                      <label className="text-sm font-semibold text-slate-700 mb-3 block">Preferred Study Time</label>
-                      <div className="flex gap-3">
-                        {(['Morning', 'Afternoon', 'Night'] as const).map((time) => (
+                      <label className="mb-3 block text-sm font-semibold text-slate-700">Preferred Study Time</label>
+                      <div className="flex flex-wrap gap-3">
+                        {(['Morning', 'Afternoon', 'Night'] as const).map(time => (
                           <button
                             key={time}
                             onClick={() => setStudyTime(time)}
-                            className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all ${
-                              studyTime === time
-                                ? 'bg-[#5b51ff] text-white'
-                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                            className={`flex-1 rounded-xl py-2.5 text-sm font-bold transition-all ${
+                              studyTime === time ? 'bg-[#5b51ff] text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                             }`}
                           >
-                            {time === 'Morning' ? '🌅' : time === 'Afternoon' ? '☀️' : '🌙'} {time}
+                            {time}
                           </button>
                         ))}
                       </div>
                     </div>
 
                     <div>
-                      <label className="text-sm font-semibold text-slate-700 mb-3 block">Distraction Level</label>
-                      <div className="flex gap-3">
-                        {([
-                          { val: 'Low' as const, color: 'bg-green-500', emoji: '😊' },
-                          { val: 'Average' as const, color: 'bg-yellow-400', emoji: '😐' },
-                          { val: 'High' as const, color: 'bg-red-500', emoji: '😅' },
-                        ]).map(({ val, color, emoji }) => (
+                      <label className="mb-3 block text-sm font-semibold text-slate-700">Distraction Level</label>
+                      <div className="flex flex-wrap gap-3">
+                        {(['Low', 'Average', 'High'] as const).map(level => (
                           <button
-                            key={val}
-                            onClick={() => setDistractionLevel(val)}
-                            className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all ${
-                              distractionLevel === val
-                                ? `${color} text-white`
+                            key={level}
+                            onClick={() => setDistractionLevel(level)}
+                            className={`flex-1 rounded-xl py-2.5 text-sm font-bold transition-all ${
+                              distractionLevel === level
+                                ? level === 'Low'
+                                  ? 'bg-green-500 text-white'
+                                  : level === 'Average'
+                                    ? 'bg-yellow-400 text-white'
+                                    : 'bg-red-500 text-white'
                                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                             }`}
                           >
-                            {emoji} {val}
+                            {level}
                           </button>
                         ))}
                       </div>
@@ -358,9 +408,74 @@ const FreeAssessmentForm = () => {
                   </div>
 
                   <div className="flex gap-3">
-                    <Button variant="outline" className="flex-1 h-12 rounded-xl border-slate-200" onClick={() => setCurrentStep(3)}>Back</Button>
-                    <Button className="flex-1 h-12 bg-[#5b51ff] hover:bg-[#4a42ff] rounded-xl font-bold" onClick={handleSubmit}>
-                      Get My Plan 🎯
+                    <Button variant="outline" className="h-12 flex-1 rounded-xl border-slate-200" onClick={prevStep}>Back</Button>
+                    <Button className="h-12 flex-1 rounded-xl bg-[#5b51ff] font-bold hover:bg-[#4a42ff]" onClick={nextStep}>
+                      Next <ArrowRight className="ml-2 h-5 w-5" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {currentStep === 5 && (
+                <div className="space-y-6">
+                  <div>
+                    <p className="mb-1 text-xs font-bold uppercase tracking-widest text-slate-400">Step 5</p>
+                    <h3 className="text-2xl font-extrabold text-slate-900">Test analysis</h3>
+                    <p className="mt-1 text-slate-500">A mentor match is stronger when we know your current score pattern.</p>
+                  </div>
+
+                  <div className="space-y-5">
+                    <div className="rounded-2xl border border-slate-100 p-4">
+                      <label className="mb-3 flex items-center justify-between text-sm font-semibold text-slate-700">
+                        Last Mock Score
+                        <span className="text-[#5b51ff]">{lastMockScore}/100</span>
+                      </label>
+                      <input
+                        type="range"
+                        min={0}
+                        max={100}
+                        value={lastMockScore}
+                        onChange={event => setLastMockScore(Number(event.target.value))}
+                        className="w-full accent-[#5b51ff]"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="mb-3 block text-sm font-semibold text-slate-700">Mock Test Frequency</label>
+                      <div className="grid gap-2 sm:grid-cols-2">
+                        {(['Not started', 'Monthly', 'Weekly', '2+ per week'] as const).map(option => (
+                          <button
+                            key={option}
+                            onClick={() => setMockFrequency(option)}
+                            className={`rounded-xl border-2 px-4 py-2.5 text-sm font-bold transition-all ${
+                              mockFrequency === option ? 'border-[#5b51ff] bg-indigo-50 text-[#5b51ff]' : 'border-slate-200 text-slate-600 hover:border-slate-300'
+                            }`}
+                          >
+                            {option}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="mb-1 block text-sm font-semibold text-slate-700">Toughest Section</label>
+                      <div className="relative">
+                        <select
+                          value={toughestSection}
+                          onChange={event => setToughestSection(event.target.value)}
+                          className="w-full appearance-none rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-300"
+                        >
+                          {subjects.map(subject => <option key={subject.name}>{subject.name}</option>)}
+                        </select>
+                        <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-3">
+                    <Button variant="outline" className="h-12 flex-1 rounded-xl border-slate-200" onClick={prevStep}>Back</Button>
+                    <Button className="h-12 flex-1 rounded-xl bg-[#5b51ff] font-bold hover:bg-[#4a42ff]" onClick={() => setSubmitted(true)}>
+                      Get My Plan <BarChart3 className="ml-2 h-5 w-5" />
                     </Button>
                   </div>
                 </div>
@@ -368,65 +483,70 @@ const FreeAssessmentForm = () => {
             </div>
           </div>
 
-          {/* RIGHT: Info Panel */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* What you'll get */}
-            <div className="bg-white rounded-3xl p-6 shadow-lg border border-slate-100">
-              <h3 className="font-extrabold text-slate-900 text-lg mb-4">We will personalize your entire study plan based on</h3>
+          <div className="space-y-6 lg:col-span-2">
+            <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-lg">
+              <h3 className="mb-4 text-lg font-extrabold text-slate-900">Your plan will be based on</h3>
               <div className="space-y-3">
                 {[
-                  { icon: '🎯', text: 'Your target exam & syllabus' },
-                  { icon: '📊', text: 'Your weak & strong subjects' },
-                  { icon: '⏰', text: 'Your daily study capacity' },
-                  { icon: '🏆', text: 'Your past performance trends' },
-                  { icon: '🧠', text: 'Your learning style & behavior' },
-                ].map((item, i) => (
-                  <div key={i} className="flex items-center gap-3">
-                    <span className="text-xl">{item.icon}</span>
-                    <span className="text-sm font-semibold text-slate-600">{item.text}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Target Exam Info */}
-            <div className="bg-white rounded-3xl p-6 shadow-lg border border-slate-100">
-              <h3 className="font-extrabold text-slate-900 text-lg mb-3">Target Exam</h3>
-              <p className="text-xs text-slate-400 mb-3">Select an Exam</p>
-              <div className="bg-slate-50 rounded-xl px-4 py-3 flex items-center justify-between mb-4 border border-slate-200">
-                <div className="flex items-center gap-2">
-                  <span className="text-lg">🏦</span>
-                  <span className="font-bold text-slate-800">{selectedExam}</span>
-                </div>
-                <ChevronDown className="h-4 w-4 text-slate-400" />
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                {['HiBochi', 'Tamil', 'SSC CGL', 'Hindi'].map((item) => (
-                  <div key={item} className="flex items-center gap-2 text-sm text-slate-600">
-                    <div className="w-5 h-5 rounded bg-indigo-100 flex items-center justify-center flex-shrink-0">
-                      <CheckCircle2 className="w-3 h-3 text-indigo-600" />
+                  'Target exam and syllabus stage',
+                  'Weak and strong subject map',
+                  'Daily study capacity',
+                  'Mock score and frequency',
+                  'Preferred language and schedule',
+                ].map(item => (
+                  <div key={item} className="flex items-center gap-3">
+                    <div className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded bg-indigo-100">
+                      <CheckCircle2 className="h-3 w-3 text-indigo-600" />
                     </div>
-                    {item}
+                    <span className="text-sm font-semibold text-slate-600">{item}</span>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Recommendations */}
-            <div className="bg-white rounded-3xl p-6 shadow-lg border border-slate-100">
-              <h3 className="font-extrabold text-slate-900 text-base mb-3">💡 Recommendations</h3>
+            <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-lg">
+              <h3 className="mb-3 text-lg font-extrabold text-slate-900">Assessment Summary</h3>
+              <div className="space-y-3">
+                <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Target Exam</p>
+                  <p className="mt-1 font-bold text-slate-800">{selectedExam}</p>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="rounded-xl bg-indigo-50 p-3">
+                    <p className="text-xs font-semibold text-indigo-500">Language</p>
+                    <p className="text-sm font-bold text-slate-800">{language}</p>
+                  </div>
+                  <div className="rounded-xl bg-green-50 p-3">
+                    <p className="text-xs font-semibold text-green-600">Study Time</p>
+                    <p className="text-sm font-bold text-slate-800">{studyHours} hrs/day</p>
+                  </div>
+                  <div className="rounded-xl bg-orange-50 p-3">
+                    <p className="text-xs font-semibold text-orange-600">Mock Score</p>
+                    <p className="text-sm font-bold text-slate-800">{lastMockScore}/100</p>
+                  </div>
+                  <div className="rounded-xl bg-purple-50 p-3">
+                    <p className="text-xs font-semibold text-purple-600">Weak Areas</p>
+                    <p className="text-sm font-bold text-slate-800">{weakSubjects.length || 'Pending'}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-3xl border border-slate-100 bg-white p-6 shadow-lg">
+              <h3 className="mb-3 text-base font-extrabold text-slate-900">Recommendations</h3>
               <div className="space-y-2">
-                {[
-                  { icon: '⭐', text: 'We recommend identifying your exam strengths' },
-                  { icon: '📅', text: 'Personalize Daily: honor of taboos study later ristrily tares' },
-                  { icon: '🎓', text: 'Improvement: usageellprlop retutia Achieve' },
-                ].map((item, i) => (
-                  <div key={i} className="flex gap-2">
-                    <span>{item.icon}</span>
-                    <p className="text-xs text-slate-600">{item.text}</p>
+                {recommendations.map(item => (
+                  <div key={item} className="flex gap-2 rounded-xl bg-slate-50 p-3">
+                    <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-green-600" />
+                    <p className="text-xs leading-relaxed text-slate-600">{item}</p>
                   </div>
                 ))}
               </div>
+              {strongSubjects.length > 0 && (
+                <p className="mt-4 rounded-xl bg-green-50 p-3 text-xs font-semibold text-green-700">
+                  Strong subjects to protect: {strongSubjects.slice(0, 2).join(', ')}
+                </p>
+              )}
             </div>
           </div>
         </div>

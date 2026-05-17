@@ -474,26 +474,7 @@ const TargetExamCard: React.FC<TargetExamCardProps> = ({
 
         </div>{/* end animated slide wrapper */}
 
-        {/* Row 4: View All Targets & Slide Indicators */}
-        <div className="flex items-center justify-between mt-2 pt-4 border-t border-gray-100">
-          {/* Dot Indicators */}
-          <div className="flex items-center gap-1.5">
-            {safeExams.map((_, idx) => (
-               <button 
-                 key={idx} 
-                 onClick={() => setViewIndex(idx)}
-                 className={`h-2 rounded-full transition-all ${idx === validIndex ? 'w-6 bg-primary' : 'w-2 bg-gray-200 hover:bg-gray-300'}`}
-               />
-            ))}
-          </div>
-          
-          <button 
-            onClick={() => setManageTargetsOpen(true)}
-            className="text-xs font-bold text-primary hover:text-primary/80 transition-colors flex items-center gap-1"
-          >
-            Manage Targets ({safeExams.length}/3)
-          </button>
-        </div>
+
 
         <WeaknessDetectionModal
           isOpen={weaknessOpen}
