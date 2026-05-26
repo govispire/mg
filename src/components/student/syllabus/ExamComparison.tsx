@@ -4,7 +4,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { X, CheckCircle2, XCircle } from 'lucide-react';
-import { allSyllabusData, ExamSyllabusConfig } from '@/data/syllabusData';
+import { ExamSyllabusConfig } from '@/data/syllabusData';
+import { useSyllabusData } from '@/hooks/useSyllabusData';
 
 interface ExamComparisonProps {
   isOpen: boolean;
@@ -19,8 +20,9 @@ const ExamComparison: React.FC<ExamComparisonProps> = ({
   selectedExams,
   onRemoveExam
 }) => {
+  const { getExamConfig } = useSyllabusData();
   const examsData = selectedExams
-    .map(id => allSyllabusData[id])
+    .map(id => getExamConfig(id))
     .filter(Boolean) as ExamSyllabusConfig[];
   
   if (examsData.length === 0) return null;

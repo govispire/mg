@@ -14,6 +14,7 @@ import TestCatalogManager from '@/pages/superadmin/TestCatalogManager';
 import SuperAdminExamManager from '@/pages/superadmin/SuperAdminExamManager';
 import QuestionManager from '@/pages/superadmin/QuestionManager';
 import TestBuilderPage from '@/pages/superadmin/TestBuilderPage';
+import LiveTestManager from '@/pages/superadmin/LiveTestManager';
 import EmployeeApprovalQueue from '@/pages/superadmin/EmployeeApprovalQueue';
 import EmployeeManager from '@/pages/superadmin/EmployeeManager';
 import SuperAdminVocabulary from '@/pages/superadmin/SuperAdminVocabulary';
@@ -22,6 +23,7 @@ import UpcomingExamsManager from '@/pages/superadmin/UpcomingExamsManager';
 import CurrentAffairsManager from '@/pages/superadmin/CurrentAffairsManager';
 import ExamAlertsManager from '@/pages/superadmin/ExamAlertsManager';
 import AdsManager from '@/pages/superadmin/AdsManager';
+import SuperAdminTaskManager from '@/pages/superadmin/SuperAdminTaskManager';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import NotFound from '@/pages/NotFound';
 
@@ -41,6 +43,7 @@ const SuperAdminRoutes = () => {
           <Route path="/test-catalog" element={<TestCatalogManager />} />
           <Route path="/test-catalog/:categoryId/:sectionId/:examId" element={<SuperAdminExamManager />} />
           <Route path="/test-catalog/:categoryId/:sectionId/:examId/:slotKey/:testId/questions" element={<TestBuilderPage />} />
+          <Route path="/live-tests" element={<LiveTestManager />} />
           {/* ── New Phase 2 & 3 Routes ── */}
           <Route path="/approval-queue" element={<EmployeeApprovalQueue />} />
           <Route path="/employee-manager" element={<EmployeeManager />} />
@@ -50,6 +53,8 @@ const SuperAdminRoutes = () => {
           <Route path="/current-affairs" element={<CurrentAffairsManager />} />
           <Route path="/exam-alerts" element={<ExamAlertsManager />} />
           <Route path="/ads-manager" element={<AdsManager />} />
+          {/* ── Governance Routes ── */}
+          <Route path="/task-manager" element={<SuperAdminTaskManager />} />
           <Route path="*" element={<NotFound />} />
         </Route>
       </Route>

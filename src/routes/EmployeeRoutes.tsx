@@ -13,6 +13,7 @@ import Approvals from '@/pages/employee/Approvals';
 import CreateBlog from '@/pages/employee/CreateBlog';
 import CreateCurrentAffairs from '@/pages/employee/CreateCurrentAffairs';
 import EmployeeVocabulary from '@/pages/employee/EmployeeVocabulary';
+import EmployeeMyTasks from '@/pages/employee/EmployeeMyTasks';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import NotFound from '@/pages/NotFound';
 
@@ -33,6 +34,8 @@ const EmployeeRoutes = () => {
           <Route path="/create-blog" element={<CreateBlog />} />
           <Route path="/create-current-affairs" element={<CreateCurrentAffairs />} />
           <Route path="/vocabulary" element={<EmployeeVocabulary />} />
+          {/* ── Governance Routes ── */}
+          <Route path="/my-tasks" element={<EmployeeMyTasks />} />
           <Route path="*" element={<NotFound />} />
         </Route>
       </Route>

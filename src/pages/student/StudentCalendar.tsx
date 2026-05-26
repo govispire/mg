@@ -1,10 +1,13 @@
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import UniversalCalendar from '@/components/calendar/UniversalCalendar';
 import { CalendarEvent } from '@/components/student/calendar/types';
+import { useAllExamStages } from '@/hooks/useExamStages';
+import { useTargetExams } from '@/hooks/useTargetExams';
 
-// Sample data with enhanced structure
-const sampleEvents: CalendarEvent[] = [
+// ─── Sample static study events ───────────────────────────────────────────────
+
+const staticEvents: CalendarEvent[] = [
   {
     id: '1',
     title: 'Mock Test - Banking Awareness',
@@ -62,14 +65,41 @@ const sampleEvents: CalendarEvent[] = [
   }
 ];
 
+// ─── Component ────────────────────────────────────────────────────────────────
 
 const StudentCalendar: React.FC = () => {
+  const { allStages } = useAllExamStages();
+  const { targetExams } = useTargetExams();
+
+  // Convert live exam stages → CalendarEvents
+  const stageEvents: CalendarEvent[] = useMemo(() => {
+    return allStages
+      .filter(stage => stage.isVisible && stage.date)
+      .map(stage => ({
+        id: `stage_${stage.id}`,
+        title: `📅 ${stage.name}`,
+        description: stage.notes || `Exam stage: ${stage.name}`,
+        date: new Date(stage.date!),
+        time: '09:00',
+        category: 'exam' as const,
+        priority: 'high' as const,
+        status: stage.status === 'completed' ? 'completed' as const : 'pending' as const,
+        taskType: 'exam' as const,
+        completed: stage.status === 'completed',
+        images: [],
+        ...(stage.link ? { attachmentUrl: stage.link } : {}),
+      }));
+  }, [allStages]);
+
+  const allEvents = useMemo(() => [...staticEvents, ...stageEvents], [stageEvents]);
+
   return (
     <UniversalCalendar 
       userRole="student" 
-      initialEvents={sampleEvents}
+      initialEvents={allEvents}
     />
   );
 };
 
 export default StudentCalendar;
+

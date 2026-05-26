@@ -18,7 +18,7 @@ import { useToast } from '@/hooks/use-toast';
 import {
     ArrowLeft, Plus, Pencil, Trash2, Eye, EyeOff,
     Clock, Target, BarChart2, Star, BookOpen, Zap, Radio, Trophy,
-    Grid3X3, List, CheckCircle, Play, Upload, Tag, Check, X, Users, Quote, Save,
+    Grid3X3, List, CheckCircle, Play, Upload, Tag, Check, X, Users, Quote, Save, Calendar,
 } from 'lucide-react';
 import { useSuccessStoriesStore, type SuccessStory } from '@/hooks/useSuccessStoriesStore';
 import { Textarea } from '@/components/ui/textarea';
@@ -32,6 +32,8 @@ import {
 } from '@/hooks/useExamCatalog';
 import { cn } from '@/lib/utils';
 import { Progress } from '@/components/ui/progress';
+import ExamStageManager from '@/components/superadmin/ExamStageManager';
+import ExamSyllabusManager from '@/components/superadmin/ExamSyllabusManager';
 
 // ─── Difficulty badge ─────────────────────────────────────────────────────────
 
@@ -223,14 +225,17 @@ const SuperAdminExamManager: React.FC = () => {
     const category = catalog.find(c => c.id === categoryId);
     const section = category?.sections.find(s => s.id === sectionId);
 
-    // Dynamic main tab list from slots (unique tab values) + 'success-stories'
+    // Dynamic main tab list from slots (unique tab values) + 'stages' + 'success-stories'
     const mainTabValues: string[] = React.useMemo(() => {
-        if (!exam) return ['success-stories'];
+        if (!exam) return ['__stages__', 'success-stories'];
         const seen = new Set<string>();
         const tabs: string[] = [];
         for (const slot of exam.testSlots) {
             if (!seen.has(slot.tab)) { seen.add(slot.tab); tabs.push(slot.tab); }
         }
+        // Always append stages manager, syllabus, and success stories
+        tabs.push('__stages__');
+        tabs.push('__syllabus__');
         tabs.push('success-stories');
         return tabs;
     }, [exam]);
@@ -726,20 +731,20 @@ const SuperAdminExamManager: React.FC = () => {
                     <div className="flex items-center gap-1 overflow-x-auto pb-0">
                         {mainTabValues.map((tabVal) => {
                             const isSuccessStories = tabVal === 'success-stories';
+                            const isStages = tabVal === '__stages__';
+                            const isSyllabus = tabVal === '__syllabus__';
                             // First slot of this tab gives us the label
-                            const firstSlot = isSuccessStories ? null : exam!.testSlots.find(s => s.tab === tabVal);
-                            // Label to show: for tab with sub-tabs, show the tab value nicely; for simple slot, show its label
+                            const firstSlot = (isSuccessStories || isStages || isSyllabus) ? null : exam!.testSlots.find(s => s.tab === tabVal);
+                            // Label to show
                             const displayLabel = isSuccessStories ? 'Success Stories'
+                                : isStages ? 'Exam Stages'
+                                : isSyllabus ? 'Syllabus'
                                 : (exam!.testSlots.filter(s => s.tab === tabVal).some(s => s.subTab)
                                     ? tabVal.replace(/_\d+$/, '').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
                                     : firstSlot?.label ?? tabVal);
-                            const tabTestCount = isSuccessStories ? 0
+                            const tabTestCount = (isSuccessStories || isStages || isSyllabus) ? 0
                                 : exam!.testSlots.filter(s => s.tab === tabVal).reduce((a, s) => a + s.tests.length, 0);
                             const isActive = activeTab === tabVal;
-
-                            // The slot key to use for rename (for simple=direct slots, use firstSlot.key; for sub-tab tabs, no single key—show generic rename)
-                            const simpleSlot = isSuccessStories ? null
-                                : exam!.testSlots.find(s => s.tab === tabVal && s.subTab === null);
 
                             return (
                                 <div key={tabVal} className="relative flex items-center group shrink-0">
@@ -749,9 +754,12 @@ const SuperAdminExamManager: React.FC = () => {
                                             isActive
                                                 ? 'border-primary text-primary bg-white rounded-t-lg'
                                                 : 'border-transparent text-muted-foreground hover:text-foreground hover:border-gray-300'
-                                        }`}
+                                        } ${isStages ? 'text-emerald-700 hover:text-emerald-800' : ''}`}
                                     >
-                                        {isSuccessStories ? <Users className="h-3.5 w-3.5" /> : <BookOpen className="h-3.5 w-3.5" />}
+                                        {isSuccessStories ? <Users className="h-3.5 w-3.5" />
+                                         : isStages ? <Calendar className="h-3.5 w-3.5 text-emerald-600" />
+                                         : isSyllabus ? <BookOpen className="h-3.5 w-3.5 text-indigo-600" />
+                                         : <BookOpen className="h-3.5 w-3.5" />}
                                         {renamingSlotKey === `__tab__${tabVal}` ? (
                                             <input
                                                 autoFocus
@@ -763,10 +771,10 @@ const SuperAdminExamManager: React.FC = () => {
                                                 onClick={e => e.stopPropagation()}
                                             />
                                         ) : (
-                                            <span onDoubleClick={() => !isSuccessStories && (
+                                            <span onDoubleClick={() => (!isSuccessStories && !isStages && !isSyllabus) && (
                                                 setRenamingSlotKey(`__tab__${tabVal}`),
                                                 setRenameValue(displayLabel)
-                                            )} title="Double-click to rename">{displayLabel}</span>
+                                            )} title={isStages ? 'Manage exam stages, dates and visibility' : isSyllabus ? 'Manage syllabus stages, subjects and topics' : 'Double-click to rename'}>{displayLabel}</span>
                                         )}
                                         {tabTestCount > 0 && (
                                             <span className="bg-primary/15 text-primary text-[10px] font-bold px-1.5 py-0.5 rounded-full">{tabTestCount}</span>
@@ -775,8 +783,8 @@ const SuperAdminExamManager: React.FC = () => {
                                             <span className="bg-amber-100 text-amber-700 text-[10px] font-bold px-1.5 py-0.5 rounded-full">{examStories.length}</span>
                                         )}
                                     </button>
-                                    {/* Rename + Delete buttons (only on hover, not for success-stories) */}
-                                    {!isSuccessStories && isActive && (
+                                    {/* Rename + Delete buttons (only for test tabs, not stages/success-stories) */}
+                                    {!isSuccessStories && !isStages && isActive && (
                                         <div className="flex items-center gap-0.5 ml-0.5 pb-0.5">
                                             <button
                                                 className="h-5 w-5 rounded text-gray-400 hover:text-primary hover:bg-primary/10 flex items-center justify-center transition-colors"
@@ -807,7 +815,13 @@ const SuperAdminExamManager: React.FC = () => {
 
                 {/* ── Tab content ──────────────────────────────────────────── */}
                 <div className="p-4 sm:p-6">
-                    {activeTab === 'success-stories' ? (
+                    {activeTab === '__stages__' ? (
+                        // ── Exam Stages Manager ──────────────────────────────────────────
+                        <ExamStageManager examId={examId!} examName={exam!.name} />
+                    ) : activeTab === '__syllabus__' ? (
+                        // ── Syllabus Manager ─────────────────────────────────────────────
+                        <ExamSyllabusManager examId={examId!} examName={exam!.name} />
+                    ) : activeTab === 'success-stories' ? (
                         // ── Success Stories Panel ─────────────────────────────────────────
                         <div className="space-y-4">
                             <div className="flex items-center justify-between">

@@ -1004,8 +1004,40 @@ const SettingsTab: React.FC = () => {
   const [s, setS] = useState<AdsSettings>(getAdsSettings());
   const [saved, setSaved] = useState(false);
   const [open, setOpen] = useState<string>('ad');
+  const [paymentSettings, setPaymentSettings] = useState({
+    gateway: 'Razorpay',
+    autoInvoice: true,
+    requirePaymentBeforeLaunch: false,
+    billingCycle: 'Monthly',
+  });
+  const [approvalSettings, setApprovalSettings] = useState({
+    requireApproval: true,
+    reviewerRole: 'Super Admin',
+    autoPauseFlaggedAds: true,
+    changeLogRetention: '180 days',
+  });
+  const [notificationSettings, setNotificationSettings] = useState({
+    emailSummary: true,
+    pushAlerts: true,
+    lowCtrAlert: true,
+    budgetAlertAt: 80,
+  });
 
   const save = () => { saveAdsSettings(s); setSaved(true); setTimeout(() => setSaved(false), 2000); };
+
+  const ToggleRow: React.FC<{ label: string; description: string; checked: boolean; onToggle: () => void }> = ({ label, description, checked, onToggle }) => (
+    <button
+      type="button"
+      onClick={onToggle}
+      className="w-full flex items-center justify-between gap-3 rounded-xl border border-slate-200 px-3 py-2.5 text-left hover:bg-slate-50 transition-colors"
+    >
+      <span>
+        <span className="block text-sm font-semibold text-slate-700">{label}</span>
+        <span className="block text-[11px] text-slate-400 mt-0.5">{description}</span>
+      </span>
+      {checked ? <ToggleRight className="h-6 w-6 text-emerald-600" /> : <ToggleLeft className="h-6 w-6 text-slate-400" />}
+    </button>
+  );
 
   const Accordion: React.FC<{ id: string; title: string; icon: React.ReactNode; children: React.ReactNode }> = ({ id, title, icon, children }) => (
     <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
@@ -1073,15 +1105,134 @@ const SettingsTab: React.FC = () => {
       </Accordion>
 
       <Accordion id="payment" title="Payment Settings" icon={<BarChart2 className="h-4 w-4 text-blue-600" />}>
-        <div className="pt-4 text-sm text-slate-400 italic">Payment gateway integration coming soon.</div>
+        <div className="pt-4 space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="text-sm font-semibold text-slate-700 mb-1.5 block">Gateway Provider</label>
+              <select
+                value={paymentSettings.gateway}
+                onChange={e => setPaymentSettings(x => ({ ...x, gateway: e.target.value }))}
+                className="w-full text-sm border rounded-xl px-3 py-2 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+              >
+                <option>Razorpay</option>
+                <option>Stripe</option>
+                <option>Manual Invoice</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-sm font-semibold text-slate-700 mb-1.5 block">Billing Cycle</label>
+              <select
+                value={paymentSettings.billingCycle}
+                onChange={e => setPaymentSettings(x => ({ ...x, billingCycle: e.target.value }))}
+                className="w-full text-sm border rounded-xl px-3 py-2 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+              >
+                <option>Monthly</option>
+                <option>Quarterly</option>
+                <option>Campaign based</option>
+              </select>
+            </div>
+          </div>
+          <ToggleRow
+            label="Auto-generate invoices"
+            description="Create invoices when an ad contract is marked billable."
+            checked={paymentSettings.autoInvoice}
+            onToggle={() => setPaymentSettings(x => ({ ...x, autoInvoice: !x.autoInvoice }))}
+          />
+          <ToggleRow
+            label="Require payment before launch"
+            description="Keep new advertiser campaigns inactive until payment is confirmed."
+            checked={paymentSettings.requirePaymentBeforeLaunch}
+            onToggle={() => setPaymentSettings(x => ({ ...x, requirePaymentBeforeLaunch: !x.requirePaymentBeforeLaunch }))}
+          />
+          <div className="rounded-xl bg-blue-50 border border-blue-100 p-3 text-xs text-blue-700">
+            Active rule: {paymentSettings.gateway} billing, {paymentSettings.billingCycle.toLowerCase()} cycle.
+          </div>
+        </div>
       </Accordion>
 
       <Accordion id="admin" title="Admin Controls" icon={<Users className="h-4 w-4 text-violet-600" />}>
-        <div className="pt-4 text-sm text-slate-400 italic">Role-based ad approval workflow coming soon.</div>
+        <div className="pt-4 space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="text-sm font-semibold text-slate-700 mb-1.5 block">Reviewer Role</label>
+              <select
+                value={approvalSettings.reviewerRole}
+                onChange={e => setApprovalSettings(x => ({ ...x, reviewerRole: e.target.value }))}
+                className="w-full text-sm border rounded-xl px-3 py-2 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+              >
+                <option>Super Admin</option>
+                <option>Owner</option>
+                <option>Category Admin</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-sm font-semibold text-slate-700 mb-1.5 block">Change Log Retention</label>
+              <select
+                value={approvalSettings.changeLogRetention}
+                onChange={e => setApprovalSettings(x => ({ ...x, changeLogRetention: e.target.value }))}
+                className="w-full text-sm border rounded-xl px-3 py-2 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+              >
+                <option>90 days</option>
+                <option>180 days</option>
+                <option>365 days</option>
+              </select>
+            </div>
+          </div>
+          <ToggleRow
+            label="Require approval for new ads"
+            description="Send new or edited ads into a review queue before publication."
+            checked={approvalSettings.requireApproval}
+            onToggle={() => setApprovalSettings(x => ({ ...x, requireApproval: !x.requireApproval }))}
+          />
+          <ToggleRow
+            label="Auto-pause flagged ads"
+            description="Pause ads when reports, expired targeting, or unsafe links are detected."
+            checked={approvalSettings.autoPauseFlaggedAds}
+            onToggle={() => setApprovalSettings(x => ({ ...x, autoPauseFlaggedAds: !x.autoPauseFlaggedAds }))}
+          />
+          <div className="rounded-xl bg-violet-50 border border-violet-100 p-3 text-xs text-violet-700">
+            Review queue owner: {approvalSettings.reviewerRole}.
+          </div>
+        </div>
       </Accordion>
 
       <Accordion id="notifications" title="Notification Preferences" icon={<Zap className="h-4 w-4 text-orange-500" />}>
-        <div className="pt-4 text-sm text-slate-400 italic">Email/push notification settings coming soon.</div>
+        <div className="pt-4 space-y-4">
+          <div>
+            <label className="text-sm font-semibold text-slate-700">Budget Alert Threshold</label>
+            <p className="text-[11px] text-slate-400 mb-3">Send alerts when a campaign has used this share of its budget.</p>
+            <div className="flex items-center gap-3">
+              <input
+                type="range"
+                min={50}
+                max={100}
+                step={5}
+                value={notificationSettings.budgetAlertAt}
+                onChange={e => setNotificationSettings(x => ({ ...x, budgetAlertAt: parseInt(e.target.value) }))}
+                className="flex-1 accent-emerald-600"
+              />
+              <span className="text-sm font-bold text-slate-800 w-12 text-right">{notificationSettings.budgetAlertAt}%</span>
+            </div>
+          </div>
+          <ToggleRow
+            label="Daily email summary"
+            description="Send campaign status and revenue totals to admins."
+            checked={notificationSettings.emailSummary}
+            onToggle={() => setNotificationSettings(x => ({ ...x, emailSummary: !x.emailSummary }))}
+          />
+          <ToggleRow
+            label="Push alerts"
+            description="Notify admins when an ad expires, pauses, or exceeds caps."
+            checked={notificationSettings.pushAlerts}
+            onToggle={() => setNotificationSettings(x => ({ ...x, pushAlerts: !x.pushAlerts }))}
+          />
+          <ToggleRow
+            label="Low CTR alert"
+            description="Flag campaigns below the minimum CTR target."
+            checked={notificationSettings.lowCtrAlert}
+            onToggle={() => setNotificationSettings(x => ({ ...x, lowCtrAlert: !x.lowCtrAlert }))}
+          />
+        </div>
       </Accordion>
     </div>
   );

@@ -7,12 +7,13 @@ import {
   Search, Bell, ChevronDown, ChevronUp,
   Calendar, Clock, MapPin, Building2, GraduationCap,
   ExternalLink, Download, CheckCircle, FileText,
-  Train, Landmark, Shield, TrendingUp, Users, BookOpen,
+  Train, Landmark, Shield, TrendingUp, Users, BookOpen, AlertTriangle, Radio,
 } from 'lucide-react';
 import {
   ExamAlertEntry, ExamStatusType,
   getExamAlerts, formatAlertDate,
 } from '@/data/examAlertsStore';
+import { useAllExamStages, getDaysLeft } from '@/hooks/useExamStages';
 
 // ── Exam logo helpers ───────────────────────────────────────────────────────
 const EXAM_LOGOS: Record<string, string> = {
@@ -112,6 +113,16 @@ const ExamNotifications: React.FC = () => {
     actionType: 'notification' | 'apply' | 'result'; url: string;
   }>({ isOpen: false, examName: '', actionType: 'apply', url: '' });
 
+  // ── Live exam stages from SuperAdmin ────────────────────────────────────────
+  const { allStages } = useAllExamStages();
+  const urgentStages = useMemo(() => {
+    return allStages
+      .filter(s => s.isVisible && s.date && s.status !== 'completed' && s.status !== 'cancelled')
+      .map(s => ({ ...s, daysLeft: getDaysLeft(s.date) }))
+      .filter(s => s.daysLeft !== null && s.daysLeft >= 0 && s.daysLeft <= 30)
+      .sort((a, b) => (a.daysLeft ?? 0) - (b.daysLeft ?? 0));
+  }, [allStages]);
+
   useEffect(() => { setAlerts(getExamAlerts().filter(e => e.isActive)); }, []);
 
   // Listen for changes from superadmin (same tab storage event)
@@ -153,6 +164,46 @@ const ExamNotifications: React.FC = () => {
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
+
+      {/* ── Live Stage Alert Banner ── */}
+      {urgentStages.length > 0 && (
+        <div className="bg-gradient-to-r from-red-50 to-amber-50 border border-red-200 rounded-xl p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <Radio className="h-4 w-4 text-red-600 animate-pulse" />
+            <p className="text-sm font-bold text-red-800">
+              🚨 Upcoming Exam Stages in Next 30 Days
+            </p>
+            <span className="ml-auto text-[10px] font-bold text-red-600 bg-red-100 px-2 py-0.5 rounded-full">
+              {urgentStages.length} alert{urgentStages.length > 1 ? 's' : ''}
+            </span>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {urgentStages.map(stage => (
+              <div key={stage.id} className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-xs font-semibold
+                ${stage.daysLeft === 0 ? 'bg-red-100 border-red-300 text-red-800' :
+                  stage.daysLeft! <= 7 ? 'bg-orange-50 border-orange-200 text-orange-800' :
+                  'bg-amber-50 border-amber-200 text-amber-800'}`}>
+                <Calendar className="h-3.5 w-3.5 flex-shrink-0" />
+                <span className="font-bold">{stage.name}</span>
+                <span className="text-[10px] opacity-80">
+                  {stage.daysLeft === 0 ? 'TODAY!' : `${stage.daysLeft}d left`}
+                </span>
+                {stage.date && (
+                  <span className="text-[10px] opacity-70">
+                    — {new Date(stage.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+                  </span>
+                )}
+                {stage.link && (
+                  <a href={stage.link} target="_blank" rel="noopener noreferrer"
+                    className="underline hover:no-underline" title="Official notice">
+                    Notice ↗
+                  </a>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* ── Search Bar ── */}
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm px-4 py-3">

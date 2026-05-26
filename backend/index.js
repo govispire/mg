@@ -2,11 +2,16 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 
-const authRoutes    = require('./routes/auth');
-const userRoutes    = require('./routes/users');
-const quizRoutes    = require('./routes/quiz');
-const taskRoutes    = require('./routes/tasks');
-const presenceRoutes = require('./routes/presence');
+const authRoutes         = require('./routes/auth');
+const userRoutes         = require('./routes/users');
+const quizRoutes         = require('./routes/quiz');
+const taskRoutes         = require('./routes/tasks');
+const presenceRoutes     = require('./routes/presence');
+// ── Governance routes ─────────────────────────────────────────
+const adminUsersRoutes   = require('./routes/adminUsers');
+const staffTasksRoutes   = require('./routes/staffTasks');
+const auditLogsRoutes    = require('./routes/auditLogs');
+const notificationsRoutes = require('./routes/notifications');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -24,11 +29,16 @@ app.get('/api/health', (req, res) => {
 });
 
 // ── Routes ────────────────────────────────────────────────────
-app.use('/api/auth',     authRoutes);
-app.use('/api/users',    userRoutes);
-app.use('/api/quiz',     quizRoutes);
-app.use('/api/tasks',    taskRoutes);
-app.use('/api/presence', presenceRoutes);
+app.use('/api/auth',          authRoutes);
+app.use('/api/users',         userRoutes);
+app.use('/api/quiz',          quizRoutes);
+app.use('/api/tasks',         taskRoutes);
+app.use('/api/presence',      presenceRoutes);
+// ── Governance ───────────────────────────────────────────────
+app.use('/api/admin/users',   adminUsersRoutes);
+app.use('/api/staff-tasks',   staffTasksRoutes);
+app.use('/api/audit-logs',    auditLogsRoutes);
+app.use('/api/notifications', notificationsRoutes);
 
 // ── 404 handler ───────────────────────────────────────────────
 app.use((req, res) => {

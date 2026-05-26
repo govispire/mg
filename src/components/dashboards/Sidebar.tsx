@@ -9,9 +9,10 @@ import {
   HelpCircle, Upload, Eye, CheckCircle, Users, Bell,
   PieChart, CreditCard, Settings, UserCheck, MessageSquare,
   Target, Clock, TrendingUp, Gift, Flame, Trophy, Star, Award, Lock, Shield,
-  Sparkles, FileEdit, GraduationCap, Newspaper, Megaphone,
+  Sparkles, FileEdit, GraduationCap, Newspaper, Megaphone, BarChart3, Radio,
   ChevronLeft, ChevronRight,
 } from 'lucide-react';
+import { useContentItems } from '@/hooks/useEmployeePermissions';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -211,6 +212,7 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({ role, basePath, collapsed, onToggle }) => {
   const location = useLocation();
   const { user } = useAuth();
+  const { pendingCount } = useContentItems();
   const [streak, setStreak] = useState(0);
   const [longestStreak, setLongestStreak] = useState(0);
 
@@ -236,7 +238,7 @@ const Sidebar: React.FC<SidebarProps> = ({ role, basePath, collapsed, onToggle }
       // For mentorship, check if current path starts with mentorship
       return location.pathname.startsWith(`${basePath}/mentorship`);
     }
-    return location.pathname === path;
+    return location.pathname === path || location.pathname.startsWith(`${path}/`);
   };
 
   // Define navigation items based on role
@@ -287,13 +289,15 @@ const Sidebar: React.FC<SidebarProps> = ({ role, basePath, collapsed, onToggle }
           { icon: <CalendarDays size={18} />, label: 'Calendar', to: `${basePath}/calendar` },
           { icon: <Users size={18} />, label: 'Create Admins', to: `${basePath}/create-admins` },
           { icon: <Users size={18} />, label: 'Manage All Users', to: `${basePath}/manage-users` },
+          { icon: <BarChart3 size={18} />, label: 'Employee Monitor', to: `${basePath}/employee-manager` },
+          { icon: <Shield size={18} />, label: 'Approval Queue', to: `${basePath}/approval-queue`, badge: pendingCount > 0 ? String(pendingCount) : undefined, highlight: pendingCount > 0 },
           { icon: <CreditCard size={18} />, label: 'Payment/Plans', to: `${basePath}/payment-plans` },
           { icon: <BarChart2 size={18} />, label: 'View Analytics', to: `${basePath}/analytics` },
           { icon: <Sparkles size={18} />, label: 'Create AI Blog', to: `${basePath}/create-blog`, highlight: true },
           { icon: <FileEdit size={18} />, label: 'Manage Blogs', to: `${basePath}/manage-blogs` },
           { icon: <GraduationCap size={18} />, label: 'Test Catalog', to: `${basePath}/test-catalog`, highlight: true },
+          { icon: <Radio size={18} />, label: 'Live Tests', to: `${basePath}/live-tests`, highlight: true },
           { icon: <Newspaper size={18} />, label: 'Current Affairs', to: `${basePath}/current-affairs`, highlight: true },
-          { icon: <BookOpen size={18} />, label: 'Syllabus Manager', to: `${basePath}/syllabus-manager`, highlight: true },
           { icon: <Bell size={18} />, label: 'Upcoming Exams', to: `${basePath}/upcoming-exams`, highlight: true },
           { icon: <BookOpen size={18} />, label: 'Vocabulary', to: `${basePath}/vocabulary` },
           { icon: <Bell size={18} />, label: 'Exam Alerts', to: `${basePath}/exam-alerts`, highlight: true },

@@ -20,6 +20,7 @@ import {
   ExamSyllabusConfig,
   TopicConfig
 } from '@/data/syllabusData';
+import { useSyllabusData } from '@/hooks/useSyllabusData';
 import { useExamCatalog } from '@/hooks/useExamCatalog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -37,6 +38,8 @@ import {
 
 const SyllabusPage = () => {
   const { catalog } = useExamCatalog();
+  // ── Live syllabus data (SuperAdmin saves override static data) ─────────────
+  const { getExamConfig } = useSyllabusData();
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
 
   // Loading state
@@ -119,8 +122,8 @@ const SyllabusPage = () => {
     return sampleVideoUrls[index];
   };
 
-  // Get current exam config
-  const examConfig = allSyllabusData[selectedExam];
+  // Get current exam config — SuperAdmin data wins over static
+  const examConfig = getExamConfig(selectedExam);
 
   // Set initial tier when exam changes
   useEffect(() => {
@@ -435,7 +438,7 @@ const SyllabusPage = () => {
                 value={selectedExam} 
                 onValueChange={(val) => {
                   setSelectedExam(val);
-                  setSelectedTier(allSyllabusData[val]?.tiers[0]?.id || '');
+                  setSelectedTier(getExamConfig(val)?.tiers[0]?.id || '');
                 }}
               >
                 <SelectTrigger className="h-9 bg-white">

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -18,6 +18,8 @@ import { useExamCatalog, type TestSubject } from '@/hooks/useExamCatalog';
 import { getExamTheme } from '@/utils/examTheme';
 import { WeaknessDetectionModal } from '@/components/student/exam/WeaknessDetectionModal';
 import { HowToStartModal } from '@/components/student/exam/HowToStartModal';
+import { useExamStages, getNextStage, getDaysLeft } from '@/hooks/useExamStages';
+import { STAGE_GRADIENTS } from '@/components/superadmin/ExamStageManager';
 
 /* ─── helpers ─────────────────────────────────────────────────────────────── */
 
@@ -26,6 +28,7 @@ const PURCHASE_KEY = (examId: string) => `exam_purchased_${examId}`;
 
 const ExamDetail = () => {
   const { category, examId } = useParams();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("prelims");
   const [activeSubTab, setActiveSubTab] = useState("full");
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -33,6 +36,21 @@ const ExamDetail = () => {
   const [howToStartOpen, setHowToStartOpen] = useState(false);
   const [countdownSlide, setCountdownSlide] = useState(0);
   const { progressData, getTypeProgress, setProgressData, updateTestProgress } = useExamProgress(examId!);
+
+  // ── Live exam stages — hook normalizes examId to slug internally ──────────
+  // No need for double call; slug normalization is done inside useExamStages.
+  const { stages: liveStages, visibleStages: liveVisibleStages } = useExamStages(examId ?? '');
+
+  // Build countdown slides from ALL visible stages that have a date
+  const stageCountdownSlides = liveVisibleStages.filter(s => s.date).map((s, i) => ({
+    label: s.name,
+    date: s.date!,
+    daysLeft: getDaysLeft(s.date) ?? 0,
+    // Use SuperAdmin-chosen colour; fallback to palette by index
+    color: s.color || STAGE_GRADIENTS[i % STAGE_GRADIENTS.length].value,
+  }));
+  const liveNextStage = getNextStage(liveStages);
+  const liveDaysLeft = getDaysLeft(liveNextStage?.date ?? null);
 
   // ── Ads panel state (same system as TargetExamCard) ──────────────────────
   const [panelAds, setPanelAds] = useState<AdBanner[]>([]);
@@ -54,26 +72,29 @@ const ExamDetail = () => {
     return () => window.removeEventListener('storage', h);
   }, [loadPanelAds]);
 
-  const panelTotalSlides = 1 + panelAds.length;
+  // Total slides = stage countdown slides + ads
+  const panelTotalSlides = stageCountdownSlides.length + panelAds.length;
 
-  // Track impressions for ads
+  // Track impressions for ads (ads start at index stageCountdownSlides.length)
   useEffect(() => {
-    if (panelSlideIdx === 0) return;
-    const ad = panelAds[panelSlideIdx - 1];
+    const adIdx = panelSlideIdx - stageCountdownSlides.length;
+    if (adIdx < 0) return; // currently on a stage slide
+    const ad = panelAds[adIdx];
     if (ad && !panelImpressionTracked.current.has(ad.id)) {
       panelImpressionTracked.current.add(ad.id);
       recordImpression(ad.id);
     }
-  }, [panelSlideIdx, panelAds]);
+  }, [panelSlideIdx, panelAds, stageCountdownSlides.length]);
 
-  // Auto-advance panel slides
+  // Auto-advance: 5s per stage slide, ad-duration per ad slide
   useEffect(() => {
     if (panelTotalSlides <= 1) return;
     if (panelTimerRef.current) clearTimeout(panelTimerRef.current);
-    const currentAd = panelSlideIdx > 0 ? panelAds[panelSlideIdx - 1] : null;
-    const ms = currentAd ? getSlideDuration(currentAd.adType) : 6000;
+    const adIdx = panelSlideIdx - stageCountdownSlides.length;
+    const currentAd = adIdx >= 0 ? panelAds[adIdx] : null;
+    const ms = currentAd ? getSlideDuration(currentAd.adType) : 5000;
     panelTimerRef.current = setTimeout(() => {
-      setPanelSlideIdx(prev => (prev + 1) % panelTotalSlides);
+      setPanelSlideIdx(prev => (prev + 1) % Math.max(1, panelTotalSlides));
     }, ms);
     return () => { if (panelTimerRef.current) clearTimeout(panelTimerRef.current); };
   }, [panelSlideIdx, panelTotalSlides, panelAds]);
@@ -776,7 +797,7 @@ const ExamDetail = () => {
               <button onClick={() => setActiveTab('prelims')} className="bg-primary hover:bg-primary/90 text-white flex items-center gap-2 font-bold px-5 py-2.5 rounded-xl shadow-md shadow-primary/20 transition-all active:scale-95 text-sm">
                 <PlayCircle className="w-4 h-4" /> Start Full Mock
               </button>
-              <button className="border border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-gray-700 font-semibold px-4 py-2.5 rounded-xl transition-all active:scale-95 text-sm flex items-center gap-2">
+              <button onClick={() => navigate('/student/syllabus')} className="border border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-gray-700 font-semibold px-4 py-2.5 rounded-xl transition-all active:scale-95 text-sm flex items-center gap-2">
                 <BookOpen className="w-4 h-4 text-gray-500" /> View Syllabus
               </button>
               <button onClick={() => setWeaknessOpen(true)} className="border border-violet-200 hover:border-violet-300 hover:bg-violet-50 text-violet-700 font-semibold px-4 py-2.5 rounded-xl transition-all active:scale-95 text-sm flex items-center gap-2">
@@ -793,41 +814,69 @@ const ExamDetail = () => {
           </div>
 
           {/* ══ RIGHT PANEL — Countdown + Superadmin Ads ══ */}
+          {/* currentBg: uses SuperAdmin-chosen stage colour, fallback to palette */}
+          {(() => {
+            const currentBg = panelSlideIdx < stageCountdownSlides.length
+              ? stageCountdownSlides[panelSlideIdx].color
+              : STAGE_GRADIENTS[0].value;
+            return (
           <div
             className="md:w-[260px] flex-shrink-0 relative overflow-hidden group select-none"
-            style={{ background: 'linear-gradient(160deg,#2563eb,#0ea5e9,#06b6d4)', minHeight: 220 }}
+            style={{ background: currentBg, minHeight: 220, transition: 'background 0.6s ease' }}
           >
-            {/* Slide 0 — Days Left */}
-            <div
-              className="absolute inset-0 flex flex-col items-center justify-center text-white transition-opacity duration-500 p-6"
-              style={{ opacity: panelSlideIdx === 0 ? 1 : 0, pointerEvents: panelSlideIdx === 0 ? 'auto' : 'none' }}
-            >
-              <div className="absolute -top-6 -right-6 w-24 h-24 bg-white/10 rounded-full blur-2xl pointer-events-none" />
-              <div className="absolute bottom-8 -left-8 w-28 h-28 bg-white/10 rounded-full blur-2xl pointer-events-none" />
-              <div className="relative z-10 flex flex-col items-center text-center">
-                <div className="text-[10px] font-extrabold uppercase tracking-widest opacity-75 mb-1">Your Countdown</div>
-                <div className="font-black leading-none tabular-nums drop-shadow-lg" style={{ fontSize: 68 }}>150</div>
-                <div className="text-[13px] font-black uppercase tracking-[0.2em] opacity-90 mt-1">Days Left</div>
-                <div className="mt-2 w-10 h-0.5 bg-white/40 rounded-full" />
-                <div className="mt-1.5 text-[10px] opacity-70 tracking-wide font-medium uppercase">To Prelims Day</div>
-                <div className="mt-4 bg-white/15 border border-white/25 rounded-xl px-3 py-2 flex items-center gap-2 w-full">
-                  <Calendar className="w-3.5 h-3.5 text-white flex-shrink-0" />
-                  <div>
-                    <div className="font-black text-white text-xs leading-tight">5 Oct 2026</div>
-                    <div className="text-[9px] text-white/65 font-semibold">Prelims Exam Date</div>
+            {/* Slides 0..m-1 — Stage Countdowns (all visible stages with dates) */}
+            {stageCountdownSlides.length > 0 ? (
+              stageCountdownSlides.map((slide, idx) => (
+                <div
+                  key={`stage-${idx}`}
+                  className="absolute inset-0 flex flex-col items-center justify-center text-white transition-opacity duration-500 p-6"
+                  style={{ opacity: panelSlideIdx === idx ? 1 : 0, pointerEvents: panelSlideIdx === idx ? 'auto' : 'none', background: slide.color }}
+                >
+                  <div className="absolute -top-6 -right-6 w-24 h-24 bg-white/10 rounded-full blur-2xl pointer-events-none" />
+                  <div className="absolute bottom-8 -left-8 w-28 h-28 bg-white/10 rounded-full blur-2xl pointer-events-none" />
+                  <div className="relative z-10 flex flex-col items-center text-center">
+                    <div className="text-[10px] font-extrabold uppercase tracking-widest opacity-75 mb-1">Your Countdown</div>
+                    <div className="font-black leading-none tabular-nums drop-shadow-lg" style={{ fontSize: 68 }}>
+                      {Math.max(0, slide.daysLeft)}
+                    </div>
+                    <div className="text-[13px] font-black uppercase tracking-[0.2em] opacity-90 mt-1">Days Left</div>
+                    <div className="mt-2 w-10 h-0.5 bg-white/40 rounded-full" />
+                    <div className="mt-1.5 text-[10px] opacity-70 tracking-wide font-medium uppercase">
+                      To {slide.label} Day
+                    </div>
+                    <div className="mt-4 bg-white/15 border border-white/25 rounded-xl px-3 py-2 flex items-center gap-2 w-full">
+                      <Calendar className="w-3.5 h-3.5 text-white flex-shrink-0" />
+                      <div>
+                        <div className="font-black text-white text-xs leading-tight">
+                          {new Date(slide.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                        </div>
+                        <div className="text-[9px] text-white/65 font-semibold">{slide.label} Exam Date</div>
+                      </div>
+                    </div>
                   </div>
                 </div>
+              ))
+            ) : (
+              /* Fallback when no stages configured — show a single empty slide */
+              <div
+                className="absolute inset-0 flex flex-col items-center justify-center text-white transition-opacity duration-500 p-6"
+                style={{ opacity: panelSlideIdx === 0 ? 1 : 0, pointerEvents: panelSlideIdx === 0 ? 'auto' : 'none' }}
+              >
+                <div className="relative z-10 flex flex-col items-center text-center">
+                  <div className="text-[10px] font-extrabold uppercase tracking-widest opacity-75 mb-3">Your Countdown</div>
+                  <div className="text-white/60 text-xs">No stages set yet</div>
+                </div>
               </div>
-            </div>
+            )}
 
-            {/* Slides 1..n — Superadmin Ads */}
+            {/* Slides m..m+n-1 — Superadmin Ads */}
             {panelAds.map((ad, idx) => (
               <div
                 key={ad.id}
                 className="absolute inset-0 flex flex-col transition-opacity duration-500"
                 style={{
-                  opacity: panelSlideIdx === idx + 1 ? 1 : 0,
-                  pointerEvents: panelSlideIdx === idx + 1 ? 'auto' : 'none',
+                  opacity: panelSlideIdx === stageCountdownSlides.length + idx ? 1 : 0,
+                  pointerEvents: panelSlideIdx === stageCountdownSlides.length + idx ? 'auto' : 'none',
                   background: ad.imageDataUrl ? undefined : (ad.bgColor || 'linear-gradient(135deg,#1e40af,#10b981)'),
                 }}
               >
@@ -873,8 +922,8 @@ const ExamDetail = () => {
               </div>
             ))}
 
-            {/* Navigation — only when ads exist */}
-            {panelAds.length > 0 && (
+            {/* Navigation — when multiple slides exist */}
+            {panelTotalSlides > 1 && (
               <>
                 <button type="button" onClick={() => setPanelSlideIdx(p => (p - 1 + panelTotalSlides) % panelTotalSlides)}
                   className="absolute left-1 top-1/2 -translate-y-1/2 w-6 h-6 bg-white/20 backdrop-blur-sm hover:bg-white/40 text-white rounded-full flex items-center justify-center z-20 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -893,6 +942,8 @@ const ExamDetail = () => {
               </>
             )}
           </div>
+            );
+          })()}
         </div>
       )}
 
@@ -906,6 +957,7 @@ const ExamDetail = () => {
           <div className="bg-slate-50 p-3 sm:p-4 border-b">
             {/* Gradient top stripe */}
             <div className={`h-0.5 w-full bg-gradient-to-r ${theme.gradientClass} mb-3 rounded-full opacity-60`} />
+
             {/* Main Tabs — pill style matching dashboard */}
             <div className="bg-white border border-slate-200 rounded-xl flex items-center gap-1 px-1 py-1 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
               {mainTabs.map((tab) => {

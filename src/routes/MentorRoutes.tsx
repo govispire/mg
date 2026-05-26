@@ -13,6 +13,8 @@ import MentorLeaderboard from '@/pages/mentor/MentorLeaderboard';
 import MentorAnalytics from '@/pages/mentor/MentorAnalytics';
 import MentorSchedule from '@/pages/mentor/MentorSchedule';
 import MentorCalendar from '@/pages/mentor/MentorCalendar';
+import MentorMyTasks from '@/pages/mentor/MentorMyTasks';
+import MentorRecommendations from '@/pages/mentor/MentorRecommendations';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import NotFound from '@/pages/NotFound';
 
@@ -32,6 +34,9 @@ const MentorRoutes = () => {
           <Route path="/leaderboard" element={<MentorLeaderboard />} />
           <Route path="/analytics" element={<MentorAnalytics />} />
           <Route path="/schedule" element={<MentorSchedule />} />
+          {/* ── Governance Routes ── */}
+          <Route path="/my-tasks" element={<MentorMyTasks />} />
+          <Route path="/recommendations" element={<MentorRecommendations />} />
           <Route path="*" element={<NotFound />} />
         </Route>
       </Route>

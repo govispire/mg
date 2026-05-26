@@ -6,13 +6,14 @@ import {
   MoreVertical, ArrowUp, ArrowDown, Plus, Trash2
 } from 'lucide-react';
 import { getTargetExamRoute } from '@/utils/targetExamRoute';
-import { differenceInDays } from 'date-fns';
 import { getActiveAds, recordClick, recordImpression, getSlideDuration, AdBanner } from '@/data/adsStore';
 import { WeaknessDetectionModal } from '@/components/student/exam/WeaknessDetectionModal';
 import { HowToStartModal } from '@/components/student/exam/HowToStartModal';
 import { useTargetExams, getPriorityLabel, getPriorityColor } from '@/hooks/useTargetExams';
 import { useExamCatalog } from '@/hooks/useExamCatalog';
 import { AddTargetPanel, ChangeTargetPanel, ChangePriorityPanel, RemoveTargetPanel, SuccessPanel } from './TargetExamPanels';
+import { useExamStages, getNextStage, getVisibleStages, getDaysLeft } from '@/hooks/useExamStages';
+import { STAGE_GRADIENTS } from '@/components/superadmin/ExamStageManager';
 
 interface TargetExamCardProps {
   targetExam?: string;
@@ -111,6 +112,25 @@ const TargetExamCard: React.FC<TargetExamCardProps> = ({
   const targetExam = currentExam.name;
   const examCategory = currentExam.category;
 
+  // ── Live stages from SuperAdmin ───────────────────────────────────────────
+  // Resolve examId from catalog first (gives us the canonical slug like "sbi-po")
+  const resolvedExamId = (() => {
+    for (const cat of catalog) {
+      for (const sec of cat.sections) {
+        const found = sec.exams.find(e => e.id === currentExam.id || e.name === currentExam.name);
+        if (found) return found.id;
+      }
+    }
+    // Fallback: slugify the exam name (matches SuperAdmin URL param format)
+    return currentExam.id
+      || currentExam.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+  })();
+
+  // Hook normalizes examId to slug internally — single call is sufficient
+  const { stages: liveStages } = useExamStages(resolvedExamId);
+  const liveVisibleStages = getVisibleStages(liveStages);
+  const liveNextStage = getNextStage(liveStages);
+
   // Resolve logo from global catalog (so it updates immediately after Change Exam)
   const resolvedLogo = (() => {
     for (const cat of catalog) {
@@ -126,6 +146,52 @@ const TargetExamCard: React.FC<TargetExamCardProps> = ({
   
   const meta = getExamMeta(targetExam);
   const mockRoute = getTargetExamRoute(targetExam);
+
+  // ── Preparation Progress tabs: ALWAYS fixed Prelims/Mains/Live from catalog ──
+  // Stages are ONLY for the countdown slider — never for progress cards.
+  const tabs = (() => {
+    // Try to get real totals from catalog test slots
+    for (const cat of catalog) {
+      for (const sec of cat.sections) {
+        const ex = sec.exams.find(e => e.id === resolvedExamId);
+        if (ex && ex.testSlots?.length) {
+          const preliSlots = ex.testSlots.filter(s => s.tab?.toLowerCase().includes('preli'));
+          const mainsSlots = ex.testSlots.filter(s => s.tab?.toLowerCase().includes('main'));
+          const liveSlots  = ex.testSlots.filter(s => s.tab?.toLowerCase().includes('live'));
+          const preliTotal = preliSlots.reduce((a, s) => a + s.tests.length, 0) || meta.preliTotal;
+          const mainsTotal = mainsSlots.reduce((a, s) => a + s.tests.length, 0) || meta.mainsTotal;
+          const liveTotal  = liveSlots.reduce((a, s)  => a + s.tests.length, 0) || meta.liveTotal;
+          return [
+            { label: 'Prelims',   icon: <FileText className="w-4 h-4" />, total: preliTotal, completed: 0, accent: '#3b82f6', iconBg: '#eff6ff', iconColor: '#2563eb' },
+            { label: 'Mains',     icon: <BookOpen className="w-4 h-4" />, total: mainsTotal, completed: 0, accent: '#8b5cf6', iconBg: '#f5f3ff', iconColor: '#7c3aed' },
+            { label: 'Live Test', icon: <Zap className="w-4 h-4" />,      total: liveTotal,  completed: 0, accent: '#10b981', iconBg: '#ecfdf5', iconColor: '#059669' },
+          ];
+        }
+      }
+    }
+    // Fallback to meta defaults
+    return [
+      { label: 'Prelims',   icon: <FileText className="w-4 h-4" />, total: meta.preliTotal, completed: 0, accent: '#3b82f6', iconBg: '#eff6ff', iconColor: '#2563eb' },
+      { label: 'Mains',     icon: <BookOpen className="w-4 h-4" />, total: meta.mainsTotal, completed: 0, accent: '#8b5cf6', iconBg: '#f5f3ff', iconColor: '#7c3aed' },
+      { label: 'Live Test', icon: <Zap className="w-4 h-4" />,      total: meta.liveTotal,  completed: 0, accent: '#10b981', iconBg: '#ecfdf5', iconColor: '#059669' },
+    ];
+  })();
+
+  // ── Countdown slides: ONLY stages drive the countdown ────────────────────
+  // Stages never affect prep-progress cards above.
+  const hasliveStages = liveVisibleStages.length > 0;
+  const countdownSlides = hasliveStages
+    ? liveVisibleStages
+        .filter(s => s.date)
+        .map((s, i) => ({ label: s.name, date: s.date!, color: s.color || STAGE_GRADIENTS[i % STAGE_GRADIENTS.length].value }))
+    : [
+        { label: 'Prelims', date: meta.examDate, color: STAGE_GRADIENTS[0].value },
+        ...(meta.mainsDate ? [{ label: 'Mains', date: meta.mainsDate, color: STAGE_GRADIENTS[1].value }] : []),
+      ];
+  const grandTotal     = tabs.reduce((s, t) => s + t.total, 0);
+  const grandCompleted = tabs.reduce((s, t) => s + t.completed, 0);
+
+  // ── Modal + panel state ───────────────────────────────────────────────────
   const [weaknessOpen, setWeaknessOpen] = useState(false);
   const [howToStartOpen, setHowToStartOpen] = useState(false);
   const [manageTargetsOpen, setManageTargetsOpen] = useState(false);
@@ -147,32 +213,15 @@ const TargetExamCard: React.FC<TargetExamCardProps> = ({
     return () => document.removeEventListener('mousedown', handler);
   }, [dotMenuOpen]);
 
-  // Days left
-  const daysLeft = (() => {
-    try {
-      const d = differenceInDays(new Date(meta.examDate), new Date());
-      return d > 0 ? d : null;
-    } catch { return null; }
-  })();
-
-  // Derive mock progress from liveOverallPct (or 0)
+  // ── Progress rings ────────────────────────────────────────────────────────
   const overallPct = liveOverallPct && liveOverallPct > 0 ? Math.round(liveOverallPct) : 0;
   const rings = [
-    { label: 'OVERALL',   pct: overallPct,                                                  color: '#10b981', size: 82, stroke: 7, textSize: 14 },
-    { label: 'QUANT',     pct: Math.min(Math.round(overallPct * 0.9 + 5), 100),             color: '#3b82f6', size: 60, stroke: 5, textSize: 11 },
-    { label: 'REASONING', pct: Math.min(Math.round(overallPct * 1.1), 100),                 color: '#8b5cf6', size: 60, stroke: 5, textSize: 11 },
-    { label: 'ENGLISH',   pct: Math.min(Math.round(overallPct * 0.85 + 10), 100),          color: '#f59e0b', size: 60, stroke: 5, textSize: 11 },
-    { label: 'GEN. AWR.', pct: Math.min(Math.round(overallPct * 0.75 + 15), 100),          color: '#ec4899', size: 60, stroke: 5, textSize: 11 },
+    { label: 'OVERALL',   pct: overallPct,                                         color: '#10b981', size: 82, stroke: 7, textSize: 14 },
+    { label: 'QUANT',     pct: Math.min(Math.round(overallPct * 0.9 + 5), 100),   color: '#3b82f6', size: 60, stroke: 5, textSize: 11 },
+    { label: 'REASONING', pct: Math.min(Math.round(overallPct * 1.1), 100),        color: '#8b5cf6', size: 60, stroke: 5, textSize: 11 },
+    { label: 'ENGLISH',   pct: Math.min(Math.round(overallPct * 0.85 + 10), 100), color: '#f59e0b', size: 60, stroke: 5, textSize: 11 },
+    { label: 'GEN. AWR.', pct: Math.min(Math.round(overallPct * 0.75 + 15), 100), color: '#ec4899', size: 60, stroke: 5, textSize: 11 },
   ];
-
-  // Mock test completion counts (will wire to real data later)
-  const tabs = [
-    { label: 'Prelims',   icon: <FileText className="w-4 h-4" />, total: meta.preliTotal, completed: 0, accent: '#3b82f6', iconBg: '#eff6ff', iconColor: '#2563eb' },
-    { label: 'Mains',     icon: <BookOpen className="w-4 h-4" />, total: meta.mainsTotal, completed: 0, accent: '#8b5cf6', iconBg: '#f5f3ff', iconColor: '#7c3aed' },
-    { label: 'Live Test', icon: <Zap className="w-4 h-4" />,      total: meta.liveTotal,  completed: 0, accent: '#10b981', iconBg: '#ecfdf5', iconColor: '#059669' },
-  ];
-  const grandTotal     = tabs.reduce((s, t) => s + t.total, 0);
-  const grandCompleted = tabs.reduce((s, t) => s + t.completed, 0);
 
   // ── Ads panel ──────────────────────────────────────────────────────────────
   const [ads, setAds]             = useState<AdBanner[]>([]);
@@ -214,23 +263,18 @@ const TargetExamCard: React.FC<TargetExamCardProps> = ({
     return () => { if (timerRef.current) clearTimeout(timerRef.current); };
   }, [slideIdx, totalSlides, ads]);
 
-  // ── Countdown auto-slide (Prelims ↔ Mains, 10s each) ─────────────────────
-  const countdownSlides = [
-    { label: 'Prelims', date: meta.examDate },
-    ...(meta.mainsDate ? [{ label: 'Mains', date: meta.mainsDate }] : []),
-  ];
+  // ── Countdown auto-slide (uses LIVE stages, falls back to meta) ─────────────
   const [countdownSlide, setCountdownSlide] = useState(0);
 
   useEffect(() => {
-    // Always reset to Prelims when the exam changes
     setCountdownSlide(0);
-    // Only auto-slide if Mains date exists
-    if (!meta.mainsDate) return;
+    if (countdownSlides.length <= 1) return;
     const id = setInterval(() => {
-      setCountdownSlide(p => (p === 0 ? 1 : 0));
+      setCountdownSlide(p => (p + 1) % countdownSlides.length);
     }, 10000);
     return () => clearInterval(id);
-  }, [meta.examDate, meta.mainsDate]); // re-runs when exam changes
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [resolvedExamId, liveStages.length]);
 
   useEffect(() => {
     if (slideIdx >= totalSlides) setSlideIdx(0);
@@ -490,31 +534,35 @@ const TargetExamCard: React.FC<TargetExamCardProps> = ({
         />
       </div>
 
-      {/* ══ RIGHT PANEL — Countdown + Superadmin Ads ══ */}
+      {(() => {
+        // Current background: uses SuperAdmin-chosen stage colour, fallback to imported palette
+        const currentPanelBg = slideIdx === 0
+          ? (countdownSlides[countdownSlide]?.color || STAGE_GRADIENTS[countdownSlide % STAGE_GRADIENTS.length].value)
+          : undefined; // ads handle their own bg
+        return (
       <div
         className="lg:w-[260px] flex-shrink-0 relative overflow-hidden group select-none"
-        style={{ background: '#1e1b4b', minHeight: 120 }}
+        style={{ background: currentPanelBg || '#1e1b4b', minHeight: 120, transition: 'background 0.6s ease' }}
       >
         {/* Slide 0 — Countdown (auto-cycles Prelims ↔ Mains) */}
         <div
           className="absolute inset-0 transition-opacity duration-500"
           style={{ opacity: slideIdx === 0 ? 1 : 0, pointerEvents: slideIdx === 0 ? 'auto' : 'none' }}
         >
-          {/* Per-slide background layers — cross-fade between them */}
-          <div
-            className="absolute inset-0 transition-all duration-700 pointer-events-none"
-            style={{ background: 'linear-gradient(160deg,#1e40af,#2563eb,#0ea5e9)', opacity: countdownSlide === 0 ? 1 : 0 }}
-          />
-          <div
-            className="absolute inset-0 transition-all duration-700 pointer-events-none"
-            style={{ background: 'linear-gradient(160deg,#4c1d95,#7c3aed,#a855f7)', opacity: countdownSlide === 1 ? 1 : 0 }}
-          />
+          {/* Per-slide background layers — each uses its own SuperAdmin colour */}
+          {countdownSlides.map((cs, i) => (
+            <div
+              key={i}
+              className="absolute inset-0 transition-all duration-700 pointer-events-none"
+              style={{ background: cs.color, opacity: countdownSlide === i ? 1 : 0 }}
+            />
+          ))}
           <div className="absolute -top-6 -right-6 w-24 h-24 bg-white/10 rounded-full blur-2xl pointer-events-none" />
           <div className="absolute bottom-8 -left-8 w-28 h-28 bg-white/10 rounded-full blur-2xl pointer-events-none" />
 
           {/* Each countdown sub-slide fades in/out */}
           {countdownSlides.map((cs, i) => {
-            const dLeft = differenceInDays(new Date(cs.date), new Date());
+            const dLeft = getDaysLeft(cs.date) ?? 0;
             return (
               <div
                 key={cs.label}
@@ -529,7 +577,7 @@ const TargetExamCard: React.FC<TargetExamCardProps> = ({
                 <div className="relative z-10 flex flex-col items-center text-center shrink-0">
                   <div className="text-[9px] sm:text-[10px] font-extrabold uppercase tracking-widest opacity-75 mb-0.5 lg:mb-1">Your Countdown</div>
                   <div className="font-black leading-none tabular-nums drop-shadow-lg text-5xl sm:text-6xl lg:text-[68px]">
-                    {dLeft > 0 ? dLeft : '0'}
+                    {Math.max(0, dLeft)}
                   </div>
                   <div className="text-[11px] sm:text-[13px] font-black uppercase tracking-[0.2em] opacity-90 mt-0.5 lg:mt-1">Days Left</div>
                 </div>
@@ -537,7 +585,7 @@ const TargetExamCard: React.FC<TargetExamCardProps> = ({
                 {/* Date badge */}
                 <div className="relative z-10 flex flex-col items-center gap-2 lg:mt-2 lg:w-full">
                   <div className="hidden lg:block w-10 h-0.5 bg-white/40 rounded-full" />
-                  <div className="text-[9px] sm:text-[10px] opacity-70 tracking-wide font-medium uppercase text-center">To Exam Day</div>
+                  <div className="text-[9px] sm:text-[10px] opacity-70 tracking-wide font-medium uppercase text-center">To {cs.label} Day</div>
                   <div className="bg-white/15 border border-white/25 rounded-xl px-3 py-1.5 sm:py-2 flex items-center gap-2 w-full">
                     <Calendar className="w-3.5 h-3.5 text-white flex-shrink-0" />
                     <div className="flex-1">
@@ -641,6 +689,8 @@ const TargetExamCard: React.FC<TargetExamCardProps> = ({
           </>
         )}
       </div>
+        );
+      })()}
 
       {/* ══ VIEW ALL TARGETS — Read-only count list ══ */}
       {manageTargetsOpen && (

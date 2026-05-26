@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -30,8 +30,90 @@ interface LiveTestData {
 }
 
 // ── Main Component ───────────────────────────────────────────────────────────
+const LIVE_TESTS_KEY = 'superadmin_live_tests';
+
+const dateInput = (date: Date) => date.toISOString().split('T')[0];
+
+const addDays = (days: number) => {
+  const date = new Date();
+  date.setDate(date.getDate() + days);
+  return date;
+};
+
+const seedLiveTests = (): LiveTestData[] => {
+  const today = new Date();
+  const tomorrow = addDays(1);
+  const nextWeek = addDays(7);
+
+  return [
+    {
+      id: 1001,
+      title: 'All India Banking Live Mock',
+      description: 'Timed IBPS and SBI style full mock with live ranking enabled.',
+      questions: 100,
+      duration: 60,
+      marks: 100,
+      startDate: dateInput(today),
+      startTime: '10:00',
+      endDate: dateInput(today),
+      endTime: '23:00',
+      examDateTime: today,
+      endDateTime: today,
+      totalSeats: 25000,
+      status: 'live',
+    },
+    {
+      id: 1002,
+      title: 'SSC CGL Tier 1 Mega Test',
+      description: 'National-level practice test for quant, reasoning, English, and GA.',
+      questions: 100,
+      duration: 60,
+      marks: 200,
+      startDate: dateInput(tomorrow),
+      startTime: '18:00',
+      endDate: dateInput(tomorrow),
+      endTime: '21:00',
+      examDateTime: tomorrow,
+      endDateTime: tomorrow,
+      totalSeats: 18000,
+      status: 'scheduled',
+    },
+    {
+      id: 1003,
+      title: 'Railway NTPC Speed Challenge',
+      description: 'Short-form live test focused on speed, accuracy, and leaderboard ranking.',
+      questions: 50,
+      duration: 35,
+      marks: 50,
+      startDate: dateInput(nextWeek),
+      startTime: '19:00',
+      endDate: dateInput(nextWeek),
+      endTime: '20:30',
+      examDateTime: nextWeek,
+      endDateTime: nextWeek,
+      totalSeats: 12000,
+      status: 'draft',
+    },
+  ];
+};
+
+const loadLiveTests = (): LiveTestData[] => {
+  try {
+    const raw = localStorage.getItem(LIVE_TESTS_KEY);
+    if (!raw) return seedLiveTests();
+
+    return JSON.parse(raw).map((test: LiveTestData) => ({
+      ...test,
+      examDateTime: new Date(test.examDateTime),
+      endDateTime: new Date(test.endDateTime),
+    }));
+  } catch {
+    return seedLiveTests();
+  }
+};
+
 const LiveTestManager: React.FC = () => {
-  const [liveTests, setLiveTests] = useState<LiveTestData[]>([]);
+  const [liveTests, setLiveTests] = useState<LiveTestData[]>(() => loadLiveTests());
   const [showForm, setShowForm] = useState(false);
   const [editingTest, setEditingTest] = useState<LiveTestData | null>(null);
 
@@ -48,6 +130,10 @@ const LiveTestManager: React.FC = () => {
     endTime: '12:00',
     totalSeats: 15000,
   });
+
+  useEffect(() => {
+    localStorage.setItem(LIVE_TESTS_KEY, JSON.stringify(liveTests));
+  }, [liveTests]);
 
   const resetForm = () => {
     setFormData({
