@@ -131,11 +131,20 @@ const migrate = (raw: CatalogCategory[]): { data: CatalogCategory[]; changed: bo
                 const missing = DEFAULT_SLOT_TEMPLATES.filter(t => !existing.has(t.key));
                 const slots = [
                     ...(exam.testSlots ?? []).map(slot => {
-                        // Ensure every slot has a subjects array
+                        let updatedSlot = { ...slot };
+                        let slotChanged = false;
                         if (!slot.subjects) {
-                            changed = true;
+                            slotChanged = true;
                             const template = DEFAULT_SLOT_TEMPLATES.find(t => t.key === slot.key);
-                            return { ...slot, subjects: template?.subjects ?? [] };
+                            updatedSlot.subjects = template?.subjects ?? [];
+                        }
+                        if (!slot.tests) {
+                            slotChanged = true;
+                            updatedSlot.tests = [];
+                        }
+                        if (slotChanged) {
+                            changed = true;
+                            return updatedSlot;
                         }
                         return slot;
                     }),

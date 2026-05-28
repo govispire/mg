@@ -206,12 +206,34 @@ const ExamTestsTab: React.FC<Props> = ({ examId, examName, categoryId, sectionId
 
   const openAdd = (slotKey: string) => {
     const slot = exam.testSlots.find(s => s.key === slotKey);
-    const n = (slot?.tests.length || 0) + 1;
     setEditingTestId(null);
+
+    let defaultName = '';
+    if (slot) {
+      const subjectObj = slot.subjects?.find(s => s.id === selectedSubject);
+      if (subjectObj) {
+        // Dynamic subject-wise name and counter
+        const count = slot.tests.filter(t => (t as any).subjectId === selectedSubject).length;
+        const mainLabel = tabDisplayLabel(slot.tab); // e.g. "Prelims"
+        const subLabel = slot.subTab ? tabDisplayLabel(slot.subTab) : ''; // e.g. "Sectional"
+        if (subLabel) {
+          defaultName = `${mainLabel} - ${subjectObj.name} ${subLabel} Test ${count + 1}`;
+        } else {
+          defaultName = `${subjectObj.name} ${mainLabel} Test ${count + 1}`;
+        }
+      } else {
+        // Fallback for general (no subject active or 'All' filter selected)
+        const n = slot.tests.length + 1;
+        defaultName = `${slot.label ?? slotKey} ${n}`;
+      }
+    } else {
+      defaultName = `${slotKey} 1`;
+    }
+
     // Auto-tag the test to the currently selected subject (if any)
     setTestForm({
       ...defaultForm(),
-      name: `${slot?.label ?? slotKey} ${n}`,
+      name: defaultName,
       subjectId: selectedSubject ?? '',
     } as any);
     setTestDialog(true);
@@ -906,10 +928,10 @@ const ExamTestsTab: React.FC<Props> = ({ examId, examName, categoryId, sectionId
             {currentSubjects.length > 0 && (
               <div>
                 <Label className="text-xs font-semibold">Subject Section</Label>
-                <Select value={(testForm as any).subjectId || ''} onValueChange={v => setTestForm(f => ({ ...f, subjectId: v } as any))}>
+                <Select value={(testForm as any).subjectId || 'none'} onValueChange={v => setTestForm(f => ({ ...f, subjectId: v === 'none' ? '' : v } as any))}>
                   <SelectTrigger className="mt-1 h-9 text-xs"><SelectValue placeholder="Select subject section (optional)" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">No subject (general)</SelectItem>
+                    <SelectItem value="none">No subject (general)</SelectItem>
                     {currentSubjects.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
                   </SelectContent>
                 </Select>
