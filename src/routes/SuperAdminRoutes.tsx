@@ -11,6 +11,7 @@ import SuperAdminAnalytics from '@/pages/superadmin/SuperAdminAnalytics';
 import AIBlogCreator from '@/pages/superadmin/AIBlogCreator';
 import BlogManager from '@/pages/superadmin/BlogManager';
 import TestCatalogManager from '@/pages/superadmin/TestCatalogManager';
+import CategoryDetailPage from '@/pages/superadmin/CategoryDetailPage';
 import SuperAdminExamManager from '@/pages/superadmin/SuperAdminExamManager';
 import QuestionManager from '@/pages/superadmin/QuestionManager';
 import TestBuilderPage from '@/pages/superadmin/TestBuilderPage';
@@ -41,6 +42,7 @@ const SuperAdminRoutes = () => {
           <Route path="/create-blog" element={<AIBlogCreator />} />
           <Route path="/manage-blogs" element={<BlogManager />} />
           <Route path="/test-catalog" element={<TestCatalogManager />} />
+          <Route path="/test-catalog/:categoryId" element={<CategoryDetailPage />} />
           <Route path="/test-catalog/:categoryId/:sectionId/:examId" element={<SuperAdminExamManager />} />
           <Route path="/test-catalog/:categoryId/:sectionId/:examId/:slotKey/:testId/questions" element={<TestBuilderPage />} />
           <Route path="/live-tests" element={<LiveTestManager />} />

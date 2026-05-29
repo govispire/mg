@@ -536,7 +536,14 @@ const TestCatalogManager: React.FC = () => {
                                                     onClick={() => setDeleteTarget({ type: 'category', label: cat.name, onConfirm: () => deleteCategory(cat.id) })}
                                                     title="Delete"><Trash2 className="h-4 w-4" /></button>
                                                 <div className="w-px h-5 bg-gray-200 mx-1" />
-                                                <ChevronRight className="h-4 w-4 text-gray-400" />
+                                                {/* ── NEW: Manage button → CategoryDetailPage ── */}
+                                                <button
+                                                    className="flex items-center gap-1 h-8 px-2.5 rounded-lg text-xs font-semibold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 transition-all border border-indigo-100"
+                                                    onClick={() => navigate(`/super-admin/test-catalog/${cat.id}`)}
+                                                    title="Open category detail"
+                                                >
+                                                    Manage <ChevronRight className="h-3.5 w-3.5" />
+                                                </button>
                                             </div>
                                         </div>
                                     </div>

@@ -74,6 +74,8 @@ export interface CatalogCategory {
     isPopular: boolean;
     isVisible: boolean;
     sections: CatalogSection[];
+    /** Ordered list of popular exam IDs for the student-facing popular strip */
+    popularOrder?: string[];
     createdAt: string;
     updatedAt: string;
 }
@@ -945,6 +947,63 @@ export const useExamCatalog = () => {
             ?.exams.find(e => e.id === examId),
         [catalog]);
 
+    /**
+     * Toggle isPopular on an exam across ALL sections of a category.
+     * Also updates popularOrder: adds to end if marking popular, removes if un-marking.
+     */
+    const toggleExamPopular = useCallback((categoryId: string, examId: string) => {
+        setCatalog(prev => {
+            const cat = prev.find(c => c.id === categoryId);
+            if (!cat) return prev;
+
+            // Find current popular state (check all sections)
+            const currentlyPopular = cat.sections.some(s =>
+                s.exams.some(e => e.id === examId && e.isPopular)
+            );
+            const newPopular = !currentlyPopular;
+
+            // Update popularOrder
+            const currentOrder = cat.popularOrder ?? [];
+            const newOrder = newPopular
+                ? currentOrder.includes(examId) ? currentOrder : [...currentOrder, examId]
+                : currentOrder.filter(id => id !== examId);
+
+            const next = prev.map(c =>
+                c.id !== categoryId ? c : {
+                    ...c,
+                    popularOrder: newOrder,
+                    sections: c.sections.map(s => ({
+                        ...s,
+                        exams: s.exams.map(e =>
+                            e.id === examId ? { ...e, isPopular: newPopular } : e
+                        ),
+                    })),
+                    updatedAt: new Date().toISOString(),
+                }
+            );
+            persist(next);
+            return next;
+        });
+    }, [persist]);
+
+    /**
+     * Persist a new drag-drop ordering for the popular exams strip.
+     * orderedIds is the complete ordered array of popular exam IDs.
+     */
+    const reorderPopularExams = useCallback((categoryId: string, orderedIds: string[]) => {
+        setCatalog(prev => {
+            const next = prev.map(c =>
+                c.id !== categoryId ? c : {
+                    ...c,
+                    popularOrder: orderedIds,
+                    updatedAt: new Date().toISOString(),
+                }
+            );
+            persist(next);
+            return next;
+        });
+    }, [persist]);
+
     return {
         catalog, loading,
         addCategory, updateCategory, deleteCategory, toggleCategoryVisibility,
@@ -954,5 +1013,6 @@ export const useExamCatalog = () => {
         addSubject, updateSubject, deleteSubject,
         updateSlotLabel, addSlot, deleteSlot,
         resetToDefaults, findExam,
+        toggleExamPopular, reorderPopularExams,
     };
 };
