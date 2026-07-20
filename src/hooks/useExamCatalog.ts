@@ -55,12 +55,24 @@ export interface CatalogSection {
     exams: CatalogExam[];
 }
 
+/**
+ * Content classification set by Super Admin.
+ * The Owner controls PRICING; Super Admin controls ACCESS TIER.
+ *  free      — anyone can open without any plan
+ *  plan      — requires any paid subscription (Smart / Pro / Pro Max)
+ *  package   — only accessible via a Category Package purchase
+ *  both      — accessible via plan OR package
+ */
+export type ExamAccessTier = 'free' | 'plan' | 'package' | 'both';
+
 export interface CatalogExam {
     id: string;
     name: string;
     logo: string;
     isPopular: boolean;
     testSlots: TestTypeSlot[];
+    /** Content access classification — set by Super Admin, priced by Owner */
+    accessTier: ExamAccessTier;
 }
 
 export interface CatalogCategory {
@@ -117,7 +129,7 @@ const STORAGE_KEY = 'superadmin_exam_catalog';
 const CHANNEL_NAME = 'exam_catalog_sync';
 
 /** Bump this whenever the seed data changes to force all users to re-seed */
-const SEED_VERSION = '4';
+const SEED_VERSION = '5';
 const SEED_VER_KEY = 'superadmin_catalog_seed_ver';
 
 // ─── Migration: ensure every exam has all 10 slots ───────────────────────────
@@ -129,10 +141,16 @@ const migrate = (raw: CatalogCategory[]): { data: CatalogCategory[]; changed: bo
         sections: cat.sections.map(sec => ({
             ...sec,
             exams: sec.exams.map(exam => {
-                const existing = new Set((exam.testSlots ?? []).map(s => s.key));
+                // Backfill accessTier for pre-existing exams
+                let updatedExam = exam;
+                if (!(exam as any).accessTier) {
+                    changed = true;
+                    updatedExam = { ...exam, accessTier: 'free' as ExamAccessTier };
+                }
+                const existing = new Set((updatedExam.testSlots ?? []).map(s => s.key));
                 const missing = DEFAULT_SLOT_TEMPLATES.filter(t => !existing.has(t.key));
                 const slots = [
-                    ...(exam.testSlots ?? []).map(slot => {
+                    ...(updatedExam.testSlots ?? []).map(slot => {
                         let updatedSlot = { ...slot };
                         let slotChanged = false;
                         if (!slot.subjects) {
@@ -152,10 +170,10 @@ const migrate = (raw: CatalogCategory[]): { data: CatalogCategory[]; changed: bo
                     }),
                     ...missing.map(t => { changed = true; return { ...t, tests: [] }; }),
                 ];
-                if (!exam.testSlots || exam.testSlots.length === 0 || missing.length > 0 || changed) {
-                    return { ...exam, testSlots: slots };
+                if (!updatedExam.testSlots || updatedExam.testSlots.length === 0 || missing.length > 0 || changed) {
+                    return { ...updatedExam, testSlots: slots };
                 }
-                return exam;
+                return updatedExam;
             }),
         })),
     }));

@@ -20,6 +20,8 @@ import { WeaknessDetectionModal } from '@/components/student/exam/WeaknessDetect
 import { HowToStartModal } from '@/components/student/exam/HowToStartModal';
 import { useExamStages, getNextStage, getDaysLeft } from '@/hooks/useExamStages';
 import { STAGE_GRADIENTS } from '@/components/superadmin/ExamStageManager';
+import { useAccessControl, ACCESS_TIER_LABELS, ACCESS_TIER_COLORS } from '@/hooks/useAccessControl';
+import type { ExamAccessTier } from '@/hooks/useExamCatalog';
 
 /* ─── helpers ─────────────────────────────────────────────────────────────── */
 
@@ -132,6 +134,20 @@ const ExamDetail = () => {
   };
 
   const { catalog } = useExamCatalog();
+
+  // ── Get exam accessTier from catalog (set by Super Admin) ─────────────────
+  const examAccessTier = React.useMemo((): ExamAccessTier => {
+    for (const cat of catalog) {
+      for (const sec of cat.sections) {
+        const found = sec.exams.find(e => e.id === examId);
+        if (found) return found.accessTier ?? 'free';
+      }
+    }
+    return 'free'; // default: free access if not in catalog (static exams)
+  }, [catalog, examId]);
+
+  // ── Real-time access check (Super Admin tier + student's subscription) ────
+  const accessResult = useAccessControl(examId, examAccessTier, category);
 
   // Get exam name — try catalog first (for superadmin-created exams), then static examData
   const examName = React.useMemo(() => {
@@ -594,79 +610,113 @@ const ExamDetail = () => {
             </div>
           </div>
 
-          {/* ══ RIGHT — Pricing Card ══ */}
+          {/* ══ RIGHT — Access Gate Card (reads accessTier + student subscription in real-time) ══ */}
           <div className="lg:w-[300px] w-full bg-white rounded-2xl border border-gray-200 shadow-lg overflow-hidden flex-shrink-0 flex flex-col">
-            {/* Validity header */}
-            <div className="flex items-center justify-center gap-1.5 bg-emerald-500 py-3">
-              <Shield className="w-3.5 h-3.5 text-white" />
-              <span className="text-xs font-bold text-white uppercase tracking-widest">12 Month Validity</span>
-            </div>
-
-            <div className="p-5 flex flex-col">
-              {/* Most Popular badge */}
-              <div className="flex justify-center mb-3">
-                <div className="inline-flex items-center gap-1.5 bg-orange-50 border border-orange-200 text-orange-600 text-[11px] font-bold px-3 py-1 rounded-full">
-                  🔥 MOST POPULAR
+            {examAccessTier === 'free' ? (
+              /* ─── FREE exam — just let them in ─── */
+              <>
+                <div className="flex items-center justify-center gap-1.5 bg-emerald-500 py-3">
+                  <Shield className="w-3.5 h-3.5 text-white" />
+                  <span className="text-xs font-bold text-white uppercase tracking-widest">Free Access</span>
                 </div>
-              </div>
-
-              {/* Package name */}
-              <div className="text-center mb-4">
-                <div className="font-black text-gray-900 text-lg leading-snug">{examName.split(' ').slice(0, 4).join(' ')} Full Package</div>
-                <div className="text-xs text-gray-400 font-semibold mt-0.5">Prelims + Mains</div>
-              </div>
-
-              {/* Pricing */}
-              <div className="flex items-center justify-center gap-3 mb-1">
-                <span className="text-gray-400 font-bold text-base line-through">₹1,999</span>
-                <span className="bg-red-500 text-white font-bold text-xs px-2.5 py-1 rounded-full">85% OFF</span>
-              </div>
-              <div className="text-center mb-2">
-                <span className="text-6xl font-black text-gray-900">₹<span>299</span></span>
-              </div>
-              <div className="flex justify-center mb-4">
-                <div className="inline-flex items-center gap-1.5 bg-emerald-50 border border-emerald-200 text-emerald-700 text-[11px] font-semibold px-3 py-1 rounded-full">
-                  🏷️ You Save ₹1,700
-                </div>
-              </div>
-
-              {/* Benefits checklist */}
-              <div className="space-y-2 mb-5">
-                {[
-                  'Instant Access After Payment',
-                  '12 Month Validity',
-                  'Updated as per latest syllabus',
-                  'Mock Tests + AI Performance Analysis',
-                  'Detailed Solutions & Explanations',
-                ].map(b => (
-                  <div key={b} className="flex items-start gap-2.5 text-xs text-gray-600">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5" />
-                    <span className="font-medium">{b}</span>
+                <div className="p-5 flex flex-col gap-4">
+                  <div className="text-center">
+                    <div className="text-4xl font-black text-emerald-600 mb-1">FREE</div>
+                    <p className="text-xs text-muted-foreground">No subscription required for this exam</p>
                   </div>
-                ))}
-              </div>
+                  <div className="space-y-2">
+                    {['All Tests Included', 'AI Performance Analysis', 'Detailed Solutions', 'All India Ranking'].map(b => (
+                      <div key={b} className="flex items-start gap-2.5 text-xs text-gray-600">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5" />
+                        <span className="font-medium">{b}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <button
+                    onClick={handleBuy}
+                    className="w-full bg-emerald-500 hover:bg-emerald-600 active:scale-[0.98] text-white font-bold text-base py-3.5 rounded-xl shadow-lg shadow-emerald-500/30 transition-all flex items-center justify-center gap-2"
+                  >
+                    <ShoppingCart className="w-5 h-5" /> Start Preparation →
+                  </button>
+                </div>
+              </>
+            ) : (
+              /* ─── PLAN / PACKAGE / BOTH — show what's needed ─── */
+              <>
+                {/* Header */}
+                <div className={`flex items-center justify-center gap-1.5 py-3 ${
+                  examAccessTier === 'plan' ? 'bg-indigo-600' :
+                  examAccessTier === 'package' ? 'bg-amber-500' : 'bg-violet-600'
+                }`}>
+                  <Shield className="w-3.5 h-3.5 text-white" />
+                  <span className="text-xs font-bold text-white uppercase tracking-widest">
+                    {ACCESS_TIER_LABELS[examAccessTier]}
+                  </span>
+                </div>
 
-              {/* CTA */}
-              <button
-                onClick={handleBuy}
-                className="w-full bg-emerald-500 hover:bg-emerald-600 active:scale-[0.98] text-white font-bold text-base py-3.5 rounded-xl shadow-lg shadow-emerald-500/30 transition-all flex items-center justify-center gap-2"
-              >
-                <ShoppingCart className="w-5 h-5" /> Start Preparation →
-              </button>
+                <div className="p-5 flex flex-col gap-4">
+                  <div className="text-center space-y-1">
+                    <div className={`text-5xl font-black ${
+                      examAccessTier === 'plan' ? 'text-indigo-600' :
+                      examAccessTier === 'package' ? 'text-amber-600' : 'text-violet-600'
+                    }`}>🔒</div>
+                    <p className="text-sm font-bold text-gray-800">
+                      {examAccessTier === 'plan'    && 'Subscription Required'}
+                      {examAccessTier === 'package' && 'Package Required'}
+                      {examAccessTier === 'both'    && 'Plan or Package Required'}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {examAccessTier === 'plan'    && 'Get any paid plan to unlock all tests in this exam'}
+                      {examAccessTier === 'package' && `Purchase the ${category?.replace('-', ' ')} package to unlock`}
+                      {examAccessTier === 'both'    && 'Unlock via a subscription plan or category package'}
+                    </p>
+                  </div>
 
-              <div className="flex items-center justify-center gap-1.5 mt-2.5 text-[11px] text-gray-400 font-semibold">
-                <Shield className="w-3 h-3 text-emerald-500" /> Secure &amp; Safe Payment
-              </div>
+                  {/* Benefits */}
+                  <div className="space-y-2">
+                    {['All Mock Tests', 'AI Performance Analysis', 'Detailed Solutions', 'All India Ranking', '12 Month Validity'].map(b => (
+                      <div key={b} className="flex items-start gap-2.5 text-xs text-gray-600">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5" />
+                        <span className="font-medium">{b}</span>
+                      </div>
+                    ))}
+                  </div>
 
-              {/* Urgency strip */}
-              <div className="mt-4 bg-emerald-50 border border-emerald-100 rounded-xl px-3 py-2.5 flex items-center gap-2">
-                <Users className="w-4 h-4 text-emerald-600 flex-shrink-0" />
-                <span className="text-[11px] font-bold text-emerald-700">342 students enrolled this week</span>
-                <TrendingUp className="w-3.5 h-3.5 text-emerald-500 ml-auto flex-shrink-0" />
-              </div>
-            </div>
+                  {/* Primary CTA: plan or package */}
+                  {(examAccessTier === 'plan' || examAccessTier === 'both') && (
+                    <button
+                      onClick={() => navigate('/student/pricing')}
+                      className="w-full bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] text-white font-bold text-sm py-3 rounded-xl shadow-lg shadow-indigo-600/20 transition-all flex items-center justify-center gap-2"
+                    >
+                      👑 View Plans & Subscribe
+                    </button>
+                  )}
+                  {(examAccessTier === 'package' || examAccessTier === 'both') && (
+                    <button
+                      onClick={() => navigate(`/student/checkout?type=package&id=pkg-${(category ?? 'banking').replace('-insurance', '')}`)}
+                      className="w-full bg-amber-500 hover:bg-amber-600 active:scale-[0.98] text-white font-bold text-sm py-3 rounded-xl shadow-lg shadow-amber-500/20 transition-all flex items-center justify-center gap-2"
+                    >
+                      📦 Buy {category?.replace('-', ' ')} Package
+                    </button>
+                  )}
+
+                  {/* Fallback individual purchase */}
+                  <button
+                    onClick={handleBuy}
+                    className="w-full border border-gray-200 hover:border-gray-300 text-gray-600 hover:bg-gray-50 font-semibold text-xs py-2.5 rounded-xl transition-all flex items-center justify-center gap-2"
+                  >
+                    <ShoppingCart className="w-4 h-4" /> Buy This Exam Only
+                  </button>
+
+                  <div className="flex items-center justify-center gap-1.5 mt-1 text-[11px] text-gray-400 font-semibold">
+                    <Shield className="w-3 h-3 text-emerald-500" /> Secure & Safe Payment
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </div>
+
 
       ) : (
         /* ── AFTER PURCHASE ── */

@@ -13,7 +13,11 @@ import React, { useState, useMemo, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
+} from '@/components/ui/dialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -35,14 +39,20 @@ import {
   GripVertical, X, Pencil, Trash2, Eye, EyeOff,
   MoreVertical, BarChart3, Target, Users, TrendingUp,
   BookOpen, GraduationCap, Layers, AlertTriangle,
-  ChevronUp, ChevronDown,
+  ChevronUp, ChevronDown, HelpCircle, Info,
 } from 'lucide-react';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel,
   AlertDialogContent, AlertDialogDescription,
   AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { useExamCatalog, type CatalogExam, type CatalogCategory } from '@/hooks/useExamCatalog';
+import { useExamCatalog, type CatalogExam, type CatalogCategory, type ExamAccessTier } from '@/hooks/useExamCatalog';
 import { cn } from '@/lib/utils';
 
 // ─── Deterministic mock stats ─────────────────────────────────────────────────
@@ -72,6 +82,24 @@ const fmtNum = (n: number) =>
 
 type ExamStatus = 'live' | 'upcoming' | 'hidden';
 
+// Access tier badge helper
+const ACCESS_TIER_CONFIG: Record<ExamAccessTier, { label: string; cls: string; icon: string }> = {
+  free:    { label: 'Free',    cls: 'bg-emerald-50 text-emerald-700 border-emerald-200', icon: '🟢' },
+  plan:    { label: 'Plan',    cls: 'bg-indigo-50 text-indigo-700 border-indigo-200',    icon: '👑' },
+  package: { label: 'Package', cls: 'bg-amber-50 text-amber-700 border-amber-200',       icon: '📦' },
+  both:    { label: 'Plan/Pkg',cls: 'bg-violet-50 text-violet-700 border-violet-200',    icon: '⚡' },
+};
+
+const AccessTierBadge = ({ tier }: { tier?: ExamAccessTier }) => {
+  const t = tier ?? 'free';
+  const cfg = ACCESS_TIER_CONFIG[t];
+  return (
+    <span className={`inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded-full border ${cfg.cls}`}>
+      {cfg.icon} {cfg.label}
+    </span>
+  );
+};
+
 const examStatus = (exam: CatalogExam & { isVisible?: boolean }): ExamStatus => {
   if ((exam as any).isVisible === false) return 'hidden';
   const h = hashCode(exam.id + 'status');
@@ -80,9 +108,9 @@ const examStatus = (exam: CatalogExam & { isVisible?: boolean }): ExamStatus => 
 
 const StatusBadge = ({ status }: { status: ExamStatus }) => {
   const map = {
-    live: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-    upcoming: 'bg-blue-50 text-blue-700 border-blue-200',
-    hidden: 'bg-gray-100 text-gray-500 border-gray-200',
+    live: 'bg-emerald-50 text-emerald-700 border-emerald-200 shadow-[0_2px_8px_rgba(16,185,129,0.06)]',
+    upcoming: 'bg-blue-50 text-blue-700 border-blue-200 shadow-[0_2px_8px_rgba(59,130,246,0.06)]',
+    hidden: 'bg-gray-50 text-gray-500 border-gray-200',
   } as const;
   const dot = {
     live: 'bg-emerald-500',
@@ -90,8 +118,20 @@ const StatusBadge = ({ status }: { status: ExamStatus }) => {
     hidden: 'bg-gray-400',
   } as const;
   return (
-    <span className={`inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full border font-semibold ${map[status]}`}>
-      <span className={`w-1.5 h-1.5 rounded-full ${dot[status]}`} />
+    <span className={`inline-flex items-center gap-1.5 text-[10px] px-2.5 py-0.5 rounded-full border font-bold ${map[status]}`}>
+      {status === 'live' ? (
+        <span className="relative flex h-1.5 w-1.5">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+          <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
+        </span>
+      ) : status === 'upcoming' ? (
+        <span className="relative flex h-1.5 w-1.5">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+          <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-blue-500"></span>
+        </span>
+      ) : (
+        <span className={`w-1.5 h-1.5 rounded-full ${dot[status]}`} />
+      )}
       {status.charAt(0).toUpperCase() + status.slice(1)}
     </span>
   );
@@ -299,14 +339,17 @@ const ExamGridCard: React.FC<ExamCardProps> = ({
         </div>
       )}
 
-      {/* Header */}
+      {/* Header: Logo + Name + Section + Tier badge */}
       <div className="flex items-start gap-3 mb-3">
         <ExamLogo logo={exam.logo} name={exam.name} size="md" />
         <div className="min-w-0 flex-1">
           <p className="font-bold text-sm text-gray-800 truncate pr-12 group-hover:text-indigo-700 transition-colors">
             {exam.name}
           </p>
-          <p className="text-[11px] text-muted-foreground mt-0.5">{exam.sectionName}</p>
+          <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+            <p className="text-[11px] text-muted-foreground">{exam.sectionName}</p>
+            <AccessTierBadge tier={exam.accessTier} />
+          </div>
         </div>
       </div>
 
@@ -515,7 +558,7 @@ const CategoryDetailPage: React.FC = () => {
   const { toast } = useToast();
   const {
     catalog, loading,
-    toggleExamPopular, reorderPopularExams, removeExam,
+    addExam, toggleExamPopular, reorderPopularExams, removeExam,
   } = useExamCatalog();
 
   // ── View / Filter state ────────────────────────────────────────────────────
@@ -533,8 +576,21 @@ const CategoryDetailPage: React.FC = () => {
     examId: string; sectionId: string; name: string;
   } | null>(null);
 
+  // ── Add Exam dialog ────────────────────────────────────────────────────────
+  const [addExamOpen, setAddExamOpen] = useState(false);
+  const [addExamForm, setAddExamForm] = useState({
+    name: '', logo: '', isPopular: false, sectionId: '', accessTier: 'free' as ExamAccessTier,
+  });
+  const [addExamSaving, setAddExamSaving] = useState(false);
+
   // ─────────────────────────────────────────────────────────────────────────
   const category = useMemo(() => catalog.find(c => c.id === categoryId), [catalog, categoryId]);
+
+  React.useEffect(() => {
+    if (category) {
+      document.title = `Manage ${category.name} | Exament Super Admin`;
+    }
+  }, [category]);
 
   const allExams = useMemo(() => {
     if (!category) return [];
@@ -616,6 +672,30 @@ const CategoryDetailPage: React.FC = () => {
     setDeleteTarget(null);
   };
 
+  const handleAddExam = () => {
+    if (!addExamForm.name.trim() || !categoryId) return;
+    // Use first non-popular section, or first section as fallback
+    const targetSectionId = addExamForm.sectionId ||
+      category?.sections.find(s => s.id !== 'popular')?.id ||
+      category?.sections[0]?.id;
+    if (!targetSectionId) { toast({ title: 'No section available', variant: 'destructive' }); return; }
+    const id = addExamForm.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    setAddExamSaving(true);
+    addExam(categoryId, targetSectionId, {
+      id: `${id}-${Date.now()}`,
+      name: addExamForm.name.trim(),
+      logo: addExamForm.logo.trim(),
+      description: '',
+      isPopular: addExamForm.isPopular,
+      accessTier: addExamForm.accessTier,
+      testSlots: [],
+    });
+    toast({ title: `✅ "${addExamForm.name.trim()}" added!`, description: `Access Tier: ${addExamForm.accessTier}` });
+    setAddExamForm({ name: '', logo: '', isPopular: false, sectionId: '', accessTier: 'free' });
+    setAddExamSaving(false);
+    setAddExamOpen(false);
+  };
+
   const navigateToExam = (exam: CatalogExam & { sectionId: string }) => {
     navigate(`/super-admin/test-catalog/${categoryId}/${exam.sectionId}/${exam.id}`);
   };
@@ -646,7 +726,8 @@ const CategoryDetailPage: React.FC = () => {
 
   // ─────────────────────────────────────────────────────────────────────────
   return (
-    <div className="p-4 md:p-6 space-y-6 max-w-[1400px] mx-auto">
+    <TooltipProvider>
+      <div className="p-4 md:p-6 space-y-6 max-w-[1400px] mx-auto">
 
       {/* ── Breadcrumb ──────────────────────────────────────────────────────── */}
       <nav className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -658,27 +739,34 @@ const CategoryDetailPage: React.FC = () => {
       </nav>
 
       {/* ── Header ──────────────────────────────────────────────────────────── */}
-      <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-indigo-600 via-violet-600 to-purple-700 shadow-xl">
-        <div className="absolute inset-0 opacity-10"
+      <div className="relative rounded-2xl overflow-hidden bg-slate-950 border border-slate-800 shadow-2xl">
+        {/* Glowing mesh blobs */}
+        <div className="absolute top-[-45%] left-[-15%] w-[55%] h-[110%] rounded-full bg-indigo-500/15 blur-[100px] pointer-events-none animate-pulse" style={{ animationDuration: '8000ms' }} />
+        <div className="absolute bottom-[-45%] right-[-15%] w-[55%] h-[110%] rounded-full bg-purple-500/15 blur-[100px] pointer-events-none animate-pulse" style={{ animationDuration: '6000ms' }} />
+        <div className="absolute inset-0 opacity-5"
           style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '24px 24px' }} />
 
         {/* Top bar */}
-        <div className="relative flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 px-6 pt-5 pb-3">
+        <div className="relative flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 px-6 pt-5 pb-3 z-10">
           <div className="flex items-center gap-3">
             <button
               onClick={() => navigate('/super-admin/test-catalog')}
-              className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors"
+              className="p-1.5 rounded-lg bg-slate-900 border border-slate-800 hover:bg-slate-800 text-slate-300 hover:text-white transition-all hover:scale-105 active:scale-95 shadow-sm"
             >
               <ArrowLeft className="h-4 w-4" />
             </button>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-2xl font-black text-white">{category.name}</h1>
-                <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-emerald-400/20 text-emerald-200 border border-emerald-400/30 font-semibold">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> Live
+                <h1 className="text-2xl font-black text-white tracking-tight">{category.name}</h1>
+                <span className="inline-flex items-center gap-1.5 text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-500/25 font-bold shadow-[0_0_12px_rgba(16,185,129,0.1)]">
+                  <span className="relative flex h-1.5 w-1.5">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
+                  </span>
+                  Live
                 </span>
               </div>
-              <p className="text-sm text-white/70 mt-0.5">
+              <p className="text-sm text-slate-400 mt-0.5 font-medium">
                 Manage exams, select popular, and control student-facing display
               </p>
             </div>
@@ -687,16 +775,20 @@ const CategoryDetailPage: React.FC = () => {
           {/* Action buttons */}
           <div className="flex items-center gap-2 flex-shrink-0 flex-wrap">
             <Button size="sm" variant="outline"
-              className="gap-1.5 bg-white/10 border-white/30 text-white hover:bg-white/20 h-8 text-xs">
+              className="gap-1.5 bg-slate-900 border-slate-850 text-slate-300 hover:bg-slate-800 hover:text-white h-8 text-xs transition-all hover:scale-[1.02] active:scale-[0.98]">
               <Download className="h-3.5 w-3.5" /> Export CSV
             </Button>
             <Button size="sm" variant="outline"
-              className="gap-1.5 bg-white/10 border-white/30 text-white hover:bg-white/20 h-8 text-xs">
+              className="gap-1.5 bg-slate-900 border-slate-850 text-slate-300 hover:bg-slate-800 hover:text-white h-8 text-xs transition-all hover:scale-[1.02] active:scale-[0.98]">
               <Upload className="h-3.5 w-3.5" /> Import
             </Button>
             <Button size="sm"
-              className="gap-1.5 bg-white text-indigo-700 hover:bg-white/90 font-semibold h-8 text-xs shadow"
-              onClick={() => navigate(`/super-admin/test-catalog`)}>
+              className="gap-1.5 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold h-8 text-xs shadow-lg shadow-indigo-600/20 transition-all hover:scale-[1.04] active:scale-[0.96]"
+              onClick={() => {
+                const defaultSec = category?.sections.find(s => s.id !== 'popular')?.id || category?.sections[0]?.id || '';
+                setAddExamForm({ name: '', logo: '', isPopular: false, sectionId: defaultSec, accessTier: 'free' });
+                setAddExamOpen(true);
+              }}>
               <Plus className="h-3.5 w-3.5" /> Add Exam
             </Button>
           </div>
@@ -705,20 +797,30 @@ const CategoryDetailPage: React.FC = () => {
         {/* Stats bar */}
         <div className="relative grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-px bg-white/10 border-t border-white/10 mt-2">
           {[
-            { label: 'Total Exams', value: allExams.length, icon: BookOpen },
-            { label: 'Popular', value: popularExams.length, icon: Star },
-            { label: 'Total Students', value: fmtNum(aggStats.registered), icon: Users },
-            { label: 'Primary Goal', value: fmtNum(aggStats.primary), icon: Target },
-            { label: 'Secondary Goal', value: fmtNum(aggStats.secondary), icon: TrendingUp },
-            { label: 'Backup Goal', value: fmtNum(aggStats.backup), icon: GraduationCap },
-          ].map(({ label, value, icon: Icon }) => (
-            <div key={label} className="flex items-center gap-2.5 px-4 py-3 bg-white/5 hover:bg-white/10 transition-colors">
-              <Icon className="h-4 w-4 text-white/60 flex-shrink-0" />
-              <div>
-                <div className="text-base font-black text-white">{value}</div>
-                <div className="text-[10px] text-white/60 uppercase tracking-wide">{label}</div>
-              </div>
-            </div>
+            { label: 'Total Exams', value: allExams.length, icon: BookOpen, tooltip: "The overall count of exams active in this category, including all sections." },
+            { label: 'Popular', value: popularExams.length, icon: Star, tooltip: "Exams highlighted to students at the top of the homepage in this exact custom rank order." },
+            { label: 'Total Students', value: fmtNum(aggStats.registered), icon: Users, tooltip: "Total registrations for all exams under this category." },
+            { label: 'Primary Goal', value: fmtNum(aggStats.primary), icon: Target, tooltip: "Students who have designated an exam in this category as their main primary target." },
+            { label: 'Secondary Goal', value: fmtNum(aggStats.secondary), icon: TrendingUp, tooltip: "Students targeting these exams as secondary/substitute choices." },
+            { label: 'Backup Goal', value: fmtNum(aggStats.backup), icon: GraduationCap, tooltip: "Students keeping these exams as fallback backup targets." },
+          ].map(({ label, value, icon: Icon, tooltip }) => (
+            <Tooltip key={label}>
+              <TooltipTrigger asChild>
+                <div className="flex items-center gap-2.5 px-4 py-3 bg-white/5 hover:bg-white/10 transition-colors cursor-help">
+                  <Icon className="h-4 w-4 text-white/60 flex-shrink-0" />
+                  <div>
+                    <div className="text-base font-black text-white">{value}</div>
+                    <div className="text-[10px] text-white/60 uppercase tracking-wide flex items-center gap-1">
+                      {label}
+                      <HelpCircle className="h-2.5 w-2.5 opacity-55 text-white/80" />
+                    </div>
+                  </div>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent className="bg-slate-900 border-slate-800 text-white max-w-[240px] text-xs">
+                {tooltip}
+              </TooltipContent>
+            </Tooltip>
           ))}
         </div>
       </div>
@@ -734,7 +836,7 @@ const CategoryDetailPage: React.FC = () => {
         >
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shadow-sm">
-              <Star className="h-4.5 w-4.5 text-white" fill="white" />
+              <Star className="h-4 w-4 text-white" fill="white" />
             </div>
             <div className="text-left">
               <div className="flex items-center gap-2">
@@ -986,25 +1088,64 @@ const CategoryDetailPage: React.FC = () => {
                           Exam Name
                         </th>
                         <th className="px-4 py-3 text-center text-xs font-bold text-indigo-600 uppercase tracking-wider">
-                          <div className="flex items-center justify-center gap-1">
-                            <Users className="h-3.5 w-3.5" /> Registered
-                          </div>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div className="flex items-center justify-center gap-1 cursor-help hover:text-indigo-800 transition-colors">
+                                <Users className="h-3.5 w-3.5" /> Registered <HelpCircle className="h-3 w-3 opacity-60" />
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent className="bg-slate-900 border-slate-800 text-white text-xs max-w-[200px]">
+                              Total number of students who have enrolled or signed up for this exam target.
+                            </TooltipContent>
+                          </Tooltip>
                         </th>
                         <th className="px-4 py-3 text-center text-xs font-bold text-emerald-600 uppercase tracking-wider">
-                          <div className="flex items-center justify-center gap-1">
-                            <Target className="h-3.5 w-3.5" /> Primary
-                          </div>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div className="flex items-center justify-center gap-1 cursor-help hover:text-emerald-800 transition-colors">
+                                <Target className="h-3.5 w-3.5" /> Primary <HelpCircle className="h-3 w-3 opacity-60" />
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent className="bg-slate-900 border-slate-800 text-white text-xs max-w-[200px]">
+                              Students who have designated this exam as their absolute primary focus.
+                            </TooltipContent>
+                          </Tooltip>
                         </th>
                         <th className="px-4 py-3 text-center text-xs font-bold text-blue-600 uppercase tracking-wider">
-                          Secondary
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div className="flex items-center justify-center gap-1 cursor-help hover:text-blue-800 transition-colors">
+                                Secondary <HelpCircle className="h-3 w-3 opacity-60" />
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent className="bg-slate-900 border-slate-800 text-white text-xs max-w-[200px]">
+                              Students targeting this exam as a secondary priority or fallback option.
+                            </TooltipContent>
+                          </Tooltip>
                         </th>
                         <th className="px-4 py-3 text-center text-xs font-bold text-orange-600 uppercase tracking-wider">
-                          Backup
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div className="flex items-center justify-center gap-1 cursor-help hover:text-orange-800 transition-colors">
+                                Backup <HelpCircle className="h-3 w-3 opacity-60" />
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent className="bg-slate-900 border-slate-800 text-white text-xs max-w-[200px]">
+                              Students keeping this exam as a low-priority backup target.
+                            </TooltipContent>
+                          </Tooltip>
                         </th>
                         <th className="px-4 py-3 text-center text-xs font-bold text-amber-600 uppercase tracking-wider">
-                          <div className="flex items-center justify-center gap-1">
-                            <Star className="h-3.5 w-3.5" /> Popular
-                          </div>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div className="flex items-center justify-center gap-1 cursor-help hover:text-amber-800 transition-colors">
+                                <Star className="h-3.5 w-3.5" /> Popular <HelpCircle className="h-3 w-3 opacity-60" />
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent className="bg-slate-900 border-slate-800 text-white text-xs max-w-[200px]">
+                              Curated popular subset shown at the top of the homepage in this exact rank order.
+                            </TooltipContent>
+                          </Tooltip>
                         </th>
                         <th className="px-4 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">
                           Status
@@ -1088,7 +1229,131 @@ const CategoryDetailPage: React.FC = () => {
         </AlertDialogContent>
       </AlertDialog>
 
-    </div>
+      {/* ── Add Exam Dialog ──────────────────────────────────────────────────── */}
+      <Dialog open={addExamOpen} onOpenChange={setAddExamOpen}>
+        <DialogContent className="sm:max-w-[480px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <span className="w-8 h-8 rounded-lg bg-indigo-500 flex items-center justify-center text-white">
+                <Plus className="h-4 w-4" />
+              </span>
+              <span>Add New Exam to {category.name}</span>
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            {/* Exam Name */}
+            <div className="space-y-1.5">
+              <Label htmlFor="exam-name">Exam Name <span className="text-red-500">*</span></Label>
+              <Input
+                id="exam-name"
+                placeholder="e.g. SBI Apprentice, RBI Grade B"
+                value={addExamForm.name}
+                onChange={(e) => setAddExamForm(prev => ({ ...prev, name: e.target.value }))}
+                className="w-full"
+              />
+            </div>
+
+            {/* Target Section */}
+            <div className="space-y-1.5">
+              <Label>Target Section <span className="text-red-500">*</span></Label>
+              <Select
+                value={addExamForm.sectionId}
+                onValueChange={(val) => setAddExamForm(prev => ({ ...prev, sectionId: val }))}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select target section" />
+                </SelectTrigger>
+                <SelectContent>
+                  {category.sections
+                    .filter(s => s.id !== 'popular')
+                    .map(s => (
+                      <SelectItem key={s.id} value={s.id}>
+                        {s.name}
+                      </SelectItem>
+                    ))
+                  }
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Logo URL */}
+            <div className="space-y-1.5">
+              <Label htmlFor="logo-url">Logo Image URL (Optional)</Label>
+              <Input
+                id="logo-url"
+                placeholder="https://example.com/logo.png"
+                value={addExamForm.logo}
+                onChange={(e) => setAddExamForm(prev => ({ ...prev, logo: e.target.value }))}
+                className="w-full"
+              />
+            </div>
+
+            {/* Access Tier */}
+            <div className="space-y-2">
+              <Label className="text-sm font-semibold">Access Tier <span className="text-red-500">*</span></Label>
+              <p className="text-xs text-muted-foreground -mt-1">
+                Classifies who can access this exam's tests. Pricing is set separately by the Owner.
+              </p>
+              <div className="grid grid-cols-2 gap-2">
+                {([
+                  { value: 'free',    label: '🟢 Free',     desc: 'All students can access' },
+                  { value: 'plan',    label: '👑 Plan',     desc: 'Paid subscription required' },
+                  { value: 'package', label: '📦 Package',  desc: 'Category package required' },
+                  { value: 'both',    label: '⚡ Plan/Pkg', desc: 'Either plan or package' },
+                ] as { value: ExamAccessTier; label: string; desc: string }[]).map(opt => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => setAddExamForm(prev => ({ ...prev, accessTier: opt.value }))}
+                    className={`flex flex-col items-start p-3 rounded-xl border-2 text-left transition-all ${
+                      addExamForm.accessTier === opt.value
+                        ? 'border-indigo-500 bg-indigo-50'
+                        : 'border-gray-200 hover:border-indigo-300 hover:bg-gray-50'
+                    }`}
+                  >
+                    <span className="text-sm font-bold text-gray-800">{opt.label}</span>
+                    <span className="text-[10px] text-muted-foreground mt-0.5">{opt.desc}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Mark as Popular Switch */}
+            <div className="flex items-center justify-between p-3 border rounded-xl bg-gray-50/50">
+              <div className="space-y-0.5">
+                <div className="text-sm font-semibold flex items-center gap-1.5">
+                  <Star className="h-3.5 w-3.5 text-amber-500 fill-amber-500" />
+                  <span>Mark as Popular Exam</span>
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  Adds this exam to the curated popular strip on top
+                </div>
+              </div>
+              <Switch
+                checked={addExamForm.isPopular}
+                onCheckedChange={(checked) => setAddExamForm(prev => ({ ...prev, isPopular: checked }))}
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setAddExamOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              className="bg-indigo-600 hover:bg-indigo-700 text-white"
+              disabled={!addExamForm.name.trim() || addExamSaving}
+              onClick={handleAddExam}
+            >
+              {addExamSaving ? 'Adding...' : 'Add Exam'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      </div>
+    </TooltipProvider>
   );
 };
 

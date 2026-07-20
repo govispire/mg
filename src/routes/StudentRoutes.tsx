@@ -39,6 +39,11 @@ import SolutionViewer from '@/pages/student/SolutionViewer';
 import TestWindow from '@/pages/student/TestWindow';
 import LiveTests from '@/pages/student/LiveTests';
 
+// ── Payment System Pages ────────────────────────────────────────────────────
+import StudentPricingPage from '@/pages/student/StudentPricingPage';
+import StudentCheckout from '@/pages/student/StudentCheckout';
+import StudentSubscription from '@/pages/student/StudentSubscription';
+
 const StudentRoutes = () => {
   const navigate = useNavigate();
 
@@ -96,6 +101,12 @@ const StudentRoutes = () => {
           <Route path="/doubt-forum" element={<DoubtForum />} />
           <Route path="/faq" element={<FAQ />} />
           <Route path="/vocabulary" element={<StudentVocabulary />} />
+
+          {/* ── Payment System Routes ── */}
+          <Route path="/pricing" element={<StudentPricingPage />} />
+          <Route path="/checkout" element={<StudentCheckout />} />
+          <Route path="/subscription" element={<StudentSubscription />} />
+
           <Route path="*" element={<NotFound />} />
         </Route>
 

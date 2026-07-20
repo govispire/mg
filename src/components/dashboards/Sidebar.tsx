@@ -10,7 +10,7 @@ import {
   PieChart, CreditCard, Settings, UserCheck, MessageSquare,
   Target, Clock, TrendingUp, Gift, Flame, Trophy, Star, Award, Lock, Shield,
   Sparkles, FileEdit, GraduationCap, Newspaper, Megaphone, BarChart3, Radio,
-  ChevronLeft, ChevronRight,
+  ChevronLeft, ChevronRight, Crown,
 } from 'lucide-react';
 import { useContentItems } from '@/hooks/useEmployeePermissions';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -260,6 +260,10 @@ const Sidebar: React.FC<SidebarProps> = ({ role, basePath, collapsed, onToggle }
           { icon: <Heart size={18} />, label: 'Exam Tracker', to: `${basePath}/self-care` },
           { icon: <FileText size={18} />, label: 'PDF Courses', to: `${basePath}/pdf-courses` },
           { icon: <BookOpen size={18} />, label: 'Vocabulary', to: `${basePath}/vocabulary`, highlight: true },
+
+          // ── Payment ──
+          { icon: <Crown size={18} />, label: 'My Subscription', to: `${basePath}/subscription` },
+          { icon: <CreditCard size={18} />, label: 'Pricing & Plans', to: `${basePath}/pricing` },
         ];
       case 'mentor':
         return [
@@ -311,9 +315,17 @@ const Sidebar: React.FC<SidebarProps> = ({ role, basePath, collapsed, onToggle }
           { icon: <FileText size={18} />, label: 'Content Management', to: `${basePath}/content-management` },
           { icon: <CalendarDays size={18} />, label: 'Calendar', to: `${basePath}/calendar` },
           { icon: <Bell size={18} />, label: 'Notifications', to: `${basePath}/notifications` },
-          { icon: <CreditCard size={18} />, label: 'Payments & Plans', to: `${basePath}/payments-plans` },
-          { icon: <Settings size={18} />, label: 'Settings', to: `${basePath}/settings` },
+          // ── Revenue & Payments ──
+          { icon: <CreditCard size={18} />, label: 'Revenue Center', to: `${basePath}/payments-plans`, highlight: true },
+          { icon: <Crown size={18} />, label: 'Plan Manager', to: `${basePath}/plan-manager` },
+          { icon: <FileText size={18} />, label: 'Package Manager', to: `${basePath}/package-manager` },
+          { icon: <Sparkles size={18} />, label: 'Addon Manager', to: `${basePath}/addon-manager` },
+          { icon: <Shield size={18} />, label: 'Category Access', to: `${basePath}/category-access` },
+          { icon: <Lock size={18} />, label: 'Feature Access', to: `${basePath}/feature-access` },
+          { icon: <Gift size={18} />, label: 'Coupon Manager', to: `${basePath}/coupon-manager` },
+          { icon: <Settings size={18} />, label: 'Payment Settings', to: `${basePath}/payment-settings` },
         ];
+
       default:
         return [];
     }
@@ -399,8 +411,27 @@ const Sidebar: React.FC<SidebarProps> = ({ role, basePath, collapsed, onToggle }
           </ul>
         </nav>
 
-        {/* Footer: year text when expanded */}
-        {!collapsed && (
+        {/* Footer: Upgrade button (student) + year text when expanded */}
+        {!collapsed && role === 'student' && (
+          <div className="flex-shrink-0 border-t border-slate-100 px-3 py-3">
+            <a
+              href={`${basePath}/pricing`}
+              className="flex items-center gap-2 w-full rounded-xl px-3 py-2.5 text-sm font-bold text-white transition-all duration-200 hover:opacity-90 hover:scale-[1.02] active:scale-100"
+              style={{
+                background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)',
+                boxShadow: '0 2px 12px rgba(79,70,229,0.35)',
+              }}
+            >
+              <Crown size={16} className="text-amber-300 flex-shrink-0" />
+              <span>Upgrade Plan</span>
+              <span className="ml-auto text-indigo-200 text-xs font-normal">7-day free trial</span>
+            </a>
+            <div className="text-[10px] text-slate-400 mt-2 text-center">
+              Examerit © {new Date().getFullYear()}
+            </div>
+          </div>
+        )}
+        {!collapsed && role !== 'student' && (
           <div className="flex-shrink-0 border-t border-slate-100 px-4 py-3">
             <div className="text-[10px] text-slate-400">
               Examerit © {new Date().getFullYear()}

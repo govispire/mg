@@ -14,12 +14,7 @@ import {
     DialogTitle,
     DialogFooter,
 } from '@/components/ui/dialog';
-import {
-    Accordion,
-    AccordionContent,
-    AccordionItem,
-    AccordionTrigger,
-} from '@/components/ui/accordion';
+
 import {
     AlertDialog,
     AlertDialogAction,
@@ -462,10 +457,12 @@ const TestCatalogManager: React.FC = () => {
                     <Button onClick={openAddCategory} className="gap-2 mt-4" size="sm"><Plus className="h-4 w-4" /> New Category</Button>
                 </div>
             ) : (
-                <Accordion type="multiple" className="space-y-3">
+                <div className="space-y-3">
                     {filteredCatalog.map((cat) => {
-                        const sectionCount = cat.sections.length;
                         const examCount = cat.sections.reduce((a, s) => a + s.exams.length, 0);
+                        const popularCount = cat.sections.reduce(
+                            (a, s) => a + s.exams.filter(e => e.isPopular).length, 0
+                        );
                         const accentMap: Record<string, string> = {
                             'bg-blue-50 border-blue-200': 'from-blue-400 to-blue-600',
                             'bg-green-50 border-green-200': 'from-emerald-400 to-emerald-600',
@@ -479,162 +476,101 @@ const TestCatalogManager: React.FC = () => {
                         const accent = accentMap[cat.colorClass] ?? 'from-gray-400 to-gray-600';
 
                         return (
-                            <AccordionItem
+                            <div
                                 key={cat.id}
-                                value={cat.id}
                                 className={cn(
-                                    'border border-gray-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all bg-white',
+                                    'group border border-gray-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all bg-white cursor-pointer',
                                     !cat.isVisible && 'opacity-60',
                                 )}
+                                onClick={() => navigate(`/super-admin/test-catalog/${cat.id}`)}
                             >
-                                {/* Category Header */}
-                                <AccordionTrigger className="px-0 py-0 hover:no-underline [&>svg]:hidden">
-                                    <div className="flex items-stretch w-full min-w-0">
-                                        <div className={`w-1.5 bg-gradient-to-b ${accent} flex-shrink-0`} />
-                                        <div className="flex items-center gap-4 flex-1 min-w-0 px-5 py-4 hover:bg-gray-50/70 transition-colors">
-                                            <div className={`w-11 h-11 rounded-xl border-2 flex items-center justify-center flex-shrink-0 shadow-sm ${cat.colorClass}`}>
-                                                {cat.logo ? (
-                                                    <img src={cat.logo} alt={cat.name} className="w-8 h-8 object-contain" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                                <div className="flex items-stretch w-full min-w-0">
+                                    {/* Accent bar */}
+                                    <div className={`w-1.5 bg-gradient-to-b ${accent} flex-shrink-0`} />
+
+                                    <div className="flex items-center gap-4 flex-1 min-w-0 px-5 py-4 group-hover:bg-gray-50/50 transition-colors">
+                                        {/* Logo */}
+                                        <div className={`w-11 h-11 rounded-xl border-2 flex items-center justify-center flex-shrink-0 shadow-sm ${cat.colorClass}`}>
+                                            {cat.logo ? (
+                                                <img src={cat.logo} alt={cat.name} className="w-8 h-8 object-contain"
+                                                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                                            ) : (
+                                                <BookOpen className="h-5 w-5 text-gray-400" />
+                                            )}
+                                        </div>
+
+                                        {/* Info */}
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-center gap-2 flex-wrap">
+                                                <span className="font-semibold text-[13px] text-gray-800 group-hover:text-indigo-700 transition-colors">
+                                                    {cat.name}
+                                                </span>
+                                                {cat.isPopular && (
+                                                    <span className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 font-medium">
+                                                        <Star className="h-2.5 w-2.5 fill-amber-400 text-amber-400" />Popular
+                                                    </span>
+                                                )}
+                                                {cat.isVisible ? (
+                                                    <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium">
+                                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />Live
+                                                    </span>
                                                 ) : (
-                                                    <BookOpen className="h-5 w-5 text-gray-400" />
+                                                    <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500 border border-gray-200 font-medium">
+                                                        <EyeOff className="h-2.5 w-2.5" />Hidden
+                                                    </span>
                                                 )}
                                             </div>
-                                            <div className="flex-1 min-w-0 text-left">
-                                                <div className="flex items-center gap-2 flex-wrap">
-                                                    <span className="font-semibold text-[13px] text-gray-800">{cat.name}</span>
-                                                    {cat.isPopular && (
-                                                        <span className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 font-medium">
-                                                            <Star className="h-2.5 w-2.5 fill-amber-400 text-amber-400" />Popular
-                                                        </span>
-                                                    )}
-                                                    {cat.isVisible ? (
-                                                        <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium">
-                                                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />Live
-                                                        </span>
-                                                    ) : (
-                                                        <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500 border border-gray-200 font-medium">
-                                                            <EyeOff className="h-2.5 w-2.5" />Hidden
-                                                        </span>
-                                                    )}
-                                                </div>
-                                                <p className="text-xs text-muted-foreground truncate mt-0.5 max-w-xs">{cat.description}</p>
-                                                <div className="flex items-center gap-2 mt-1.5">
-                                                    <span className="text-[11px] bg-violet-50 text-violet-600 border border-violet-100 px-2 py-0.5 rounded-full font-medium">{sectionCount} section{sectionCount !== 1 ? 's' : ''}</span>
-                                                    <span className="text-[11px] bg-blue-50 text-blue-600 border border-blue-100 px-2 py-0.5 rounded-full font-medium">{examCount} exam{examCount !== 1 ? 's' : ''}</span>
-                                                </div>
-                                            </div>
-                                            <div className="flex items-center gap-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
-                                                <button className="h-8 w-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-amber-600 hover:bg-amber-50 transition-all"
-                                                    onClick={() => setHideTarget({ label: cat.name, isCurrentlyVisible: cat.isVisible, onConfirm: () => { toggleCategoryVisibility(cat.id); toast({ title: cat.isVisible ? `"${cat.name}" hidden` : `"${cat.name}" now visible` }); } })}
-                                                    title={cat.isVisible ? 'Hide' : 'Show'}>
-                                                    {cat.isVisible ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-                                                </button>
-                                                <button className="h-8 w-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-primary hover:bg-primary/10 transition-all"
-                                                    onClick={() => setEditConfirmTarget({ label: cat.name, type: 'category', onConfirm: () => openEditCategory(cat) })}
-                                                    title="Edit"><Pencil className="h-4 w-4" /></button>
-                                                <button className="h-8 w-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-destructive hover:bg-red-50 transition-all"
-                                                    onClick={() => setDeleteTarget({ type: 'category', label: cat.name, onConfirm: () => deleteCategory(cat.id) })}
-                                                    title="Delete"><Trash2 className="h-4 w-4" /></button>
-                                                <div className="w-px h-5 bg-gray-200 mx-1" />
-                                                {/* ── NEW: Manage button → CategoryDetailPage ── */}
-                                                <button
-                                                    className="flex items-center gap-1 h-8 px-2.5 rounded-lg text-xs font-semibold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 transition-all border border-indigo-100"
-                                                    onClick={() => navigate(`/super-admin/test-catalog/${cat.id}`)}
-                                                    title="Open category detail"
-                                                >
-                                                    Manage <ChevronRight className="h-3.5 w-3.5" />
-                                                </button>
+                                            <p className="text-xs text-muted-foreground truncate mt-0.5 max-w-xs">{cat.description}</p>
+                                            <div className="flex items-center gap-2 mt-1.5">
+                                                <span className="text-[11px] bg-blue-50 text-blue-600 border border-blue-100 px-2 py-0.5 rounded-full font-medium">
+                                                    {examCount} exam{examCount !== 1 ? 's' : ''}
+                                                </span>
+                                                {popularCount > 0 && (
+                                                    <span className="text-[11px] bg-amber-50 text-amber-700 border border-amber-100 px-2 py-0.5 rounded-full font-medium flex items-center gap-0.5">
+                                                        <Star className="h-2 w-2 fill-amber-400 text-amber-400" />{popularCount} popular
+                                                    </span>
+                                                )}
                                             </div>
                                         </div>
-                                    </div>
-                                </AccordionTrigger>
 
-                                {/* Sections */}
-                                <AccordionContent className="px-0 pb-0">
-                                    <div className="border-t border-gray-100">
-                                        <div className="flex items-center justify-between px-5 py-3 bg-gray-50/80 border-b border-gray-100">
-                                            <div className="flex items-center gap-2">
-                                                <Layers className="h-3.5 w-3.5 text-violet-500" />
-                                                <span className="text-xs font-semibold text-gray-600 uppercase tracking-wider">Sections</span>
-                                                {sectionCount > 0 && <span className="text-xs bg-violet-100 text-violet-700 px-1.5 py-0.5 rounded-full font-medium">{sectionCount}</span>}
-                                            </div>
-                                            <Button variant="outline" size="sm" className="h-7 text-xs gap-1 border-dashed hover:border-primary hover:text-primary hover:bg-primary/5"
-                                                onClick={() => openAddSection(cat.id)}>
-                                                <Plus className="h-3.5 w-3.5" /> Add Section
-                                            </Button>
+                                        {/* Actions — stop propagation so they don't trigger card navigation */}
+                                        <div className="flex items-center gap-1 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                                            <button
+                                                className="h-8 w-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-amber-600 hover:bg-amber-50 transition-all"
+                                                onClick={() => setHideTarget({ label: cat.name, isCurrentlyVisible: cat.isVisible, onConfirm: () => { toggleCategoryVisibility(cat.id); toast({ title: cat.isVisible ? `"${cat.name}" hidden` : `"${cat.name}" now visible` }); } })}
+                                                title={cat.isVisible ? 'Hide' : 'Show'}
+                                            >
+                                                {cat.isVisible ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                                            </button>
+                                            <button
+                                                className="h-8 w-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-primary hover:bg-primary/10 transition-all"
+                                                onClick={() => setEditConfirmTarget({ label: cat.name, type: 'category', onConfirm: () => openEditCategory(cat) })}
+                                                title="Edit"
+                                            >
+                                                <Pencil className="h-4 w-4" />
+                                            </button>
+                                            <button
+                                                className="h-8 w-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-destructive hover:bg-red-50 transition-all"
+                                                onClick={() => setDeleteTarget({ type: 'category', label: cat.name, onConfirm: () => deleteCategory(cat.id) })}
+                                                title="Delete"
+                                            >
+                                                <Trash2 className="h-4 w-4" />
+                                            </button>
+                                            <div className="w-px h-5 bg-gray-200 mx-1" />
+                                            <button
+                                                className="flex items-center gap-1 h-8 px-2.5 rounded-lg text-xs font-semibold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 transition-all border border-indigo-100"
+                                                onClick={() => navigate(`/super-admin/test-catalog/${cat.id}`)}
+                                                title="Open category detail"
+                                            >
+                                                Manage <ChevronRight className="h-3.5 w-3.5" />
+                                            </button>
                                         </div>
-                                        {cat.sections.length === 0 ? (
-                                            <div className="text-center py-8 m-4 border-2 border-dashed border-gray-200 rounded-xl">
-                                                <Layers className="h-8 w-8 text-gray-200 mx-auto mb-2" />
-                                                <p className="text-xs text-muted-foreground">No sections yet — add one to organize exams</p>
-                                            </div>
-                                        ) : (
-                                            <div className="p-4 space-y-3">
-                                                {cat.sections.map((section) => (
-                                                    <div key={section.id} className="rounded-xl border border-gray-100 overflow-hidden bg-white shadow-sm">
-                                                        <div className="px-4 py-2.5 flex items-center justify-between gap-3 bg-gradient-to-r from-gray-50 to-white border-b border-gray-100">
-                                                            <div className="flex items-center gap-2.5 min-w-0">
-                                                                <div className={`w-1 h-7 rounded-full bg-gradient-to-b ${accent} flex-shrink-0`} />
-                                                                <div className="min-w-0">
-                                                                    <p className="text-sm font-semibold text-gray-800">{section.name}</p>
-                                                                    {section.description && <p className="text-xs text-muted-foreground truncate">{section.description}</p>}
-                                                                </div>
-                                                                <span className="text-[11px] bg-violet-50 text-violet-600 border border-violet-100 px-2 py-0.5 rounded-full font-medium flex-shrink-0">{section.exams.length} exam{section.exams.length !== 1 ? 's' : ''}</span>
-                                                            </div>
-                                                            <div className="flex gap-1 shrink-0">
-                                                                <button className="h-7 w-7 flex items-center justify-center rounded-lg text-gray-400 hover:text-primary hover:bg-primary/10 transition-all"
-                                                                    onClick={() => openEditSection(cat.id, section)}><Pencil className="h-3.5 w-3.5" /></button>
-                                                                <button className="h-7 w-7 flex items-center justify-center rounded-lg text-gray-400 hover:text-destructive hover:bg-red-50 transition-all"
-                                                                    onClick={() => setDeleteTarget({ type: 'section', label: section.name, onConfirm: () => deleteSection(cat.id, section.id) })}><Trash2 className="h-3.5 w-3.5" /></button>
-                                                            </div>
-                                                        </div>
-                                                        <div className="p-3">
-                                                            {section.exams.length === 0 ? (
-                                                                <p className="text-xs text-muted-foreground py-2 text-center italic">No exams yet.</p>
-                                                            ) : (
-                                                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 mb-2">
-                                                                    {section.exams.map((exam) => (
-                                                                        <div key={exam.id} className="group flex items-center gap-2 bg-gray-50/80 border border-gray-100 rounded-lg px-3 py-2 hover:bg-white hover:border-primary/30 hover:shadow-md transition-all">
-                                                                            <button className="flex items-center gap-2 flex-1 min-w-0 text-left"
-                                                                                onClick={() => navigate(`/super-admin/test-catalog/${cat.id}/${section.id}/${exam.id}`)}
-                                                                                title="Manage tests">
-                                                                                {exam.logo ? (
-                                                                                    <img src={exam.logo} alt={exam.name} className="w-8 h-8 object-contain flex-shrink-0 rounded-lg"
-                                                                                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                                                                                ) : (
-                                                                                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary/10 to-primary/20 flex items-center justify-center text-sm flex-shrink-0"></div>
-                                                                                )}
-                                                                                <div className="min-w-0 flex-1">
-                                                                                    <p className="text-xs font-semibold truncate text-gray-700 group-hover:text-primary transition-colors">{exam.name}</p>
-                                                                                    {exam.isPopular && <p className="text-[10px] text-amber-600 flex items-center gap-0.5 font-medium"><Star className="h-2.5 w-2.5 fill-amber-400 text-amber-400" />Popular</p>}
-                                                                                    <p className="text-[10px] text-primary font-semibold opacity-0 group-hover:opacity-100 transition-opacity">Open Tests </p>
-                                                                                </div>
-                                                                            </button>
-                                                                            <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-                                                                                <button className="p-1 text-gray-400 hover:text-primary rounded-md transition-colors"
-                                                                                    onClick={() => openEditExam(cat.id, section.id, exam)} title="Edit"><Pencil className="h-3 w-3" /></button>
-                                                                                <button className="p-1 text-gray-400 hover:text-destructive rounded-md transition-colors"
-                                                                                    onClick={() => setDeleteTarget({ type: 'exam', label: exam.name, onConfirm: () => removeExam(cat.id, section.id, exam.id) })} title="Delete"><Trash2 className="h-3 w-3" /></button>
-                                                                            </div>
-                                                                        </div>
-                                                                    ))}
-                                                                </div>
-                                                            )}
-                                                            <button className="w-full mt-1 h-8 flex items-center justify-center gap-1.5 text-xs text-primary font-medium border border-dashed border-primary/30 rounded-lg hover:bg-primary/5 hover:border-primary/50 transition-all"
-                                                                onClick={() => openAddExam(cat.id, section.id)}>
-                                                                <Plus className="h-3 w-3" /> Add Exam
-                                                            </button>
-                                                        </div>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        )}
                                     </div>
-                                </AccordionContent>
-                            </AccordionItem>
+                                </div>
+                            </div>
                         );
                     })}
-                </Accordion>
+                </div>
             )}
             </>
 
