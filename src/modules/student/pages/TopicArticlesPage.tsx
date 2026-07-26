@@ -332,6 +332,17 @@ const TopicArticlesPage = () => {
                           {article.excerpt}
                         </p>
 
+                        {/* Article Image */}
+                        {article.image && (
+                          <div className="mb-6 rounded-xl overflow-hidden aspect-video w-full max-h-[400px] border border-slate-200/90 shadow-2xs bg-slate-100">
+                            <img
+                              src={article.image}
+                              alt={article.title}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        )}
+
                         <div className="flex flex-wrap gap-2 mb-6">
                           {article.tags.map((tag, i) => (
                             <Badge key={i} variant="secondary" className="hover:bg-primary hover:text-primary-foreground transition-colors cursor-pointer">

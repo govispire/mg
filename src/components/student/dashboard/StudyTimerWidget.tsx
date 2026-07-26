@@ -569,7 +569,7 @@ export const StudyTimerWidget: React.FC = () => {
           <div className="flex items-center gap-2.5">
             <div
               className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
-              style={{ background: 'linear-gradient(135deg,#059669,#10b981)', boxShadow: '0 2px 10px rgba(16,185,129,0.35)' }}
+              style={{ background: 'linear-gradient(135deg,#1d4ed8,#2563eb)', boxShadow: '0 2px 10px rgba(37,99,235,0.35)' }}
             >
               <Shield className="h-4.5 w-4.5 text-white" style={{ width: 18, height: 18 }} />
             </div>
@@ -631,14 +631,14 @@ export const StudyTimerWidget: React.FC = () => {
             <div className="flex flex-col items-center">
               <span
                 className="font-black tabular-nums leading-none"
-                style={{ fontSize: 'clamp(36px, 10vw, 68px)', fontFamily: "'Outfit','Inter',sans-serif", color: '#059669', letterSpacing: '-0.04em', lineHeight: 1 }}
+                style={{ fontSize: 'clamp(36px, 10vw, 68px)', fontFamily: "'Outfit','Inter',sans-serif", color: '#2563eb', letterSpacing: '-0.04em', lineHeight: 1 }}
               >
                 {String(selectedMins % 60).padStart(2, '0')}
               </span>
-              {/* MIN label with green pill */}
+              {/* MIN label with blue pill */}
               <span
                 className="text-[10px] font-bold uppercase tracking-widest mt-1.5 px-2 py-0.5 rounded-full"
-                style={{ color: '#059669', background: 'rgba(5,150,105,0.1)' }}
+                style={{ color: '#2563eb', background: '#eff6ff' }}
               >MIN</span>
             </div>
 
@@ -699,7 +699,7 @@ export const StudyTimerWidget: React.FC = () => {
                 onClick={() => pickDuration(m)}
                 className="flex-1 min-w-[60px] py-2 rounded-full text-[12px] font-semibold transition-all border"
                 style={selectedMins === m && !showCustom
-                  ? { background: 'linear-gradient(135deg,#16a34a,#22c55e)', color: '#fff', border: 'transparent', boxShadow: '0 2px 8px rgba(34,197,94,0.35)' }
+                  ? { background: 'linear-gradient(135deg,#1d4ed8,#2563eb)', color: '#fff', border: 'transparent', boxShadow: '0 2px 8px rgba(37,99,235,0.35)' }
                   : { background: '#fff', color: '#64748b', border: '1.5px solid #e2e8f0' }}
               >
                 {m} min
@@ -745,7 +745,7 @@ export const StudyTimerWidget: React.FC = () => {
           <button
             onClick={() => { setShowPicker(false); startFullscreen(); }}
             className="flex-1 py-3 rounded-2xl font-bold text-[13px] transition-all hover:opacity-95 active:scale-95 text-white flex items-center justify-center gap-2"
-            style={{ background: 'linear-gradient(135deg,#16a34a,#22c55e)', boxShadow: '0 4px 16px rgba(34,197,94,0.35)' }}
+            style={{ background: 'linear-gradient(135deg,#1d4ed8,#2563eb)', boxShadow: '0 4px 16px rgba(37,99,235,0.35)' }}
           >
             <Monitor style={{ width: 16, height: 16 }} /> Start Fullscreen
           </button>

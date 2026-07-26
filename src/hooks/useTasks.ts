@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useContext } from 'react';
-import { TaskContext } from '@/context/TaskContext';
+import { TaskContext } from '@/app/providers/TaskProvider';
 
 // Sample initial tasks data
 const initialTasks = [

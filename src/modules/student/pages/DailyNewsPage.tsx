@@ -25,6 +25,10 @@ const DailyNewsPage = () => {
   const { getReadingProgress, markAsRead } = useReadingProgress();
   const { isSaved, toggleSave } = useSavedArticles();
 
+  const handleGoBack = () => {
+    navigate('/student/current-affairs', { state: { tab: 'daily-news' } });
+  };
+
   // Search and filter state
   const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState({
@@ -135,7 +139,7 @@ const DailyNewsPage = () => {
       <div className="sticky top-0 z-10 bg-background border-b">
         <div className="max-w-4xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <Button variant="ghost" onClick={() => navigate(-1)} size="sm">
+            <Button variant="ghost" onClick={handleGoBack} size="sm">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back
             </Button>
@@ -348,6 +352,17 @@ const DailyNewsPage = () => {
                             </h3>
 
                             <p className="text-muted-foreground mb-4">{article.excerpt}</p>
+
+                            {/* Article Image */}
+                            {article.image && (
+                              <div className="my-4 rounded-xl overflow-hidden aspect-video w-full max-h-[420px] border border-slate-200/90 shadow-2xs bg-slate-100">
+                                <img
+                                  src={article.image}
+                                  alt={article.title}
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+                            )}
 
                             {/* Meta Info */}
                             <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">

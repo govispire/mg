@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { dailyQuizzes } from '@/data/dailyQuizzesData';
+import { useQuizzes } from '@/hooks/useQuizCatalog';
 import { api } from '@/lib/api';
 import type { StudySession } from '@/store/useTimerStore';
 
@@ -32,14 +32,15 @@ function getTimerSessionMins(): number {
 
 function computeStats(
   quizCompletions: Record<string, { completed: boolean; score: number; date: string; duration?: number }>,
-  studentPresence: Record<string, boolean>
+  studentPresence: Record<string, boolean>,
+  quizzes: any[]
 ): Omit<DashboardStats, 'isLoading'> {
   const completedEntries = Object.entries(quizCompletions).filter(([, v]) => v.completed);
 
   // Study Hours = quiz-based minutes + studyTimerSessions (timer + test durations)
   const quizMinutes = completedEntries.reduce((acc, [id, v]) => {
     if (v.duration) return acc + v.duration;
-    const quiz = dailyQuizzes.find(q => q.id === id);
+    const quiz = quizzes.find(q => q.id === id);
     return acc + (quiz?.duration ?? 15);
   }, 0);
   const timerMinutes = getTimerSessionMins();
@@ -98,6 +99,7 @@ function computeStats(
 }
 
 export function useDashboardStats(): DashboardStats {
+  const { data: quizzes = [] } = useQuizzes();
   const [stats, setStats] = useState<Omit<DashboardStats, 'isLoading'>>({
     studyHours: 0, activeStreak: 0, mockTestsTaken: 0, avgScore: 0, percentile: 0, performanceData: []
   });
@@ -107,11 +109,11 @@ export function useDashboardStats(): DashboardStats {
     const token = localStorage.getItem('token');
     if (token) {
       Promise.all([api.getQuizCompletions(), api.getPresence()])
-        .then(([completions, presence]) => setStats(computeStats(completions, presence)))
-        .catch(() => setStats(computeStats(getLocalCompletions(), getLocalPresence())))
+        .then(([completions, presence]) => setStats(computeStats(completions, presence, quizzes)))
+        .catch(() => setStats(computeStats(getLocalCompletions(), getLocalPresence(), quizzes)))
         .finally(() => setIsLoading(false));
     } else {
-      setStats(computeStats(getLocalCompletions(), getLocalPresence()));
+      setStats(computeStats(getLocalCompletions(), getLocalPresence(), quizzes));
       setIsLoading(false);
     }
   };

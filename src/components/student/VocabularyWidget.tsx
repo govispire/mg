@@ -85,7 +85,7 @@ export default function WordOfTheDayCard() {
             {/* ── Header ── */}
             <div className="flex items-center justify-between px-4 py-2.5 bg-slate-50 border-b border-slate-100">
                 <div className="flex items-center gap-2">
-                    <MessageSquare className="w-4 h-4 text-emerald-600" />
+                    <MessageSquare className="w-4 h-4 text-blue-600" />
                     <div>
                         <span className="text-sm font-bold text-slate-800">Today's Vocabulary Challenge</span>
                         <p className="text-[10px] text-slate-400 leading-none mt-0.5">
@@ -143,7 +143,7 @@ export default function WordOfTheDayCard() {
                         className="w-full flex items-center justify-center"
                         style={{
                             height: 200,
-                            background: 'linear-gradient(135deg,#059669,#10b981)',
+                            background: 'linear-gradient(135deg,#1d4ed8,#2563eb)',
                         }}
                     >
                         <span className="text-6xl font-black text-white/20 select-none">{word.word[0]}</span>
@@ -174,8 +174,18 @@ export default function WordOfTheDayCard() {
                 </div>
             </div>
 
-            {/* ── Content below image ── */}
+            {/* ── Content Area ── */}
             <div className="px-4 pt-3 pb-3 flex-1 flex flex-col gap-2.5">
+                {/* WORD OF THE DAY crown badge */}
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                        <span className="text-[10px] font-black uppercase tracking-widest text-emerald-600">WORD OF THE DAY</span>
+                        <span className="text-xs">👑</span>
+                    </div>
+                    {word.pronunciation && (
+                        <span className="text-[11px] font-mono text-slate-400">[ {word.pronunciation} ]</span>
+                    )}
+                </div>
 
                 {/* Meaning */}
                 <p className="text-[13px] text-slate-700 font-medium leading-snug">
@@ -184,8 +194,9 @@ export default function WordOfTheDayCard() {
 
                 {/* Example */}
                 {word.example && (
-                    <div className="bg-slate-50 rounded-lg px-3 py-2 border-l-2 border-slate-300">
-                        <p className="text-[11px] text-slate-500 italic leading-relaxed">
+                    <div className="bg-slate-50/80 rounded-xl px-3 py-2 border-l-2 border-emerald-500">
+                        <p className="text-[11px] text-slate-600 italic leading-relaxed">
+                            <strong className="font-bold text-slate-900 not-italic">Example: </strong>
                             "{word.example}"
                         </p>
                     </div>
@@ -198,17 +209,9 @@ export default function WordOfTheDayCard() {
                         {word.synonyms!.map(syn => (
                             <span
                                 key={syn}
-                                className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-slate-100 border border-slate-200 text-slate-600"
+                                className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 border border-slate-200 text-slate-600"
                             >
                                 {syn}
-                            </span>
-                        ))}
-                        {(word.antonyms?.length ?? 0) > 0 && word.antonyms!.slice(0, 1).map(ant => (
-                            <span
-                                key={ant}
-                                className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-red-50 border border-red-200 text-red-500"
-                            >
-                                {ant}
                             </span>
                         ))}
                     </div>
@@ -230,17 +233,17 @@ export default function WordOfTheDayCard() {
                         <>
                             <button
                                 onClick={handleSkip}
-                                className="flex-1 py-2.5 rounded-xl border-2 border-slate-200 text-slate-600 text-[12px] font-bold hover:bg-slate-50 transition-all"
+                                className="flex-1 py-2 rounded-xl border border-slate-200 text-slate-600 text-[11px] font-bold hover:bg-slate-50 transition-all"
                             >
                                 Skip Today
                             </button>
-                            <button
-                                onClick={handleSave}
-                                className="flex-1 py-2.5 rounded-xl text-white text-[12px] font-bold transition-all hover:opacity-90 active:scale-95"
-                                style={{ background: 'linear-gradient(135deg,#059669,#10b981)', boxShadow: '0 3px 10px rgba(16,185,129,0.35)' }}
+                            <Link
+                                to="/student/vocabulary"
+                                className="flex-1 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold transition-all shadow-sm flex items-center justify-center gap-1"
                             >
-                                Mark as Learned
-                            </button>
+                                <span>View Details</span>
+                                <ChevronRight className="w-3.5 h-3.5" />
+                            </Link>
                         </>
                     )}
                 </div>

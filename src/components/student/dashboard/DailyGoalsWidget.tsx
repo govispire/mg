@@ -19,7 +19,7 @@ const TIMER_PRESETS = [
   { label: '4 hr',   secs: 4 * 60 * 60 },
   { label: '5 hr',   secs: 5 * 60 * 60 },
 ];
-import { dailyQuizzes } from '@/data/dailyQuizzesData';
+import { useQuizzes } from '@/hooks/useQuizCatalog';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
@@ -107,6 +107,7 @@ const TYPE_LABELS: Record<string, { label: string; icon: string; color: string }
 
 // ─── Main Component ────────────────────────────────────────────────────────────
 export const DailyGoalsWidget: React.FC = () => {
+  const { data: dailyQuizzes = [] } = useQuizzes();
   const today = getISTDateStr();
 
   const [allGoals, setAllGoals] = useState<Goal[]>(loadAllGoals);
@@ -462,7 +463,7 @@ export const DailyGoalsWidget: React.FC = () => {
         <div className="px-5 pt-4 pb-3">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2.5">
-              <div className="w-7 h-7 rounded-lg flex items-center justify-center shadow-sm" style={{ background: 'linear-gradient(135deg,#059669,#10b981)' }}>
+              <div className="w-7 h-7 rounded-lg flex items-center justify-center shadow-sm" style={{ background: 'linear-gradient(135deg,#1d4ed8,#2563eb)' }}>
                 <Target className="h-3.5 w-3.5 text-white" />
               </div>
               <div>
@@ -494,7 +495,7 @@ export const DailyGoalsWidget: React.FC = () => {
                 <button
                   onClick={() => { setShowAdd(!showAdd); setShowHistory(false); }}
                   className="flex items-center gap-1 text-[10px] font-bold text-white px-2.5 py-1 rounded-full shadow-sm transition-all hover:shadow-md"
-                  style={{ background: '#10b981' }}
+                  style={{ background: '#2563eb' }}
                 >
                   <Plus className="h-3 w-3" />
                   Add Goal
@@ -559,7 +560,7 @@ export const DailyGoalsWidget: React.FC = () => {
               <button
                 onClick={() => setShowAdd(true)}
               className="text-[12px] font-bold hover:opacity-80 border px-4 py-1.5 rounded-full transition-colors"
-                style={{ color: '#10b981', background: 'rgba(16,185,129,0.1)', borderColor: 'rgba(16,185,129,0.25)' }}
+                style={{ color: '#2563eb', background: '#eff6ff', borderColor: '#bfdbfe' }}
               >
                 + Set your goals for today
               </button>

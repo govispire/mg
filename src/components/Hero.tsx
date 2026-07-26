@@ -92,9 +92,9 @@ const Hero = () => {
               <Badge className="bg-blue-100 text-blue-800 px-4 py-2">
                 🚀 India's #1 Competitive Exam Platform
               </Badge>
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-brand-darkblue">
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-slate-950">
                 Master Your Exams with
-                <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent"> AI-Powered</span> Preparation
+                <span className="bg-gradient-to-r from-primary to-indigo-600 bg-clip-text text-transparent"> AI-Powered</span> Preparation
               </h1>
               <p className="text-xl text-gray-600 max-w-lg leading-relaxed">
                 Comprehensive platform combining expert mentorship, smart analytics, personalized study plans, and real exam simulations for guaranteed success.
@@ -143,7 +143,7 @@ const Hero = () => {
 
               <Dialog>
                 <DialogTrigger asChild>
-                  <Button size="lg" variant="outline" className="border-2 border-brand-blue text-brand-blue hover:bg-brand-blue hover:text-white transition-colors px-8 py-4 text-lg">
+                  <Button size="lg" variant="outline" className="border-2 border-primary text-primary hover:bg-primary hover:text-white transition-colors px-8 py-4 text-lg">
                     Explore Features
                   </Button>
                 </DialogTrigger>
@@ -219,7 +219,7 @@ const Hero = () => {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-16">
           {stats.map((stat, index) => (
             <div key={index} className="text-center">
-              <div className="text-3xl md:text-4xl font-bold text-brand-darkblue mb-2">{stat.value}</div>
+              <div className="text-3xl md:text-4xl font-bold text-slate-900 mb-2">{stat.value}</div>
               <div className="text-gray-600">{stat.label}</div>
             </div>
           ))}

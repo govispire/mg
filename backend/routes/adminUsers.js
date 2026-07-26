@@ -4,6 +4,7 @@ const pool = require('../db');
 const auth = require('../middleware/auth');
 const requireRole = require('../middleware/requireRole');
 const auditLog = require('../middleware/auditLogger');
+const { validate, createUserSchema, editUserSchema, resetPasswordSchema, bulkImportSchema } = require('../middleware/validation');
 
 const router = express.Router();
 
@@ -63,22 +64,14 @@ router.post(
   '/',
   auth,
   requireRole(['owner', 'super-admin']),
+  validate(createUserSchema),
   auditLog('user.create'),
   async (req, res) => {
     const { name, email, password, role, phone, department, employee_capacity } = req.body;
 
-    if (!name || !email || !password || !role) {
-      return res.status(400).json({ error: 'name, email, password, role are required' });
-    }
-
     // Super-admin cannot create owner or super-admin
     if (req.user.role === 'super-admin' && ['owner', 'super-admin'].includes(role)) {
       return res.status(403).json({ error: 'Super-admin cannot create Owner or Super-admin accounts' });
-    }
-
-    const validRoles = ['owner', 'super-admin', 'employee', 'mentor', 'student'];
-    if (!validRoles.includes(role)) {
-      return res.status(400).json({ error: `Invalid role. Must be one of: ${validRoles.join(', ')}` });
     }
 
     try {
@@ -128,6 +121,19 @@ router.post(
   }
 );
 
+// ─── GET /api/admin/users/meta/role-summary ─────────────────
+// NOTE: This must be defined BEFORE /:id to avoid Express matching "meta" as an id
+router.get('/meta/role-summary', auth, requireRole(['owner', 'super-admin']), async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT role, status, COUNT(*) as count FROM users GROUP BY role, status ORDER BY role`
+    );
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 // ─── GET /api/admin/users/:id — get single user ──────────────
 router.get('/:id', auth, requireRole(['owner', 'super-admin']), async (req, res) => {
   try {
@@ -154,6 +160,7 @@ router.put(
   '/:id',
   auth,
   requireRole(['owner', 'super-admin']),
+  validate(editUserSchema),
   auditLog('user.edit'),
   async (req, res) => {
     const { name, phone, department, employee_capacity } = req.body;
@@ -245,12 +252,10 @@ router.post(
   '/:id/reset-password',
   auth,
   requireRole(['owner', 'super-admin']),
+  validate(resetPasswordSchema),
   auditLog('user.password_reset'),
   async (req, res) => {
     const { new_password } = req.body;
-    if (!new_password || new_password.length < 6) {
-      return res.status(400).json({ error: 'Password must be at least 6 characters' });
-    }
     try {
       const hash = await bcrypt.hash(new_password, 10);
       await pool.query('UPDATE users SET password_hash=$1 WHERE id=$2', [hash, req.params.id]);
@@ -266,12 +271,10 @@ router.post(
   '/bulk-import',
   auth,
   requireRole(['owner', 'super-admin']),
+  validate(bulkImportSchema),
   auditLog('user.bulk_import'),
   async (req, res) => {
     const { students } = req.body; // [{name, email, exam, mentor_id}]
-    if (!Array.isArray(students) || students.length === 0) {
-      return res.status(400).json({ error: 'students array is required' });
-    }
 
     const results = { created: [], failed: [] };
 
@@ -313,18 +316,6 @@ router.get('/:id/login-history', auth, requireRole(['owner', 'super-admin']), as
       `SELECT id, ip_address, user_agent, status, created_at FROM login_history
        WHERE user_id=$1 ORDER BY created_at DESC LIMIT 50`,
       [req.params.id]
-    );
-    res.json(result.rows);
-  } catch (err) {
-    res.status(500).json({ error: 'Server error' });
-  }
-});
-
-// ─── GET /api/admin/users/role-summary ────────────────────────
-router.get('/meta/role-summary', auth, requireRole(['owner', 'super-admin']), async (req, res) => {
-  try {
-    const result = await pool.query(
-      `SELECT role, status, COUNT(*) as count FROM users GROUP BY role, status ORDER BY role`
     );
     res.json(result.rows);
   } catch (err) {

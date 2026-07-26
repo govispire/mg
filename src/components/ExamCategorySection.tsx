@@ -56,7 +56,7 @@ const ExamCategorySection = () => {
             <Dialog>
               <DialogTrigger asChild>
                 <Button 
-                  className="w-full transition-colors hover:bg-brand-darkblue" 
+                  className="w-full transition-colors hover:bg-primary/90" 
                   disabled={!selectedExam}
                 >
                   Continue

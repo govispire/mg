@@ -83,7 +83,14 @@ const UnifiedLearningView: React.FC<{
   onDifficult?: (wordId: string) => void;
 }> = ({ words, initialIndex = 0, mode, lessonId, onExit, onComplete, selfAssessments, onSelfAssess, onBookmark, onDifficult }) => {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
-  
+  const [popImgFailed, setPopImgFailed] = useState(false);
+
+  const stockPhotoFallback = 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1000&auto=format&fit=crop';
+
+  useEffect(() => {
+    setPopImgFailed(false);
+  }, [currentIndex]);
+
   // Prevent background scrolling
   useEffect(() => {
     document.body.style.overflow = 'hidden';
@@ -255,13 +262,17 @@ const UnifiedLearningView: React.FC<{
             )}
           </div>
 
-          {/* Right Column (Visuals & Relationships) */}
+          {/* Right Column (Visual Image & Relationships) */}
           <div className="flex flex-col gap-8">
-            {word.imageUrl && (
-              <div className="w-full flex justify-center">
-                <img src={word.imageUrl} alt={word.word} className="w-64 h-64 sm:w-80 sm:h-80 object-contain drop-shadow-sm transition-transform hover:scale-105 duration-500" />
-              </div>
-            )}
+            {/* SuperAdmin Uploaded / Configured Image Display */}
+            <div className="w-full rounded-2xl overflow-hidden border border-slate-200/90 shadow-md relative bg-slate-50 group">
+              <img 
+                src={(!popImgFailed && word.imageUrl) ? word.imageUrl : stockPhotoFallback} 
+                alt={word.word} 
+                className="w-full h-64 sm:h-80 object-cover object-center group-hover:scale-105 transition-transform duration-700" 
+                onError={() => setPopImgFailed(true)}
+              />
+            </div>
 
             {/* Word Tree Card */}
             {parsedTree && (
@@ -1268,10 +1279,17 @@ const HomeScreen: React.FC<{
 }> = ({ stats, categories, lessons, lessonProgress, userProgress, activeWords, revisionQueue, vocabStreak, onOpenCategory, onOpenRevision, onOpenWordOfDay }) => {
   const [catFilter, setCatFilter] = useState('all');
   const [currentWoDIndex, setCurrentWoDIndex] = useState(0);
+  const [heroImgFailed, setHeroImgFailed] = useState(false);
+
+  React.useEffect(() => {
+    setHeroImgFailed(false);
+  }, [currentWoDIndex]);
   
   const dailyWords = activeWords.slice(0, 10);
   const wordOfDay = dailyWords[currentWoDIndex];
 
+  // Stock photo map by difficulty/situation for fallback
+  const stockPhotoFallback = 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1000&auto=format&fit=crop';
   
   const today = new Date().toISOString().split('T')[0];
   const dueToday = revisionQueue.filter(r => r.nextRevisionDate <= today).length;
@@ -1305,28 +1323,7 @@ const HomeScreen: React.FC<{
         </div>
       </div>
 
-      {/* Journey stats */}
-      <div className="bg-white rounded-2xl border p-5">
-        <div className="flex items-start justify-between mb-3">
-          <div>
-            <h2 className="font-bold text-slate-800">Your Vocabulary Journey</h2>
-            <p className="text-xs text-slate-500 mt-0.5">Track your progress and master new words every day</p>
-          </div>
-        </div>
-        <div className="grid grid-cols-4 gap-4">
-          {[
-            { label: 'Total Sets', value: categories.filter(c => c.isActive).length },
-            { label: 'Total Words', value: activeWords.length },
-            { label: 'Words Mastered', value: stats.mastered || 0 },
-            { label: 'In Progress', value: stats.inProgress || userProgress.filter(p => p.status === 'learning' || p.status === 'learned').length },
-          ].map(s => (
-            <div key={s.label} className="text-center">
-              <p className="text-2xl font-black text-slate-800">{s.value}</p>
-              <p className="text-[10px] font-medium text-slate-400 mt-0.5">{s.label}</p>
-            </div>
-          ))}
-        </div>
-      </div>
+
 
       {/* Revision alert */}
       {dueToday > 0 && (
@@ -1347,109 +1344,142 @@ const HomeScreen: React.FC<{
         </button>
       )}
 
-      {/* Word of the Day */}
+      {/* ── Word of the Day Hero Banner (Matches Reference Design) ── */}
       {wordOfDay && (
         <div 
           onClick={() => onOpenWordOfDay(currentWoDIndex)}
-          className="bg-white rounded-[2rem] border border-slate-100 shadow-sm p-5 sm:p-6 relative cursor-pointer hover:shadow-md transition-shadow group"
+          className="relative w-full rounded-3xl border border-slate-200/80 bg-white shadow-sm overflow-hidden p-6 sm:p-8 cursor-pointer hover:shadow-md transition-all group"
         >
-          <div className="absolute top-5 right-5 flex items-center gap-2 z-20">
-            <button 
-              onClick={(e) => { e.stopPropagation(); setCurrentWoDIndex(i => Math.max(0, i - 1)); }}
-              disabled={currentWoDIndex === 0}
-              className="h-8 w-8 rounded-full bg-slate-50 hover:bg-slate-100 flex items-center justify-center text-slate-500 disabled:opacity-30 transition-colors"
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </button>
-            <span className="text-xs font-bold text-slate-400">{currentWoDIndex + 1} / {dailyWords.length}</span>
-            <button 
-              onClick={(e) => { e.stopPropagation(); setCurrentWoDIndex(i => Math.min(dailyWords.length - 1, i + 1)); }}
-              disabled={currentWoDIndex === dailyWords.length - 1}
-              className="h-8 w-8 rounded-full bg-slate-50 hover:bg-slate-100 flex items-center justify-center text-slate-500 disabled:opacity-30 transition-colors"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </button>
+          {/* Right side background image with smooth gradient blend */}
+          <div className="absolute top-0 right-0 bottom-0 w-[45%] sm:w-[48%] pointer-events-none overflow-hidden">
+            <img 
+              src={(!heroImgFailed && wordOfDay.imageUrl) ? wordOfDay.imageUrl : stockPhotoFallback} 
+              alt={wordOfDay.word} 
+              className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 contrast-[1.03] brightness-[1.02]" 
+              onError={() => setHeroImgFailed(true)}
+            />
+            {/* Soft left-edge blend gradient only (0-30%) */}
+            <div 
+              className="absolute inset-0" 
+              style={{
+                background: 'linear-gradient(to right, #FFFFFF 0%, rgba(255,255,255,0.75) 12%, transparent 35%)'
+              }}
+            />
           </div>
 
-          <div className="flex flex-col md:flex-row gap-6 md:gap-8">
-            {/* Left Content */}
-            <div className="flex-1 flex flex-col">
-              <div className="flex items-center gap-1.5 mb-4">
-                <Star className="h-4 w-4 text-amber-500 fill-amber-500" />
-                <span className="text-[10px] font-black uppercase tracking-widest text-amber-600">Daily Words</span>
-              </div>
-              <div className="flex items-center gap-3 mb-2">
-                <h3 className="text-3xl sm:text-4xl font-black text-slate-800 tracking-tight group-hover:text-emerald-700 transition-colors">{wordOfDay.word}</h3>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if ('speechSynthesis' in window) {
-                      window.speechSynthesis.speak(new SpeechSynthesisUtterance(wordOfDay.word));
-                    }
-                  }}
-                  className="h-8 w-8 rounded-full bg-emerald-50 hover:bg-emerald-100 flex items-center justify-center text-emerald-600 transition-colors shrink-0"
+          {/* Top Right Controls: Slider Navigation & Bookmark */}
+          <div className="absolute top-5 right-5 z-20 flex items-center gap-2" onClick={e => e.stopPropagation()}>
+            {dailyWords.length > 1 && (
+              <div className="flex items-center gap-1.5 bg-white/80 backdrop-blur-md border border-slate-200 rounded-full px-3 py-1 shadow-sm text-xs font-bold text-slate-600">
+                <button 
+                  onClick={() => setCurrentWoDIndex(i => Math.max(0, i - 1))}
+                  disabled={currentWoDIndex === 0}
+                  className="hover:text-slate-900 disabled:opacity-30 transition-colors"
                 >
-                  <Volume2 className="h-4 w-4" />
+                  <ChevronLeft className="h-3.5 w-3.5" />
+                </button>
+                <span>{currentWoDIndex + 1} / {dailyWords.length}</span>
+                <button 
+                  onClick={() => setCurrentWoDIndex(i => Math.min(dailyWords.length - 1, i + 1))}
+                  disabled={currentWoDIndex === dailyWords.length - 1}
+                  className="hover:text-slate-900 disabled:opacity-30 transition-colors"
+                >
+                  <ChevronRight className="h-3.5 w-3.5" />
                 </button>
               </div>
-              <div className="flex items-center gap-2 mb-4">
-                {wordOfDay.pronunciation && (
-                  <span className="text-slate-400 font-mono text-sm">/ {wordOfDay.pronunciation} /</span>
-                )}
-                {wordOfDay.partOfSpeech && (
-                  <span className="text-emerald-600 font-bold text-[10px] bg-emerald-50 px-2 py-0.5 rounded-md capitalize">{wordOfDay.partOfSpeech}</span>
-                )}
-              </div>
-              <p className="text-slate-700 text-base font-medium leading-relaxed mb-6 max-w-lg line-clamp-2">
-                {wordOfDay.meaning}
-              </p>
-              <div className="mt-auto">
-                <p className="text-[10px] font-black uppercase tracking-widest text-emerald-600 mb-2 flex items-center gap-1.5">
-                  <MapPin className="h-3.5 w-3.5" /> Example
-                </p>
-                <div className="space-y-2">
-                  {wordOfDay.example && (
-                    <div className="flex items-start gap-2">
-                      <div className="h-5 w-5 rounded-full bg-emerald-100 flex items-center justify-center shrink-0 mt-0.5">
-                        <Check className="h-3 w-3 text-emerald-600" />
-                      </div>
-                      <p className="text-sm text-slate-700 font-medium leading-relaxed line-clamp-1">
-                        {wordOfDay.example}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </div>
+            )}
+            <button
+              onClick={() => {
+                const isBookmarked = userProgress.some(p => p.wordId === wordOfDay.id && p.status === 'learned');
+                toggleWordStatus(wordOfDay.id, isBookmarked ? 'learning' : 'learned', wordOfDay.difficulty);
+              }}
+              className={`w-10 h-10 rounded-full flex items-center justify-center transition-all shadow-sm ${
+                userProgress.some(p => p.wordId === wordOfDay.id && p.status === 'learned')
+                  ? 'bg-emerald-600 text-white'
+                  : 'bg-slate-800/80 hover:bg-slate-900 text-white backdrop-blur-md'
+              }`}
+              title="Bookmark Word"
+            >
+              <Bookmark className={`w-4 h-4 ${userProgress.some(p => p.wordId === wordOfDay.id && p.status === 'learned') ? 'fill-white' : ''}`} />
+            </button>
+          </div>
+
+          {/* Left Content Area */}
+          <div className="relative z-10 max-w-xl">
+            {/* Header Badge */}
+            <div className="flex items-center gap-1.5 mb-3">
+              <span className="text-xs font-black uppercase tracking-widest text-emerald-600">WORD OF THE DAY</span>
+              <span className="text-sm">👑</span>
             </div>
 
-            {/* Right Image & Floating Card */}
-            <div className="w-full md:w-[40%] flex flex-col justify-end relative">
-              {wordOfDay.imageUrl && (
-                <div className="w-full h-48 md:h-56 rounded-[1.5rem] overflow-hidden shadow-sm relative md:mb-4">
-                  <img src={wordOfDay.imageUrl} alt={wordOfDay.word} className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                </div>
-              )}
-              
-              <div className="bg-white rounded-2xl border border-slate-100 shadow-xl p-4 absolute -bottom-4 right-0 md:-bottom-2 md:-left-6 max-w-[280px] z-10 flex gap-3 items-center group-hover:-translate-y-1 transition-transform">
-                <div className="h-10 w-10 rounded-xl bg-indigo-50 flex items-center justify-center shrink-0">
-                  <BookOpen className="h-5 w-5 text-indigo-500" />
-                </div>
-                <div>
-                  <p className="font-bold text-slate-800 text-sm mb-0.5">Explore Complete Word</p>
-                  <p className="text-xs text-slate-500">Synonyms, word family, quizzes & more.</p>
-                </div>
-              </div>
+            {/* Word Title + Pronunciation Audio Button */}
+            <div className="flex items-center gap-3 mb-2">
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-slate-900 tracking-tight leading-none">
+                {wordOfDay.word}
+              </h2>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if ('speechSynthesis' in window) {
+                    window.speechSynthesis.speak(new SpeechSynthesisUtterance(wordOfDay.word));
+                  }
+                }}
+                className="w-9 h-9 rounded-xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/60 flex items-center justify-center text-emerald-600 transition-colors shrink-0 shadow-sm"
+                title="Listen Pronunciation"
+              >
+                <Volume2 className="w-4.5 h-4.5" />
+              </button>
             </div>
-          </div>
-          
-          {/* Action Buttons */}
-          <div className="mt-10 md:mt-8 grid grid-cols-1 sm:grid-cols-2 gap-3" onClick={e => e.stopPropagation()}>
-            <Button className="bg-emerald-600 hover:bg-emerald-700 h-12 rounded-xl text-base font-bold gap-1.5 shadow-sm shadow-emerald-200">
-              <Check className="h-4 w-4" /> I Know This
-            </Button>
-            <Button variant="outline" className="border-amber-200 text-amber-700 hover:bg-amber-50 h-12 rounded-xl text-base font-bold gap-1.5">
-              <RotateCcw className="h-4 w-4" /> Need Revision
-            </Button>
+
+            {/* Phonetic & Part of Speech */}
+            <div className="flex items-center gap-2 mb-4 text-sm font-medium">
+              {wordOfDay.pronunciation && (
+                <span className="text-slate-400 font-mono">[ {wordOfDay.pronunciation} ]</span>
+              )}
+              {wordOfDay.pronunciation && wordOfDay.partOfSpeech && (
+                <span className="text-slate-300">•</span>
+              )}
+              {wordOfDay.partOfSpeech && (
+                <span className="text-emerald-600 font-bold capitalize">{wordOfDay.partOfSpeech}</span>
+              )}
+            </div>
+
+            {/* Definition / Meaning */}
+            <p className="text-slate-700 text-base sm:text-lg font-medium leading-relaxed mb-4 max-w-lg">
+              {wordOfDay.meaning}
+            </p>
+
+            {/* Example sentence */}
+            {wordOfDay.example && (
+              <div className="mb-6 max-w-lg">
+                <p className="text-sm text-slate-700 leading-relaxed italic">
+                  <strong className="font-bold text-slate-900 not-italic">Example: </strong>
+                  {wordOfDay.example}
+                </p>
+              </div>
+            )}
+
+            {/* Action CTAs */}
+            <div className="flex flex-wrap items-center gap-3 pt-1">
+              <button
+                onClick={(e) => { e.stopPropagation(); onOpenWordOfDay(currentWoDIndex); }}
+                className="inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm px-6 py-2.5 rounded-full transition-all shadow-md active:scale-95"
+              >
+                <span>View Details</span>
+                <ChevronRight className="w-4 h-4" />
+              </button>
+              
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleWordStatus(wordOfDay.id, 'learned', wordOfDay.difficulty);
+                }}
+                className="inline-flex items-center justify-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs px-4 py-2.5 rounded-full transition-colors"
+              >
+                <Check className="w-3.5 h-3.5 text-emerald-600" />
+                <span>Mark Learned</span>
+              </button>
+            </div>
           </div>
         </div>
       )}

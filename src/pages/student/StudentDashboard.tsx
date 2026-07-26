@@ -30,7 +30,7 @@ import StatCardDialog from '@/components/student/StatCardDialog';
 import QuizLeaderboardModal from '@/components/student/quiz/QuizLeaderboardModal';
 import QuizCard from '@/components/student/quiz/QuizCard';
 import { getQuizLeaderboard } from '@/services/quizLeaderboardService';
-import { dailyQuizzes } from '@/data/dailyQuizzesData';
+import { useQuizzes } from '@/hooks/useQuizCatalog';
 import QuizAttemptIBPS, { QuizResult } from '@/components/student/quiz/QuizAttemptIBPS';
 import launchExamWindow from '@/utils/launchExam';
 import { toast } from 'sonner';
@@ -53,7 +53,7 @@ import WordOfTheDayCard from '@/components/student/VocabularyWidget';
 import TargetExamCard from '@/components/student/dashboard/TargetExamCard';
 import DashboardBannerStrip from '@/components/student/dashboard/DashboardBannerStrip';
 import RecentExamNotifications from '@/components/student/dashboard/RecentExamNotifications';
-import { courses as allCourses } from '@/data/courseData';
+import { useCourses } from '@/hooks/useCourses';
 import { DailyGoalsWidget } from '@/components/student/dashboard/DailyGoalsWidget';
 import { StudyTimerWidget } from '@/components/student/dashboard/StudyTimerWidget';
 import { AdsBanner } from '@/components/student/dashboard/AdsBanner';
@@ -76,6 +76,7 @@ interface UserProfile {
 const FeaturedCoursesSection = ({ navigate }: { navigate: (path: string) => void }) => {
   const [hoveredCourse, setHoveredCourse] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const { data: allCourses = [], isLoading: coursesLoading } = useCourses();
 
   // Auto-scroll: advances every 3s, pauses on hover, loops back to start
   React.useEffect(() => {
@@ -264,6 +265,7 @@ const FeaturedCoursesSection = ({ navigate }: { navigate: (path: string) => void
 };
 
 const StudentDashboard = () => {
+  const { data: dailyQuizzes = [] } = useQuizzes();
   const { user } = useAuth();
   const navigate = useNavigate();
   const [attendanceView, setAttendanceView] = useState<'week' | 'month'>('week');
@@ -628,7 +630,7 @@ const StudentDashboard = () => {
       {/* ═══════════════════════════════════════════════════════
           TAB NAVIGATION
          ═══════════════════════════════════════════════════════ */}
-      <div className="bg-white border border-slate-200 rounded-xl shadow-sm -mx-3 px-3 sm:-mx-4 sm:px-4 md:-mx-6 md:px-6 mb-4 sm:mb-6">
+      <div className="bg-white border border-slate-200 rounded-xl shadow-sm mb-4 sm:mb-6">
         <div className="flex items-center gap-1 p-1">
           {tabs.map((tab) => {
             const Icon = tab.icon;
@@ -639,7 +641,7 @@ const StudentDashboard = () => {
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex items-center justify-center gap-1.5 sm:gap-2 flex-1 py-2.5 sm:py-3 rounded-lg transition-all text-xs sm:text-sm font-medium ${
                   isActive
-                    ? 'bg-emerald-500 text-white shadow-sm shadow-emerald-200 font-semibold'
+                    ? 'bg-blue-600 text-white shadow-sm shadow-blue-200 font-semibold'
                     : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
                 }`}
               >

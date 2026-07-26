@@ -88,13 +88,17 @@ export const StageProgressBar: React.FC<StageProgressBarProps> = ({ stages, onSt
     return index === stages.length - 1 || stages[index].name.toLowerCase().includes('final');
   };
 
-  const getStageIcon = (status: string, stageName: string, index: number) => {
+  const getStageIcon = (status: string, stageName: string, index: number, editable: boolean) => {
     const finalStage = isFinalStage(index);
+
+    if (!editable && status === 'pending') {
+      return <Lock className="text-slate-400 h-3.5 w-3.5 sm:h-4 sm:w-4" />;
+    }
 
     if (finalStage) {
       switch (status) {
         case 'selected':
-          return <Trophy className="text-yellow-400 h-4 w-4 sm:h-5 sm:w-5" />;
+          return <Trophy className="text-amber-300 h-4 w-4 sm:h-5 sm:w-5" />;
         case 'not-selected':
           return <X className="text-white h-4 w-4 sm:h-5 sm:w-5" />;
         default:
@@ -108,41 +112,40 @@ export const StageProgressBar: React.FC<StageProgressBarProps> = ({ stages, onSt
       case 'not-cleared':
         return <X className="text-white h-4 w-4 sm:h-5 sm:w-5" />;
       case 'n/a':
-        return <Minus className="text-white h-4 w-4 sm:h-5 sm:w-5" />;
+        return <Minus className="text-slate-400 h-4 w-4 sm:h-5 sm:w-5" />;
       default:
         return <Clock className="text-white h-4 w-4 sm:h-5 sm:w-5" />;
     }
   };
 
-  const getStageColor = (status: string, stageName: string, index: number) => {
+  const getStageColor = (status: string, stageName: string, index: number, editable: boolean) => {
     const finalStage = isFinalStage(index);
-    const editable = isStageEditable(stages, index);
 
-    const baseColor = (() => {
-      if (finalStage) {
-        switch (status) {
-          case 'selected':
-            return 'bg-gradient-to-r from-yellow-400 to-orange-500 shadow-lg ring-2 ring-yellow-300';
-          case 'not-selected':
-            return 'bg-red-500 shadow-md';
-          default:
-            return 'bg-gradient-to-r from-purple-500 to-indigo-500 shadow-md';
-        }
-      }
+    if (!editable && status === 'pending') {
+      return 'bg-slate-100 border-slate-200 text-slate-400 shadow-2xs';
+    }
 
+    if (finalStage) {
       switch (status) {
-        case 'cleared':
-          return 'bg-green-500 shadow-md ring-2 ring-green-300';
-        case 'not-cleared':
-          return 'bg-red-500 shadow-md';
-        case 'n/a':
-          return 'bg-gray-400 shadow-sm';
+        case 'selected':
+          return 'bg-gradient-to-r from-amber-400 to-emerald-500 text-white shadow-md border-amber-300';
+        case 'not-selected':
+          return 'bg-rose-600 text-white shadow-xs';
         default:
-          return 'bg-blue-500 shadow-sm';
+          return 'bg-indigo-600 text-white shadow-xs';
       }
-    })();
+    }
 
-    return editable ? baseColor : `${baseColor} opacity-50`;
+    switch (status) {
+      case 'cleared':
+        return 'bg-emerald-600 text-white shadow-xs';
+      case 'not-cleared':
+        return 'bg-rose-600 text-white shadow-xs';
+      case 'n/a':
+        return 'bg-slate-300 text-slate-600 shadow-2xs';
+      default:
+        return 'bg-blue-600 text-white shadow-xs';
+    }
   };
 
   const getStageStatusText = (status: string, index: number) => {
@@ -202,42 +205,28 @@ export const StageProgressBar: React.FC<StageProgressBarProps> = ({ stages, onSt
     const stageElement = (
       <div
         className={`flex flex-col items-center relative z-10 transition-all duration-200 ${editable
-          ? 'cursor-pointer hover:opacity-80 hover:scale-105'
+          ? 'cursor-pointer hover:opacity-90 hover:scale-105'
           : 'cursor-not-allowed'
           }`}
         style={{ width: `${stageWidth}%` }}
         onClick={() => handleStageClick(index)}
       >
-        <div className={`rounded-full h-8 w-8 sm:h-10 sm:w-10 md:h-12 md:w-12 ${getStageColor(stage.status, stage.name, index)} flex items-center justify-center transition-all duration-200 border-2 border-white shadow-md relative ${isActive ? 'ring-4 ring-blue-500/20 shadow-lg scale-110' : ''}`}>
-          {getStageIcon(stage.status, stage.name, index)}
-          {isActive && (
-            <span className="absolute flex h-full w-full rounded-full opacity-75 animate-ping bg-blue-400/30"></span>
-          )}
-          {!editable && (
-            <div className="absolute -top-1 -right-1 bg-gray-600 rounded-full p-0.5">
-              <Lock className="h-2 w-2 sm:h-3 sm:w-3 text-white" />
-            </div>
-          )}
+        <div className={`rounded-full h-9 w-9 sm:h-11 sm:w-11 ${getStageColor(stage.status, stage.name, index, editable)} flex items-center justify-center transition-all duration-200 border-2 border-white shadow-xs relative ${isActive ? 'ring-4 ring-blue-500/20 shadow-md scale-105' : ''}`}>
+          {getStageIcon(stage.status, stage.name, index, editable)}
         </div>
-        <p className={`text-xs sm:text-sm mt-1 text-center font-medium leading-tight px-1 ${isActive ? 'text-blue-700 font-bold' : ''}`} title={stage.name}>
-          {stage.name.length > 12 ? `${stage.name.substring(0, 12)}...` : stage.name}
+        <p className={`text-[11px] sm:text-xs mt-1.5 text-center font-extrabold leading-tight px-1 max-w-[95px] break-words ${isActive ? 'text-blue-700' : 'text-slate-800'}`} title={stage.name}>
+          {stage.name}
         </p>
-        <p className={`text-[10px] sm:text-xs text-center font-medium ${stage.status === 'cleared' || stage.status === 'selected' ? 'text-green-600' :
-          stage.status === 'not-cleared' || stage.status === 'not-selected' ? 'text-red-600' :
-            isActive ? 'text-blue-600 font-semibold' : 'text-gray-500'
-          } ${!editable ? 'opacity-60' : ''}`}>
+        <p className={`text-[10px] sm:text-[11px] text-center font-bold mt-0.5 ${stage.status === 'cleared' || stage.status === 'selected' ? 'text-emerald-700' :
+          stage.status === 'not-cleared' || stage.status === 'not-selected' ? 'text-rose-600' :
+            isActive ? 'text-blue-600 font-extrabold' : 'text-slate-400'
+          } ${!editable ? 'opacity-70' : ''}`}>
           {isActive && stage.status === 'pending' ? 'Current Stage' : getStageStatusText(stage.status, index)}
         </p>
         {stage.score && (
-          <p className={`text-[10px] sm:text-xs text-blue-600 text-center font-medium ${!editable ? 'opacity-60' : ''}`}>
+          <p className={`text-[10px] sm:text-[11px] text-blue-600 text-center font-bold ${!editable ? 'opacity-70' : ''}`}>
             {stage.score}
           </p>
-        )}
-        {isFinalStage(index) && (
-          <div className="flex items-center gap-1 mt-1">
-            <Star className={`h-2 w-2 sm:h-3 sm:w-3 text-yellow-500 ${!editable ? 'opacity-60' : ''}`} />
-            <span className={`text-[8px] sm:text-[10px] text-yellow-600 font-medium ${!editable ? 'opacity-60' : ''}`}>Final</span>
-          </div>
         )}
       </div>
     );
@@ -250,7 +239,7 @@ export const StageProgressBar: React.FC<StageProgressBarProps> = ({ stages, onSt
               {stageElement}
             </TooltipTrigger>
             <TooltipContent>
-              <p className="text-sm">{reason}</p>
+              <p className="text-xs font-semibold">{reason}</p>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
@@ -262,11 +251,11 @@ export const StageProgressBar: React.FC<StageProgressBarProps> = ({ stages, onSt
 
   return (
     <>
-      <div>
-        <div className="flex justify-between items-center mb-1">
-          <h4 className="font-medium text-sm sm:text-base">Exam Stages</h4>
-          <div className="text-xs sm:text-sm text-gray-500">
-            {completedStages}/{stages.length} completed ({Math.round(progressPercentage)}%)
+      <div className="space-y-3">
+        <div className="flex justify-between items-center">
+          <h4 className="font-extrabold text-xs sm:text-sm text-slate-800 uppercase tracking-wider">Exam Progress Stepper</h4>
+          <div className="text-xs font-extrabold text-slate-600 bg-slate-100 px-2.5 py-0.5 rounded-full border border-slate-200">
+            {completedStages}/{stages.length} Cleared ({Math.round(progressPercentage)}%)
           </div>
         </div>
 
@@ -278,26 +267,30 @@ export const StageProgressBar: React.FC<StageProgressBarProps> = ({ stages, onSt
           </div>
 
           {/* Progress line */}
-          <div className="absolute left-0 top-6 sm:top-7 md:top-8 h-1 bg-gray-200 w-full z-0 rounded-full"></div>
+          <div className="absolute left-0 top-6 sm:top-7 h-1 bg-slate-200 w-full z-0 rounded-full"></div>
           <div
-            className="absolute left-0 top-6 sm:top-7 md:top-8 h-1 bg-gradient-to-r from-green-400 to-blue-500 z-0 transition-all duration-500 rounded-full"
+            className="absolute left-0 top-6 sm:top-7 h-1 bg-gradient-to-r from-blue-600 to-emerald-500 z-0 transition-all duration-500 rounded-full"
             style={{ width: `${progressPercentage}%` }}
           ></div>
         </div>
 
-        {/* Auto-progression indicator */}
-        <div className="mt-1 text-[10px] sm:text-xs text-gray-500 bg-muted/50 p-1.5 rounded flex flex-wrap gap-3 items-center">
-          <div className="flex items-center gap-1">
-            <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse"></div>
-            <span>Current Stage</span>
+        {/* Stepper Legend */}
+        <div className="text-[11px] font-medium text-slate-500 bg-slate-50 border border-slate-200/70 px-3 py-1.5 rounded-xl flex flex-wrap gap-4 items-center">
+          <div className="flex items-center gap-1.5">
+            <span className="w-2 h-2 bg-emerald-600 rounded-full"></span>
+            <span className="font-bold text-slate-700">Cleared</span>
           </div>
-          <div className="flex items-center gap-1">
-            <Trophy className="h-3 w-3 text-yellow-500" />
-            <span>Final Selection</span>
+          <div className="flex items-center gap-1.5">
+            <span className="w-2 h-2 bg-blue-600 rounded-full"></span>
+            <span className="font-bold text-slate-700">Current Stage</span>
           </div>
-          <div className="flex items-center gap-1 ml-auto">
-            <Lock className="h-3 w-3 text-gray-400" />
-            <span>Subsequent stages locked</span>
+          <div className="flex items-center gap-1.5">
+            <span className="w-2 h-2 bg-rose-600 rounded-full"></span>
+            <span className="font-bold text-slate-700">Not Cleared</span>
+          </div>
+          <div className="flex items-center gap-1.5 ml-auto text-slate-400">
+            <Lock className="h-3 w-3" />
+            <span>Subsequent stages locked until preceding cleared</span>
           </div>
         </div>
       </div>

@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import LandingHeader from '@/components/LandingHeader';
 import Footer from '@/components/Footer';
 import { toast } from 'sonner';
-import { getArticleById as getStaticArticleById, getRelatedArticles } from '@/components/current-affairs/articlesData';
+import { useArticle, useArticles } from '@/hooks/useCurrentAffairsArticles';
 import { Article, ReadingSettings } from '@/components/current-affairs/types';
 import { ShareDialog } from '@/components/current-affairs/ShareDialog';
 import ArticleQuiz from '@/components/current-affairs/ArticleQuiz';
@@ -27,17 +27,31 @@ const CurrentAffairsReader = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Detect if accessed from within student portal (avoid logout on back)
+  // Detect if accessed from within student portal
   const isInsideStudentPortal = location.pathname.startsWith('/student') ||
     document.referrer.includes('/student') ||
-    location.state?.from?.includes('/student');
-  const backPath = isInsideStudentPortal ? '/student/current-affairs' : '/current-affairs';
+    location.state?.from?.includes('/student') ||
+    !!localStorage.getItem('user');
 
-  // Try store first (admin-created articles), then fall back to static data
+  const returnTab = location.state?.tab || 'news';
+
+  const handleBack = () => {
+    if (isInsideStudentPortal) {
+      navigate('/student/current-affairs', { state: { tab: returnTab } });
+    } else {
+      navigate('/current-affairs', { state: { tab: returnTab } });
+    }
+  };
+
+  // Try store first (admin-created articles), then fall back to API
   const { getArticleFromStore } = useCurrentAffairsStore();
+  const { data: apiArticle } = useArticle(id);
+  const { data: allArticlesData = [] } = useArticles();
   const storeArticle = id ? getArticleFromStore(id) : undefined;
-  const article = storeArticle ?? (id ? getStaticArticleById(id) : null);
-  const relatedArticles = article ? getRelatedArticles(article as Article) : [];
+  const article = storeArticle ?? (apiArticle as any) ?? null;
+  const relatedArticles = article ? (allArticlesData as any[]).filter((a: any) =>
+    a.category === article.category && a.id !== article.id
+  ).slice(0, 4) : [];
   
   const [shareArticle, setShareArticle] = useState<Article | null>(null);
   const [showQuiz, setShowQuiz] = useState(false);
@@ -180,7 +194,7 @@ const CurrentAffairsReader = () => {
               <Button 
                 variant="ghost" 
                 size="sm"
-                onClick={() => navigate(backPath)}
+                onClick={handleBack}
                 className={readingSettings.isDarkMode ? 'text-gray-100' : ''}
               >
                 <ArrowLeft className="h-4 w-4 mr-2" />
@@ -283,15 +297,11 @@ const CurrentAffairsReader = () => {
       
       {/* Main Content */}
       <main ref={contentRef} className="container mx-auto px-4 py-8 max-w-4xl">
-        {/* Breadcrumb */}
-        <div className="mb-8">
-          <StepBreadcrumb
-            items={[
-              { label: 'Home', icon: <Home className="h-4 w-4" />, href: '/' },
-              { label: 'Current Affairs', href: '/current-affairs' },
-              { label: article.category, isActive: true },
-            ]}
-          />
+        {/* Category Pill Only (Home & Current Affairs removed per request) */}
+        <div className="mb-6">
+          <span className="px-4 py-2 rounded-xl bg-blue-600 text-white font-extrabold text-xs shadow-2xs inline-block tracking-wide">
+            {article.category}
+          </span>
         </div>
         
         {/* Article Header */}

@@ -197,16 +197,16 @@ const StudentTests = () => {
     return (
       <div className="space-y-6">
         {/* ── Category Header Banner ─────────────────────────────────────── */}
-        <div className="rounded-xl border border-emerald-200 shadow-sm p-5 sm:p-7 overflow-hidden relative"
-          style={{ background: 'linear-gradient(135deg, #ecfdf5 0%, #d1fae5 40%, #e0f2fe 100%)' }}
+        <div className="rounded-xl border border-blue-100 shadow-sm p-5 sm:p-7 overflow-hidden relative"
+          style={{ background: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 40%, #e0f2fe 100%)' }}
         >
           {/* Decorative blobs */}
-          <div className="absolute -top-6 -right-6 w-32 h-32 rounded-full bg-emerald-100 opacity-40 pointer-events-none" />
-          <div className="absolute -bottom-8 right-24 w-24 h-24 rounded-full bg-teal-100 opacity-30 pointer-events-none" />
+          <div className="absolute -top-6 -right-6 w-32 h-32 rounded-full bg-blue-100 opacity-40 pointer-events-none" />
+          <div className="absolute -bottom-8 right-24 w-24 h-24 rounded-full bg-sky-100 opacity-30 pointer-events-none" />
 
           <div className="flex flex-col sm:flex-row sm:items-center gap-4 relative z-10">
             {/* Logo */}
-            <div className="w-16 h-16 rounded-2xl bg-white/80 border border-emerald-200 shadow-sm flex items-center justify-center flex-shrink-0 backdrop-blur-sm">
+            <div className="w-16 h-16 rounded-2xl bg-white/80 border border-slate-200 shadow-sm flex items-center justify-center flex-shrink-0 backdrop-blur-sm">
               <img
                 src={headerLogo}
                 alt={categoryData.name}
@@ -221,19 +221,19 @@ const StudentTests = () => {
               {/* Chips row */}
               <div className="flex flex-wrap gap-4 mt-3 text-sm text-gray-700">
                 <span className="flex items-center gap-1.5">
-                  <BookOpen className="w-4 h-4 text-emerald-600" />
+                  <BookOpen className="w-4 h-4 text-slate-400" />
                   <strong className="text-gray-900">{totalExamCount}</strong> Exams
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <BookOpen className="w-4 h-4 text-emerald-600" />
+                  <BookOpen className="w-4 h-4 text-slate-400" />
                   <strong className="text-gray-900">{totalExamCount * 10}</strong> Mock Tests
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <Users className="w-4 h-4 text-emerald-600" />
+                  <Users className="w-4 h-4 text-slate-400" />
                   <strong className="text-gray-900">{formatStudents(categoryData.studentsEnrolled)}</strong> Students
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <Zap className="w-4 h-4 text-emerald-600" />
+                  <Zap className="w-4 h-4 text-slate-400" />
                   Updated Daily
                 </span>
               </div>
@@ -246,11 +246,11 @@ const StudentTests = () => {
           <div>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-base font-semibold text-gray-900 flex items-center gap-2">
-                <Star className="w-4 h-4 text-emerald-600 fill-emerald-600" />
+                <Star className="w-4 h-4 text-amber-500 fill-amber-400" />
                 Popular Exams
               </h2>
               <button
-                className="text-sm text-emerald-600 hover:text-emerald-700 font-medium flex items-center gap-0.5"
+                className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-0.5"
                 onClick={() => setShowAll(true)}
               >
                 View all <ChevronRight className="w-4 h-4" />
@@ -263,11 +263,11 @@ const StudentTests = () => {
                 return (
                   <div
                     key={exam.id}
-                    className="bg-gray-50 rounded-xl border border-gray-200 p-5 flex flex-col gap-3 hover:bg-white hover:shadow-md hover:border-gray-300 transition-all"
+                    className="bg-white rounded-xl border border-slate-200 p-4 sm:p-5 flex flex-col gap-3.5 hover:shadow-md hover:border-blue-200 transition-all group"
                   >
                     {/* Exam identity */}
                     <div className="flex items-center gap-3">
-                      <div className="w-11 h-11 rounded-full bg-white border border-gray-200 flex items-center justify-center flex-shrink-0 shadow-sm">
+                      <div className="w-12 h-12 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center flex-shrink-0 shadow-sm group-hover:scale-105 transition-transform">
                         <img
                           src={exam.logo}
                           alt={exam.name}
@@ -275,31 +275,32 @@ const StudentTests = () => {
                           onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                         />
                       </div>
-                      <div>
-                        <div className="font-semibold text-gray-900 text-sm leading-snug">{exam.name}</div>
-                        <div className="text-xs text-gray-400 mt-0.5">{stats.subtitle}</div>
+                      <div className="min-w-0 flex-1">
+                        <div className="font-bold text-slate-900 text-base leading-snug truncate group-hover:text-blue-600 transition-colors">{exam.name}</div>
+                        <div className="text-xs font-medium text-slate-500 mt-0.5">{stats.subtitle}</div>
                       </div>
                     </div>
 
                     {/* Stats */}
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-1.5 text-xs text-gray-600">
-                        <BookOpen className="w-3.5 h-3.5 text-emerald-600" />
-                        <strong className="text-gray-800">{stats.tests}</strong> Tests
+                    <div className="space-y-1 bg-slate-50 p-2.5 rounded-lg border border-slate-100">
+                      <div className="flex items-center gap-1.5 text-xs text-slate-600">
+                        <BookOpen className="w-3.5 h-3.5 text-blue-500" />
+                        <strong className="text-slate-800">{stats.tests}</strong> Tests
                       </div>
-                      <div className="flex items-center gap-1.5 text-xs text-gray-600">
-                        <Users className="w-3.5 h-3.5 text-emerald-600" />
-                        <strong className="text-gray-800">{formatStudents(stats.students)}</strong> Students
+                      <div className="flex items-center gap-1.5 text-xs text-slate-600">
+                        <Users className="w-3.5 h-3.5 text-blue-500" />
+                        <strong className="text-slate-800">{formatStudents(stats.students)}</strong> Students
                       </div>
                     </div>
 
                     {/* CTA */}
-                    <Button
-                      className="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium mt-auto"
+                    <button
+                      className="w-full h-9 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg transition-colors mt-auto flex items-center justify-center gap-1.5 shadow-sm"
                       onClick={() => navigate(`/student/tests/${categoryId}/${exam.id}`)}
                     >
-                      Start Practice
-                    </Button>
+                      <span>Start Practice</span>
+                      <ChevronRight className="w-3.5 h-3.5" />
+                    </button>
                   </div>
                 );
               })}
@@ -318,7 +319,7 @@ const StudentTests = () => {
               <select
                 value={sortOrder}
                 onChange={e => setSortOrder(e.target.value as 'az' | 'za' | 'popular')}
-                className="appearance-none border border-gray-200 rounded-lg text-sm py-1.5 pl-3 pr-8 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer"
+                className="appearance-none border border-gray-200 rounded-lg text-sm py-1.5 pl-3 pr-8 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
               >
                 <option value="popular">Sort: Popular</option>
                 <option value="az">Sort: A to Z</option>
@@ -413,7 +414,7 @@ const StudentTests = () => {
                       isOverflowing ? 'flex-shrink-0' : 'flex-1'
                     } ${
                       isActive
-                        ? 'bg-emerald-500 text-white shadow-sm shadow-emerald-200 font-semibold'
+                        ? 'bg-blue-600 text-white shadow-sm shadow-blue-200 font-semibold'
                         : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'
                     }`}
                   >
@@ -465,42 +466,43 @@ const AllExamsList = ({ exams, categoryId, onNavigate }: AllExamsListProps) => {
         return (
           <div
             key={exam.id}
-            className="bg-gray-50 rounded-xl border border-gray-200 p-4 flex flex-col gap-3 hover:bg-white hover:shadow-md hover:border-gray-300 transition-all"
+            className="bg-white rounded-xl border border-slate-200 p-4 flex flex-col gap-3 hover:shadow-md hover:border-blue-200 transition-all group"
           >
             {/* Exam identity */}
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-white border border-gray-200 flex items-center justify-center flex-shrink-0 shadow-sm">
+              <div className="w-11 h-11 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center flex-shrink-0 shadow-sm group-hover:scale-105 transition-transform">
                 <img
                   src={exam.logo}
                   alt={exam.name}
-                  className="w-6 h-6 object-contain"
+                  className="w-6.5 h-6.5 object-contain"
                   onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                 />
               </div>
-              <div className="min-w-0">
-                <div className="font-semibold text-gray-900 text-sm truncate leading-snug">{exam.name}</div>
-                <div className="text-xs text-gray-400 mt-0.5">{stats.subtitle}</div>
+              <div className="min-w-0 flex-1">
+                <div className="font-bold text-slate-900 text-base leading-snug truncate group-hover:text-blue-600 transition-colors">{exam.name}</div>
+                <div className="text-xs font-medium text-slate-500 mt-0.5">{stats.subtitle}</div>
               </div>
             </div>
 
             {/* Stats */}
-            <div className="space-y-1">
-              <div className="flex items-center gap-1.5 text-xs text-gray-600">
-                <BookOpen className="w-3.5 h-3.5 text-emerald-600" />
-                <strong className="text-gray-800">{stats.tests}</strong> Tests
+            <div className="space-y-1 bg-slate-50 p-2 rounded-lg border border-slate-100">
+              <div className="flex items-center gap-1.5 text-xs text-slate-600">
+                <BookOpen className="w-3.5 h-3.5 text-blue-500" />
+                <strong className="text-slate-800">{stats.tests}</strong> Tests
               </div>
-              <div className="flex items-center gap-1.5 text-xs text-gray-600">
-                <Users className="w-3.5 h-3.5 text-emerald-600" />
-                <strong className="text-gray-800">{formatStudents(stats.students)}</strong> Students
+              <div className="flex items-center gap-1.5 text-xs text-slate-600">
+                <Users className="w-3.5 h-3.5 text-blue-500" />
+                <strong className="text-slate-800">{formatStudents(stats.students)}</strong> Students
               </div>
             </div>
 
             {/* CTA */}
             <button
               onClick={() => onNavigate(`/student/tests/${categoryId}/${exam.id}`)}
-              className="w-full mt-auto py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition-colors"
+              className="w-full h-8.5 mt-auto py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors flex items-center justify-center gap-1 shadow-sm"
             >
-              View Tests
+              <span>View Tests</span>
+              <ChevronRight className="w-3.5 h-3.5" />
             </button>
           </div>
         );

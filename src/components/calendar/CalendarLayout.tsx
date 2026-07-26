@@ -9,7 +9,7 @@ import ProfileButton from '@/components/student/ProfileButton';
 import { Calendar, ChevronLeft, ChevronRight, Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { TaskProvider } from '@/context/TaskContext';
+import { TaskProvider } from '@/app/providers/TaskProvider';
 
 const CalendarLayout: React.FC = () => {
   const isMobile = useIsMobile();

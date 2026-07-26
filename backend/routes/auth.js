@@ -2,16 +2,13 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const pool = require('../db');
+const { validate, loginSchema, registerSchema } = require('../middleware/validation');
 
 const router = express.Router();
 
 // POST /api/auth/login
-router.post('/login', async (req, res) => {
+router.post('/login', validate(loginSchema), async (req, res) => {
   const { email, password } = req.body;
-
-  if (!email || !password) {
-    return res.status(400).json({ error: 'Email and password are required' });
-  }
 
   try {
     const result = await pool.query(
@@ -20,6 +17,11 @@ router.post('/login', async (req, res) => {
     );
 
     if (result.rows.length === 0) {
+      // Record failed login attempt
+      await pool.query(
+        `INSERT INTO login_history (user_id, ip_address, user_agent, status) VALUES (0, $1, $2, 'failed')`,
+        [req.ip, req.headers['user-agent'] || '']
+      ).catch(() => {});
       return res.status(401).json({ error: 'Invalid email or password' });
     }
 
@@ -27,8 +29,25 @@ router.post('/login', async (req, res) => {
     const passwordMatch = await bcrypt.compare(password, user.password_hash);
 
     if (!passwordMatch) {
+      // Record failed login attempt
+      await pool.query(
+        `INSERT INTO login_history (user_id, ip_address, user_agent, status) VALUES ($1, $2, $3, 'failed')`,
+        [user.id, req.ip, req.headers['user-agent'] || '']
+      ).catch(() => {});
       return res.status(401).json({ error: 'Invalid email or password' });
     }
+
+    // Record successful login
+    await pool.query(
+      `INSERT INTO login_history (user_id, ip_address, user_agent, status) VALUES ($1, $2, $3, 'success')`,
+      [user.id, req.ip, req.headers['user-agent'] || '']
+    ).catch(() => {});
+
+    // Update last_login_at
+    await pool.query(
+      `UPDATE users SET last_login_at = NOW() WHERE id = $1`,
+      [user.id]
+    ).catch(() => {});
 
     const token = jwt.sign(
       { id: user.id, email: user.email, role: user.role },
@@ -54,12 +73,8 @@ router.post('/login', async (req, res) => {
 });
 
 // POST /api/auth/register
-router.post('/register', async (req, res) => {
-  const { name, email, password, role = 'student' } = req.body;
-
-  if (!name || !email || !password) {
-    return res.status(400).json({ error: 'Name, email, and password are required' });
-  }
+router.post('/register', validate(registerSchema), async (req, res) => {
+  const { name, email, password, role } = req.body;
 
   try {
     // Check if email already exists

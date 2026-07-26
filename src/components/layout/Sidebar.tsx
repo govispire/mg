@@ -118,11 +118,11 @@ const SidebarItem: React.FC<SidebarItemProps> = ({ icon, label, to, active, coll
     <Link
       to={to}
       className={cn(
-        "flex items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-sm transition-all duration-200",
-        "hover:bg-gray-100/80",
+        "flex items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-sm transition-all duration-200 group relative",
+        "hover:bg-slate-50 hover:text-slate-900",
         active
-          ? "bg-brand-blue/10 text-brand-blue font-semibold shadow-sm"
-          : "text-gray-600 font-medium",
+          ? "bg-emerald-50 text-emerald-700 font-semibold shadow-sm ring-1 ring-emerald-100"
+          : "text-slate-600 font-medium",
         highlight && !active && "bg-primary/5 border border-primary/20",
         collapsed && "justify-center px-2"
       )}
@@ -131,9 +131,11 @@ const SidebarItem: React.FC<SidebarItemProps> = ({ icon, label, to, active, coll
       <div className={cn("flex items-center gap-3", collapsed && "gap-0")}>
         <span
           className={cn(
-            "flex-shrink-0 transition-colors",
-            highlight && "text-primary",
-            active && "text-brand-blue"
+            "flex items-center justify-center w-7 h-7 rounded-lg transition-all duration-200",
+            active
+              ? "bg-emerald-600 text-white shadow-sm"
+              : "text-slate-400 group-hover:text-slate-600 group-hover:bg-slate-100",
+            highlight && !active && "text-primary group-hover:text-primary"
           )}
         >
           {icon}
@@ -141,8 +143,9 @@ const SidebarItem: React.FC<SidebarItemProps> = ({ icon, label, to, active, coll
         {!collapsed && (
           <span
             className={cn(
-              "font-semibold whitespace-nowrap overflow-hidden transition-all duration-200",
-              highlight && "text-primary"
+              "font-semibold text-[13px] whitespace-nowrap overflow-hidden transition-all duration-200",
+              active ? "text-emerald-700" : "group-hover:text-slate-900",
+              highlight && !active && "text-primary"
             )}
             style={{ opacity: collapsed ? 0 : 1 }}
           >
@@ -171,6 +174,9 @@ const SidebarItem: React.FC<SidebarItemProps> = ({ icon, label, to, active, coll
             </Badge>
           )}
         </div>
+      )}
+      {active && (
+        <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-6 bg-emerald-600 rounded-r-full shadow-[0_0_6px_rgba(5,150,105,0.4)]" />
       )}
     </Link>
   );
@@ -245,7 +251,7 @@ const Sidebar: React.FC<SidebarProps> = ({ role, basePath, collapsed, onToggle }
           { icon: <FileText size={18} />, label: 'Current Affairs', to: `${basePath}/current-affairs` },
           { icon: <Gift size={18} />, label: 'Daily Free Quizzes', to: `${basePath}/daily-quizzes`, badge: 'TODAY', highlight: true, showStreak: true },
           { icon: <Bell size={18} />, label: 'Exam Alerts', to: `${basePath}/exam-notifications` },
-          { icon: <Heart size={18} />, label: 'Exam Tracker', to: `${basePath}/self-care` },
+          { icon: <Heart size={18} />, label: 'Exam Tracker', to: `${basePath}/exam-tracker` },
           { icon: <FileText size={18} />, label: 'PDF Courses', to: `${basePath}/pdf-courses` },
           { icon: <BookOpen size={18} />, label: 'Vocabulary', to: `${basePath}/vocabulary`, highlight: true, badge: 'NEW' },
         ];
@@ -324,7 +330,7 @@ const Sidebar: React.FC<SidebarProps> = ({ role, basePath, collapsed, onToggle }
           )}
         >
           {/* Logo mark */}
-          <div className="w-8 h-8 rounded-lg bg-brand-blue flex items-center justify-center text-white font-bold text-sm flex-shrink-0 shadow-sm">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold text-sm flex-shrink-0 shadow-sm">
             E
           </div>
           {!collapsed && (
@@ -347,8 +353,8 @@ const Sidebar: React.FC<SidebarProps> = ({ role, basePath, collapsed, onToggle }
                   "absolute top-[18px] -right-[14px] z-10",
                   "flex items-center justify-center rounded-full",
                   "w-7 h-7 border-2 border-slate-200 bg-white text-slate-500",
-                  "hover:bg-blue-50 hover:text-brand-blue hover:border-brand-blue/40 transition-all duration-200",
-                  "shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue/30"
+                  "hover:bg-primary/10 hover:text-primary hover:border-primary/40 transition-all duration-200",
+                  "shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
                 )}
                 aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
               >
@@ -368,7 +374,7 @@ const Sidebar: React.FC<SidebarProps> = ({ role, basePath, collapsed, onToggle }
         {collapsed && (
           <div className="py-3 border-b border-slate-100 flex justify-center flex-shrink-0">
             <Avatar className="h-8 w-8">
-              <AvatarFallback className="bg-brand-blue/10 text-brand-blue font-semibold text-sm">
+              <AvatarFallback className="bg-primary/10 text-primary font-semibold text-sm">
                 {user?.name?.charAt(0)?.toUpperCase() || 'U'}
               </AvatarFallback>
             </Avatar>

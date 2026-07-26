@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { TrendingUp, Flame, Trophy, Target, BarChart2, CheckCircle2, Clock } from 'lucide-react';
+import { Flame, Trophy, Target, CheckCircle2 } from 'lucide-react';
 
 interface LeaderboardEntry {
   rank: number;
@@ -38,10 +38,10 @@ const weeklyProgress: WeeklyProgress[] = [
 ];
 
 const subjectProgress = [
-  { subject: 'English', score: 65, weak: ['RC', 'Para Jumble'], color: 'bg-blue-500' },
-  { subject: 'Quantitative', score: 78, weak: ['Time & Work'], color: 'bg-green-500' },
-  { subject: 'Reasoning', score: 60, weak: ['Seating Arr.', 'Blood Rel.'], color: 'bg-purple-500' },
-  { subject: 'General Awareness', score: 82, weak: [], color: 'bg-orange-500' },
+  { subject: 'English Language', score: 65, weak: ['RC', 'Para Jumble'] },
+  { subject: 'Quantitative Aptitude', score: 78, weak: ['Time & Work'] },
+  { subject: 'Reasoning Ability', score: 60, weak: ['Seating Arr.', 'Blood Rel.'] },
+  { subject: 'General Awareness', score: 82, weak: [] },
 ];
 
 type Tab = 'overview' | 'leaderboard' | 'weekly';
@@ -54,97 +54,118 @@ const ProgressPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Stats row */}
+      {/* ── 1. UNIFIED WHITE TOP STAT CARDS ── */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {[
-          { label: 'Task Streak', value: '18 days', icon: Flame, color: 'text-orange-500', bg: 'bg-orange-50' },
-          { label: 'Batch Rank', value: '#4 / 14', icon: Trophy, color: 'text-yellow-500', bg: 'bg-yellow-50' },
-          { label: 'Avg Accuracy', value: '71%', icon: Target, color: 'text-blue-600', bg: 'bg-blue-50' },
-          { label: 'Tasks Done', value: '85%', icon: CheckCircle2, color: 'text-green-600', bg: 'bg-green-50' },
+          { label: 'Task Streak', value: '18 days', icon: Flame, iconColor: 'text-orange-500' },
+          { label: 'Batch Rank', value: '#4 / 14', icon: Trophy, iconColor: 'text-amber-500' },
+          { label: 'Avg Accuracy', value: '71%', icon: Target, iconColor: 'text-blue-600' },
+          { label: 'Tasks Done', value: '85%', icon: CheckCircle2, iconColor: 'text-emerald-600' },
         ].map(s => {
           const Icon = s.icon;
           return (
-            <div key={s.label} className={`${s.bg} rounded-xl p-4`}>
-              <div className={`w-9 h-9 rounded-lg bg-white flex items-center justify-center mb-3 shadow-sm`}>
-                <Icon className={`w-5 h-5 ${s.color}`} />
+            <div key={s.label} className="bg-white rounded-2xl border border-slate-200/90 p-4 sm:p-5 shadow-2xs hover:shadow-xs transition-all">
+              <div className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-200/60 flex items-center justify-center mb-3 shadow-2xs">
+                <Icon className={`w-5 h-5 ${s.iconColor}`} />
               </div>
-              <p className="text-xl font-bold text-gray-900">{s.value}</p>
-              <p className="text-xs text-gray-500 mt-0.5">{s.label}</p>
+              <p className="text-2xl font-black text-slate-900 leading-none">{s.value}</p>
+              <p className="text-xs font-bold text-slate-400 mt-1.5">{s.label}</p>
             </div>
           );
         })}
       </div>
 
-      {/* Tab bar */}
-      <div className="flex gap-1 bg-gray-100 p-1 rounded-xl w-fit" role="tablist" aria-label="Progress view options">
+      {/* ── 2. COMPACT SEGMENTED CONTROL TRACK FOR SUB-TABS ── */}
+      <div className="bg-slate-100/90 border border-slate-200/80 p-1 rounded-xl flex items-center gap-1 w-fit" role="tablist">
         {(['overview', 'leaderboard', 'weekly'] as Tab[]).map(t => (
           <button
             key={t}
             onClick={() => setActiveTab(t)}
-            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all capitalize
-              ${activeTab === t ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+            className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all capitalize ${
+              activeTab === t
+                ? 'bg-white text-blue-600 shadow-xs border border-slate-200/60'
+                : 'text-slate-500 hover:text-slate-800'
+            }`}
             role="tab"
             aria-selected={activeTab === t}
-            aria-controls={`progress-panel-${t}`}
-            id={`progress-tab-${t}`}
           >
             {t}
           </button>
         ))}
       </div>
 
-      {/* ── Overview ── */}
+      {/* ── 3. OVERVIEW: UNIFIED ROYAL BLUE PROGRESS BARS & EQUAL HEIGHT CARDS ── */}
       {activeTab === 'overview' && (
-        <div className="space-y-4" role="tabpanel" aria-labelledby="progress-tab-overview" id="progress-panel-overview">
-          <h3 className="text-sm font-bold text-gray-700">Subject-wise Progress</h3>
-          {subjectProgress.map(s => (
-            <div key={s.subject} className="bg-white rounded-xl border border-gray-200 p-4">
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-sm font-bold text-gray-900">{s.subject}</p>
-                <span className={`text-sm font-bold ${s.score >= 75 ? 'text-green-600' : s.score >= 60 ? 'text-yellow-600' : 'text-red-600'}`}>
-                  {s.score}%
-                </span>
-              </div>
-              <div className="w-full bg-gray-100 rounded-full h-2 mb-3">
-                <div className={`${s.color} h-full rounded-full transition-all duration-500`} style={{ width: `${s.score}%` }} />
-              </div>
-              {s.weak.length > 0 ? (
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="text-xs text-red-500 font-medium">⚠ Weak:</span>
-                  {s.weak.map(w => (
-                    <span key={w} className="text-xs bg-red-50 text-red-600 px-2 py-0.5 rounded-md">{w}</span>
-                  ))}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-base font-bold text-slate-900">Subject-wise Performance Breakdown</h3>
+            <span className="text-xs text-slate-400 font-semibold">Updated Today</span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-stretch">
+            {subjectProgress.map(s => (
+              <div key={s.subject} className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-2xs hover:shadow-xs transition-shadow h-full flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="text-sm font-extrabold text-slate-900">{s.subject}</p>
+                    <span className="text-sm font-extrabold text-slate-900">
+                      {s.score}%
+                    </span>
+                  </div>
+
+                  {/* UNIFIED ROYAL BLUE PROGRESS BAR */}
+                  <div className="w-full bg-slate-100 rounded-full h-2.5 mb-4 overflow-hidden border border-slate-200/60">
+                    <div
+                      className="bg-blue-600 h-full rounded-full transition-all duration-500"
+                      style={{ width: `${s.score}%` }}
+                    />
+                  </div>
                 </div>
-              ) : (
-                <p className="text-xs text-green-600 font-medium flex items-center gap-1">
-                  <CheckCircle2 className="w-3 h-3" /> No weak areas — keep it up!
-                </p>
-              )}
-            </div>
-          ))}
+
+                {/* NEUTRAL GRAY WEAK TOPIC TAGS (TONED DOWN) */}
+                <div className="pt-2 border-t border-slate-100">
+                  {s.weak.length > 0 ? (
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="text-xs font-bold text-slate-500">Weak Topics:</span>
+                      {s.weak.map(w => (
+                        <span key={w} className="text-xs font-bold bg-slate-100 border border-slate-200/80 text-slate-700 px-2.5 py-0.5 rounded-md">
+                          {w}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-emerald-600 font-bold flex items-center gap-1">
+                      <CheckCircle2 className="w-3.5 h-3.5" /> Strong proficiency — No weak areas!
+                    </p>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
-      {/* ── Leaderboard ── */}
+      {/* ── 4. LEADERBOARD ── */}
       {activeTab === 'leaderboard' && (
-        <div role="tabpanel" aria-labelledby="progress-tab-leaderboard" id="progress-panel-leaderboard">
-          <div className="flex items-center gap-2 mb-4">
-            <span className="text-xs text-gray-500 font-medium">Sort by:</span>
-            {(['task', 'score', 'streak'] as const).map(f => (
-              <button
-                key={f}
-                onClick={() => setLbFilter(f)}
-                className={`text-xs px-3 py-1.5 rounded-lg font-semibold transition-colors capitalize
-                  ${lbFilter === f ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
-                aria-label={`Sort leaderboard by ${f === 'task' ? 'task completion' : f === 'score' ? 'test score' : 'streak'}`}
-                aria-pressed={lbFilter === f}
-              >
-                {f === 'task' ? 'Task Completion' : f === 'score' ? 'Test Score' : 'Streak'}
-              </button>
-            ))}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <span className="text-xs font-bold text-slate-500">Filter Leaderboard:</span>
+            <div className="flex gap-1.5">
+              {(['task', 'score', 'streak'] as const).map(f => (
+                <button
+                  key={f}
+                  onClick={() => setLbFilter(f)}
+                  className={`text-xs px-3.5 py-1.5 rounded-xl font-extrabold transition-all capitalize ${
+                    lbFilter === f ? 'bg-blue-600 text-white shadow-xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  }`}
+                >
+                  {f === 'task' ? 'Task Completion' : f === 'score' ? 'Test Score' : 'Streak'}
+                </button>
+              ))}
+            </div>
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-2.5">
             {leaderboard
               .sort((a, b) =>
                 lbFilter === 'task' ? b.taskCompletion - a.taskCompletion :
@@ -156,31 +177,32 @@ const ProgressPage: React.FC = () => {
                 return (
                   <div
                     key={entry.rank}
-                    className={`flex items-center gap-4 p-4 rounded-xl border-2 transition-all
-                      ${entry.isCurrentUser ? 'border-blue-400 bg-blue-50' : 'border-gray-100 bg-white'}`}
+                    className={`flex items-center gap-4 p-4 rounded-2xl border-2 transition-all ${
+                      entry.isCurrentUser ? 'border-blue-500 bg-blue-50/70 shadow-2xs' : 'border-slate-100 bg-white shadow-2xs'
+                    }`}
                   >
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0
-                      ${displayRank === 1 ? 'bg-yellow-400 text-white' :
-                        displayRank === 2 ? 'bg-gray-300 text-gray-700' :
-                        displayRank === 3 ? 'bg-orange-300 text-white' :
-                        'bg-gray-100 text-gray-500'}`}
-                    >
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center font-black text-xs shrink-0 ${
+                      displayRank === 1 ? 'bg-amber-400 text-slate-950' :
+                      displayRank === 2 ? 'bg-slate-300 text-slate-800' :
+                      displayRank === 3 ? 'bg-amber-600 text-white' :
+                      'bg-slate-100 text-slate-500'
+                    }`}>
                       {displayRank}
                     </div>
-                    <img src={entry.avatar} alt={entry.name} className="w-9 h-9 rounded-full border-2 border-gray-100 flex-shrink-0" />
+                    <img src={entry.avatar} alt={entry.name} className="w-10 h-10 rounded-full border-2 border-slate-200 object-cover shrink-0" />
                     <div className="flex-1 min-w-0">
-                      <p className={`text-sm font-bold truncate ${entry.isCurrentUser ? 'text-blue-700' : 'text-gray-900'}`}>
-                        {entry.name} {entry.isCurrentUser && <span className="text-xs font-normal">(You)</span>}
+                      <p className={`text-sm font-extrabold truncate ${entry.isCurrentUser ? 'text-blue-700' : 'text-slate-900'}`}>
+                        {entry.name} {entry.isCurrentUser && <span className="text-xs font-normal text-blue-600">(You)</span>}
                       </p>
-                      <p className="text-xs text-gray-500">{entry.streak} day streak 🔥</p>
+                      <p className="text-xs text-slate-400 font-medium">{entry.streak} day streak 🔥</p>
                     </div>
-                    <div className="text-right flex-shrink-0">
-                      <p className="text-sm font-bold text-gray-900">
+                    <div className="text-right shrink-0">
+                      <p className="text-sm font-black text-slate-900">
                         {lbFilter === 'task' ? `${entry.taskCompletion}%` :
                          lbFilter === 'score' ? `${entry.testScore}%` :
                          `${entry.streak}d`}
                       </p>
-                      <p className="text-xs text-gray-400">
+                      <p className="text-[10px] uppercase font-bold text-slate-400">
                         {lbFilter === 'task' ? 'tasks' : lbFilter === 'score' ? 'score' : 'streak'}
                       </p>
                     </div>
@@ -191,49 +213,26 @@ const ProgressPage: React.FC = () => {
         </div>
       )}
 
-      {/* ── Weekly ── */}
+      {/* ── 5. WEEKLY ── */}
       {activeTab === 'weekly' && (
-        <div role="tabpanel" aria-labelledby="progress-tab-weekly" id="progress-panel-weekly">
-          <h3 className="text-sm font-bold text-gray-700 mb-4">This Week's Performance</h3>
+        <div className="space-y-4">
+          <h3 className="text-sm font-extrabold text-slate-900">Weekly Performance Trends</h3>
 
           {/* Bar chart */}
-          <div className="bg-white rounded-xl border border-gray-200 p-5 mb-4">
-            <p className="text-xs text-gray-500 mb-4 font-medium">Test Score by Day</p>
-            <div className="flex items-end gap-3 h-32">
+          <div className="bg-white rounded-2xl border border-slate-200 p-5">
+            <p className="text-xs text-slate-400 font-bold mb-4">Test Accuracy Score by Day</p>
+            <div className="flex items-end gap-3 h-36 pt-4">
               {weeklyProgress.map(d => (
-                <div key={d.day} className="flex-1 flex flex-col items-center gap-1">
-                  <span className="text-[10px] text-gray-500">{d.testScore > 0 ? `${d.testScore}%` : ''}</span>
+                <div key={d.day} className="flex-1 flex flex-col items-center gap-1.5">
+                  <span className="text-[10px] font-bold text-slate-600">{d.testScore > 0 ? `${d.testScore}%` : ''}</span>
                   <div
-                    className={`w-full rounded-t-lg transition-all ${d.testScore > 75 ? 'bg-blue-500' : d.testScore > 0 ? 'bg-blue-300' : 'bg-gray-100'}`}
-                    style={{ height: `${d.testScore > 0 ? (d.testScore / maxTest) * 100 : 5}%` }}
+                    className={`w-full rounded-t-xl transition-all ${d.testScore > 75 ? 'bg-blue-600' : d.testScore > 0 ? 'bg-blue-400' : 'bg-slate-100'}`}
+                    style={{ height: `${d.testScore > 0 ? (d.testScore / maxTest) * 100 : 8}%` }}
                   />
-                  <span className="text-[10px] text-gray-400">{d.day}</span>
+                  <span className="text-[11px] font-bold text-slate-500">{d.day}</span>
                 </div>
               ))}
             </div>
-          </div>
-
-          {/* Daily summary */}
-          <div className="space-y-2">
-            {weeklyProgress.map(d => (
-              <div key={d.day} className="flex items-center justify-between bg-white border border-gray-100 rounded-xl px-4 py-3">
-                <span className="text-sm font-semibold text-gray-700 w-10">{d.day}</span>
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-green-500" />
-                  <span className="text-xs text-gray-600">{d.tasks} tasks</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <BarChart2 className="w-3.5 h-3.5 text-blue-500" />
-                  <span className="text-xs text-gray-600">{d.testScore > 0 ? `${d.testScore}% score` : 'No test'}</span>
-                </div>
-                <div className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-                  d.tasks >= 6 ? 'bg-green-100 text-green-700' :
-                  d.tasks >= 4 ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'
-                }`}>
-                  {d.tasks >= 6 ? 'Full' : d.tasks >= 4 ? 'Partial' : 'Missed'}
-                </div>
-              </div>
-            ))}
           </div>
         </div>
       )}

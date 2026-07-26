@@ -1,6 +1,7 @@
 const express = require('express');
 const pool = require('../db');
 const auth = require('../middleware/auth');
+const { validate, submitQuizResultSchema, updateStreakSchema, upsertQuizCompletionSchema } = require('../middleware/validation');
 
 const router = express.Router();
 
@@ -41,7 +42,7 @@ router.get('/results', auth, async (req, res) => {
 });
 
 // POST /api/quiz/results
-router.post('/results', auth, async (req, res) => {
+router.post('/results', auth, validate(submitQuizResultSchema), async (req, res) => {
   const {
     quizId, date, score, totalQuestions, percentage,
     timeTaken, timePerQuestion, topicAccuracy, subjectAccuracy, answers,
@@ -116,7 +117,7 @@ router.get('/streak', auth, async (req, res) => {
 });
 
 // PUT /api/quiz/streak
-router.put('/streak', auth, async (req, res) => {
+router.put('/streak', auth, validate(updateStreakSchema), async (req, res) => {
   const {
     currentStreak, longestStreak, lastQuizDate,
     totalQuizzesTaken, totalPoints, unlockedRewards, dailyGoalCompleted,
@@ -186,12 +187,8 @@ router.get('/completions', auth, async (req, res) => {
 });
 
 // POST /api/quiz/completions
-router.post('/completions', auth, async (req, res) => {
+router.post('/completions', auth, validate(upsertQuizCompletionSchema), async (req, res) => {
   const { quizId, completed = true, score = 0, date, duration = 15 } = req.body;
-
-  if (!quizId) {
-    return res.status(400).json({ error: 'quizId is required' });
-  }
 
   try {
     await pool.query(

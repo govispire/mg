@@ -43,9 +43,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import './TeamsStudy.css';
 
 // Import Data Sources
-import { dailyQuizzes } from '@/data/dailyQuizzesData';
+import { useQuizzes } from '@/hooks/useQuizCatalog';
 import { categoryCurrentAffairs } from '@/data/categoryCurrentAffairsData';
-import { prelimsTests, mainsTests, sectionalTests } from '@/data/testData';
 import { toast } from 'sonner';
 
 // --- Types ---
@@ -232,6 +231,10 @@ const initialChatMessages: ChatMessage[] = [
 
 const TeamsStudy = () => {
     const navigate = useNavigate();
+    const { data: dailyQuizzes = [] } = useQuizzes();
+    const { data: prelimsTests = [] } = useQuizzes({ type: 'prelims' });
+    const { data: mainsTests = [] } = useQuizzes({ type: 'mains' });
+    const { data: sectionalTests = [] } = useQuizzes({ type: 'sectional' });
 
     // --- State ---
     const [viewMode, setViewMode] = useState<'dashboard' | 'find-teams' | 'leaderboard'>('dashboard');

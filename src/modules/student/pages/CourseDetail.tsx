@@ -6,12 +6,14 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { CourseNavigation } from '@/components/student/courses/CourseNavigation';
 import { BookOpen, Play, FileText, Clock } from 'lucide-react';
-import { getCourseById, subjects } from '@/data/courseData';
+import { useCourse } from '@/hooks/useCourses';
 
 const CourseDetail = () => {
   const { courseId } = useParams();
-  const course = getCourseById(courseId!);
+  const { data: course, isLoading: courseLoading } = useCourse(courseId);
   
+  if (courseLoading) return <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" /></div>;
+
   if (!course) {
     return (
       <div className="text-center py-10">
@@ -23,7 +25,7 @@ const CourseDetail = () => {
     );
   }
   
-  const courseSubjects = course.subjects.map(subjectId => subjects[subjectId]).filter(Boolean);
+  const courseSubjects = ((course as any).subjects || []).filter(Boolean);
   
   return (
     <div className="space-y-6">

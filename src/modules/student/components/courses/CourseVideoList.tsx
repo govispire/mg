@@ -4,7 +4,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Play, CheckCircle, BookOpen } from 'lucide-react';
-import { getCourseById, subjects, getAllVideosBySubject } from '@/data/courseData';
+import { useCourse } from '@/hooks/useCourses';
 
 interface CourseVideoListProps {
   courseId: string;
@@ -12,10 +12,12 @@ interface CourseVideoListProps {
 }
 
 export const CourseVideoList: React.FC<CourseVideoListProps> = ({ courseId, subject }) => {
-  const course = getCourseById(courseId);
-  const subjectData = subjects[subject];
-  const videos = getAllVideosBySubject(subject);
+  const { data: course, isLoading: courseLoading } = useCourse(courseId);
+  const courseSubjectsList = (course as any)?.subjects || [];
+  const subjectData = courseSubjectsList.find((s: any) => s.id === subject);
+  const videos = subjectData?.videos || [];
   
+  if (courseLoading) return <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" /></div>;
   if (!course || !subjectData) return null;
   
   const watchedCount = videos.filter(v => v.isWatched).length;

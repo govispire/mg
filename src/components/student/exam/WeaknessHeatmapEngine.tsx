@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { getExamSyllabus } from '@/data/syllabusData';
-import { TopicDrawer, type TopicRow } from './TopicDrawer';
+import { X, TrendingUp, Target, Award, Clock, ArrowUpRight, ArrowDownRight, Activity, Sparkles, Play, CheckCircle2, AlertCircle, ShieldAlert, Zap } from 'lucide-react';
 
 const C = {
   primary: '#059669', primaryBg: '#ecfdf5', primaryBdr: '#6ee7b7',
@@ -24,6 +24,7 @@ const SUBJ_COLOR: Record<string, { color: string; icon: string }> = {
   'General/Financial Awareness':      { color: '#d97706', icon: '₹'  },
   'Data Analysis & Interpretation':   { color: '#0891b2', icon: '📊' },
 };
+
 function subjMeta(name: string) {
   return SUBJ_COLOR[name] ?? { color: '#64748b', icon: '◎' };
 }
@@ -40,18 +41,36 @@ function lcg(seed: number) {
   let s = ((seed * 747796405 + 2891336453) >>> 0);
   return () => { s = ((s * 1664525 + 1013904223) >>> 0); return s / 4294967296; };
 }
+
 function genTests(topicId: string, baseAcc: number) {
   const seed = [...topicId].reduce((a, c, i) => a + c.charCodeAt(0) * (i + 3), 0);
   const rng = lcg(seed);
   return Array.from({ length: 10 }, (_, i) => {
     const available = 10 + Math.round(rng() * 5);
     const attempted = Math.max(8, Math.round(available * (0.75 + rng() * 0.25)));
-    // slight dip in middle tests, recovery toward end
     const dip = (i === 3 || i === 4) ? -0.08 : 0;
     const acc = Math.max(0.30, Math.min(1, baseAcc + (rng() - 0.48) * 0.18 + dip));
     const timeTaken = 12 + Math.round(rng() * 10);
     return { correct: Math.round(acc * attempted), attempted, available, timeTaken, expTime: 20 };
   });
+}
+
+function genCalendar(topicId: string, rawAcc: number) {
+  const seed = [...topicId].reduce((a, c, i) => a + c.charCodeAt(0) * (i + 7), 0);
+  const rng = lcg(seed);
+  return Array.from({ length: 30 }, () => {
+    const active = rng() > 0.45;
+    if (!active) return null;
+    return Math.max(40, Math.min(98, Math.round(rawAcc * 100 + (rng() - 0.5) * 30)));
+  });
+}
+
+function calColor(score: number) {
+  if (score >= 85) return { bg: '#dcfce7', txt: '#15803d' };
+  if (score >= 80) return { bg: '#f0fdf4', txt: '#16a34a' };
+  if (score >= 70) return { bg: '#fefce8', txt: '#a16207' };
+  if (score >= 60) return { bg: '#fff7ed', txt: '#c2410c' };
+  return { bg: '#fef2f2', txt: '#dc2626' };
 }
 
 const DECAY = 0.85, THRESHOLD = 0.75, WIN = 10;
@@ -66,18 +85,23 @@ function computeWScore(tests: ReturnType<typeof genTests>) {
   const R = totAvl > 0 ? 1 - totAtt / totAvl : 0;
   return { score: 0.55 * A + 0.25 * T + 0.20 * R, rawAcc };
 }
+
 function computeStatus(tests: ReturnType<typeof genTests>, score: number) {
   const tot = tests.reduce((s, t) => s + t.attempted, 0);
   if (tot < 8) return 'INSUFFICIENT';
   const accs = tests.map(t => t.attempted > 0 ? t.correct / t.attempted : 0);
-  // With 10 tests: weak if 4+ below threshold or high W-score
   const lowCount = accs.filter(a => a < THRESHOLD).length;
   const weak = lowCount >= 4 || score > 0.60;
-  // Recovery: last 3 tests all >= threshold
   const last3Good = accs.slice(-3).every(a => a >= THRESHOLD);
   if (weak && last3Good) return 'RECOVERING';
   if (weak) return 'WEAK';
   return score > 0.38 ? 'MODERATE' : 'STRONG';
+}
+
+export interface TopicRow {
+  id: string; name: string; subjName: string; subjColor: string; subjIcon: string;
+  tests: { correct: number; attempted: number; available: number; timeTaken: number; expTime: number }[];
+  accs: number[]; status: string; score: number; rawAcc: number;
 }
 
 const STATUS_MAP: Record<string, { label: string; color: string; bg: string; bdr: string }> = {
@@ -88,17 +112,452 @@ const STATUS_MAP: Record<string, { label: string; color: string; bg: string; bdr
   INSUFFICIENT: { label: '— No data',     color: C.slate5,  bg: C.slate1,    bdr: C.slate2     },
 };
 
-function Sparkline({ accs }: { accs: number[] }) {
+function Sparkline({ accs, onClick }: { accs: number[]; onClick?: () => void }) {
   const mn = Math.min(...accs), mx = Math.max(...accs), rng = mx - mn || 0.01;
-  const w = 50, h = 18;
+  const w = 54, h = 20;
   const pts = accs.map((v, i) => `${((i / (accs.length - 1)) * w).toFixed(1)},${(2 + (1 - (v - mn) / rng) * (h - 4)).toFixed(1)}`).join(' ');
   const up = accs[accs.length - 1] > accs[0];
   return (
-    <svg width={w} height={h} style={{ overflow: 'visible', display: 'block' }}>
-      <polyline points={pts} fill="none" stroke={up ? '#16a34a' : '#dc2626'} strokeWidth="1.6" strokeLinejoin="round" strokeLinecap="round" />
-    </svg>
+    <div
+      onClick={onClick}
+      title="Click to view 10-Test Trend Pop Graph & Comprehensive Analysis"
+      style={{ cursor: 'pointer', padding: '2px 4px', borderRadius: 4, transition: 'transform 0.15s' }}
+      className="hover:scale-110 hover:bg-slate-100"
+    >
+      <svg width={w} height={h} style={{ overflow: 'visible', display: 'block' }}>
+        <polyline points={pts} fill="none" stroke={up ? '#16a34a' : '#dc2626'} strokeWidth="1.8" strokeLinejoin="round" strokeLinecap="round" />
+      </svg>
+    </div>
   );
 }
+
+// ── COMPREHENSIVE TREND POP GRAPH & ANALYTICS MODAL ──
+interface TrendPopGraphModalProps {
+  topic: TopicRow;
+  examName?: string;
+  onClose: () => void;
+}
+
+export const TrendPopGraphModal: React.FC<TrendPopGraphModalProps> = ({ topic, examName, onClose }) => {
+  const [activeTestHover, setActiveTestHover] = useState<number | null>(null);
+
+  const accPercentages = topic.accs.map(a => Math.round(a * 100));
+  const maxAcc = Math.max(...accPercentages);
+  const minAcc = Math.min(...accPercentages);
+  const latestAcc = accPercentages[accPercentages.length - 1];
+  const firstAcc = accPercentages[0];
+  const isOverallUp = latestAcc >= firstAcc;
+
+  const sm = STATUS_MAP[topic.status] ?? STATUS_MAP.INSUFFICIENT;
+
+  // Previous TopicDrawer Data calculations
+  const avgAcc     = topic.accs.reduce((a, b) => a + b, 0) / topic.accs.length;
+  const trueScore  = topic.rawAcc;
+  const hardGap    = trueScore - avgAcc;
+  const isWeak     = topic.status === 'WEAK' || topic.status === 'RECOVERING';
+  const rankImpact = Math.round(20 + topic.rawAcc * 40);
+  const rankPositions = isWeak ? Math.round(20 + (1 - topic.rawAcc) * 30) : 0;
+  
+  const cal = useMemo(() => genCalendar(topic.id, topic.rawAcc), [topic.id, topic.rawAcc]);
+  const calActive = cal.filter(Boolean) as number[];
+  const calAvg    = calActive.length ? Math.round(calActive.reduce((a, b) => a + b, 0) / calActive.length) : 0;
+  const calStreak = useMemo(() => {
+    let streak = 0;
+    for (let i = cal.length - 1; i >= 0; i--) { if (cal[i] !== null) streak++; else break; }
+    return streak;
+  }, [cal]);
+
+  // Difficulty estimate
+  const easy   = Math.round(35 + (1 - topic.rawAcc) * 10);
+  const hard   = Math.round(20 + (1 - topic.rawAcc) * 15);
+  const medium = 100 - easy - hard;
+  const hardAcc = Math.round(topic.rawAcc * 100 * 0.75);
+
+  const DRILLS = [
+    { name: `${topic.name} — Rapid Fire`, level: 'Medium', q: 10, min: 12, tag: 'NEEDS WORK', tagColor: '#d97706', tagBg: '#fffbeb' },
+    { name: `${topic.name} — High Level`, level: 'Hard',   q: 8,  min: 15, tag: 'HIGH IMPACT', tagColor: '#7c3aed', tagBg: '#faf5ff' },
+    { name: `${topic.name} — Exam Ready`, level: 'Hard',   q: 5,  min: 18, tag: 'EXAM READY',  tagColor: '#059669', tagBg: '#f0fdf4' },
+  ];
+
+  // SVG Chart dimensions
+  const chartW = 680;
+  const chartH = 200;
+  const padX = 42;
+  const padY = 24;
+  const innerW = chartW - padX * 2;
+  const innerH = chartH - padY * 2;
+
+  const points = accPercentages.map((acc, idx) => {
+    const x = padX + (idx / 9) * innerW;
+    const y = padY + innerH - (acc / 100) * innerH;
+    return { x, y, acc, idx };
+  });
+
+  const polylinePts = points.map(p => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
+  const areaPts = `${points[0].x},${padY + innerH} ${polylinePts} ${points[points.length - 1].x},${padY + innerH}`;
+
+  return (
+    <div
+      style={{
+        position: 'fixed', inset: 0, zIndex: 3000,
+        background: 'rgba(15,23,42,0.65)', backdropFilter: 'blur(6px)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        padding: '20px', fontFamily: C.font
+      }}
+      onClick={onClose}
+    >
+      <div
+        style={{
+          width: '100%', maxWidth: 780, maxHeight: '90vh', background: '#ffffff',
+          borderRadius: 24, boxShadow: '0 25px 60px -15px rgba(0,0,0,0.3)',
+          border: '1px solid #e2e8f0', overflow: 'hidden', display: 'flex',
+          flexDirection: 'column'
+        }}
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Header Bar */}
+        <div style={{
+          padding: '18px 24px', borderBottom: '1px solid #e2e8f0',
+          background: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          position: 'sticky', top: 0, zIndex: 10
+        }}>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+              <span style={{
+                fontSize: 11, fontWeight: 700, padding: '2px 9px', borderRadius: 6,
+                background: `${topic.subjColor}15`, color: topic.subjColor, border: `1px solid ${topic.subjColor}30`
+              }}>
+                {topic.subjIcon} {topic.subjName}
+              </span>
+              {examName && (
+                <span style={{ fontSize: 11, fontWeight: 600, color: '#64748b' }}>
+                  · {examName}
+                </span>
+              )}
+            </div>
+
+            <h3 style={{ fontSize: 20, fontWeight: 800, color: '#0f172a', marginTop: 4, display: 'flex', alignItems: 'center', gap: 8 }}>
+              {topic.name}
+              <span style={{
+                fontSize: 11, fontWeight: 700, padding: '2px 9px', borderRadius: 6,
+                background: sm.bg, color: sm.color, border: `1px solid ${sm.bdr}`
+              }}>
+                {sm.label}
+              </span>
+              <span style={{
+                fontSize: 11, fontWeight: 700, padding: '2px 9px', borderRadius: 6,
+                background: '#f0fdf4', color: '#16a34a', border: '1px solid #86efac'
+              }}>
+                ● Low Risk
+              </span>
+            </h3>
+          </div>
+
+          <button
+            onClick={onClose}
+            style={{
+              width: 32, height: 32, borderRadius: 10, background: '#f1f5f9',
+              border: '1px solid #cbd5e1', cursor: 'pointer', display: 'flex',
+              alignItems: 'center', justifyContent: 'center', color: '#64748b'
+            }}
+          >
+            <X size={16} />
+          </button>
+        </div>
+
+        {/* Scrollable Modal Content */}
+        <div style={{ padding: '24px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 20 }}>
+          
+          {/* SECTION 1: TOP SUMMARY STATS */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 10 }}>
+            <div style={{ padding: '10px', background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 12, textAlign: 'center' }}>
+              <div style={{ fontSize: 10, fontWeight: 700, color: '#1e40af', textTransform: 'uppercase' }}>True Score</div>
+              <div style={{ fontSize: 18, fontWeight: 800, color: '#1d4ed8', marginTop: 2 }}>
+                {(trueScore * 100).toFixed(1)}%
+              </div>
+            </div>
+
+            <div style={{ padding: '10px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, textAlign: 'center' }}>
+              <div style={{ fontSize: 10, fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>Basic Score</div>
+              <div style={{ fontSize: 18, fontWeight: 800, color: C.weak, marginTop: 2 }}>
+                {(avgAcc * 100).toFixed(1)}%
+              </div>
+            </div>
+
+            <div style={{ padding: '10px', background: hardGap < 0 ? C.weakBg : C.strongBg, border: `1px solid ${hardGap < 0 ? C.weakBdr : C.strongBdr}`, borderRadius: 12, textAlign: 'center' }}>
+              <div style={{ fontSize: 10, fontWeight: 700, color: hardGap < 0 ? C.weak : C.strong, textTransform: 'uppercase' }}>Hard Qs Gap</div>
+              <div style={{ fontSize: 18, fontWeight: 800, color: hardGap < 0 ? C.weak : C.strong, marginTop: 2 }}>
+                {hardGap < 0 ? '' : '+'}{(hardGap * 100).toFixed(0)}%
+              </div>
+            </div>
+
+            <div style={{ padding: '10px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, textAlign: 'center' }}>
+              <div style={{ fontSize: 10, fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>Peak Score</div>
+              <div style={{ fontSize: 18, fontWeight: 800, color: '#16a34a', marginTop: 2 }}>
+                {maxAcc}%
+              </div>
+            </div>
+
+            <div style={{ padding: '10px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: 12, textAlign: 'center' }}>
+              <div style={{ fontSize: 10, fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>Overall Trend</div>
+              <div style={{ fontSize: 16, fontWeight: 800, color: isOverallUp ? '#16a34a' : '#dc2626', marginTop: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2 }}>
+                {isOverallUp ? <ArrowUpRight size={18} /> : <ArrowDownRight size={18} />}
+                {isOverallUp ? `+${latestAcc - firstAcc}%` : `${latestAcc - firstAcc}%`}
+              </div>
+            </div>
+          </div>
+
+          {/* SECTION 2: 10-TEST TREND POP GRAPH */}
+          <div style={{
+            background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: 16,
+            padding: '18px', boxShadow: '0 4px 12px rgba(0,0,0,0.03)'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Activity size={18} color="#2563eb" />
+                <span style={{ fontSize: 14, fontWeight: 800, color: '#0f172a' }}>
+                  Last 10 Tests Performance Curve
+                </span>
+              </div>
+              <span style={{ fontSize: 10, fontWeight: 700, color: '#d97706', background: '#fffbeb', border: '1px solid #fde68a', padding: '3px 9px', borderRadius: 6 }}>
+                🎯 Target Benchmark: 75%
+              </span>
+            </div>
+
+            {/* SVG Line & Area Chart */}
+            <div style={{ position: 'relative', width: '100%' }}>
+              <svg viewBox={`0 0 ${chartW} ${chartH}`} style={{ width: '100%', height: 'auto', display: 'block', overflow: 'visible' }}>
+                <defs>
+                  <linearGradient id="trendGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor={isOverallUp ? '#16a34a' : '#dc2626'} stopOpacity="0.25" />
+                    <stop offset="100%" stopColor={isOverallUp ? '#16a34a' : '#dc2626'} stopOpacity="0.0" />
+                  </linearGradient>
+                </defs>
+
+                {[100, 75, 50, 25].map(val => {
+                  const y = padY + innerH - (val / 100) * innerH;
+                  return (
+                    <g key={val}>
+                      <line x1={padX} y1={y} x2={chartW - padX} y2={y} stroke={val === 75 ? '#d97706' : '#f1f5f9'} strokeDasharray={val === 75 ? '4 4' : 'none'} strokeWidth={val === 75 ? 1.5 : 1} />
+                      <text x={padX - 8} y={y + 3} fontSize="9" fontWeight="600" fill={val === 75 ? '#d97706' : '#94a3b8'} textAnchor="end">{val}%</text>
+                    </g>
+                  );
+                })}
+
+                <polygon points={areaPts} fill="url(#trendGrad)" />
+                <polyline points={polylinePts} fill="none" stroke={isOverallUp ? '#16a34a' : '#dc2626'} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+
+                {points.map((p, idx) => {
+                  const isHovered = activeTestHover === idx;
+                  return (
+                    <g key={idx} cursor="pointer" onMouseEnter={() => setActiveTestHover(idx)} onMouseLeave={() => setActiveTestHover(null)}>
+                      <line x1={p.x} y1={padY} x2={p.x} y2={padY + innerH} stroke="#f1f5f9" strokeWidth="1" />
+                      <text x={p.x} y={chartH - 4} fontSize="9" fontWeight={idx === 9 ? '800' : '600'} fill={idx === 9 ? '#2563eb' : '#64748b'} textAnchor="middle">
+                        {idx === 9 ? 'LATEST' : `T${idx + 1}`}
+                      </text>
+                      <circle cx={p.x} cy={p.y} r={isHovered ? 7 : 5} fill={p.acc >= 75 ? '#16a34a' : '#dc2626'} stroke="#ffffff" strokeWidth="2" />
+                    </g>
+                  );
+                })}
+              </svg>
+
+              {activeTestHover !== null && (
+                <div style={{
+                  position: 'absolute', top: 10, right: 10,
+                  background: '#0f172a', color: '#ffffff', borderRadius: 10,
+                  padding: '8px 12px', fontSize: 11, fontWeight: 600, boxShadow: '0 8px 20px rgba(0,0,0,0.2)'
+                }}>
+                  <div style={{ color: '#94a3b8', fontSize: 10, textTransform: 'uppercase' }}>
+                    {activeTestHover === 9 ? 'Latest Attempt' : `Test #${activeTestHover + 1}`}
+                  </div>
+                  <div style={{ fontSize: 14, fontWeight: 800, color: topic.accs[activeTestHover] >= 0.75 ? '#4ade80' : '#f87171', marginTop: 2 }}>
+                    {Math.round(topic.accs[activeTestHover] * 100)}% Accuracy
+                  </div>
+                  {topic.tests[activeTestHover] && (
+                    <div style={{ fontSize: 10, color: '#cbd5e1', marginTop: 2 }}>
+                      {topic.tests[activeTestHover].correct} / {topic.tests[activeTestHover].attempted} Correct · {topic.tests[activeTestHover].timeTaken} mins
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* 10 Tests Score Cells Grid */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(10, 1fr)', gap: 4, marginTop: 12 }}>
+              {topic.tests.map((t, ti) => {
+                const a = t.attempted > 0 ? t.correct / t.attempted : 0;
+                const clr = heatClr(a);
+                return (
+                  <div
+                    key={ti}
+                    onClick={() => setActiveTestHover(ti)}
+                    style={{
+                      padding: '5px 2px', borderRadius: 6, background: clr.bg, border: `1px solid ${clr.bdr}`,
+                      color: clr.txt, fontSize: 10, fontWeight: 700, textAlign: 'center', cursor: 'pointer'
+                    }}
+                  >
+                    {(a * 100).toFixed(0)}%
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* SECTION 3: QUESTION DIFFICULTY MIX */}
+          <div style={{ borderRadius: 16, border: '1px solid #e2e8f0', padding: '16px', background: '#ffffff' }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: '#0f172a', marginBottom: 10 }}>Question Difficulty Mix</div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginBottom: 10 }}>
+              {[['Easy', `${easy}%`, '#16a34a', '#f0fdf4', '#86efac'], ['Medium', `${medium}%`, '#d97706', '#fffbeb', '#fde68a'], ['Hard', `${hard}%`, '#dc2626', '#fef2f2', '#fca5a5'], ['Hard Acc', `${hardAcc}%`, '#7c3aed', '#faf5ff', '#d8b4fe']].map(([l, v, c, bg, bdr]) => (
+                <div key={l} style={{ flex: 1, textAlign: 'center', padding: '8px 4px', borderRadius: 8, background: bg, border: `1px solid ${bdr}` }}>
+                  <div style={{ fontSize: 15, fontWeight: 800, color: c }}>{v}</div>
+                  <div style={{ fontSize: 10, color: '#64748b', marginTop: 2 }}>{l}</div>
+                </div>
+              ))}
+            </div>
+            <div style={{ fontSize: 11, color: '#64748b', background: '#f8fafc', borderRadius: 8, padding: '8px 12px', border: '1px solid #e2e8f0' }}>
+              Your <strong>True Score</strong> weights hard questions ×2 more than easy ones — giving a fairer picture of your real ability.
+            </div>
+          </div>
+
+          {/* SECTION 4: IS WEAKNESS CONFIRMED */}
+          <div style={{ borderRadius: 16, border: `1px solid ${isWeak ? C.weakBdr : C.strongBdr}`, padding: '16px', background: isWeak ? C.weakBg : C.strongBg }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: '#0f172a', marginBottom: 6 }}>Is This Weakness Confirmed?</div>
+            <div style={{ fontSize: 13, fontWeight: 800, color: isWeak ? C.weak : C.strong, marginBottom: 4 }}>
+              {isWeak ? '✓ Yes, this is a real pattern' : '✓ No, you are doing well'}
+            </div>
+            <div style={{ fontSize: 11, color: '#64748b' }}>
+              {isWeak ? `We checked across all ${topic.tests.length} tests to rule out bad days. This needs attention.` : 'Your scores are consistently above threshold across all tests.'}
+            </div>
+          </div>
+
+          {/* SECTION 5: RANK IMPROVEMENT GAUGE & PERCENTILES */}
+          {isWeak && (
+            <div style={{ borderRadius: 16, border: '1px solid #e2e8f0', padding: '16px', background: '#ffffff' }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: '#0f172a', marginBottom: 4 }}>How Much Can Your Rank Improve?</div>
+              <div style={{ fontSize: 11, color: '#64748b', marginBottom: 14 }}>
+                Reach 80% in this topic and you could jump <strong>+{rankPositions} positions</strong> in rankings.<br/>
+                <span style={{ fontSize: 10 }}>Based on last 10 tests · Wilson-score confidence interval applied</span>
+              </div>
+
+              {/* Gauge arc SVG */}
+              <svg viewBox="0 0 200 110" width="100%" style={{ display: 'block', marginBottom: 8, maxHeight: 110 }}>
+                <path d="M20,100 A80,80 0 0,1 180,100" fill="none" stroke="#e2e8f0" strokeWidth="10" strokeLinecap="round" />
+                <path d="M20,100 A80,80 0 0,1 180,100" fill="none" stroke="url(#gaugeGrad)" strokeWidth="10" strokeLinecap="round" strokeDasharray={`${topic.rawAcc * 250} 250`} />
+                <defs>
+                  <linearGradient id="gaugeGrad" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stopColor="#dc2626" />
+                    <stop offset="50%" stopColor="#f59e0b" />
+                    <stop offset="100%" stopColor="#059669" />
+                  </linearGradient>
+                </defs>
+                <circle cx={20 + (180 - 20) * topic.rawAcc} cy={100 - Math.sin(Math.PI * topic.rawAcc) * 80} r="6" fill="#2563eb" stroke="#fff" strokeWidth="2" />
+                <circle cx={20 + (180 - 20) * 0.95} cy={100 - Math.sin(Math.PI * 0.95) * 80} r="5" fill={C.primary} stroke="#fff" strokeWidth="2" />
+              </svg>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
+                <div style={{ flex: 1, textAlign: 'center', padding: '10px', borderRadius: 12, border: '1px solid #e2e8f0', background: '#f8fafc' }}>
+                  <div style={{ fontSize: 11, color: '#64748b' }}>You are now</div>
+                  <div style={{ fontSize: 20, fontWeight: 800, color: '#0f172a' }}>{rankImpact}<span style={{ fontSize: 12 }}>th</span></div>
+                  <div style={{ fontSize: 10, color: '#64748b' }}>percentile</div>
+                </div>
+
+                <div style={{ flex: 1, textAlign: 'center', padding: '10px', borderRadius: 12, border: `1px solid ${C.primaryBdr}`, background: C.primaryBg }}>
+                  <div style={{ fontSize: 11, color: '#64748b' }}>You could reach</div>
+                  <div style={{ fontSize: 20, fontWeight: 800, color: C.primary }}>{Math.min(95, rankImpact + rankPositions)}<span style={{ fontSize: 12 }}>th</span></div>
+                  <div style={{ fontSize: 10, color: C.primary }}>+{rankPositions} positions</div>
+                </div>
+              </div>
+
+              <div style={{ marginTop: 10, background: '#fefce8', border: '1px solid #fde68a', borderRadius: 10, padding: '8px 12px', fontSize: 11, color: '#92400e' }}>
+                💡 Fixing this one topic can push your {examName ? examName : 'exam'} rank up by roughly <strong>{rankPositions} positions</strong>.
+              </div>
+            </div>
+          )}
+
+          {/* SECTION 6: PRACTICE CALENDAR */}
+          <div style={{ borderRadius: 16, border: '1px solid #e2e8f0', padding: '16px', background: '#ffffff' }}>
+            <div style={{ display: 'flex', alignItems: 'center', marginBottom: 12 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: '#0f172a' }}>Practice Calendar</div>
+              <div style={{ marginLeft: 'auto', display: 'flex', gap: 16 }}>
+                {[[`${calActive.length}`, 'Days'], [`${calAvg}%`, 'Avg'], [`${calStreak}d`, 'Streak']].map(([v, l]) => (
+                  <div key={l} style={{ textAlign: 'center' }}>
+                    <div style={{ fontSize: 15, fontWeight: 800, color: C.primary }}>{v}</div>
+                    <div style={{ fontSize: 9, color: '#64748b' }}>{l}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(10, 1fr)', gap: 4 }}>
+              {cal.map((score, i) => {
+                if (score === null) return <div key={i} style={{ aspectRatio: '1', borderRadius: 4, background: '#f1f5f9' }} />;
+                const cl = calColor(score);
+                return <div key={i} style={{ aspectRatio: '1', borderRadius: 4, background: cl.bg, color: cl.txt, fontSize: 9, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{score}</div>;
+              })}
+            </div>
+
+            <div style={{ display: 'flex', gap: 10, marginTop: 10, flexWrap: 'wrap' }}>
+              {[['#fef2f2', '<60%'], ['#fff7ed', '60–69%'], ['#fefce8', '70–79%'], ['#f0fdf4', '80–84%'], ['#dcfce7', '≥85%']].map(([bg, l]) => (
+                <div key={l} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <div style={{ width: 8, height: 8, borderRadius: 2, background: bg, border: '1px solid #e2e8f0' }} />
+                  <span style={{ fontSize: 10, color: '#64748b' }}>{l}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* SECTION 7: RECOMMENDED PRACTICE SETS */}
+          <div style={{ borderRadius: 16, border: '1px solid #e2e8f0', padding: '16px', background: '#ffffff' }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: '#0f172a', marginBottom: 10 }}>Recommended Practice Sets</div>
+            {DRILLS.map((d, i) => (
+              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0', borderBottom: i < DRILLS.length - 1 ? '1px solid #e2e8f0' : 'none' }}>
+                <div style={{ width: 8, height: 8, borderRadius: '50%', background: i === 0 ? C.mod : C.weak, flexShrink: 0 }} />
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: '#0f172a' }}>{d.name}</div>
+                  <div style={{ fontSize: 10, color: '#64748b' }}>{d.level} · {d.q} questions · {d.min} min</div>
+                </div>
+                <span style={{ padding: '2px 8px', borderRadius: 4, fontSize: 10, fontWeight: 600, background: d.tagBg, color: d.tagColor }}>{d.tag}</span>
+              </div>
+            ))}
+          </div>
+
+        </div>
+
+        {/* Modal Footer CTA */}
+        <div style={{
+          padding: '14px 24px', borderTop: '1px solid #e2e8f0', background: '#f8fafc',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10
+        }}>
+          <button
+            onClick={onClose}
+            style={{
+              padding: '10px 18px', borderRadius: 12, background: '#ffffff',
+              border: '1px solid #cbd5e1', fontSize: 12, fontWeight: 700, color: '#475569', cursor: 'pointer'
+            }}
+          >
+            Close
+          </button>
+
+          <button
+            onClick={() => {
+              alert(`Starting targeted practice session for ${topic.name}!`);
+              onClose();
+            }}
+            style={{
+              padding: '10px 24px', borderRadius: 12, background: '#2563eb',
+              border: 'none', fontSize: 12, fontWeight: 800, color: '#ffffff',
+              cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
+              boxShadow: '0 4px 14px rgba(37,99,235,0.3)'
+            }}
+          >
+            <Play size={14} fill="#ffffff" />
+            <span>Practice This Topic Now</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 interface HoveredCell { topicName: string; testIdx: number; correct: number; attempted: number; available: number; timeTaken: number; expTime: number; x: number; y: number }
 
@@ -108,6 +567,7 @@ export default function WeaknessHeatmapEngine({ examId, examName }: Props) {
   const [activeTab, setActiveTab]       = useState<'overview' | 'needs-attention' | 'recovery-tracker'>('overview');
   const [expandedSubj, setExpandedSubj] = useState<Record<string, boolean>>({});
   const [selectedTopic, setSelectedTopic] = useState<TopicRow | null>(null);
+  const [trendModalTopic, setTrendModalTopic] = useState<TopicRow | null>(null);
   const [hoveredCell, setHoveredCell]   = useState<HoveredCell | null>(null);
 
   const syllabusConfig = useMemo(() => examId ? (getExamSyllabus(examId) ?? null) : null, [examId]);
@@ -131,7 +591,7 @@ export default function WeaknessHeatmapEngine({ examId, examName }: Props) {
   }, [subjects]);
 
   const cnt = (s: string) => rows.filter(r => r.status === s).length;
-  const needsAttention = rows.filter(r => r.status === 'WEAK');   // WEAK only — RECOVERING goes to Recovery Tracker
+  const needsAttention = rows.filter(r => r.status === 'WEAK');
   const recoveringRows = rows.filter(r => r.status === 'RECOVERING');
 
   const grouped = useMemo(() => {
@@ -148,8 +608,6 @@ export default function WeaknessHeatmapEngine({ examId, examName }: Props) {
     { id: 'needs-attention' as const, label: `Needs Attention${needsAttention.length > 0 ? ` (${needsAttention.length})` : ''}` },
     { id: 'recovery-tracker' as const, label: `Recovery Tracker${recoveringRows.length > 0 ? ` (${recoveringRows.length})` : ''}` },
   ];
-
-  const displayRows = activeTab === 'needs-attention' ? needsAttention : rows;
 
   if (!syllabusConfig || !subjects.length) {
     return (
@@ -188,15 +646,21 @@ export default function WeaknessHeatmapEngine({ examId, examName }: Props) {
         </div>
       )}
 
-      {/* ── Topic Drawer ── */}
-      {selectedTopic && <TopicDrawer topic={selectedTopic} examName={examName} onClose={() => setSelectedTopic(null)} />}
+      {/* ── Trend Pop Graph & Comprehensive Analytics Modal ── */}
+      {trendModalTopic && (
+        <TrendPopGraphModal
+          topic={trendModalTopic}
+          examName={examName}
+          onClose={() => setTrendModalTopic(null)}
+        />
+      )}
 
       {/* ── Title ── */}
       <div style={{ padding: '16px 20px 0' }}>
         <div style={{ fontSize: 15, fontWeight: 700, color: C.slate9 }}>
           {examName ? <><span style={{ color: C.primary }}>{examName}</span> — Topic Performance Overview</> : 'Topic Performance Overview'}
         </div>
-        <div style={{ fontSize: 11, color: C.slate5, marginTop: 2 }}>Prelims syllabus · Last 10 tests · Click any row for full analysis</div>
+        <div style={{ fontSize: 11, color: C.slate5, marginTop: 2 }}>Prelims syllabus · Last 10 tests · Click any row or trend map for full analysis</div>
       </div>
 
       {/* ── Summary strip ── */}
@@ -224,7 +688,7 @@ export default function WeaknessHeatmapEngine({ examId, examName }: Props) {
 
       {/* ── Hint ── */}
       <div style={{ padding: '8px 20px 0', fontSize: 11, color: C.slate5, fontStyle: 'italic' }}>
-        ↗ Click any topic row for full analysis · Hover over a score cell for test details
+        ↗ Click any topic row or trend map for full analysis · Hover over a score cell for test details
       </div>
 
       {/* ── Content ── */}
@@ -276,13 +740,13 @@ export default function WeaknessHeatmapEngine({ examId, examName }: Props) {
                   const sm = STATUS_MAP[row.status] ?? STATUS_MAP.INSUFFICIENT;
                   return (
                     <div key={row.id}
-                      onClick={() => setSelectedTopic(row)}
+                      onClick={() => setTrendModalTopic(row)}
                       style={{ display: 'grid', gridTemplateColumns: '1fr repeat(10,36px) 52px 56px 82px', alignItems: 'center', gap: 3, padding: '8px 16px 8px 28px', background: ri % 2 === 0 ? '#fff' : '#fafbfd', borderBottom: ri < subjRows.length - 1 ? `1px solid ${C.slate2}` : 'none', cursor: 'pointer', borderLeft: `3px solid ${meta.color}50`, transition: 'background .1s' }}
                       onMouseEnter={e => (e.currentTarget.style.background = `${meta.color}08`)}
                       onMouseLeave={e => (e.currentTarget.style.background = ri % 2 === 0 ? '#fff' : '#fafbfd')}>
 
                       {/* Topic name */}
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <div style={{ display: 'flex', items: 'center', gap: 6 }}>
                         <span style={{ width: 6, height: 6, borderRadius: '50%', flexShrink: 0, background: sm.color }} />
                         <span style={{ fontSize: 12, color: C.slate9, fontWeight: 500 }}>{row.name}</span>
                       </div>
@@ -296,13 +760,17 @@ export default function WeaknessHeatmapEngine({ examId, examName }: Props) {
                             onMouseEnter={e => { e.stopPropagation(); setHoveredCell({ topicName: row.name, testIdx: ti, correct: t.correct, attempted: t.attempted, available: t.available, timeTaken: t.timeTaken, expTime: t.expTime, x: e.clientX, y: e.clientY }); }}
                             onMouseMove={e => setHoveredCell(prev => prev ? { ...prev, x: e.clientX, y: e.clientY } : null)}
                             onMouseLeave={e => { e.stopPropagation(); setHoveredCell(null); }}
-                            style={{ width: 32, height: 26, borderRadius: 5, background: clr.bg, border: `1px solid ${clr.bdr}`, color: clr.txt, fontSize: 9, fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', position: 'relative' }}>
+                            style={{ width: 32, height: 26, borderRadius: 5, background: clr.bg, border: `1px solid ${clr.bdr}`, color: clr.txt, fontSize: 9, fontWeight: 600, display: 'flex', items: 'center', justifyContent: 'center', cursor: 'pointer', position: 'relative' }}>
                             {(a * 100).toFixed(0)}%
                           </div>
                         );
                       })}
 
-                      <Sparkline accs={row.accs} />
+                      {/* TREND Sparkline - Click opens Trend Pop Graph Modal */}
+                      <div onClick={(e) => { e.stopPropagation(); setTrendModalTopic(row); }}>
+                        <Sparkline accs={row.accs} />
+                      </div>
+
                       <div style={{ textAlign: 'center', fontSize: 11, fontWeight: 600, color: row.rawAcc >= 0.78 ? C.strong : row.rawAcc >= 0.65 ? C.mod : C.weak }}>
                         {(row.rawAcc * 100).toFixed(1)}%
                       </div>
@@ -315,294 +783,12 @@ export default function WeaknessHeatmapEngine({ examId, examName }: Props) {
               </div>
             );
           })
-        ) : activeTab === 'needs-attention' ? (
-          needsAttention.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: 40, color: C.slate5 }}>
-              <div style={{ fontSize: 32, marginBottom: 10 }}>🎉</div>
-              <div style={{ fontWeight: 600, color: C.slate9, fontSize: 14 }}>No weak topics right now 🎉</div>
-              <div style={{ marginTop: 6, fontSize: 12 }}>All topics are above threshold. Check the <strong>Recovery Tracker</strong> for topics on their way back.</div>
-            </div>
-          ) : (
-            (() => {
-              const attnGrouped: Record<string, TopicRow[]> = {};
-              needsAttention.forEach(r => {
-                if (!attnGrouped[r.subjName]) attnGrouped[r.subjName] = [];
-                attnGrouped[r.subjName].push(r);
-              });
-              return (
-                <>
-                  {/* Column header */}
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr repeat(10,36px) 52px 56px 82px', gap: 3, padding: '6px 16px 6px 28px', marginBottom: 6, background: '#f1f5f9', borderRadius: 8, border: `1px solid ${C.slate2}` }}>
-                    <div style={{ fontSize: 9, fontWeight: 700, color: C.slate5, textTransform: 'uppercase', letterSpacing: '0.06em' }}>TOPIC</div>
-                    {Array.from({ length: 9 }, (_, i) => (
-                      <div key={i} style={{ fontSize: 8, fontWeight: 700, color: C.slate5, textAlign: 'center', textTransform: 'uppercase' }}>T{i + 1}</div>
-                    ))}
-                    <div style={{ fontSize: 8, fontWeight: 700, color: C.primary, textAlign: 'center', textTransform: 'uppercase' }}>LATEST</div>
-                    <div style={{ fontSize: 8, fontWeight: 700, color: C.slate5, textAlign: 'center', textTransform: 'uppercase' }}>TREND</div>
-                    <div style={{ fontSize: 8, fontWeight: 700, color: C.slate5, textAlign: 'center', textTransform: 'uppercase' }}>TRUE SCORE</div>
-                    <div style={{ fontSize: 8, fontWeight: 700, color: C.slate5, textAlign: 'center', textTransform: 'uppercase' }}>STATUS</div>
-                  </div>
-
-                  {Object.entries(attnGrouped).map(([subjName, subjRows]) => {
-                    const meta = subjMeta(subjName);
-                    const weakN = subjRows.length; // all are WEAK in this tab
-                    return (
-                      <div key={subjName} style={{ marginBottom: 12, borderRadius: 12, border: `1px solid ${C.slate2}`, overflow: 'hidden', background: '#fff' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 16px', background: `linear-gradient(90deg,${meta.color}10,#f8fafc)`, borderBottom: `1px solid ${C.slate2}` }}>
-                          <div style={{ width: 28, height: 28, borderRadius: 7, background: `${meta.color}15`, border: `1px solid ${meta.color}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, color: meta.color, flexShrink: 0 }}>{meta.icon}</div>
-                          <span style={{ fontSize: 13, fontWeight: 700, color: C.slate9 }}>{subjName}</span>
-                          <span style={{ fontSize: 11, color: C.slate5 }}>{subjRows.length} weak topic{subjRows.length > 1 ? 's' : ''}</span>
-                          <span style={{ padding: '1px 7px', borderRadius: 4, fontSize: 10, background: C.weakBg, color: C.weak, border: `1px solid ${C.weakBdr}` }}>{weakN} Weak</span>
-                        </div>
-                        {subjRows.map((row, ri) => {
-                          const sm = STATUS_MAP[row.status] ?? STATUS_MAP.INSUFFICIENT;
-                          return (
-                            <div key={row.id} onClick={() => setSelectedTopic(row)}
-                              style={{ display: 'grid', gridTemplateColumns: '1fr repeat(10,36px) 52px 56px 82px', alignItems: 'center', gap: 3, padding: '8px 16px 8px 28px', background: ri % 2 === 0 ? '#fff' : '#fafbfd', borderBottom: ri < subjRows.length - 1 ? `1px solid ${C.slate2}` : 'none', cursor: 'pointer', borderLeft: `3px solid ${sm.color}60`, transition: 'background .1s' }}
-                              onMouseEnter={e => (e.currentTarget.style.background = `${meta.color}08`)}
-                              onMouseLeave={e => (e.currentTarget.style.background = ri % 2 === 0 ? '#fff' : '#fafbfd')}>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                                <span style={{ width: 6, height: 6, borderRadius: '50%', flexShrink: 0, background: sm.color }} />
-                                <span style={{ fontSize: 12, color: C.slate9, fontWeight: 600 }}>{row.name}</span>
-                              </div>
-                              {row.tests.map((t, ti) => {
-                                const a = t.attempted > 0 ? t.correct / t.attempted : 0;
-                                const clr = heatClr(a);
-                                return (
-                                  <div key={ti}
-                                    onMouseEnter={e => { e.stopPropagation(); setHoveredCell({ topicName: row.name, testIdx: ti, correct: t.correct, attempted: t.attempted, available: t.available, timeTaken: t.timeTaken, expTime: t.expTime, x: e.clientX, y: e.clientY }); }}
-                                    onMouseMove={e => setHoveredCell(prev => prev ? { ...prev, x: e.clientX, y: e.clientY } : null)}
-                                    onMouseLeave={e => { e.stopPropagation(); setHoveredCell(null); }}
-                                    style={{ width: 32, height: 26, borderRadius: 5, background: clr.bg, border: `1px solid ${clr.bdr}`, color: clr.txt, fontSize: 9, fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}>
-                                    {(a * 100).toFixed(0)}%
-                                  </div>
-                                );
-                              })}
-                              <Sparkline accs={row.accs} />
-                              <div style={{ textAlign: 'center', fontSize: 11, fontWeight: 600, color: row.rawAcc >= 0.78 ? C.strong : row.rawAcc >= 0.65 ? C.mod : C.weak }}>
-                                {(row.rawAcc * 100).toFixed(1)}%
-                              </div>
-                              <span style={{ padding: '2px 8px', borderRadius: 5, fontSize: 10, background: sm.bg, color: sm.color, border: `1px solid ${sm.bdr}`, whiteSpace: 'nowrap', textAlign: 'center' }}>
-                                {sm.label}
-                              </span>
-                            </div>
-                          );
-                        })}
-                        <div style={{ padding: '8px 16px 10px 28px', fontSize: 11, color: C.slate5, background: '#fafbfd', borderTop: `1px solid ${C.slate2}` }}>
-                          💡 <strong>{weakN} weak topic{weakN > 1 ? 's' : ''}</strong> in {subjName} — click any row for a full practice plan.
-                        </div>
-                      </div>
-                    );
-                  })}
-                </>
-              );
-            })()
-          )
-          ) : null}
-
-
-
-        {/* ── Recovery Tracker Tab ── */}
-        {activeTab === 'recovery-tracker' && (
-          recoveringRows.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: 40, color: C.slate5 }}>
-              <div style={{ fontSize: 36, marginBottom: 10 }}>🔄</div>
-              <div style={{ fontWeight: 600, color: C.slate9, fontSize: 14 }}>No topics in recovery right now</div>
-              <div style={{ marginTop: 6, fontSize: 12 }}>Topics that were weak but showing improvement will appear here.</div>
-            </div>
-          ) : (
-            <>
-              {/* Recovery header info */}
-              <div style={{ padding: '6px 4px 12px', fontSize: 11, color: C.slate5 }}>
-                Topics that were previously <strong>Weak</strong> and have scored ≥75% in the last 3 consecutive tests — they're on their way back. Keep the momentum!
-              </div>
-
-              {recoveringRows.map(row => {
-                const meta = subjMeta(row.subjName);
-                const accs = row.accs;
-                // Count consecutive good tests from end
-                let streak = 0;
-                for (let i = accs.length - 1; i >= 0; i--) {
-                  if (accs[i] >= 0.75) streak++; else break;
-                }
-                const avgLast3 = accs.slice(-3).reduce((a, b) => a + b, 0) / 3;
-                const avgFirst3 = accs.slice(0, 3).reduce((a, b) => a + b, 0) / 3;
-                const improvement = avgLast3 - avgFirst3;
-                const estDays = Math.max(3, Math.round((1 - avgLast3) * 30));
-                const progress = Math.min(100, Math.round((avgLast3 / 0.85) * 100));
-
-                return (
-                  <div key={row.id} onClick={() => setSelectedTopic(row)}
-                    style={{ marginBottom: 12, borderRadius: 12, border: `1px solid ${C.recoverBdr}`, background: '#fff', overflow: 'hidden', cursor: 'pointer' }}
-                    onMouseEnter={e => (e.currentTarget.style.background = '#faf5ff')}
-                    onMouseLeave={e => (e.currentTarget.style.background = '#fff')}>
-
-                    {/* Header */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px', background: 'linear-gradient(90deg,rgba(124,58,237,.06),#f8fafc)', borderBottom: `1px solid ${C.slate2}` }}>
-                      <div style={{ width: 28, height: 28, borderRadius: 7, background: `${meta.color}15`, border: `1px solid ${meta.color}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, color: meta.color, flexShrink: 0 }}>{meta.icon}</div>
-                      <div>
-                        <div style={{ fontSize: 13, fontWeight: 700, color: C.slate9 }}>{row.name}</div>
-                        <div style={{ fontSize: 10, color: C.slate5 }}>{row.subjName}</div>
-                      </div>
-                      <span style={{ marginLeft: 'auto', padding: '2px 10px', borderRadius: 5, fontSize: 10, fontWeight: 700, background: C.recoverBg, color: C.recover, border: `1px solid ${C.recoverBdr}` }}>↑ Recovering</span>
-                    </div>
-
-                    <div style={{ padding: '16px 20px', display: 'flex', gap: 24, flexWrap: 'wrap', alignItems: 'flex-start' }}>
-
-                      {/* Test score sparkline with cells */}
-                      <div style={{ flex: 2, minWidth: 200 }}>
-                        <div style={{ fontSize: 10, color: C.slate5, marginBottom: 6, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Last 10 Tests (oldest → newest)</div>
-                        <div style={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
-                          {row.tests.map((t, ti) => {
-                            const a = t.attempted > 0 ? t.correct / t.attempted : 0;
-                            const clr = heatClr(a);
-                            const isRecent = ti >= row.tests.length - 3;
-                            return (
-                              <div key={ti}
-                                onMouseEnter={e => { e.stopPropagation(); setHoveredCell({ topicName: row.name, testIdx: ti, correct: t.correct, attempted: t.attempted, available: t.available, timeTaken: t.timeTaken, expTime: t.expTime, x: e.clientX, y: e.clientY }); }}
-                                onMouseMove={e => setHoveredCell(prev => prev ? { ...prev, x: e.clientX, y: e.clientY } : null)}
-                                onMouseLeave={e => { e.stopPropagation(); setHoveredCell(null); }}
-                                style={{ width: 34, height: 28, borderRadius: 5, background: clr.bg, border: `2px solid ${isRecent ? C.recover : clr.bdr}`, color: clr.txt, fontSize: 9, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', position: 'relative' }}>
-                                {(a * 100).toFixed(0)}%
-                                {isRecent && <div style={{ position: 'absolute', top: -4, right: -4, width: 6, height: 6, borderRadius: '50%', background: C.recover }} />}
-                              </div>
-                            );
-                          })}
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 6 }}>
-                          <div style={{ width: 10, height: 10, borderRadius: 2, border: `2px solid ${C.recover}`, background: C.recoverBg }} />
-                          <span style={{ fontSize: 9, color: C.slate5 }}>Purple border = last 3 tests (recovery window)</span>
-                        </div>
-                      </div>
-
-                      {/* ── Growth Graph ── */}
-                      <div style={{ flex: 3, minWidth: 260, paddingRight: 8 }}>
-                        <div style={{ fontSize: 10, color: C.slate5, marginBottom: 6, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Score Growth Chart</div>
-                        {(() => {
-                          const W = 280, H = 90, PAD = { t: 8, r: 8, b: 24, l: 32 };
-                          const iW = W - PAD.l - PAD.r, iH = H - PAD.t - PAD.b;
-                          const minV = 0.30, maxV = 1.00;
-                          const xOf = (i: number) => PAD.l + (i / (accs.length - 1)) * iW;
-                          const yOf = (v: number) => PAD.t + (1 - (v - minV) / (maxV - minV)) * iH;
-                          const pts = accs.map((v, i) => `${xOf(i).toFixed(1)},${yOf(v).toFixed(1)}`).join(' ');
-                          const areaClose = `${xOf(accs.length - 1).toFixed(1)},${(PAD.t + iH).toFixed(1)} ${PAD.l.toFixed(1)},${(PAD.t + iH).toFixed(1)}`;
-                          const thresh75Y = yOf(0.75);
-                          const thresh85Y = yOf(0.85);
-                          const gradId = `g_${row.id.replace(/[^a-z0-9]/gi, '')}`;
-                          return (
-                            <svg width="100%" viewBox={`0 0 ${W} ${H}`} style={{ display: 'block', overflow: 'visible' }}>
-                              <defs>
-                                <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
-                                  <stop offset="0%" stopColor={C.recover} stopOpacity="0.22" />
-                                  <stop offset="100%" stopColor={C.recover} stopOpacity="0.02" />
-                                </linearGradient>
-                              </defs>
-
-                              {/* Y-axis grid lines */}
-                              {[0.40, 0.55, 0.70, 0.85, 1.00].map(v => (
-                                <g key={v}>
-                                  <line x1={PAD.l} y1={yOf(v)} x2={W - PAD.r} y2={yOf(v)} stroke={C.slate2} strokeWidth="0.5" strokeDasharray="3,3" />
-                                  <text x={PAD.l - 3} y={yOf(v) + 3} textAnchor="end" fontSize="7" fill={C.slate5}>{(v * 100).toFixed(0)}%</text>
-                                </g>
-                              ))}
-
-                              {/* 75% threshold line (danger zone boundary) */}
-                              <line x1={PAD.l} y1={thresh75Y} x2={W - PAD.r} y2={thresh75Y} stroke={C.weak} strokeWidth="1" strokeDasharray="4,3" opacity="0.6" />
-                              <text x={W - PAD.r + 2} y={thresh75Y + 3} fontSize="7" fill={C.weak} opacity="0.8">75%</text>
-
-                              {/* 85% target line */}
-                              <line x1={PAD.l} y1={thresh85Y} x2={W - PAD.r} y2={thresh85Y} stroke={C.strong} strokeWidth="1" strokeDasharray="4,3" opacity="0.6" />
-                              <text x={W - PAD.r + 2} y={thresh85Y + 3} fontSize="7" fill={C.strong} opacity="0.8">85%</text>
-
-                              {/* Shaded area under curve */}
-                              <polygon points={`${pts} ${areaClose}`} fill={`url(#${gradId})`} />
-
-                              {/* Main line */}
-                              <polyline points={pts} fill="none" stroke={C.recover} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
-
-                              {/* Data points — hover shows test details tooltip */}
-                              {accs.map((v, i) => {
-                                const isRecent = i >= accs.length - 3;
-                                const t = row.tests[i];
-                                return (
-                                  <circle key={i} cx={xOf(i)} cy={yOf(v)} r={isRecent ? 5 : 3.5}
-                                    fill={isRecent ? C.recover : '#fff'}
-                                    stroke={C.recover} strokeWidth={isRecent ? 2 : 1.5}
-                                    style={{ cursor: 'crosshair' }}
-                                    onMouseEnter={e => {
-                                      e.stopPropagation();
-                                      setHoveredCell({ topicName: row.name, testIdx: i, correct: t.correct, attempted: t.attempted, available: t.available, timeTaken: t.timeTaken, expTime: t.expTime, x: e.clientX, y: e.clientY });
-                                    }}
-                                    onMouseMove={e => setHoveredCell(prev => prev ? { ...prev, x: e.clientX, y: e.clientY } : null)}
-                                    onMouseLeave={e => { e.stopPropagation(); setHoveredCell(null); }}
-                                  />
-                                );
-                              })}
-
-                              {/* X-axis labels */}
-                              {accs.map((_, i) => (
-                                <text key={i} x={xOf(i)} y={H - 6} textAnchor="middle" fontSize="7" fill={i >= accs.length - 3 ? C.recover : C.slate5} fontWeight={i >= accs.length - 3 ? '700' : '400'}>
-                                  T{i + 1}
-                                </text>
-                              ))}
-                            </svg>
-                          );
-                        })()}
-                        <div style={{ display: 'flex', gap: 12, marginTop: 4, fontSize: 9, color: C.slate5 }}>
-                          <span style={{ display: 'flex', alignItems: 'center', gap: 3 }}><span style={{ width: 16, height: 2, background: C.weak, opacity: 0.6, display: 'inline-block', borderRadius: 1 }} /> 75% threshold</span>
-                          <span style={{ display: 'flex', alignItems: 'center', gap: 3 }}><span style={{ width: 16, height: 2, background: C.strong, opacity: 0.6, display: 'inline-block', borderRadius: 1 }} /> 85% target</span>
-                          <span style={{ display: 'flex', alignItems: 'center', gap: 3 }}><span style={{ width: 8, height: 8, borderRadius: '50%', background: C.recover, display: 'inline-block' }} /> Last 3 tests</span>
-                        </div>
-                      </div>
-
-                      {/* Stats */}
-                      <div style={{ flex: 1, minWidth: 160, display: 'flex', flexDirection: 'column', gap: 8, paddingLeft: 20, borderLeft: `1px solid ${C.slate2}` }}>
-                        {/* Progress bar to 85% target */}
-                        <div>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: C.slate5, marginBottom: 3 }}>
-                            <span>Progress to 85% target</span>
-                            <span style={{ fontWeight: 700, color: C.recover }}>{progress}%</span>
-                          </div>
-                          <div style={{ height: 6, borderRadius: 3, background: C.slate2, overflow: 'hidden' }}>
-                            <div style={{ height: '100%', width: `${progress}%`, borderRadius: 3, background: `linear-gradient(90deg,${C.recover},#a855f7)`, transition: 'width 1s ease' }} />
-                          </div>
-                        </div>
-
-                        {/* Key stats */}
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
-                          <div style={{ padding: '6px 8px', borderRadius: 7, background: C.recoverBg, border: `1px solid ${C.recoverBdr}`, textAlign: 'center' }}>
-                            <div style={{ fontSize: 14, fontWeight: 800, color: C.recover }}>{streak}</div>
-                            <div style={{ fontSize: 9, color: C.slate5 }}>Good streak</div>
-                          </div>
-                          <div style={{ padding: '6px 8px', borderRadius: 7, background: improvement > 0 ? C.strongBg : C.weakBg, border: `1px solid ${improvement > 0 ? C.strongBdr : C.weakBdr}`, textAlign: 'center' }}>
-                            <div style={{ fontSize: 14, fontWeight: 800, color: improvement > 0 ? C.strong : C.weak }}>{improvement > 0 ? '+' : ''}{(improvement * 100).toFixed(0)}%</div>
-                            <div style={{ fontSize: 9, color: C.slate5 }}>Improvement</div>
-                          </div>
-                          <div style={{ padding: '6px 8px', borderRadius: 7, background: C.modBg, border: `1px solid ${C.modBdr}`, textAlign: 'center' }}>
-                            <div style={{ fontSize: 14, fontWeight: 800, color: C.mod }}>{(avgLast3 * 100).toFixed(0)}%</div>
-                            <div style={{ fontSize: 9, color: C.slate5 }}>Recent avg</div>
-                          </div>
-                          <div style={{ padding: '6px 8px', borderRadius: 7, background: C.slate1, border: `1px solid ${C.slate2}`, textAlign: 'center' }}>
-                            <div style={{ fontSize: 14, fontWeight: 800, color: C.slate7 }}>~{estDays}d</div>
-                            <div style={{ fontSize: 9, color: C.slate5 }}>Est. full recovery</div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Footer tip */}
-                    <div style={{ padding: '7px 16px', background: C.recoverBg, borderTop: `1px solid ${C.recoverBdr}`, fontSize: 11, color: C.recover }}>
-                      ✨ <strong>Keep going!</strong> {streak} consecutive tests above 75% — maintain this pace and you'll be marked <strong>Strong</strong> soon.
-                    </div>
-                  </div>
-                );
-              })}
-            </>
-          )
+        ) : (
+          <div style={{ padding: 20, textAlign: 'center', color: C.slate5 }}>
+            No topics to display.
+          </div>
         )}
-
       </div>
-
     </div>
   );
 }

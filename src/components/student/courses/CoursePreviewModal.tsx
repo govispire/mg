@@ -7,7 +7,8 @@ import {
   Award, ChevronDown, ChevronUp, CheckCircle,
   ShoppingCart, BookOpen, Shield, Zap, Globe
 } from 'lucide-react';
-import { Course, subjects as allSubjects } from '@/data/courseData';
+import type { Course } from '@/data/courseData';
+import { useCourseSubjects } from '@/hooks/useCourses';
 import { useNavigate } from 'react-router-dom';
 
 interface CoursePreviewModalProps {
@@ -65,6 +66,8 @@ export const CoursePreviewModal: React.FC<CoursePreviewModalProps> = ({ course, 
   const navigate = useNavigate();
   const [expandedSubject, setExpandedSubject] = useState<string | null>(null);
   const [videoPlaying, setVideoPlaying] = useState(false);
+  const { data: courseSubjectsData = [], isLoading: subjectsLoading } = useCourseSubjects(course?.id);
+  const allSubjects: Record<string, any> = Object.fromEntries((courseSubjectsData || []).map((s: any) => [s.id, s]));
 
   if (!course) return null;
 

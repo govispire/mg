@@ -9,7 +9,7 @@ import {
   ArrowRight, AlertTriangle, CheckCircle, RotateCcw,
   ChevronRight,
 } from 'lucide-react';
-import { getCourseById, subjects } from '@/data/courseData';
+import { useCourse } from '@/hooks/useCourses';
 
 // ── Subject priority helpers ────────────────────────────────────────────────
 const getSubjectTag = (progress: number) => {
@@ -27,7 +27,9 @@ const getSubjectCTA = (progress: number) => {
 const CourseDetail = () => {
   const { courseId } = useParams();
   const navigate = useNavigate();
-  const course = getCourseById(courseId!);
+  const { data: course, isLoading: courseLoading } = useCourse(courseId);
+
+  if (courseLoading) return <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" /></div>;
 
   if (!course) {
     return (
@@ -41,10 +43,9 @@ const CourseDetail = () => {
   }
 
   // Sort subjects: weakest first
-  const courseSubjects = course.subjects
-    .map(id => subjects[id])
+  const courseSubjects = ((course as any).subjects || [])
     .filter(Boolean)
-    .sort((a, b) => (a.progress ?? 0) - (b.progress ?? 0));
+    .sort((a: any, b: any) => ((a as any).progress ?? 0) - ((b as any).progress ?? 0));
 
   const overallProgress = course.progress ?? 0;
 

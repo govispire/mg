@@ -8,7 +8,7 @@ import {
 } from '@/data/examData';
 
 // ── Brand colour ────────────────────────────────────────────────────────────
-const EM = '#10b981';
+const EM = '#2563eb';
 
 const RBI_LOGO    = 'https://res.cloudinary.com/dsyxrhbwb/image/upload/v1744125087/reservebank_of_india_jlgv5o.webp';
 const LIC_LOGO    = 'https://res.cloudinary.com/dsyxrhbwb/image/upload/v1748061919/jaiib_stprpj.png';
@@ -44,7 +44,7 @@ const ExamLogo: React.FC<{ examId: string; examName: string }> = ({ examId, exam
     return (
       <div
         className="w-10 h-10 rounded-xl flex items-center justify-center text-white font-black text-[11px] shrink-0"
-        style={{ background: 'linear-gradient(135deg,#059669,#10b981)', boxShadow: '0 2px 8px rgba(16,185,129,0.3)' }}
+        style={{ background: 'linear-gradient(135deg,#1d4ed8,#2563eb)', boxShadow: '0 2px 8px rgba(37,99,235,0.3)' }}
       >
         {getInitials(examName)}
       </div>
@@ -79,9 +79,9 @@ const RecentExamNotifications: React.FC = () => {
         <div className="flex items-center gap-2.5">
           <div
             className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
-            style={{ background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.2)' }}
+            style={{ background: '#eff6ff', border: '1px solid #bfdbfe' }}
           >
-            <Bell className="h-4 w-4" style={{ color: EM }} />
+            <Bell className="h-4 w-4 text-blue-600" />
           </div>
           <div>
             <h3 className="font-bold text-[15px] text-slate-800 leading-none">Recent Exam Notifications</h3>
@@ -89,8 +89,7 @@ const RecentExamNotifications: React.FC = () => {
           </div>
         </div>
         <button
-          className="flex items-center gap-1 text-[12px] font-semibold px-3 py-1.5 rounded-lg transition-all shrink-0"
-          style={{ color: EM, background: 'rgba(16,185,129,0.07)', border: '1px solid rgba(16,185,129,0.18)' }}
+          className="flex items-center gap-1 text-[12px] font-semibold px-3 py-1.5 rounded-lg transition-all shrink-0 text-blue-600 bg-blue-50 border border-blue-200 hover:bg-blue-100"
           onClick={() => navigate('/student/exam-notifications')}
         >
           View All <ArrowRight className="h-3.5 w-3.5" />
@@ -152,7 +151,7 @@ const RecentExamNotifications: React.FC = () => {
               {/* Apply Now button */}
               <button
                 className="shrink-0 text-[11px] font-bold px-4 py-2 rounded-xl transition-all text-white hover:opacity-90 active:scale-95 whitespace-nowrap"
-                style={{ background: 'linear-gradient(135deg,#059669,#10b981)', boxShadow: '0 2px 8px rgba(16,185,129,0.3)' }}
+                style={{ background: 'linear-gradient(135deg,#1d4ed8,#2563eb)', boxShadow: '0 2px 8px rgba(37,99,235,0.3)' }}
                 onClick={(e) => { e.stopPropagation(); navigate('/student/exam-notifications'); }}
               >
                 Apply Now

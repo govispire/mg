@@ -74,8 +74,10 @@ export const StatsOverview: React.FC<StatsOverviewProps> = ({
             value: Math.max(0, journeyDays),
             subtext: 'Since start of prep',
             icon: Map,
-            gradient: 'from-blue-500 to-blue-600',
-            accentColor: '#3b82f6',
+            // Neutral icon — no rainbow gradient
+            iconBg: '#F1F5F9',
+            iconColor: '#475569',
+            accentColor: '#2563EB',  // brand blue left-strip only
         },
         {
             id: 'hours',
@@ -83,8 +85,9 @@ export const StatsOverview: React.FC<StatsOverviewProps> = ({
             value: studyHours,
             subtext: studyHours > 0 ? 'From completed quizzes' : 'Complete quizzes to track',
             icon: Hourglass,
-            gradient: 'from-violet-500 to-purple-600',
-            accentColor: '#8b5cf6',
+            iconBg: '#F1F5F9',
+            iconColor: '#475569',
+            accentColor: '#475569',
         },
         {
             id: 'active',
@@ -92,8 +95,10 @@ export const StatsOverview: React.FC<StatsOverviewProps> = ({
             value: activeStreak,
             subtext: activeStreak > 0 ? `${activeStreak} day${activeStreak !== 1 ? 's' : ''} in a row` : 'Complete 2 quizzes today',
             icon: Flame,
-            gradient: 'from-emerald-500 to-green-600',
-            accentColor: '#10b981',
+            // Flame is semantic: amber for in-progress streaks
+            iconBg: '#FFF7ED',
+            iconColor: '#D97706',
+            accentColor: '#D97706',
         },
         {
             id: 'tests',
@@ -101,8 +106,9 @@ export const StatsOverview: React.FC<StatsOverviewProps> = ({
             value: mockTestsTaken,
             subtext: mockTestsTaken > 0 ? `${mockTestsTaken} quiz${mockTestsTaken !== 1 ? 'zes' : ''} finished` : 'Start your first quiz!',
             icon: ClipboardCheck,
-            gradient: 'from-orange-500 to-amber-600',
-            accentColor: '#f97316',
+            iconBg: '#F1F5F9',
+            iconColor: '#475569',
+            accentColor: '#475569',
         },
     ];
 
@@ -113,15 +119,19 @@ export const StatsOverview: React.FC<StatsOverviewProps> = ({
                 <button
                     key={stat.id}
                     onClick={() => onCardClick(stat.id as any)}
-                    className="group relative flex flex-col gap-2 px-5 py-4 text-left bg-white rounded-2xl border border-slate-200 overflow-hidden transition-all duration-200 hover:shadow-lg"
+                    className="group relative flex flex-col gap-2 px-5 py-4 text-left bg-white rounded-2xl border border-slate-200 overflow-hidden transition-all duration-200 hover:shadow-lg hover:border-slate-300"
+                    style={{ borderLeft: `3px solid ${stat.accentColor}` }}
                 >
-                    {/* Green arrow background - visible in right corner */}
-                    <div className="absolute right-2 top-1/2 -translate-y-1/2 opacity-10 group-hover:opacity-20 transition-opacity">
-                        <ArrowUpRight className="h-16 w-16 text-emerald-500" />
+                    {/* Subtle watermark arrow */}
+                    <div className="absolute right-2 top-1/2 -translate-y-1/2 opacity-5 group-hover:opacity-10 transition-opacity">
+                        <ArrowUpRight className="h-16 w-16 text-slate-400" />
                     </div>
                     
-                    {/* Icon */}
-                    <div className={`flex items-center justify-center w-11 h-11 rounded-xl bg-gradient-to-br ${stat.gradient} text-white shadow-sm`}>
+                    {/* Icon — uniform neutral gray container */}
+                    <div
+                        className="flex items-center justify-center w-10 h-10 rounded-xl shadow-sm flex-shrink-0"
+                        style={{ background: stat.iconBg, color: stat.iconColor }}
+                    >
                         <stat.icon className="h-5 w-5" />
                     </div>
                     
@@ -142,15 +152,22 @@ export const StatsOverview: React.FC<StatsOverviewProps> = ({
             {/* ── 5th card: Today's Tasks ── */}
             <button
                 onClick={() => onCardClick('tasks')}
-                className="group relative flex flex-col gap-2 px-5 py-4 text-left bg-white rounded-2xl border border-slate-200 overflow-hidden col-span-2 lg:col-span-1 transition-all duration-200 hover:shadow-lg"
+                className="group relative flex flex-col gap-2 px-5 py-4 text-left bg-white rounded-2xl border border-slate-200 overflow-hidden col-span-2 lg:col-span-1 transition-all duration-200 hover:shadow-lg hover:border-slate-300"
+                style={{ borderLeft: `3px solid ${taskPct === 100 ? '#16A34A' : added > 0 ? '#D97706' : '#CBD5E1'}` }}
             >
-                {/* Green arrow background - visible in right corner */}
-                <div className="absolute right-2 top-1/2 -translate-y-1/2 opacity-10 group-hover:opacity-20 transition-opacity">
-                    <ArrowUpRight className="h-16 w-16 text-emerald-500" />
+                {/* Subtle watermark */}
+                <div className="absolute right-2 top-1/2 -translate-y-1/2 opacity-5 group-hover:opacity-10 transition-opacity">
+                    <ArrowUpRight className="h-16 w-16 text-slate-400" />
                 </div>
 
-                {/* Icon */}
-                <div className={`flex items-center justify-center w-11 h-11 rounded-xl bg-gradient-to-br ${taskPct === 100 ? 'from-emerald-500 to-green-600' : 'from-amber-500 to-orange-600'} text-white shadow-sm`}>
+                {/* Icon — semantic coloring retained (task completion state is functional) */}
+                <div
+                    className="flex items-center justify-center w-10 h-10 rounded-xl shadow-sm flex-shrink-0"
+                    style={{
+                        background: taskPct === 100 ? '#F0FDF4' : added > 0 ? '#FFFBEB' : '#F1F5F9',
+                        color:      taskPct === 100 ? '#16A34A' : added > 0 ? '#D97706' : '#94A3B8',
+                    }}
+                >
                     <ListChecks className="h-5 w-5" />
                 </div>
 
@@ -160,7 +177,7 @@ export const StatsOverview: React.FC<StatsOverviewProps> = ({
                         className="text-2xl font-bold tracking-tight leading-none"
                         style={{
                             fontFamily: "'Outfit', 'Inter', sans-serif",
-                            color: taskPct === 100 ? '#10b981' : added > 0 ? '#f59e0b' : '#94a3b8',
+                            color: taskPct === 100 ? '#16A34A' : added > 0 ? '#D97706' : '#94a3b8',
                         }}
                     >
                         {completed}/{added}
@@ -178,7 +195,7 @@ export const StatsOverview: React.FC<StatsOverviewProps> = ({
                                 key={i}
                                 className="flex-1 h-1.5 rounded-full transition-all duration-500"
                                 style={{
-                                    background: isDone ? '#10b981' : isUsed ? '#f59e0b' : '#e2e8f0',
+                                    background: isDone ? '#16A34A' : isUsed ? '#D97706' : '#e2e8f0',
                                     transitionDelay: `${i * 60}ms`,
                                 }}
                             />

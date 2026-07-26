@@ -13,7 +13,7 @@ import { InstructorCard } from '@/components/student/courses/InstructorCard';
 import { CategorySelector } from '@/components/global/CategorySelector';
 import { useCategoryFilteredCourses } from '@/hooks/useCategoryFilteredContent';
 import { useExamCategoryContext } from '@/app/providers';
-import { instructors } from '@/data/courseData';
+import { useCourses } from '@/hooks/useCourses';
 import { examCategories as allExamCategories, getExamsByCategory } from '@/data/examData';
 import {
   Search,
@@ -34,10 +34,31 @@ import {
 
 const StudentCourses = () => {
   const { courses: globalFilteredCourses, hasFilters, selectedCategories } = useCategoryFilteredCourses();
+  const { data: coursesData = [], isLoading: coursesLoading } = useCourses();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedExam, setSelectedExam] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [activeTab, setActiveTab] = useState('all');
+
+  // Derive unique instructors from courses
+  const instructors = useMemo(() => {
+    const seen = new Set<string>();
+    return (coursesData || []).filter((c: any) => {
+      const name = c.instructorName || c.instructor;
+      if (!name || seen.has(name)) return false;
+      seen.add(name);
+      return true;
+    }).map((c: any) => ({
+      id: c.instructorId || c.id,
+      name: c.instructorName || c.instructor || 'Unknown',
+      avatar: (c as any).instructorAvatar || '',
+      specialization: (c as any).instructorSpecialization || '',
+      rating: (c as any).instructorRating || 4.5,
+      experience: (c as any).instructorExperience || '5+ years',
+      studentsCount: (c as any).instructorStudentsCount || c.studentsCount || 0,
+      coursesCount: 1,
+    }));
+  }, [coursesData]);
 
   // Get all available exams from selected categories
   const availableExams = useMemo(() => {

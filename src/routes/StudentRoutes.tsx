@@ -1,6 +1,6 @@
 
 import React, { useEffect } from 'react';
-import { Route, Routes, useNavigate } from 'react-router-dom';
+import { Route, Routes, useNavigate, Navigate } from 'react-router-dom';
 import DashboardLayout from '@/components/dashboards/DashboardLayout';
 import StudentDashboard from '@/pages/student/StudentDashboard';
 import StudentCalendar from '@/pages/student/StudentCalendar';
@@ -96,7 +96,8 @@ const StudentRoutes = () => {
           <Route path="/daily-quizzes" element={<DailyQuizzes />} />
           <Route path="/live-tests" element={<LiveTests />} />
           <Route path="/exam-notifications" element={<ExamNotifications />} />
-          <Route path="/self-care" element={<SelfCare />} />
+          <Route path="/exam-tracker" element={<SelfCare />} />
+          <Route path="/self-care" element={<Navigate to="/student/exam-tracker" replace />} />
           <Route path="/pdf-courses" element={<PDFCourses />} />
           <Route path="/doubt-forum" element={<DoubtForum />} />
           <Route path="/faq" element={<FAQ />} />

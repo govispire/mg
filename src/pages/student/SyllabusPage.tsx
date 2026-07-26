@@ -410,261 +410,256 @@ const SyllabusPage = () => {
   }
 
   return (
-    <div className="space-y-4 max-w-7xl mx-auto">
-      {/* Header with Category Info */}
-      <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4 pb-4 border-b border-border/40">
+    <div className="space-y-6 max-w-7xl mx-auto pb-12">
+      {/* ── 1. HEADER TITLE & GLOBAL ACTION BUTTONS ── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold mb-3">Know Your Syllabus</h1>
-          <div className="flex flex-col sm:flex-row gap-3">
-            <div className="w-full sm:w-56">
-              <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1 block">Category</label>
-              <Select value={selectedCategoryId} onValueChange={setSelectedCategoryId}>
-                <SelectTrigger className="h-9 bg-white">
-                  <SelectValue placeholder="Select Category" />
-                </SelectTrigger>
-                <SelectContent>
-                  {catalog.filter(c => c.isVisible).map(cat => (
-                    <SelectItem key={cat.id} value={cat.id}>
-                      {cat.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="w-full sm:w-56">
-              <label className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1 block">Exam</label>
-              <Select 
-                value={selectedExam} 
-                onValueChange={(val) => {
-                  setSelectedExam(val);
-                  setSelectedTier(getExamConfig(val)?.tiers[0]?.id || '');
-                }}
-              >
-                <SelectTrigger className="h-9 bg-white">
-                  <SelectValue placeholder="Select Exam" />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableExams.map(exam => (
-                    <SelectItem key={exam.id} value={exam.id}>
-                      <div className="flex items-center gap-2">
-                        <img src={exam.logo} alt="" className="w-4 h-4 object-contain rounded-sm" />
-                        {exam.name}
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">Know Your Syllabus</h1>
+          <p className="mt-1 text-xs sm:text-sm text-slate-500 font-medium">
+            Explore official exam patterns, stage-wise syllabus breakdown, and topic learning resources.
+          </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 lg:mb-0">
-          {/* Search */}
-          <div className="relative flex-1 sm:flex-none">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <input
-              type="text"
-              placeholder="Search topics..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 pr-4 py-2 h-9 text-sm border rounded-md bg-white w-full sm:w-48 focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all font-medium placeholder:font-normal"
-            />
+        {/* Global Action Buttons (Compare & Study Plan) */}
+        <div className="flex items-center gap-2 shrink-0 self-start sm:self-auto">
+          {/* Compare Button */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant={compareExams.length >= 2 ? "default" : "outline"}
+                size="sm"
+                className={`h-9 px-4 rounded-xl text-xs font-bold gap-1.5 transition-all ${
+                  compareExams.length >= 2
+                    ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-xs'
+                    : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+                }`}
+              >
+                <ArrowUpDown className="h-3.5 w-3.5" />
+                <span>{compareExams.length > 0 ? `Compare (${compareExams.length})` : 'Compare Exams'}</span>
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-64 p-3 rounded-2xl shadow-lg border-slate-200" align="end">
+              <div className="space-y-3">
+                <div>
+                  <h4 className="font-extrabold text-sm text-slate-900">Select Exams to Compare</h4>
+                  <p className="text-xs text-slate-500 font-medium">Select up to 3 target exams</p>
+                </div>
+                <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                  {availableExams.map(exam => (
+                    <div key={exam.id} className="flex items-start space-x-2 py-1">
+                      <Checkbox 
+                        id={`compare-${exam.id}`}
+                        checked={compareExams.includes(exam.id)}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            if (compareExams.length < 3) setCompareExams([...compareExams, exam.id]);
+                          } else {
+                            setCompareExams(compareExams.filter(id => id !== exam.id));
+                          }
+                        }}
+                        className="mt-0.5"
+                      />
+                      <label 
+                        htmlFor={`compare-${exam.id}`}
+                        className="text-xs font-bold text-slate-700 leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer select-none"
+                      >
+                        {exam.name}
+                      </label>
+                    </div>
+                  ))}
+                </div>
+                <Button 
+                  className="w-full text-xs font-bold h-8 rounded-xl bg-blue-600 hover:bg-blue-700 text-white" 
+                  onClick={() => setShowComparison(true)}
+                  disabled={compareExams.length < 2}
+                >
+                  View Comparison ({compareExams.length})
+                </Button>
+              </div>
+            </PopoverContent>
+          </Popover>
+
+          {/* Study Plan Button */}
+          <Button
+            size="sm"
+            onClick={() => setShowStudyPlan(true)}
+            className="h-9 px-4 rounded-xl text-xs font-extrabold bg-blue-600 hover:bg-blue-700 text-white shadow-xs gap-1.5"
+          >
+            <Zap className="h-3.5 w-3.5 fill-white" />
+            <span>⚡ Study Plan</span>
+          </Button>
+        </div>
+      </div>
+
+      {/* ── 2. UNIFIED FILTER & TOOLBAR BAR ── */}
+      <div className="bg-white rounded-2xl border border-slate-200/90 p-4 shadow-2xs space-y-3">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
+          {/* Category Dropdown */}
+          <div className="md:col-span-4 space-y-1">
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Category</label>
+            <Select value={selectedCategoryId} onValueChange={setSelectedCategoryId}>
+              <SelectTrigger className="h-10 bg-slate-50 border-slate-200 rounded-xl text-xs font-bold text-slate-800">
+                <SelectValue placeholder="Select Category" />
+              </SelectTrigger>
+              <SelectContent className="rounded-xl">
+                {catalog.filter(c => c.isVisible).map(cat => (
+                  <SelectItem key={cat.id} value={cat.id} className="text-xs font-semibold">
+                    {cat.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
-          <div className="flex items-center gap-2 ml-auto sm:ml-0">
-            {/* Compare Button with Popover for Checklist */}
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant={compareExams.length >= 2 ? "default" : "outline"}
-                  size="sm"
-                  className="gap-1 h-9"
-                >
-                  <ArrowUpDown className="h-4 w-4" />
-                  Compare <Badge variant="secondary" className="ml-1 px-1.5 py-0 text-[10px] bg-muted-foreground/20">{compareExams.length}</Badge>
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-64 p-3" align="end">
-                <div className="space-y-3">
-                  <div>
-                    <h4 className="font-semibold text-sm">Select Exams to Compare</h4>
-                    <p className="text-xs text-muted-foreground">Select up to 3 exams</p>
-                  </div>
-                  <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
-                    {availableExams.map(exam => (
-                      <div key={exam.id} className="flex items-start space-x-2 py-1">
-                        <Checkbox 
-                          id={`compare-${exam.id}`}
-                          checked={compareExams.includes(exam.id)}
-                          onCheckedChange={(checked) => {
-                            if (checked) {
-                              if (compareExams.length < 3) setCompareExams([...compareExams, exam.id]);
-                            } else {
-                              setCompareExams(compareExams.filter(id => id !== exam.id));
-                            }
-                          }}
-                          className="mt-0.5"
-                        />
-                        <label 
-                          htmlFor={`compare-${exam.id}`}
-                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer select-none"
-                        >
-                          {exam.name}
-                        </label>
-                      </div>
-                    ))}
-                  </div>
-                  <Button 
-                    className="w-full text-xs h-8 mt-2" 
-                    onClick={() => setShowComparison(true)}
-                    disabled={compareExams.length < 2}
-                  >
-                    View Comparison
-                  </Button>
-                </div>
-              </PopoverContent>
-            </Popover>
-
-            {/* Study Plan Button */}
-            <Button
-              size="sm"
-              onClick={() => setShowStudyPlan(true)}
-              className="gap-1 h-9 bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-sm hover:shadow"
+          {/* Exam Dropdown (Stronger Visual Emphasis) */}
+          <div className="md:col-span-4 space-y-1">
+            <label className="text-[10px] font-black text-blue-600 uppercase tracking-wider block">Target Exam</label>
+            <Select 
+              value={selectedExam} 
+              onValueChange={(val) => {
+                setSelectedExam(val);
+                setSelectedTier(getExamConfig(val)?.tiers[0]?.id || '');
+              }}
             >
-              <Zap className="h-4 w-4" />
-              Study Plan
-            </Button>
+              <SelectTrigger className="h-10 bg-blue-50/60 border-blue-200 rounded-xl text-xs font-black text-slate-900 ring-2 ring-blue-500/10">
+                <SelectValue placeholder="Select Exam" />
+              </SelectTrigger>
+              <SelectContent className="rounded-xl">
+                {availableExams.map(exam => (
+                  <SelectItem key={exam.id} value={exam.id} className="text-xs font-bold">
+                    <div className="flex items-center gap-2">
+                      <img src={exam.logo} alt="" className="w-4 h-4 object-contain rounded-sm" />
+                      <span>{exam.name}</span>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Search Bar */}
+          <div className="md:col-span-4 space-y-1">
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Search Syllabus</label>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Search topics or subjects..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-9 pr-4 py-2 h-10 text-xs font-medium border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all placeholder:text-slate-400"
+              />
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Exam Info Card */}
-      <Card className="border-0 shadow-sm">
-        <CardContent className="p-4">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-
-            {/* Left: Exam name + badge + date */}
-            <div className="flex items-center gap-3">
-              <img
-                src={examConfig.logo}
-                alt={examConfig.examName}
-                className="w-12 h-12 object-contain flex-shrink-0"
-              />
+      {/* ── 3. EXAM METADATA CARD (COMPACT STYLED GRID) ── */}
+      <Card className="border border-slate-200/90 rounded-2xl shadow-2xs bg-white overflow-hidden">
+        <CardContent className="p-4 sm:p-5">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+            {/* Left: Exam Logo & Title (Redundant Stage Badge Removed!) */}
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-slate-50 border border-slate-200/80 p-2 flex items-center justify-center shrink-0 shadow-2xs">
+                <img
+                  src={examConfig.logo}
+                  alt={examConfig.examName}
+                  className="w-9 h-9 object-contain"
+                />
+              </div>
               <div>
-                <h2 className="text-base font-bold text-foreground leading-tight">{examConfig.fullName}</h2>
-                <div className="flex flex-wrap items-center gap-2 mt-1">
-                  <Badge variant="secondary" className="text-xs">{examConfig.stages}</Badge>
-                  <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                    <Calendar className="h-3 w-3" />
-                    {examConfig.examDate}
-                  </span>
+                <h2 className="text-base sm:text-lg font-black text-slate-900 tracking-tight leading-snug">
+                  {examConfig.fullName}
+                </h2>
+                <div className="flex items-center gap-2 mt-0.5 text-xs font-semibold text-slate-500">
+                  <Calendar className="h-3.5 w-3.5 text-blue-600" />
+                  <span>Target Date: {examConfig.examDate}</span>
                 </div>
               </div>
             </div>
 
-            {/* Right: 4 exam details — text only, no colors */}
+            {/* Right: Key Exam Metrics Styled Grid */}
             {currentTier && (
-              <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 shrink-0 bg-slate-50 border border-slate-200/80 p-2.5 rounded-xl">
                 {/* Duration */}
-                <div className="flex items-center gap-1.5">
-                  <Clock className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
-                  <div>
-                    <p className="text-[10px] text-muted-foreground leading-none">Duration</p>
-                    <p className="text-xs font-semibold text-foreground leading-tight mt-0.5">{currentTier.duration}</p>
+                <div className="px-3 py-1.5 rounded-lg bg-white border border-slate-200/60 shadow-2xs">
+                  <div className="flex items-center gap-1.5 text-slate-400">
+                    <Clock className="h-3.5 w-3.5 text-blue-600" />
+                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500">Duration</span>
                   </div>
+                  <p className="text-xs font-black text-slate-900 mt-0.5">{currentTier.duration}</p>
                 </div>
-                <div className="w-px h-8 bg-border/60" />
+
                 {/* Total Marks */}
-                <div className="flex items-center gap-1.5">
-                  <Target className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
-                  <div>
-                    <p className="text-[10px] text-muted-foreground leading-none">Total Marks</p>
-                    <p className="text-xs font-semibold text-foreground leading-tight mt-0.5">{currentTier.totalMarks}</p>
+                <div className="px-3 py-1.5 rounded-lg bg-white border border-slate-200/60 shadow-2xs">
+                  <div className="flex items-center gap-1.5 text-slate-400">
+                    <Target className="h-3.5 w-3.5 text-indigo-600" />
+                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500">Marks</span>
                   </div>
+                  <p className="text-xs font-black text-slate-900 mt-0.5">{currentTier.totalMarks}</p>
                 </div>
-                <div className="w-px h-8 bg-border/60" />
+
                 {/* Negative Marking */}
-                <div className="flex items-center gap-1.5">
-                  <X className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
-                  <div>
-                    <p className="text-[10px] text-muted-foreground leading-none">Negative Marking</p>
-                    <p className="text-xs font-semibold text-foreground leading-tight mt-0.5">{currentTier.negativeMarking}</p>
+                <div className="px-3 py-1.5 rounded-lg bg-white border border-slate-200/60 shadow-2xs">
+                  <div className="flex items-center gap-1.5 text-slate-400">
+                    <X className="h-3.5 w-3.5 text-rose-500" />
+                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500">Neg. Mark</span>
                   </div>
+                  <p className="text-xs font-black text-slate-900 mt-0.5">{currentTier.negativeMarking}</p>
                 </div>
-                <div className="w-px h-8 bg-border/60" />
+
                 {/* Sectional Cutoff */}
-                <div className="flex items-center gap-1.5">
-                  <CheckCircle2 className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
-                  <div>
-                    <p className="text-[10px] text-muted-foreground leading-none">Sectional Cutoff</p>
-                    <p className="text-xs font-semibold text-foreground leading-tight mt-0.5">
-                      {currentTier.sectionalCutoff ? 'Yes ✓' : 'No'}
-                    </p>
+                <div className="px-3 py-1.5 rounded-lg bg-white border border-slate-200/60 shadow-2xs">
+                  <div className="flex items-center gap-1.5 text-slate-400">
+                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500">Cutoff</span>
                   </div>
+                  <p className="text-xs font-black text-slate-900 mt-0.5">
+                    {currentTier.sectionalCutoff ? 'Yes ✓' : 'No'}
+                  </p>
                 </div>
               </div>
             )}
-
           </div>
         </CardContent>
       </Card>
 
-      {/* Stage Tabs — only show tabs the exam has */}
-      {examConfig.tiers.length > 0 && (() => {
-        const stageLabels = ['Prelims', 'Mains', 'Interview', 'Stage 4'];
-        const stageIcons = ['📄', '📝', '🎤', '🏆'];
-        const stageActiveClasses = [
-          'bg-sky-500 text-white border-sky-500',
-          'bg-violet-500 text-white border-violet-500',
-          'bg-emerald-500 text-white border-emerald-500',
-          'bg-amber-500 text-white border-amber-500',
-        ];
-        return (
-          <div className="space-y-0">
-            {/* Tab row */}
-            <div className="flex items-center gap-2 flex-wrap">
-              {examConfig.tiers.map((tier, idx) => {
-                const isActive = tier.id === selectedTier;
-                const activeClass = stageActiveClasses[idx] || stageActiveClasses[0];
-                const label = stageLabels[idx] || tier.name;
-                const icon = stageIcons[idx] || '📋';
-                return (
-                  <button
-                    key={tier.id}
-                    onClick={() => setSelectedTier(tier.id)}
-                    className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold border transition-all duration-200 ${
-                      isActive
-                        ? activeClass
-                        : 'bg-muted/40 text-muted-foreground border-border/50 hover:bg-muted hover:border-border'
-                    }`}
-                  >
-                    <span className="text-base leading-none">{icon}</span>
-                    {label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        );
-      })()}
+      {/* ── 4. STAGE TABS (SEGMENTED CONTROL TRACK) ── */}
+      {examConfig.tiers.length > 0 && (
+        <div className="bg-slate-100/90 p-1.5 rounded-2xl border border-slate-200/80 flex items-center gap-1 overflow-x-auto shrink-0 w-fit shadow-2xs">
+          {examConfig.tiers.map((tier) => {
+            const isActive = tier.id === selectedTier;
+            return (
+              <button
+                key={tier.id}
+                onClick={() => setSelectedTier(tier.id)}
+                className={`flex items-center gap-2 px-5 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition-all shrink-0 ${
+                  isActive
+                    ? 'bg-blue-600 text-white shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
+                }`}
+              >
+                <span>{tier.name}</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
 
-
-      {/* Recently Viewed */}
+      {/* ── 5. RECENTLY VIEWED / CONTINUE LEARNING ── */}
       {recentlyViewed.length > 0 && (
-        <Card className="bg-gradient-to-r from-purple-50 to-blue-50 border-none">
-          <CardContent className="p-4">
-            <h3 className="font-semibold text-sm mb-3 flex items-center gap-2">
-              <Clock className="h-4 w-4 text-purple-600" />
-              Continue Learning
+        <Card className="bg-blue-50/70 border border-blue-200/70 rounded-2xl shadow-2xs">
+          <CardContent className="p-4 space-y-3">
+            <h3 className="font-black text-xs uppercase tracking-wider text-slate-800 flex items-center gap-2">
+              <Clock className="h-4 w-4 text-blue-600" />
+              <span>Continue Learning (Recently Viewed)</span>
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-2">
+            <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-2.5">
               {recentlyViewed.map((item) => (
                 <button
                   key={item.topicId}
-                  className="p-3 bg-white rounded-lg text-left hover:shadow-md transition-all border border-purple-200 shadow-sm flex flex-col justify-center"
+                  className="p-3 bg-white rounded-xl text-left hover:shadow-xs transition-all border border-slate-200/80 shadow-2xs flex flex-col justify-center"
                   onClick={() => {
-                    // Find the topic and open resources
                     currentTier?.subjects.forEach(subject => {
                       const topic = subject.topics.find(t => t.id === item.topicId);
                       if (topic) {
@@ -673,8 +668,8 @@ const SyllabusPage = () => {
                     });
                   }}
                 >
-                  <p className="text-[13px] font-bold text-slate-800 truncate w-full">{item.topicName}</p>
-                  <p className="text-[11px] text-slate-600 font-medium truncate w-full mt-0.5">{item.subjectName}</p>
+                  <p className="text-xs font-black text-slate-900 truncate w-full">{item.topicName}</p>
+                  <p className="text-[11px] text-slate-500 font-semibold truncate w-full mt-0.5">{item.subjectName}</p>
                 </button>
               ))}
             </div>
@@ -682,113 +677,123 @@ const SyllabusPage = () => {
         </Card>
       )}
 
-      {/* Subjects List */}
-      <div className="space-y-3">
+      {/* ── 6. SUBJECTS ACCORDION LIST (16PX GAP & HIGH CONTRAST TOPIC COUNTS) ── */}
+      <div className="space-y-4">
         {filteredSubjects.map((subject) => {
+          const completedCount = subject.topics.filter(t => completedTopics.has(t.id)).length;
           const subjectProgress = Math.round(
-            subject.topics.reduce((sum, t) => sum + t.progress, 0) / subject.topics.length
+            (completedCount / subject.topics.length) * 100
           );
           const isExpanded = expandedSubjects.includes(subject.id);
 
           return (
-            <Card key={subject.id} className="overflow-hidden">
+            <Card key={subject.id} className="overflow-hidden border border-slate-200/90 rounded-2xl shadow-2xs bg-white">
               <button
                 onClick={() => toggleSubject(subject.id)}
-                className="w-full p-4 flex items-center gap-4 hover:bg-muted/30 transition-colors"
+                className="w-full p-4 sm:p-5 flex items-center gap-4 hover:bg-slate-50/60 transition-colors text-left"
               >
-                <div className={`p-2 rounded-lg ${subject.iconBg}`}>
+                {/* Standardized Subject Icon */}
+                <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-200/80 text-blue-600 flex items-center justify-center font-bold shrink-0 shadow-2xs">
                   {getIconByName(subject.iconName)}
                 </div>
 
-                <div className="flex-1 text-left">
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-semibold">{subject.name}</h3>
-                    <Badge variant="secondary" className="text-xs">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="font-black text-base text-slate-900 tracking-tight">{subject.name}</h3>
+                    <Badge className="bg-slate-100 border border-slate-200 text-slate-700 text-[11px] font-bold px-2.5 py-0.5 rounded-full">
                       {subject.marks} marks
                     </Badge>
                   </div>
-                  <div className="flex items-center gap-2 mt-1">
-                    <Progress value={subjectProgress} className="h-1.5 flex-1 max-w-32" />
-                    <span className="text-xs text-muted-foreground">{subjectProgress}%</span>
+
+                  {/* Topic Progress Bar & Informative Callout (Replaces 0% contrast issue) */}
+                  <div className="flex items-center gap-3 mt-1.5">
+                    <Progress value={subjectProgress} className="h-2 flex-1 max-w-48 bg-slate-100" />
+                    <span className="text-xs font-bold text-slate-600">
+                      {completedCount} / {subject.topics.length} topics completed ({subjectProgress}%)
+                    </span>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3">
-                  <span className="text-xs text-muted-foreground">
+                <div className="flex items-center gap-3 shrink-0">
+                  <span className="text-xs font-bold text-slate-500 hidden sm:inline-block bg-slate-100 px-3 py-1 rounded-full border border-slate-200/60">
                     {subject.topics.length} topics
                   </span>
                   {isExpanded ? (
-                    <ChevronUp className="h-5 w-5 text-muted-foreground" />
+                    <ChevronUp className="h-5 w-5 text-slate-500" />
                   ) : (
-                    <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                    <ChevronDown className="h-5 w-5 text-slate-500" />
                   )}
                 </div>
               </button>
 
+              {/* Accordion Topics List */}
               {isExpanded && (
-                <div className="border-t bg-muted/20 p-4">
-                  <div className="grid gap-2">
-                    {subject.topics.map((topic) => (
-                      <div
-                        key={topic.id}
-                        className={`flex flex-col md:flex-row md:items-center gap-3 p-3 bg-background rounded-lg hover:shadow-sm transition-all ${completedTopics.has(topic.id) ? 'border-l-4 border-emerald-500' : ''
+                <div className="border-t border-slate-100 bg-slate-50/50 p-4 sm:p-5">
+                  <div className="grid gap-2.5">
+                    {subject.topics.map((topic) => {
+                      const isCompleted = completedTopics.has(topic.id);
+                      return (
+                        <div
+                          key={topic.id}
+                          className={`flex flex-col md:flex-row md:items-center gap-3 p-3.5 bg-white rounded-xl border transition-all ${
+                            isCompleted
+                              ? 'border-emerald-200 bg-emerald-50/40 shadow-2xs'
+                              : 'border-slate-200/80 hover:border-slate-300 shadow-2xs'
                           }`}
-                      >
-                        {/* Completion Checkbox */}
-                        <button
-                          onClick={() => handleTopicCompletion(topic.id)}
-                          className={`flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${completedTopics.has(topic.id)
-                            ? 'bg-emerald-500 border-emerald-500'
-                            : 'border-muted-foreground/30 hover:border-emerald-500'
-                            }`}
                         >
-                          {completedTopics.has(topic.id) && (
-                            <CheckCircle2 className="h-3.5 w-3.5 text-white" />
-                          )}
-                        </button>
+                          {/* Completion Checkbox */}
+                          <button
+                            onClick={() => handleTopicCompletion(topic.id)}
+                            className={`flex-shrink-0 w-5 h-5 rounded-md border-2 flex items-center justify-center transition-all ${
+                              isCompleted
+                                ? 'bg-emerald-600 border-emerald-600 text-white'
+                                : 'border-slate-300 hover:border-emerald-600'
+                            }`}
+                          >
+                            {isCompleted && (
+                              <CheckCircle2 className="h-3.5 w-3.5 text-white" />
+                            )}
+                          </button>
 
-                        {/* Topic Info */}
-                        <div className="flex-1">
-                          <p className={`font-medium text-sm ${completedTopics.has(topic.id) ? 'line-through text-muted-foreground' : ''}`}>
-                            {topic.name}
-                          </p>
-                          <div className="flex items-center gap-2 mt-1">
-                            <Progress value={topic.progress} className="h-1 flex-1 max-w-32" />
-                            <span className="text-xs text-muted-foreground">{topic.progress}%</span>
+                          {/* Topic Name */}
+                          <div className="flex-1 min-w-0">
+                            <p className={`font-bold text-xs sm:text-sm ${isCompleted ? 'line-through text-slate-400' : 'text-slate-900'}`}>
+                              {topic.name}
+                            </p>
+                          </div>
+
+                          {/* Interactive Resource Buttons */}
+                          <div className="flex items-center gap-2 shrink-0 mt-2 md:mt-0">
+                            <button
+                              onClick={() => openResources(topic, subject.name, 'videos')}
+                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-50 text-blue-700 hover:bg-blue-100/80 transition-colors border border-blue-200/80 font-bold text-xs shadow-2xs"
+                            >
+                              <Video className="h-3.5 w-3.5 text-blue-600" />
+                              <span>Videos</span>
+                              <span className="bg-blue-200/80 px-1.5 py-0.5 rounded-md text-[10px] text-blue-900 font-extrabold">{topic.videos.length}</span>
+                            </button>
+
+                            <button
+                              onClick={() => openResources(topic, subject.name, 'pdfs')}
+                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 text-amber-800 hover:bg-amber-100/80 transition-colors border border-amber-200/80 font-bold text-xs shadow-2xs"
+                            >
+                              <FileText className="h-3.5 w-3.5 text-amber-600" />
+                              <span>PDFs</span>
+                              <span className="bg-amber-200/80 px-1.5 py-0.5 rounded-md text-[10px] text-amber-900 font-extrabold">{topic.pdfs.length}</span>
+                            </button>
+
+                            <button
+                              onClick={() => openResources(topic, subject.name, 'tests')}
+                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-800 hover:bg-emerald-100/80 transition-colors border border-emerald-200/80 font-bold text-xs shadow-2xs"
+                            >
+                              <BookOpen className="h-3.5 w-3.5 text-emerald-600" />
+                              <span>Tests</span>
+                              <span className="bg-emerald-200/80 px-1.5 py-0.5 rounded-md text-[10px] text-emerald-900 font-extrabold">{topic.tests.length}</span>
+                            </button>
                           </div>
                         </div>
-
-                        {/* Interactive Resource Buttons */}
-                        <div className="flex items-center gap-2 mt-2 md:mt-0">
-                          <button
-                            onClick={() => openResources(topic, subject.name, 'videos')}
-                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors border border-blue-100"
-                          >
-                            <Video className="h-3.5 w-3.5" />
-                            <span className="text-xs font-medium">Videos</span>
-                            <span className="text-xs bg-blue-200 px-1 rounded-sm text-blue-800 ml-0.5">{topic.videos.length}</span>
-                          </button>
-
-                          <button
-                            onClick={() => openResources(topic, subject.name, 'pdfs')}
-                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-amber-50 text-amber-700 hover:bg-amber-100 transition-colors border border-amber-100"
-                          >
-                            <FileText className="h-3.5 w-3.5" />
-                            <span className="text-xs font-medium">PDFs</span>
-                            <span className="text-xs bg-amber-200 px-1 rounded-sm text-amber-900 ml-0.5">{topic.pdfs.length}</span>
-                          </button>
-
-                          <button
-                            onClick={() => openResources(topic, subject.name, 'tests')}
-                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-colors border border-emerald-100"
-                          >
-                            <BookOpen className="h-3.5 w-3.5" />
-                            <span className="text-xs font-medium">Tests</span>
-                            <span className="text-xs bg-emerald-200 px-1 rounded-sm text-emerald-800 ml-0.5">{topic.tests.length}</span>
-                          </button>
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               )}

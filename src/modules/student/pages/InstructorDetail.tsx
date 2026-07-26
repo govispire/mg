@@ -7,12 +7,25 @@ import { Badge } from '@/components/ui/badge';
 import { CourseNavigation } from '@/components/student/courses/CourseNavigation';
 import { CourseCard } from '@/components/student/courses/CourseCard';
 import { Star, Users, BookOpen, Award } from 'lucide-react';
-import { getInstructorById, getCoursesByInstructor } from '@/data/courseData';
+import { useCourses } from '@/hooks/useCourses';
 
 const InstructorDetail = () => {
   const { instructorId } = useParams();
-  const instructor = getInstructorById(instructorId!);
-  const courses = getCoursesByInstructor(instructorId!);
+  const { data: coursesData, isLoading: coursesLoading } = useCourses({ instructor: instructorId });
+  const courses = (coursesData || []) as any[];
+  const firstCourse = courses[0] as any;
+  const instructor = firstCourse ? {
+    id: instructorId,
+    name: firstCourse.instructorName || 'Unknown Instructor',
+    avatar: firstCourse.instructorAvatar || '',
+    specialization: firstCourse.instructorSpecialization || '',
+    rating: firstCourse.instructorRating || 4.5,
+    experience: firstCourse.instructorExperience || '5+ years',
+    studentsCount: firstCourse.instructorStudentsCount || 0,
+    coursesCount: courses.length,
+  } : null;
+
+  if (coursesLoading) return <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" /></div>;
   
   if (!instructor) {
     return (

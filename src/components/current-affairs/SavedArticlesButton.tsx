@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Bookmark, FileText, ArrowRight, Trash2 } from 'lucide-react';
 import { useSavedArticles } from '@/hooks/useSavedArticles';
-import { allArticles } from '@/components/current-affairs/articlesData';
+import { useArticles } from '@/hooks/useCurrentAffairsArticles';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -13,18 +13,23 @@ export const SavedArticlesButton = () => {
     const { savedArticleIds, toggleSave } = useSavedArticles();
     const navigate = useNavigate();
     const [isOpen, setIsOpen] = useState(false);
+    const { data: rawArticles = [] } = useArticles();
+    const allArticles = rawArticles as any[];
 
     const savedArticles = allArticles.filter(article => savedArticleIds.includes(article.id));
 
     return (
         <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetTrigger asChild>
-                <Button variant="outline" className="flex items-center gap-2">
-                    <Bookmark className="h-4 w-4" />
-                    <span className="hidden sm:inline">Saved Articles</span>
-                    <Badge variant="secondary" className="ml-1 h-5 min-w-[20px] px-1 justify-center">
+                <Button
+                    variant="outline"
+                    className="bg-white hover:bg-slate-50 border-slate-200/90 shadow-2xs hover:shadow-xs text-slate-800 font-extrabold text-xs rounded-xl px-4 py-2.5 flex items-center gap-2 hover:border-blue-300 transition-all cursor-pointer shrink-0"
+                >
+                    <Bookmark className="h-4 w-4 text-blue-600 fill-blue-50" />
+                    <span>Saved Articles</span>
+                    <span className="ml-1 bg-blue-600 text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-2xs">
                         {savedArticleIds.length}
-                    </Badge>
+                    </span>
                 </Button>
             </SheetTrigger>
             <SheetContent className="w-full sm:max-w-md p-0 flex flex-col">

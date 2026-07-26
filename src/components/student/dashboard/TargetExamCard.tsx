@@ -162,18 +162,19 @@ const TargetExamCard: React.FC<TargetExamCardProps> = ({
           const mainsTotal = mainsSlots.reduce((a, s) => a + s.tests.length, 0) || meta.mainsTotal;
           const liveTotal  = liveSlots.reduce((a, s)  => a + s.tests.length, 0) || meta.liveTotal;
           return [
-            { label: 'Prelims',   icon: <FileText className="w-4 h-4" />, total: preliTotal, completed: 0, accent: '#3b82f6', iconBg: '#eff6ff', iconColor: '#2563eb' },
-            { label: 'Mains',     icon: <BookOpen className="w-4 h-4" />, total: mainsTotal, completed: 0, accent: '#8b5cf6', iconBg: '#f5f3ff', iconColor: '#7c3aed' },
-            { label: 'Live Test', icon: <Zap className="w-4 h-4" />,      total: liveTotal,  completed: 0, accent: '#10b981', iconBg: '#ecfdf5', iconColor: '#059669' },
+            // All three tabs share the same neutral icon bg — brand blue progress bar
+            { label: 'Prelims',   icon: <FileText className="w-4 h-4" />, total: preliTotal, completed: 0, accent: '#2563EB', iconBg: '#F1F5F9', iconColor: '#475569' },
+            { label: 'Mains',     icon: <BookOpen className="w-4 h-4" />, total: mainsTotal, completed: 0, accent: '#2563EB', iconBg: '#F1F5F9', iconColor: '#475569' },
+            { label: 'Live Test', icon: <Zap className="w-4 h-4" />,      total: liveTotal,  completed: 0, accent: '#2563EB', iconBg: '#F1F5F9', iconColor: '#475569' },
           ];
         }
       }
     }
     // Fallback to meta defaults
     return [
-      { label: 'Prelims',   icon: <FileText className="w-4 h-4" />, total: meta.preliTotal, completed: 0, accent: '#3b82f6', iconBg: '#eff6ff', iconColor: '#2563eb' },
-      { label: 'Mains',     icon: <BookOpen className="w-4 h-4" />, total: meta.mainsTotal, completed: 0, accent: '#8b5cf6', iconBg: '#f5f3ff', iconColor: '#7c3aed' },
-      { label: 'Live Test', icon: <Zap className="w-4 h-4" />,      total: meta.liveTotal,  completed: 0, accent: '#10b981', iconBg: '#ecfdf5', iconColor: '#059669' },
+      { label: 'Prelims',   icon: <FileText className="w-4 h-4" />, total: meta.preliTotal, completed: 0, accent: '#2563EB', iconBg: '#F1F5F9', iconColor: '#475569' },
+      { label: 'Mains',     icon: <BookOpen className="w-4 h-4" />, total: meta.mainsTotal, completed: 0, accent: '#2563EB', iconBg: '#F1F5F9', iconColor: '#475569' },
+      { label: 'Live Test', icon: <Zap className="w-4 h-4" />,      total: meta.liveTotal,  completed: 0, accent: '#2563EB', iconBg: '#F1F5F9', iconColor: '#475569' },
     ];
   })();
 
@@ -213,14 +214,14 @@ const TargetExamCard: React.FC<TargetExamCardProps> = ({
     return () => document.removeEventListener('mousedown', handler);
   }, [dotMenuOpen]);
 
-  // ── Progress rings ────────────────────────────────────────────────────────
+  // ── Progress rings — Single brand blue for all rings (no rainbow) ────────────
   const overallPct = liveOverallPct && liveOverallPct > 0 ? Math.round(liveOverallPct) : 0;
   const rings = [
-    { label: 'OVERALL',   pct: overallPct,                                         color: '#10b981', size: 82, stroke: 7, textSize: 14 },
-    { label: 'QUANT',     pct: Math.min(Math.round(overallPct * 0.9 + 5), 100),   color: '#3b82f6', size: 60, stroke: 5, textSize: 11 },
-    { label: 'REASONING', pct: Math.min(Math.round(overallPct * 1.1), 100),        color: '#8b5cf6', size: 60, stroke: 5, textSize: 11 },
-    { label: 'ENGLISH',   pct: Math.min(Math.round(overallPct * 0.85 + 10), 100), color: '#f59e0b', size: 60, stroke: 5, textSize: 11 },
-    { label: 'GEN. AWR.', pct: Math.min(Math.round(overallPct * 0.75 + 15), 100), color: '#ec4899', size: 60, stroke: 5, textSize: 11 },
+    { label: 'OVERALL',   pct: overallPct,                                         color: '#2563EB', size: 82, stroke: 7, textSize: 14 },
+    { label: 'QUANT',     pct: Math.min(Math.round(overallPct * 0.9 + 5), 100),   color: '#2563EB', size: 60, stroke: 5, textSize: 11 },
+    { label: 'REASONING', pct: Math.min(Math.round(overallPct * 1.1), 100),        color: '#2563EB', size: 60, stroke: 5, textSize: 11 },
+    { label: 'ENGLISH',   pct: Math.min(Math.round(overallPct * 0.85 + 10), 100), color: '#2563EB', size: 60, stroke: 5, textSize: 11 },
+    { label: 'GEN. AWR.', pct: Math.min(Math.round(overallPct * 0.75 + 15), 100), color: '#2563EB', size: 60, stroke: 5, textSize: 11 },
   ];
 
   // ── Ads panel ──────────────────────────────────────────────────────────────
@@ -309,7 +310,7 @@ const TargetExamCard: React.FC<TargetExamCardProps> = ({
             {safeExams.length < 3 ? (
               <button
                 onClick={() => setPanelOpen('add')}
-                className="px-2.5 py-1.5 text-[10px] sm:text-xs font-bold text-white bg-emerald-500 hover:bg-emerald-600 rounded-lg transition-colors flex items-center gap-1 shadow-sm"
+                className="px-2.5 py-1.5 text-[10px] sm:text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors flex items-center gap-1 shadow-sm"
               >
                 <span className="hidden sm:inline">+ Add Exam</span>
                 <span className="sm:hidden">+</span>
@@ -425,11 +426,12 @@ const TargetExamCard: React.FC<TargetExamCardProps> = ({
               </div>
               <div>
                 <h2 className="text-xl sm:text-2xl lg:text-3xl font-black text-gray-900 leading-none">{targetExam}</h2>
+          {/* Metadata badges — neutral slate, no competing blue+amber */}
                 <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                  <div className="inline-flex items-center gap-1 bg-blue-50 border border-blue-100 text-blue-700 text-[11px] font-semibold px-2.5 py-1 rounded-full">
+                  <div className="inline-flex items-center gap-1 bg-slate-100 border border-slate-200 text-slate-600 text-[11px] font-semibold px-2.5 py-1 rounded-full">
                     <Users className="w-3 h-3" /> 3.4K+ Students Enrolled
                   </div>
-                  <div className="inline-flex items-center gap-1 bg-amber-50 border border-amber-100 text-amber-700 text-[11px] font-semibold px-2.5 py-1 rounded-full">
+                  <div className="inline-flex items-center gap-1 bg-slate-100 border border-slate-200 text-slate-600 text-[11px] font-semibold px-2.5 py-1 rounded-full">
                     <Trophy className="w-3 h-3" /> {meta.vacancies} Vacancies
                   </div>
                 </div>
@@ -452,28 +454,30 @@ const TargetExamCard: React.FC<TargetExamCardProps> = ({
         </div>{/* end Row 1 */}
 
         {/* Row 2: Test completion cards */}
-        <div className="rounded-2xl bg-gray-50/60 px-4 py-3">
+        <div className="rounded-2xl bg-slate-50/80 p-3 sm:p-4 border border-slate-200/80">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Preparation Progress</span>
-            <span className="text-[10px] font-extrabold" style={{ color: '#16a34a' }}>{grandCompleted} / {grandTotal} Total</span>
+            <span className="text-[10px] font-extrabold text-slate-500 uppercase tracking-widest">Preparation Progress</span>
+            <span className="text-[11px] font-bold text-blue-600">{grandCompleted} / {grandTotal} Total</span>
           </div>
           <div className="grid grid-cols-3 gap-3">
             {tabs.map(tab => {
               const pct = tab.total > 0 ? Math.round((tab.completed / tab.total) * 100) : 0;
               return (
-                <div key={tab.label} className="bg-white rounded-xl px-3 py-2.5"
-                  style={{ border: '1px solid #EEF2F7', boxShadow: '0 2px 8px rgba(15,23,42,0.04)' }}>
+                <div
+                  key={tab.label}
+                  className="bg-white rounded-xl px-3.5 py-3 border border-slate-200/90 shadow-sm hover:shadow-md hover:border-blue-200 transition-all"
+                >
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0"
+                      <div className="w-6.5 h-6.5 rounded-md flex items-center justify-center flex-shrink-0"
                         style={{ background: tab.iconBg, color: tab.iconColor }}>
                         {tab.icon}
                       </div>
-                      <span className="text-[11px] font-extrabold uppercase tracking-wide" style={{ color: tab.iconColor }}>{tab.label}</span>
+                      <span className="text-[11px] font-extrabold uppercase tracking-wide text-slate-800">{tab.label}</span>
                     </div>
                     <div className="flex items-baseline gap-0.5">
-                      <span className="text-[18px] font-black" style={{ color: tab.iconColor }}>{tab.completed}</span>
-                      <span className="text-[11px] font-bold text-gray-400">/{tab.total}</span>
+                      <span className="text-[18px] font-black text-slate-900">{tab.completed}</span>
+                      <span className="text-[11px] font-bold text-slate-400">/{tab.total}</span>
                     </div>
                   </div>
                   <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
@@ -485,7 +489,7 @@ const TargetExamCard: React.FC<TargetExamCardProps> = ({
           </div>
         </div>
 
-        {/* Row 3: Action buttons — 2-col grid on mobile, row on sm+ */}
+        {/* Row 3: Action buttons — primary CTA + neutral secondaries */}
         <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 sm:gap-3">
           <button
             onClick={() => navigate(mockRoute)}
@@ -495,24 +499,26 @@ const TargetExamCard: React.FC<TargetExamCardProps> = ({
           </button>
           <button
             onClick={() => navigate('/student/syllabus')}
-            className="border border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-gray-700 font-semibold px-3 py-2.5 rounded-xl transition-all active:scale-95 text-sm flex items-center justify-center gap-2"
+            className="border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold px-3 py-2.5 rounded-xl transition-all active:scale-95 text-sm flex items-center justify-center gap-2"
           >
-            <BookOpen className="w-4 h-4 text-gray-500" />
+            <BookOpen className="w-4 h-4 text-slate-400" />
             <span className="hidden sm:inline">View </span>Syllabus
           </button>
+          {/* Weakness Predictor — neutral border, no separate violet accent */}
           <button
             onClick={() => setWeaknessOpen(true)}
-            className="border border-violet-200 hover:border-violet-300 hover:bg-violet-50 text-violet-700 font-semibold px-3 py-2.5 rounded-xl transition-all active:scale-95 text-sm flex items-center justify-center gap-2"
+            className="border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold px-3 py-2.5 rounded-xl transition-all active:scale-95 text-sm flex items-center justify-center gap-2"
           >
-            <Brain className="w-4 h-4" />
+            <Brain className="w-4 h-4 text-slate-400" />
             <span className="hidden sm:inline">Weakness </span>Predictor
-            <span className="text-[9px] font-black bg-violet-600 text-white px-1.5 py-0.5 rounded">AI</span>
+            <span className="text-[9px] font-black bg-blue-600 text-white px-1.5 py-0.5 rounded">AI</span>
           </button>
+          {/* How to Start — neutral border, no separate emerald accent */}
           <button
             onClick={() => setHowToStartOpen(true)}
-            className="border border-emerald-200 hover:border-emerald-300 hover:bg-emerald-50 text-emerald-700 font-semibold px-3 py-2.5 rounded-xl transition-all active:scale-95 text-sm flex items-center justify-center gap-2"
+            className="border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold px-3 py-2.5 rounded-xl transition-all active:scale-95 text-sm flex items-center justify-center gap-2"
           >
-            <HelpCircle className="w-4 h-4" /> How to Start
+            <HelpCircle className="w-4 h-4 text-slate-400" /> How to Start
           </button>
         </div>
 
@@ -534,22 +540,22 @@ const TargetExamCard: React.FC<TargetExamCardProps> = ({
         />
       </div>
 
+      {/* ══ RIGHT PANEL: Countdown with SuperAdmin/Stage-configured background ══ */}
       {(() => {
-        // Current background: uses SuperAdmin-chosen stage colour, fallback to imported palette
         const currentPanelBg = slideIdx === 0
           ? (countdownSlides[countdownSlide]?.color || STAGE_GRADIENTS[countdownSlide % STAGE_GRADIENTS.length].value)
-          : undefined; // ads handle their own bg
+          : undefined;
         return (
       <div
-        className="lg:w-[260px] flex-shrink-0 relative overflow-hidden group select-none"
-        style={{ background: currentPanelBg || '#1e1b4b', minHeight: 120, transition: 'background 0.6s ease' }}
+        className="lg:w-[250px] flex-shrink-0 relative overflow-hidden group select-none"
+        style={{ background: currentPanelBg || '#1e40af', minHeight: 120, transition: 'background 0.6s ease' }}
       >
-        {/* Slide 0 — Countdown (auto-cycles Prelims ↔ Mains) */}
+        {/* Slide 0 — Countdown (auto-cycles stages with SuperAdmin chosen colors) */}
         <div
           className="absolute inset-0 transition-opacity duration-500"
           style={{ opacity: slideIdx === 0 ? 1 : 0, pointerEvents: slideIdx === 0 ? 'auto' : 'none' }}
         >
-          {/* Per-slide background layers — each uses its own SuperAdmin colour */}
+          {/* Per-slide background color layers for smooth transition */}
           {countdownSlides.map((cs, i) => (
             <div
               key={i}
@@ -557,10 +563,10 @@ const TargetExamCard: React.FC<TargetExamCardProps> = ({
               style={{ background: cs.color, opacity: countdownSlide === i ? 1 : 0 }}
             />
           ))}
-          <div className="absolute -top-6 -right-6 w-24 h-24 bg-white/10 rounded-full blur-2xl pointer-events-none" />
+          <div className="absolute -top-6 -right-6 w-28 h-28 bg-white/10 rounded-full blur-2xl pointer-events-none" />
           <div className="absolute bottom-8 -left-8 w-28 h-28 bg-white/10 rounded-full blur-2xl pointer-events-none" />
 
-          {/* Each countdown sub-slide fades in/out */}
+          {/* Each countdown sub-slide */}
           {countdownSlides.map((cs, i) => {
             const dLeft = getDaysLeft(cs.date) ?? 0;
             return (
@@ -575,24 +581,24 @@ const TargetExamCard: React.FC<TargetExamCardProps> = ({
               >
                 {/* Number */}
                 <div className="relative z-10 flex flex-col items-center text-center shrink-0">
-                  <div className="text-[9px] sm:text-[10px] font-extrabold uppercase tracking-widest opacity-75 mb-0.5 lg:mb-1">Your Countdown</div>
-                  <div className="font-black leading-none tabular-nums drop-shadow-lg text-5xl sm:text-6xl lg:text-[68px]">
+                  <div className="text-[9px] sm:text-[10px] font-extrabold uppercase tracking-widest opacity-80 mb-0.5 lg:mb-1">Your Countdown</div>
+                  <div className="font-black leading-none tabular-nums drop-shadow-md text-5xl sm:text-6xl lg:text-[68px] text-white">
                     {Math.max(0, dLeft)}
                   </div>
-                  <div className="text-[11px] sm:text-[13px] font-black uppercase tracking-[0.2em] opacity-90 mt-0.5 lg:mt-1">Days Left</div>
+                  <div className="text-[11px] sm:text-[13px] font-black uppercase tracking-[0.2em] opacity-90 mt-0.5 lg:mt-1 text-white">Days Left</div>
                 </div>
 
                 {/* Date badge */}
-                <div className="relative z-10 flex flex-col items-center gap-2 lg:mt-2 lg:w-full">
-                  <div className="hidden lg:block w-10 h-0.5 bg-white/40 rounded-full" />
-                  <div className="text-[9px] sm:text-[10px] opacity-70 tracking-wide font-medium uppercase text-center">To {cs.label} Day</div>
-                  <div className="bg-white/15 border border-white/25 rounded-xl px-3 py-1.5 sm:py-2 flex items-center gap-2 w-full">
+                <div className="relative z-10 flex flex-col items-center gap-2 lg:mt-3 lg:w-full">
+                  <div className="hidden lg:block w-8 h-0.5 bg-white/30 rounded-full" />
+                  <div className="text-[9px] sm:text-[10px] opacity-75 tracking-wide font-medium uppercase text-center text-white">To {cs.label} Day</div>
+                  <div className="bg-white/15 backdrop-blur-sm border border-white/25 shadow-sm rounded-xl px-3 py-1.5 sm:py-2 flex items-center gap-2 w-full">
                     <Calendar className="w-3.5 h-3.5 text-white flex-shrink-0" />
                     <div className="flex-1">
-                      <div className="font-black text-white text-[11px] sm:text-xs leading-tight text-center">
+                      <div className="font-bold text-white text-[11px] sm:text-xs leading-tight text-center">
                         {new Date(cs.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
                       </div>
-                      <div className="text-[9px] text-white/65 font-semibold text-center">{cs.label} Exam Date</div>
+                      <div className="text-[9px] text-white/70 font-semibold text-center">{cs.label} Exam Date</div>
                     </div>
                   </div>
                 </div>
@@ -600,7 +606,7 @@ const TargetExamCard: React.FC<TargetExamCardProps> = ({
             );
           })}
 
-          {/* Dot indicator (only when Mains exists) */}
+          {/* Dot indicator (only when Mains/multiple stages exist) */}
           {countdownSlides.length > 1 && (
             <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-1 z-20">
               {countdownSlides.map((_, i) => (

@@ -8,16 +8,19 @@ import { CourseNavigation } from '@/components/student/courses/CourseNavigation'
 import { ChapterList } from '@/components/student/courses/ChapterList';
 import { CourseVideoList } from '@/components/student/courses/CourseVideoList';
 import { LayoutGrid, List } from 'lucide-react';
-import { getCourseById, subjects } from '@/data/courseData';
+import { useCourse } from '@/hooks/useCourses';
 
 const SubjectDetail = () => {
   const { courseId, subject } = useParams();
   const [viewMode, setViewMode] = useState<'chapters' | 'videos'>('chapters');
   const [isGridView, setIsGridView] = useState(true);
   
-  const course = getCourseById(courseId!);
-  const subjectData = subjects[subject!];
+  const { data: course, isLoading: courseLoading } = useCourse(courseId);
+  const courseSubjectsList = (course as any)?.subjects || [];
+  const subjectData = courseSubjectsList.find((s: any) => s.id === subject) || courseSubjectsList.find((s: any) => (s.name || '').toLowerCase().replace(/\s+/g, '-') === subject);
   
+  if (courseLoading) return <div className="flex items-center justify-center p-8"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" /></div>;
+
   if (!course || !subjectData) {
     return (
       <div className="text-center py-10">

@@ -119,9 +119,9 @@ const SidebarItem: React.FC<SidebarItemProps> = ({ icon, label, to, active, coll
       to={to}
       className={cn(
         "flex items-center justify-between gap-2 rounded-xl px-3 py-2.5 text-sm transition-all duration-200 group relative",
-        "hover:bg-emerald-50 hover:text-emerald-700",
+        "hover:bg-slate-50 hover:text-slate-900",
         active
-          ? "bg-gradient-to-r from-emerald-50 to-emerald-50/40 text-emerald-700 font-semibold shadow-sm ring-1 ring-emerald-100"
+          ? "bg-emerald-50 text-emerald-700 font-semibold shadow-sm ring-1 ring-emerald-100"
           : "text-slate-600 font-medium",
         highlight && !active && "bg-primary/5 border border-primary/10",
         collapsed && "justify-center px-2"
@@ -136,8 +136,8 @@ const SidebarItem: React.FC<SidebarItemProps> = ({ icon, label, to, active, coll
           className={cn(
             "flex items-center justify-center w-7 h-7 rounded-lg transition-all duration-200",
             active
-              ? "bg-emerald-500 text-white shadow-sm"
-              : "text-slate-400 group-hover:text-emerald-600 group-hover:bg-emerald-50",
+              ? "bg-emerald-600 text-white shadow-sm"
+              : "text-slate-400 group-hover:text-slate-600 group-hover:bg-slate-100",
             highlight && !active && "text-primary group-hover:text-primary"
           )}
         >
@@ -147,7 +147,7 @@ const SidebarItem: React.FC<SidebarItemProps> = ({ icon, label, to, active, coll
           <span
             className={cn(
               "font-semibold text-[13px] whitespace-nowrap",
-              active ? "text-emerald-700" : "group-hover:text-emerald-700",
+              active ? "text-emerald-700" : "group-hover:text-slate-900",
               highlight && !active && "text-primary"
             )}
           >
@@ -180,7 +180,7 @@ const SidebarItem: React.FC<SidebarItemProps> = ({ icon, label, to, active, coll
 
       {/* Active left indicator bar */}
       {active && (
-        <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-6 bg-emerald-500 rounded-r-full shadow-[0_0_6px_rgba(16,185,129,0.5)]" />
+        <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-6 bg-emerald-600 rounded-r-full shadow-[0_0_6px_rgba(5,150,105,0.4)]" />
       )}
     </Link>
   );
@@ -257,7 +257,7 @@ const Sidebar: React.FC<SidebarProps> = ({ role, basePath, collapsed, onToggle }
 
 
           { icon: <Bell size={18} />, label: 'Exam Alerts', to: `${basePath}/exam-notifications` },
-          { icon: <Heart size={18} />, label: 'Exam Tracker', to: `${basePath}/self-care` },
+          { icon: <Heart size={18} />, label: 'Exam Tracker', to: `${basePath}/exam-tracker` },
           { icon: <FileText size={18} />, label: 'PDF Courses', to: `${basePath}/pdf-courses` },
           { icon: <BookOpen size={18} />, label: 'Vocabulary', to: `${basePath}/vocabulary`, highlight: true },
 
@@ -377,8 +377,8 @@ const Sidebar: React.FC<SidebarProps> = ({ role, basePath, collapsed, onToggle }
                   "absolute top-[18px] -right-[14px] z-10",
                   "flex items-center justify-center rounded-full",
                   "w-7 h-7 border-2 border-slate-200 bg-white text-slate-500",
-                  "hover:bg-emerald-50 hover:text-emerald-600 hover:border-emerald-300 transition-all duration-200",
-                  "shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
+                  "hover:bg-slate-50 hover:text-slate-700 hover:border-slate-300 transition-all duration-200",
+                  "shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300"
                 )}
                 aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
               >
@@ -414,18 +414,23 @@ const Sidebar: React.FC<SidebarProps> = ({ role, basePath, collapsed, onToggle }
         {/* Footer: Upgrade button (student) + year text when expanded */}
         {!collapsed && role === 'student' && (
           <div className="flex-shrink-0 border-t border-slate-100 px-3 py-3">
-            <a
-              href={`${basePath}/pricing`}
-              className="flex items-center gap-2 w-full rounded-xl px-3 py-2.5 text-sm font-bold text-white transition-all duration-200 hover:opacity-90 hover:scale-[1.02] active:scale-100"
-              style={{
-                background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)',
-                boxShadow: '0 2px 12px rgba(79,70,229,0.35)',
-              }}
-            >
-              <Crown size={16} className="text-amber-300 flex-shrink-0" />
-              <span>Upgrade Plan</span>
-              <span className="ml-auto text-indigo-200 text-xs font-normal">7-day free trial</span>
-            </a>
+            {/* Neutral upgrade panel — single blue CTA, no heavy color block */}
+            <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5">
+              <div className="flex items-center gap-2 mb-2">
+                <Crown size={14} className="text-amber-500 flex-shrink-0" />
+                <div>
+                  <p className="text-[11px] font-bold text-slate-800 leading-tight">Upgrade to Premium</p>
+                  <p className="text-[10px] text-slate-500">7-day free trial • Cancel anytime</p>
+                </div>
+              </div>
+              <a
+                href={`${basePath}/pricing`}
+                className="flex items-center justify-center gap-1.5 w-full rounded-lg px-3 py-2 text-[11px] font-bold text-white bg-blue-600 hover:bg-blue-700 transition-colors duration-150"
+              >
+                <span>Upgrade Plan</span>
+                <span className="text-blue-200 font-normal">→</span>
+              </a>
+            </div>
             <div className="text-[10px] text-slate-400 mt-2 text-center">
               Examerit © {new Date().getFullYear()}
             </div>

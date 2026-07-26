@@ -2,7 +2,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/ui/use-toast';
-import { EmployeeCategory } from '@/shared/types/employee';
+import { EmployeeCategory } from '@/types/employee';
 
 export type UserRole = 'student' | 'employee' | 'super-admin' | 'owner' | 'mentor' | null;
 

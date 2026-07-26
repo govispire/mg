@@ -13,7 +13,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 47% 11%;
 
-    --primary: 160 84% 30%;           /* rich emerald */
+    --primary: 221 83% 53%;           /* Royal Blue #2563EB */
     --primary-foreground: 0 0% 100%;
 
     --secondary: 213 27% 92%;
@@ -22,15 +22,15 @@
     --muted: 213 27% 92%;
     --muted-foreground: 215 20% 50%;
 
-    --accent: 160 60% 92%;
-    --accent-foreground: 160 84% 22%;
+    --accent: 221 91% 96%;            /* blue-50 tint */
+    --accent-foreground: 221 83% 40%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
     --border: 213 27% 88%;
     --input: 213 27% 88%;
-    --ring: 160 84% 30%;
+    --ring: 221 83% 53%;             /* Royal Blue focus ring */
 
     --radius: 0.625rem;
 
@@ -38,10 +38,10 @@
     --sidebar-foreground: 240 5.3% 26.1%;
     --sidebar-primary: 240 5.9% 10%;
     --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 160 60% 95%;
-    --sidebar-accent-foreground: 160 84% 22%;
+    --sidebar-accent: 221 91% 96%;   /* blue-50 active tint */
+    --sidebar-accent-foreground: 221 83% 40%;
     --sidebar-border: 213 27% 90%;
-    --sidebar-ring: 160 84% 30%;
+    --sidebar-ring: 221 83% 53%;
   }
 
   .dark {
@@ -102,7 +102,7 @@
 }
 
 .hero-gradient {
-  background: linear-gradient(135deg, #e6faf5 0%, #d1f5eb 100%);
+  background: linear-gradient(135deg, #eff6ff 0%, #f0f9ff 100%);
 }
 
 .feature-card {
@@ -504,18 +504,28 @@
   opacity: 0.85;
 }
 
-/* Left accent strips */
-.db-accent-green  { border-left: 4px solid #22C55E; }
-.db-accent-blue   { border-left: 4px solid #3B82F6; }
-.db-accent-amber  { border-left: 4px solid #F59E0B; }
-.db-accent-violet { border-left: 4px solid #8B5CF6; }
-.db-accent-red    { border-left: 4px solid #EF4444; }
+/* Left accent strips — use semantic colors only */
+.db-accent-primary { border-left: 4px solid #2563EB; }  /* brand blue CTA/active */
+.db-accent-success { border-left: 4px solid #16A34A; }  /* completion / streak */
+.db-accent-warning { border-left: 4px solid #D97706; }  /* in-progress / caution */
+.db-accent-danger  { border-left: 4px solid #DC2626; }  /* error / alert */
+.db-accent-neutral { border-left: 4px solid #CBD5E1; }  /* neutral / informational */
 
-/* Icon pill bg colors */
-.db-icon-success { background: #DCFCE7; color: #16A34A; border-radius: 8px; padding: 6px; }
-.db-icon-info    { background: #DBEAFE; color: #2563EB; border-radius: 8px; padding: 6px; }
-.db-icon-warning { background: #FEF3C7; color: #D97706; border-radius: 8px; padding: 6px; }
-.db-icon-danger  { background: #FEE2E2; color: #DC2626; border-radius: 8px; padding: 6px; }
+/* ── Deprecated rainbow aliases — mapped to semantic equivalents ── */
+.db-accent-green  { border-left: 4px solid #16A34A; }
+.db-accent-blue   { border-left: 4px solid #2563EB; }
+.db-accent-amber  { border-left: 4px solid #D97706; }
+.db-accent-violet { border-left: 4px solid #2563EB; } /* collapsed to brand blue */
+.db-accent-red    { border-left: 4px solid #DC2626; }
+
+/* Icon pill bg colors — NEUTRAL by default, semantic only for functional states */
+/* Default: uniform gray for all decorative icon containers */
+.db-icon-neutral { background: #F1F5F9; color: #475569; border-radius: 8px; padding: 6px; }
+/* Semantic: only use when icon carries functional meaning */
+.db-icon-success { background: #F0FDF4; color: #16A34A; border-radius: 8px; padding: 6px; }
+.db-icon-info    { background: #EFF6FF; color: #2563EB; border-radius: 8px; padding: 6px; }
+.db-icon-warning { background: #FFFBEB; color: #D97706; border-radius: 8px; padding: 6px; }
+.db-icon-danger  { background: #FEF2F2; color: #DC2626; border-radius: 8px; padding: 6px; }
 
 /* Spacing helpers */
 .db-section-gap { gap: 24px; }

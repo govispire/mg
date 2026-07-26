@@ -30,12 +30,15 @@ import DailyNewsView from '@/components/current-affairs/DailyNewsView';
 import AllInOneView from '@/components/current-affairs/AllInOneView';
 import { StepBreadcrumb } from '@/components/ui/step-breadcrumb';
 import ArticleQuiz from '@/components/current-affairs/ArticleQuiz';
-import { allArticles, getArticleById } from '@/components/current-affairs/articlesData';
-import { dailyQuizzes } from '@/data/dailyQuizzesData';
+import { useArticles } from '@/hooks/useCurrentAffairsArticles';
+import { useQuizzes } from '@/hooks/useQuizCatalog';
 import { Article, ReadingSettings, DigestPreferences, ReadingProgress } from '@/components/current-affairs/types';
 import { useReadingProgress } from '@/hooks/useReadingProgress';
 
 const CurrentAffairs = () => {
+  const { data: dailyQuizzes = [] } = useQuizzes();
+  const { data: rawArticles = [] } = useArticles();
+  const allArticles = rawArticles as any[];
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');

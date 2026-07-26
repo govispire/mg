@@ -110,7 +110,18 @@ export const TopicViewDialog: React.FC<TopicViewDialogProps> = ({
                       <h3 className="text-2xl font-bold mb-4 group-hover:text-primary transition-colors leading-tight">
                         {article.title}
                       </h3>
-                      <p className="text-muted-foreground text-lg mb-6 leading-relaxed max-w-full">{article.excerpt}</p>
+                      <p className="text-muted-foreground text-lg mb-4 leading-relaxed max-w-full">{article.excerpt}</p>
+
+                      {/* Article Image */}
+                      {article.image && (
+                        <div className="mb-6 rounded-xl overflow-hidden aspect-video w-full max-h-[380px] border border-slate-200/90 shadow-2xs bg-slate-100">
+                          <img
+                            src={article.image}
+                            alt={article.title}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      )}
 
                       <div className="flex items-center gap-6 text-sm text-muted-foreground pt-5 border-t border-border/40">
                         <span className="flex items-center gap-2">

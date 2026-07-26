@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { CourseNavigation } from '@/components/student/courses/CourseNavigation';
 import { CoursePreviewModal } from '@/components/student/courses/CoursePreviewModal';
 import { useCategoryFilteredCourses } from '@/hooks/useCategoryFilteredContent';
-import { courses as allCourses, courseCategories } from '@/data/courseData';
+import { useCourses, useCourseCategories } from '@/hooks/useCourses';
 import {
   Search,
   BookOpen,
@@ -65,8 +65,8 @@ const catLabels: Record<string, string> = {
 
 // ── Single Course Card ───────────────────────────────────────────────────────
 const CourseCard: React.FC<{
-  course: (typeof allCourses)[0];
-  onPreview: (course: (typeof allCourses)[0]) => void;
+  course: any;
+  onPreview: (course: any) => void;
   onEnroll: (courseId: string) => void;
   isEnrolled?: boolean;
 }> = ({ course, onPreview, onEnroll, isEnrolled }) => {
@@ -189,9 +189,11 @@ const IncludesStrip = () => (
 const StudentCourses = () => {
   const navigate = useNavigate();
   const { selectedCategories } = useCategoryFilteredCourses();
+  const { data: allCourses = [], isLoading: coursesLoading } = useCourses();
+  const { data: courseCategories = [] } = useCourseCategories();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedExam, setSelectedExam] = useState<string>('all');
-  const [previewCourse, setPreviewCourse] = useState<(typeof allCourses)[0] | null>(null);
+  const [previewCourse, setPreviewCourse] = useState<any | null>(null);
 
   // Enrollment tracking (localStorage)
   const [enrolledIds, setEnrolledIds] = useState<string[]>(() => {

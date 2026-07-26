@@ -15,7 +15,7 @@ const Dashboard = () => {
         <div className="container px-4 md:px-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-brand-blue flex items-center justify-center text-white font-bold">P</div>
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground font-bold">P</div>
               <span className="text-lg font-bold">Examerit</span>
             </div>
             <Button variant="ghost" onClick={() => window.location.href = "/"}>Logout</Button>

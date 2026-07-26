@@ -3,6 +3,7 @@ const pool = require('../db');
 const auth = require('../middleware/auth');
 const requireRole = require('../middleware/requireRole');
 const auditLog = require('../middleware/auditLogger');
+const { validate, createStaffTaskSchema, updateStaffTaskStatusSchema, addCommentSchema } = require('../middleware/validation');
 
 const router = express.Router();
 
@@ -78,12 +79,10 @@ router.post(
   '/',
   auth,
   requireRole(['owner', 'super-admin']),
+  validate(createStaffTaskSchema),
   auditLog('task.assign', { resourceType: 'task' }),
   async (req, res) => {
     const { title, description, assigned_to, category, priority, due_date } = req.body;
-    if (!title || !assigned_to) {
-      return res.status(400).json({ error: 'title and assigned_to are required' });
-    }
 
     try {
       // Validate assignee exists and is employee/mentor
@@ -189,12 +188,8 @@ router.put(
 );
 
 // ─── PATCH /api/staff-tasks/:id/status — update status (employee/mentor) ──
-router.patch('/:id/status', auth, async (req, res) => {
+router.patch('/:id/status', auth, validate(updateStaffTaskStatusSchema), async (req, res) => {
   const { status, comment, proof_url, extension_reason } = req.body;
-  const validStatuses = ['assigned', 'in_progress', 'completed', 'blocked'];
-  if (!validStatuses.includes(status)) {
-    return res.status(400).json({ error: `Status must be one of: ${validStatuses.join(', ')}` });
-  }
 
   try {
     // Find task and check ownership
@@ -252,9 +247,8 @@ router.patch('/:id/status', auth, async (req, res) => {
 });
 
 // ─── POST /api/staff-tasks/:id/comment — add comment ────────
-router.post('/:id/comment', auth, async (req, res) => {
+router.post('/:id/comment', auth, validate(addCommentSchema), async (req, res) => {
   const { comment } = req.body;
-  if (!comment) return res.status(400).json({ error: 'comment is required' });
 
   try {
     const task = await pool.query('SELECT * FROM staff_tasks WHERE id=$1', [req.params.id]);

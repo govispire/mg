@@ -15,7 +15,7 @@ import AllInOneView from '@/components/current-affairs/AllInOneView';
 import DailyNewsView from '@/components/current-affairs/DailyNewsView';
 import { ContinueReadingSection } from '@/components/current-affairs/ContinueReadingSection';
 import { allArticles } from '@/components/current-affairs/articlesData';
-import { dailyQuizzes } from '@/data/dailyQuizzesData';
+import { useQuizzes } from '@/hooks/useQuizCatalog';
 import { Article } from '@/components/current-affairs/types';
 import { motion } from 'framer-motion';
 

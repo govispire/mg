@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { ExtendedArticle, QuizItem } from '@/types/currentAffairs';
 import { allArticles as seedArticles } from '@/components/current-affairs/articlesData';
 
@@ -119,13 +119,12 @@ export const useCurrentAffairsStore = () => {
     [articles]
   );
 
-  /** Only daily-news articles sorted newest-first — shown in "Daily News" tab */
-  const getDailyNewsArticles = useCallback(() =>
-    articles
-      .filter(a => a.publishType === 'daily-news')
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
-    [articles]
-  );
+  /** Daily news articles sorted newest-first — returns all articles auto-grouped by date */
+  const getDailyNewsArticles = useCallback(() => {
+    const dailyOnly = articles.filter(a => a.publishType === 'daily-news');
+    if (dailyOnly.length > 0) return dailyOnly.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    return [...articles].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }, [articles]);
 
   /**
    * All in One — returns ALL articles grouped by category.

@@ -148,54 +148,50 @@ const Hero = () => {
 
   return (
     <section style={{
-      background: 'linear-gradient(160deg, #0d1117 0%, #161b22 35%, #1c1545 70%, #0f0c29 100%)',
+      background: 'linear-gradient(135deg, #f8fbff 0%, #eef4ff 45%, #f8f7ff 100%)',
       minHeight: '100vh',
       position: 'relative',
       overflow: 'hidden',
       fontFamily: '"Inter", system-ui, -apple-system, sans-serif',
     }}>
-      {/* ── Background glow blobs ── */}
       <div style={{
         position: 'absolute', top: '-200px', left: '50%', transform: 'translateX(-50%)',
         width: '1100px', height: '800px',
-        background: 'radial-gradient(ellipse at center, rgba(99,102,241,0.14) 0%, transparent 65%)',
+        background: 'radial-gradient(ellipse at center, rgba(37,99,235,0.10) 0%, transparent 68%)',
         pointerEvents: 'none', zIndex: 0,
       }} />
       <div style={{
-        position: 'absolute', bottom: '-80px', right: '-80px', width: '550px', height: '550px',
-        background: `radial-gradient(ellipse, ${slide.glowColor} 0%, transparent 65%)`,
+        position: 'absolute', bottom: '-70px', right: '-80px', width: '520px', height: '520px',
+        background: `radial-gradient(ellipse, ${slide.glowColor} 0%, transparent 70%)`,
         transition: 'background 0.8s ease',
         pointerEvents: 'none', zIndex: 0,
       }} />
       <div style={{
-        position: 'absolute', top: '30%', left: '-60px', width: '380px', height: '380px',
-        background: 'radial-gradient(ellipse, rgba(168,85,247,0.09) 0%, transparent 70%)',
+        position: 'absolute', top: '24%', left: '-60px', width: '320px', height: '320px',
+        background: 'radial-gradient(ellipse, rgba(124,58,237,0.10) 0%, transparent 72%)',
         pointerEvents: 'none', zIndex: 0,
       }} />
 
       <div style={{ maxWidth: '1100px', margin: '0 auto', padding: '72px 24px 64px', position: 'relative', zIndex: 1 }}>
-
-        {/* ── Badge ── */}
-        <div style={{ textAlign: 'center', marginBottom: '26px' }}>
+        <div style={{ textAlign: 'center', marginBottom: '24px' }}>
           <span style={{
             display: 'inline-flex', alignItems: 'center', gap: '7px',
-            padding: '7px 18px', borderRadius: '9999px', fontSize: '13px', fontWeight: 600,
-            background: 'rgba(99,102,241,0.12)', color: '#a5b4fc',
-            border: '1px solid rgba(99,102,241,0.28)', letterSpacing: '0.015em',
+            padding: '7px 16px', borderRadius: '9999px', fontSize: '13px', fontWeight: 700,
+            background: 'rgba(37,99,235,0.10)', color: '#1d4ed8',
+            border: '1px solid rgba(37,99,235,0.16)', letterSpacing: '0.015em',
           }}>
             <Zap style={{ width: 13, height: 13 }} />
             India's #1 AI-Powered Exam Prep Platform
           </span>
         </div>
 
-        {/* ── Headline ── */}
         <h1 style={{
           textAlign: 'center', fontSize: 'clamp(2rem, 5vw, 3.6rem)', fontWeight: 800,
-          color: '#f0f6fc', lineHeight: 1.1, letterSpacing: '-0.025em', marginBottom: '18px',
+          color: '#0f172a', lineHeight: 1.1, letterSpacing: '-0.025em', marginBottom: '18px',
         }}>
           Your mission to crack{' '}
           <span style={{
-            background: 'linear-gradient(90deg, #818cf8 0%, #c084fc 50%, #fb7185 100%)',
+            background: 'linear-gradient(90deg, #2563eb 0%, #7c3aed 100%)',
             WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
           }}>
             competitive exams
@@ -203,30 +199,28 @@ const Hero = () => {
           {' '}starts here.
         </h1>
 
-        {/* ── Subtitle ── */}
         <p style={{
-          textAlign: 'center', color: '#8b949e', fontSize: '1.05rem', lineHeight: 1.7,
-          maxWidth: '580px', margin: '0 auto 36px',
+          textAlign: 'center', color: '#475569', fontSize: '1.05rem', lineHeight: 1.7,
+          maxWidth: '620px', margin: '0 auto 34px',
         }}>
           Expert mentorship, AI analytics, live tests, daily current affairs and free quizzes —
           everything you need to succeed, in one place.
         </p>
 
-        {/* ── CTA Buttons ── */}
-        <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', flexWrap: 'wrap', marginBottom: '52px' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', flexWrap: 'wrap', marginBottom: '40px' }}>
           <Dialog open={registerOpen} onOpenChange={setRegisterOpen}>
             <DialogTrigger asChild>
               <button
                 onClick={() => { setAuthTab('register'); setRegisterOpen(true); }}
                 style={{
-                  padding: '13px 32px', borderRadius: '8px', fontWeight: 700, fontSize: '15px',
+                  padding: '13px 30px', borderRadius: '9999px', fontWeight: 700, fontSize: '15px',
                   cursor: 'pointer', border: 'none',
-                  background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
-                  color: '#fff', boxShadow: '0 0 30px rgba(99,102,241,0.5), 0 4px 15px rgba(99,102,241,0.3)',
+                  background: 'linear-gradient(135deg, #2563eb 0%, #4f46e5 100%)',
+                  color: '#fff', boxShadow: '0 12px 24px rgba(37,99,235,0.22)',
                   transition: 'transform 0.15s, box-shadow 0.15s',
                 }}
-                onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.transform = 'translateY(-2px)'; el.style.boxShadow = '0 0 45px rgba(99,102,241,0.65), 0 8px 20px rgba(99,102,241,0.4)'; }}
-                onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.transform = 'translateY(0)'; el.style.boxShadow = '0 0 30px rgba(99,102,241,0.5), 0 4px 15px rgba(99,102,241,0.3)'; }}
+                onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.transform = 'translateY(-2px)'; el.style.boxShadow = '0 16px 30px rgba(37,99,235,0.28)'; }}
+                onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.transform = 'translateY(0)'; el.style.boxShadow = '0 12px 24px rgba(37,99,235,0.22)'; }}
               >
                 Start for Free →
               </button>
@@ -241,13 +235,14 @@ const Hero = () => {
               <button
                 onClick={() => { setAuthTab('login'); setLoginOpen(true); }}
                 style={{
-                  padding: '13px 32px', borderRadius: '8px', fontWeight: 600, fontSize: '15px',
+                  padding: '13px 30px', borderRadius: '9999px', fontWeight: 600, fontSize: '15px',
                   cursor: 'pointer',
-                  background: 'rgba(255,255,255,0.05)', color: '#e6edf3',
-                  border: '1px solid rgba(255,255,255,0.18)', transition: 'all 0.2s',
+                  background: '#fff', color: '#0f172a',
+                  border: '1px solid rgba(15,23,42,0.10)', transition: 'all 0.2s',
+                  boxShadow: '0 8px 18px rgba(15,23,42,0.04)',
                 }}
-                onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.background = 'rgba(255,255,255,0.10)'; el.style.borderColor = 'rgba(255,255,255,0.28)'; }}
-                onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.background = 'rgba(255,255,255,0.05)'; el.style.borderColor = 'rgba(255,255,255,0.18)'; }}
+                onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.borderColor = 'rgba(37,99,235,0.30)'; el.style.color = '#1d4ed8'; }}
+                onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.borderColor = 'rgba(15,23,42,0.10)'; el.style.color = '#0f172a'; }}
               >
                 Sign In
               </button>
@@ -258,63 +253,59 @@ const Hero = () => {
           </Dialog>
         </div>
 
-        {/* ── Stats ── */}
-        <div style={{ display: 'flex', justifyContent: 'center', gap: 0, flexWrap: 'wrap', marginBottom: '56px' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', gap: 0, flexWrap: 'wrap', marginBottom: '48px' }}>
           {stats.map((s, i) => (
             <React.Fragment key={s.label}>
-              {i > 0 && <div style={{ width: '1px', background: 'rgba(255,255,255,0.1)', margin: '4px 28px' }} />}
-              <div style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: '1.8rem', fontWeight: 800, color: '#f0f6fc', letterSpacing: '-0.02em' }}>{s.value}</div>
-                <div style={{ fontSize: '12px', color: '#8b949e', marginTop: '3px' }}>{s.label}</div>
+              {i > 0 && <div style={{ width: '1px', background: 'rgba(15,23,42,0.10)', margin: '4px 24px' }} />}
+              <div style={{
+                textAlign: 'center',
+                background: 'rgba(255,255,255,0.80)',
+                border: '1px solid rgba(15,23,42,0.06)',
+                borderRadius: '14px',
+                padding: '14px 18px',
+                boxShadow: '0 8px 24px rgba(15,23,42,0.05)',
+              }}>
+                <div style={{ fontSize: '1.45rem', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.02em' }}>{s.value}</div>
+                <div style={{ fontSize: '12px', color: '#64748b', marginTop: '3px' }}>{s.label}</div>
               </div>
             </React.Fragment>
           ))}
         </div>
 
-        {/* ══════════════════════════════════════════
-            GITHUB-STYLE GLASSY CARD WITH SCREENSHOT SLIDER
-        ════════════════════════════════════════════ */}
-        <div style={{ maxWidth: '860px', margin: '0 auto', position: 'relative' }}>
-
-          {/* Outer glow ring — the "glassy border" effect */}
+        <div style={{ maxWidth: '900px', margin: '0 auto', position: 'relative' }}>
           <div style={{
             position: 'absolute', inset: '-1px',
-            borderRadius: '16px',
-            background: `linear-gradient(135deg, ${slide.accentColor}55 0%, rgba(255,255,255,0.08) 40%, ${slide.accentColor}33 100%)`,
+            borderRadius: '18px',
+            background: `linear-gradient(135deg, ${slide.accentColor}44 0%, rgba(255,255,255,0.85) 40%, ${slide.accentColor}20 100%)`,
             transition: 'background 0.6s ease',
             zIndex: 0,
           }} />
 
-          {/* Blur bloom behind the card */}
           <div style={{
             position: 'absolute', inset: '-24px',
             borderRadius: '32px',
-            background: `radial-gradient(ellipse at 50% 80%, ${slide.glowColor} 0%, transparent 70%)`,
+            background: `radial-gradient(ellipse at 50% 80%, ${slide.glowColor} 0%, transparent 72%)`,
             filter: 'blur(16px)',
             transition: 'background 0.6s ease',
             zIndex: 0,
             pointerEvents: 'none',
           }} />
 
-          {/* Main card */}
           <div style={{
             position: 'relative', zIndex: 1,
-            borderRadius: '14px',
-            background: 'rgba(13, 17, 23, 0.82)',
-            backdropFilter: 'blur(32px)',
-            WebkitBackdropFilter: 'blur(32px)',
-            border: '1px solid rgba(255,255,255,0.10)',
-            boxShadow: `0 40px 100px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.08), 0 0 0 1px rgba(255,255,255,0.03)`,
+            borderRadius: '18px',
+            background: 'rgba(255,255,255,0.94)',
+            backdropFilter: 'blur(24px)',
+            WebkitBackdropFilter: 'blur(24px)',
+            border: '1px solid rgba(148,163,184,0.24)',
+            boxShadow: '0 24px 60px rgba(15,23,42,0.10)',
             overflow: 'hidden',
           }}>
-
-            {/* ─ macOS Title Bar ─ */}
             <div style={{
               display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 18px',
-              background: 'rgba(255,255,255,0.025)',
-              borderBottom: '1px solid rgba(255,255,255,0.07)',
+              background: 'rgba(248,250,252,0.96)',
+              borderBottom: '1px solid rgba(148,163,184,0.18)',
             }}>
-              {/* Traffic-light dots */}
               <div style={{ display: 'flex', gap: '7px', alignItems: 'center' }}>
                 {[
                   { c: '#ff5f57', s: '#e0443e' },
@@ -328,7 +319,6 @@ const Hero = () => {
                 ))}
               </div>
 
-              {/* File tabs */}
               <div style={{ flex: 1, display: 'flex', gap: '2px', overflowX: 'auto', scrollbarWidth: 'none' }}>
                 {SLIDES.map((s, i) => {
                   const isActive = i === activeIdx;
@@ -339,11 +329,11 @@ const Hero = () => {
                       style={{
                         display: 'flex', alignItems: 'center', gap: '5px',
                         padding: '5px 13px', borderRadius: '6px 6px 0 0',
-                        fontSize: '11.5px', fontWeight: isActive ? 600 : 400,
+                        fontSize: '11.5px', fontWeight: isActive ? 600 : 500,
                         cursor: 'pointer', border: 'none', whiteSpace: 'nowrap',
                         transition: 'all 0.2s',
-                        background: isActive ? 'rgba(255,255,255,0.08)' : 'transparent',
-                        color: isActive ? '#e6edf3' : '#484f58',
+                        background: isActive ? 'rgba(37,99,235,0.08)' : 'transparent',
+                        color: isActive ? '#0f172a' : '#64748b',
                         borderBottom: isActive ? `2px solid ${s.accentColor}` : '2px solid transparent',
                       }}
                     >
@@ -354,18 +344,16 @@ const Hero = () => {
                 })}
               </div>
 
-              {/* Counter badge */}
               <span style={{
-                fontSize: '11px', color: '#484f58', padding: '2px 8px',
-                background: 'rgba(255,255,255,0.04)', borderRadius: '9999px',
-                border: '1px solid rgba(255,255,255,0.07)',
+                fontSize: '11px', color: '#64748b', padding: '2px 8px',
+                background: 'rgba(15,23,42,0.04)', borderRadius: '9999px',
+                border: '1px solid rgba(15,23,42,0.06)',
               }}>
                 {activeIdx + 1}/{SLIDES.length}
               </span>
             </div>
 
-            {/* ─ Screenshot Panel ─ */}
-            <div style={{ position: 'relative', overflow: 'hidden', background: '#f0f2f5', lineHeight: 0 }}>
+            <div style={{ position: 'relative', overflow: 'hidden', background: '#f8fafc', lineHeight: 0 }}>
               <div key={animKey} style={{ animation: 'imgSlideIn 0.5s cubic-bezier(0.22,1,0.36,1) forwards' }}>
                 <img
                   src={slide.image}
@@ -377,10 +365,9 @@ const Hero = () => {
                 />
               </div>
 
-              {/* Bottom gradient overlay with caption + controls */}
               <div style={{
                 position: 'absolute', bottom: 0, left: 0, right: 0,
-                background: 'linear-gradient(to top, rgba(13,17,23,0.95) 0%, rgba(13,17,23,0.4) 60%, transparent 100%)',
+                background: 'linear-gradient(to top, rgba(15,23,42,0.92) 0%, rgba(15,23,42,0.55) 60%, transparent 100%)',
                 padding: '40px 20px 18px',
                 display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: '12px',
               }}>
@@ -395,9 +382,8 @@ const Hero = () => {
                     </div>
                     <span style={{ fontSize: '13px', fontWeight: 700, color: slide.accentColor }}>{slide.label}</span>
                   </div>
-                  <p style={{ fontSize: '12px', color: '#8b949e', margin: 0, lineHeight: 1.4 }}>{slide.caption}</p>
+                  <p style={{ fontSize: '12px', color: '#e2e8f0', margin: 0, lineHeight: 1.4 }}>{slide.caption}</p>
                 </div>
-                {/* Prev / Next */}
                 <div style={{ display: 'flex', gap: '6px', flexShrink: 0 }}>
                   {([goPrev, goNext] as const).map((fn, i) => {
                     const Icon = i === 0 ? ChevronLeft : ChevronRight;
@@ -407,12 +393,12 @@ const Hero = () => {
                         onClick={fn}
                         style={{
                           width: 34, height: 34, borderRadius: '50%', border: 'none', cursor: 'pointer',
-                          background: 'rgba(255,255,255,0.10)', color: '#e6edf3',
+                          background: 'rgba(255,255,255,0.16)', color: '#fff',
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
                           backdropFilter: 'blur(8px)', transition: 'background 0.18s',
                         }}
-                        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.22)'; }}
-                        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.10)'; }}
+                        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.26)'; }}
+                        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.16)'; }}
                       >
                         <Icon style={{ width: 16, height: 16 }} />
                       </button>
@@ -422,8 +408,7 @@ const Hero = () => {
               </div>
             </div>
 
-            {/* ─ Progress bar ─ */}
-            <div style={{ height: '3px', background: 'rgba(255,255,255,0.05)' }}>
+            <div style={{ height: '3px', background: 'rgba(15,23,42,0.05)' }}>
               <div style={{
                 height: '100%', width: `${progress}%`,
                 background: `linear-gradient(90deg, ${slide.accentColor}, ${slide.accentColor}bb)`,
@@ -432,12 +417,11 @@ const Hero = () => {
               }} />
             </div>
 
-            {/* ─ Bottom Tab Bar ─ */}
             <div style={{
               padding: '12px 16px 10px',
               display: 'flex', justifyContent: 'center', gap: '4px', flexWrap: 'wrap',
-              background: 'rgba(0,0,0,0.25)',
-              borderTop: '1px solid rgba(255,255,255,0.05)',
+              background: 'rgba(248,250,252,0.98)',
+              borderTop: '1px solid rgba(148,163,184,0.18)',
             }}>
               {SLIDES.map((s, i) => {
                 const isActive = i === activeIdx;
@@ -450,12 +434,12 @@ const Hero = () => {
                       padding: '7px 14px', borderRadius: '9999px',
                       fontSize: '12.5px', fontWeight: isActive ? 700 : 500,
                       cursor: 'pointer', border: 'none', transition: 'all 0.2s',
-                      background: isActive ? `${s.accentColor}20` : 'transparent',
-                      color: isActive ? s.accentColor : '#6b7280',
-                      outline: isActive ? `1px solid ${s.accentColor}40` : '1px solid transparent',
+                      background: isActive ? `${s.accentColor}18` : 'transparent',
+                      color: isActive ? '#0f172a' : '#64748b',
+                      outline: isActive ? `1px solid ${s.accentColor}30` : '1px solid transparent',
                     }}
-                    onMouseEnter={e => { if (!isActive) (e.currentTarget as HTMLElement).style.color = '#c9d1d9'; }}
-                    onMouseLeave={e => { if (!isActive) (e.currentTarget as HTMLElement).style.color = '#6b7280'; }}
+                    onMouseEnter={e => { if (!isActive) (e.currentTarget as HTMLElement).style.color = '#0f172a'; }}
+                    onMouseLeave={e => { if (!isActive) (e.currentTarget as HTMLElement).style.color = '#64748b'; }}
                   >
                     <s.icon style={{ width: 13, height: 13 }} />
                     {s.label}
@@ -464,7 +448,6 @@ const Hero = () => {
               })}
             </div>
 
-            {/* ─ Dot indicators ─ */}
             <div style={{ display: 'flex', justifyContent: 'center', gap: '7px', padding: '8px 0 14px' }}>
               {SLIDES.map((s, i) => (
                 <button
@@ -474,7 +457,7 @@ const Hero = () => {
                   style={{
                     width: i === activeIdx ? 22 : 7, height: 7, borderRadius: '9999px',
                     border: 'none', cursor: 'pointer', padding: 0,
-                    background: i === activeIdx ? slide.accentColor : 'rgba(255,255,255,0.16)',
+                    background: i === activeIdx ? slide.accentColor : 'rgba(15,23,42,0.16)',
                     boxShadow: i === activeIdx ? `0 0 8px ${slide.accentColor}` : 'none',
                     transition: 'all 0.35s cubic-bezier(0.34,1.56,0.64,1)',
                   }}
@@ -484,21 +467,25 @@ const Hero = () => {
           </div>
         </div>
 
-        {/* ── Sub-caption ── */}
-        <p style={{ textAlign: 'center', marginTop: '16px', fontSize: '12px', color: '#30363d' }}>
+        <p style={{ textAlign: 'center', marginTop: '16px', fontSize: '12px', color: '#64748b' }}>
           Auto-sliding every 4 seconds · click a tab or arrow to navigate
         </p>
 
-        {/* ── Features checklist ── */}
         <div style={{
-          display: 'flex', justifyContent: 'center', gap: '24px 32px',
-          flexWrap: 'wrap', marginTop: '52px',
+          display: 'flex', justifyContent: 'center', gap: '14px 20px',
+          flexWrap: 'wrap', marginTop: '44px',
         }}>
           {[
             'AI-Powered Analytics', 'Expert 1-on-1 Mentorship', 'Live Mock Tests',
             'Daily Current Affairs', 'Exam Countdown Tracker', 'Free Daily Quiz',
           ].map((f, i) => (
-            <div key={f} style={{ display: 'flex', alignItems: 'center', gap: '7px', color: '#8b949e', fontSize: '13px' }}>
+            <div key={f} style={{
+              display: 'flex', alignItems: 'center', gap: '7px',
+              color: '#334155', fontSize: '13px',
+              background: 'rgba(37,99,235,0.06)',
+              border: '1px solid rgba(37,99,235,0.12)',
+              borderRadius: '9999px', padding: '8px 12px',
+            }}>
               <CheckCircle2 style={{ width: 14, height: 14, color: SLIDES[i % SLIDES.length].accentColor, flexShrink: 0 }} />
               {f}
             </div>
@@ -506,7 +493,6 @@ const Hero = () => {
         </div>
       </div>
 
-      {/* Animation keyframes */}
       <style>{`
         @keyframes imgSlideIn {
           from { opacity: 0; transform: scale(1.02) translateY(6px); }

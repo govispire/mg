@@ -6,7 +6,7 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { ChevronDown, ChevronRight, Play, FileText, Clock, CheckCircle } from 'lucide-react';
-import { getChaptersBySubject } from '@/data/courseData';
+import { useCourse } from '@/hooks/useCourses';
 
 interface ChapterListProps {
   courseId: string;
@@ -16,7 +16,10 @@ interface ChapterListProps {
 
 export const ChapterList: React.FC<ChapterListProps> = ({ courseId, subject, isGridView }) => {
   const [openChapters, setOpenChapters] = useState<string[]>([]);
-  const chapters = getChaptersBySubject(subject);
+  const { data: course } = useCourse(courseId);
+  const courseSubjectsList = (course as any)?.subjects || [];
+  const subjectData = courseSubjectsList.find((s: any) => s.id === subject);
+  const chapters = subjectData?.chapters || [];
   
   const toggleChapter = (chapterId: string) => {
     setOpenChapters(prev => 

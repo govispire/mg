@@ -499,8 +499,8 @@ const ExamDetail = () => {
               <div className="absolute bottom-0 right-20 w-24 h-24 bg-blue-100/30 rounded-full blur-xl pointer-events-none" />
 
               {/* TARGET EXAMINATION badge */}
-              <div className="inline-flex items-center gap-1.5 bg-emerald-100 border border-emerald-200 text-emerald-700 text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-full mb-4">
-                <CheckCircle2 className="w-3 h-3" /> TARGET EXAMINATION
+              <div className="inline-flex items-center gap-1.5 bg-blue-50 border border-blue-200 text-blue-700 text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-full mb-4">
+                <CheckCircle2 className="w-3 h-3 text-blue-600" /> TARGET EXAMINATION
               </div>
 
               {/* Logo + Name + Cap row */}
@@ -615,26 +615,26 @@ const ExamDetail = () => {
             {examAccessTier === 'free' ? (
               /* ─── FREE exam — just let them in ─── */
               <>
-                <div className="flex items-center justify-center gap-1.5 bg-emerald-500 py-3">
+                <div className="flex items-center justify-center gap-1.5 bg-blue-600 py-3">
                   <Shield className="w-3.5 h-3.5 text-white" />
                   <span className="text-xs font-bold text-white uppercase tracking-widest">Free Access</span>
                 </div>
                 <div className="p-5 flex flex-col gap-4">
                   <div className="text-center">
-                    <div className="text-4xl font-black text-emerald-600 mb-1">FREE</div>
+                    <div className="text-4xl font-black text-blue-600 mb-1">FREE</div>
                     <p className="text-xs text-muted-foreground">No subscription required for this exam</p>
                   </div>
                   <div className="space-y-2">
                     {['All Tests Included', 'AI Performance Analysis', 'Detailed Solutions', 'All India Ranking'].map(b => (
                       <div key={b} className="flex items-start gap-2.5 text-xs text-gray-600">
-                        <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5" />
+                        <CheckCircle2 className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />
                         <span className="font-medium">{b}</span>
                       </div>
                     ))}
                   </div>
                   <button
                     onClick={handleBuy}
-                    className="w-full bg-emerald-500 hover:bg-emerald-600 active:scale-[0.98] text-white font-bold text-base py-3.5 rounded-xl shadow-lg shadow-emerald-500/30 transition-all flex items-center justify-center gap-2"
+                    className="w-full bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white font-bold text-base py-3.5 rounded-xl shadow-lg shadow-blue-500/30 transition-all flex items-center justify-center gap-2"
                   >
                     <ShoppingCart className="w-5 h-5" /> Start Preparation →
                   </button>
@@ -1018,7 +1018,7 @@ const ExamDetail = () => {
                     onClick={() => setActiveTab(tab.value)}
                     className={`flex-1 py-2.5 px-3 sm:px-4 rounded-lg transition-all text-xs sm:text-sm whitespace-nowrap text-center ${
                       isActive
-                        ? 'bg-emerald-500 text-white shadow-sm shadow-emerald-200 font-semibold'
+                        ? 'bg-blue-600 text-white shadow-sm shadow-blue-200 font-semibold'
                         : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50 font-medium'
                     }`}
                   >

@@ -27,7 +27,6 @@ const LandingHeader = () => {
   const [isLoginDialogOpen, setIsLoginDialogOpen] = useState(false);
   const [isRegisterDialogOpen, setIsRegisterDialogOpen] = useState(false);
 
-  // Post-signup flow state
   const [showCompulsoryForm, setShowCompulsoryForm] = useState(false);
   const [showWelcomeMessage, setShowWelcomeMessage] = useState(false);
   const [registeredUsername, setRegisteredUsername] = useState('');
@@ -41,14 +40,13 @@ const LandingHeader = () => {
 
     setTimeout(() => {
       setShowCompulsoryForm(true);
-    }, 10000); // 10 seconds delay as requested
+    }, 10000);
   };
 
   const handleCompulsoryFormComplete = (data: any) => {
-    // Store complete profile data locally
     const profileData: UserProfile = {
       username: registeredUsername,
-      email: '', // Logic to get email would go here if needed
+      email: '',
       phone: '',
       examCategory: data.examCategory,
       customExamCategory: data.customExamCategory,
@@ -65,31 +63,31 @@ const LandingHeader = () => {
   };
 
   return (
-    <header className="w-full py-2 px-4 lg:px-8 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold">P</div>
-          <span className="text-lg font-bold">Examerit</span>
+    <header className="sticky top-0 z-50 w-full border-b border-border/80 bg-background/90 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 lg:px-8">
+        <Link to="/" className="flex items-center gap-2.5">
+          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary font-semibold text-primary-foreground shadow-sm">P</div>
+          <div className="leading-none">
+            <div className="text-base font-semibold text-foreground">Examerit</div>
+            <div className="text-[11px] font-medium uppercase tracking-[0.24em] text-muted-foreground">Exam prep</div>
+          </div>
         </Link>
 
-        {/* Desktop Menu */}
-        <div className="hidden md:flex items-center gap-8">
+        <div className="hidden items-center gap-7 md:flex">
           <nav>
             <ul className="flex items-center gap-6">
-
-
-              <li><Link to="/blog" className="text-sm hover:text-primary transition-colors">Blog</Link></li>
-              <li><Link to="/current-affairs" className="text-sm hover:text-primary transition-colors">Current Affairs</Link></li>
-              <li><Link to="/exam-notifications" className="text-sm hover:text-primary transition-colors">Exam Alerts</Link></li>
-              <li><Link to="/downloads" className="text-sm hover:text-primary transition-colors">Downloads</Link></li>
-              <li><Link to="/pricing" className="text-sm hover:text-primary transition-colors">Pricing</Link></li>
+              <li><Link to="/blog" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">Blog</Link></li>
+              <li><Link to="/current-affairs" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">Current Affairs</Link></li>
+              <li><Link to="/exam-notifications" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">Exam Alerts</Link></li>
+              <li><Link to="/downloads" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">Downloads</Link></li>
+              <li><Link to="/pricing" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">Pricing</Link></li>
             </ul>
           </nav>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <Dialog open={isLoginDialogOpen} onOpenChange={setIsLoginDialogOpen}>
               <DialogTrigger asChild>
-                <Button variant="outline" onClick={() => { setActiveAuthTab("login"); setIsLoginDialogOpen(true); }}>Login</Button>
+                <Button variant="outline" className="px-5" onClick={() => { setActiveAuthTab("login"); setIsLoginDialogOpen(true); }}>Login</Button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-[500px] max-w-[95vw]">
                 <AuthModal activeTab={activeAuthTab} setActiveTab={setActiveAuthTab} onClose={() => setIsLoginDialogOpen(false)} />
@@ -98,7 +96,7 @@ const LandingHeader = () => {
 
             <Dialog open={isRegisterDialogOpen} onOpenChange={setIsRegisterDialogOpen}>
               <DialogTrigger asChild>
-                <Button onClick={() => { setActiveAuthTab("register"); setIsRegisterDialogOpen(true); }}>Sign Up</Button>
+                <Button className="px-5" onClick={() => { setActiveAuthTab("register"); setIsRegisterDialogOpen(true); }}>Sign Up</Button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-[500px] max-w-[95vw]">
                 <AuthModal
@@ -112,24 +110,25 @@ const LandingHeader = () => {
           </div>
         </div>
 
-        <button className="md:hidden" onClick={() => setIsMenuOpen(!isMenuOpen)}>
-          {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+        <button
+          className="rounded-md p-2 text-foreground transition-colors hover:bg-accent md:hidden"
+          onClick={() => setIsMenuOpen(!isMenuOpen)}
+          aria-label={isMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
+        >
+          {isMenuOpen ? <X size={22} /> : <Menu size={22} />}
         </button>
       </div>
 
-      {/* Mobile menu */}
       {isMenuOpen && (
-        <div className="md:hidden absolute top-16 left-0 right-0 bg-background z-50 border-b shadow-md">
-          <nav className="max-w-7xl mx-auto px-4 py-4">
-            <ul className="flex flex-col gap-4">
-
-
-              <li><Link to="/blog" className="block py-2" onClick={() => setIsMenuOpen(false)}>Blog</Link></li>
-              <li><Link to="/current-affairs" className="block py-2" onClick={() => setIsMenuOpen(false)}>Current Affairs</Link></li>
-              <li><Link to="/exam-notifications" className="block py-2" onClick={() => setIsMenuOpen(false)}>Exam Alerts</Link></li>
-              <li><Link to="/downloads" className="block py-2" onClick={() => setIsMenuOpen(false)}>Downloads</Link></li>
-              <li><Link to="/pricing" className="block py-2" onClick={() => setIsMenuOpen(false)}>Pricing</Link></li>
-              <li className="pt-2 border-t">
+        <div className="border-t border-border/80 bg-card md:hidden">
+          <nav className="mx-auto max-w-7xl px-4 py-4">
+            <ul className="flex flex-col gap-3">
+              <li><Link to="/blog" className="block py-2 text-sm font-medium text-foreground" onClick={() => setIsMenuOpen(false)}>Blog</Link></li>
+              <li><Link to="/current-affairs" className="block py-2 text-sm font-medium text-foreground" onClick={() => setIsMenuOpen(false)}>Current Affairs</Link></li>
+              <li><Link to="/exam-notifications" className="block py-2 text-sm font-medium text-foreground" onClick={() => setIsMenuOpen(false)}>Exam Alerts</Link></li>
+              <li><Link to="/downloads" className="block py-2 text-sm font-medium text-foreground" onClick={() => setIsMenuOpen(false)}>Downloads</Link></li>
+              <li><Link to="/pricing" className="block py-2 text-sm font-medium text-foreground" onClick={() => setIsMenuOpen(false)}>Pricing</Link></li>
+              <li className="pt-2 border-t border-border">
                 <Dialog open={isLoginDialogOpen} onOpenChange={setIsLoginDialogOpen}>
                   <DialogTrigger asChild>
                     <Button variant="outline" className="w-full" onClick={() => { setActiveAuthTab("login"); setIsLoginDialogOpen(true); }}>Login</Button>
@@ -159,7 +158,6 @@ const LandingHeader = () => {
         </div>
       )}
 
-      {/* Root Level Modals for Post-Signup Flow */}
       <CompulsoryFormModal
         open={showCompulsoryForm}
         onOpenChange={setShowCompulsoryForm}

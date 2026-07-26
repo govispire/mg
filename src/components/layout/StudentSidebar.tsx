@@ -86,7 +86,7 @@ const menuItems = [
   },
   {
     title: 'Exam Tracker',
-    url: '/student/self-care',
+    url: '/student/exam-tracker',
     icon: Heart,
   },
   {

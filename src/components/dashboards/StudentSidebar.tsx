@@ -1,4 +1,4 @@
-﻿
+
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/lib/utils';
@@ -86,7 +86,7 @@ const menuItems = [
   },
   {
     title: 'Exam Tracker',
-    url: '/student/self-care',
+    url: '/student/exam-tracker',
     icon: Heart,
   },
   {

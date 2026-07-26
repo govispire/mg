@@ -202,7 +202,7 @@ export const TestTypeGrid: React.FC<TestTypeGridProps> = ({
                         {test.testName}
                       </h3>
                       {test.isFree && (
-                        <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 text-[10px] font-bold rounded uppercase tracking-wider shrink-0">
+                        <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-[10px] font-bold rounded uppercase tracking-wider shrink-0">
                           Free
                         </span>
                       )}
@@ -269,7 +269,7 @@ export const TestTypeGrid: React.FC<TestTypeGridProps> = ({
                       <Button
                         size="sm"
                         variant="outline"
-                        className="flex-1 sm:flex-none h-9 text-xs gap-1 border-gray-200 bg-white text-gray-700 hover:border-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 font-semibold"
+                        className="flex-1 sm:flex-none h-9 text-xs gap-1 border-gray-200 bg-white text-gray-700 hover:border-blue-600 hover:bg-blue-50 hover:text-blue-700 font-semibold"
                         onClick={() => handleSolutionClick(test)}
                       >
                         <BookOpen className="h-3.5 w-3.5" />
@@ -278,7 +278,7 @@ export const TestTypeGrid: React.FC<TestTypeGridProps> = ({
                       <Button
                         size="sm"
                         variant="outline"
-                        className="flex-1 sm:flex-none h-9 text-xs gap-1 border-gray-200 bg-white text-gray-700 hover:border-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 font-semibold"
+                        className="flex-1 sm:flex-none h-9 text-xs gap-1 border-gray-200 bg-white text-gray-700 hover:border-blue-600 hover:bg-blue-50 hover:text-blue-700 font-semibold"
                         onClick={() => handleAnalysisClick(test)}
                       >
                         <BarChart3 className="h-3.5 w-3.5" />
@@ -288,7 +288,7 @@ export const TestTypeGrid: React.FC<TestTypeGridProps> = ({
                         size="sm"
                         variant="outline"
                         title="Leaderboard"
-                        className="h-9 w-9 p-0 border-gray-200 bg-white text-gray-700 hover:border-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 shrink-0"
+                        className="h-9 w-9 p-0 border-gray-200 bg-white text-gray-700 hover:border-blue-600 hover:bg-blue-50 hover:text-blue-700 shrink-0"
                         onClick={() => setSelectedTestForLeaderboard(test)}
                       >
                         <Trophy className="h-4 w-4" />
@@ -303,7 +303,7 @@ export const TestTypeGrid: React.FC<TestTypeGridProps> = ({
                         transition-all duration-150 active:scale-[0.98]
                         ${isLocked
                           ? 'bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200'
-                          : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm'
+                          : 'bg-blue-600 hover:bg-blue-700 text-white shadow-sm'
                         }
                       `}
                       onClick={() => {
@@ -519,7 +519,7 @@ export const TestTypeGrid: React.FC<TestTypeGridProps> = ({
             size="sm"
             variant="outline"
             title="Leaderboard"
-            className="h-9 w-9 p-0 border-gray-300 bg-gray-100 text-gray-700 hover:border-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 flex-shrink-0"
+            className="h-9 w-9 p-0 border-gray-300 bg-gray-100 text-gray-700 hover:border-blue-600 hover:bg-blue-50 hover:text-blue-700 flex-shrink-0"
             onClick={() => setSelectedTestForLeaderboard(test)}
           >
             <Trophy className="h-4 w-4" />

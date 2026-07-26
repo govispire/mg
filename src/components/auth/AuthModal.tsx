@@ -283,7 +283,7 @@ const AuthModal = ({ activeTab, setActiveTab, selectedExam, onClose, onRegistrat
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="password" className="text-sm font-medium">Password</Label>
-                <a href="#" className="text-xs text-brand-blue hover:underline">
+                <a href="#" className="text-xs text-primary hover:underline">
                   Forgot password?
                 </a>
               </div>
@@ -396,9 +396,9 @@ const AuthModal = ({ activeTab, setActiveTab, selectedExam, onClose, onRegistrat
 
             <p className="text-xs text-center text-gray-500 pt-2">
               By registering, you agree to our{' '}
-              <a href="#" className="text-brand-blue hover:underline">Terms of Service</a>{' '}
+              <a href="#" className="text-primary hover:underline">Terms of Service</a>{' '}
               and{' '}
-              <a href="#" className="text-brand-blue hover:underline">Privacy Policy</a>.
+              <a href="#" className="text-primary hover:underline">Privacy Policy</a>.
             </p>
           </form>
         </TabsContent>
