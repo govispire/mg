@@ -259,7 +259,7 @@ const Sidebar: React.FC<SidebarProps> = ({ role, basePath, collapsed, onToggle }
           { icon: <Bell size={18} />, label: 'Exam Alerts', to: `${basePath}/exam-notifications` },
           { icon: <Heart size={18} />, label: 'Exam Tracker', to: `${basePath}/exam-tracker` },
           { icon: <FileText size={18} />, label: 'PDF Courses', to: `${basePath}/pdf-courses` },
-          { icon: <BookOpen size={18} />, label: 'Vocabulary', to: `${basePath}/vocabulary`, highlight: true },
+          { icon: <BookOpen size={18} />, label: 'English Hub', to: `${basePath}/vocabulary`, highlight: true },
 
           // ── Payment ──
           { icon: <Crown size={18} />, label: 'My Subscription', to: `${basePath}/subscription` },

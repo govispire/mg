@@ -214,14 +214,22 @@ const TargetExamCard: React.FC<TargetExamCardProps> = ({
     return () => document.removeEventListener('mousedown', handler);
   }, [dotMenuOpen]);
 
-  // ── Progress rings — Single brand blue for all rings (no rainbow) ────────────
+  // ── Progress rings — Mathematical consistency + Slate & Emerald Palette ────────────
   const overallPct = liveOverallPct && liveOverallPct > 0 ? Math.round(liveOverallPct) : 0;
+  const quantPct = overallPct > 0 ? Math.min(Math.round(overallPct * 0.95), 100) : 0;
+  const reasoningPct = overallPct > 0 ? Math.min(Math.round(overallPct * 1.05), 100) : 0;
+  const englishPct = overallPct > 0 ? Math.min(Math.round(overallPct * 0.90), 100) : 0;
+  const genAwrPct = overallPct > 0 ? Math.min(Math.round(overallPct * 0.85), 100) : 0;
+
+  // Display overall is mathematically equal to average of the 4 subject values
+  const displayOverall = overallPct > 0 ? Math.round((quantPct + reasoningPct + englishPct + genAwrPct) / 4) : 0;
+
   const rings = [
-    { label: 'OVERALL',   pct: overallPct,                                         color: '#2563EB', size: 82, stroke: 7, textSize: 14 },
-    { label: 'QUANT',     pct: Math.min(Math.round(overallPct * 0.9 + 5), 100),   color: '#2563EB', size: 60, stroke: 5, textSize: 11 },
-    { label: 'REASONING', pct: Math.min(Math.round(overallPct * 1.1), 100),        color: '#2563EB', size: 60, stroke: 5, textSize: 11 },
-    { label: 'ENGLISH',   pct: Math.min(Math.round(overallPct * 0.85 + 10), 100), color: '#2563EB', size: 60, stroke: 5, textSize: 11 },
-    { label: 'GEN. AWR.', pct: Math.min(Math.round(overallPct * 0.75 + 15), 100), color: '#2563EB', size: 60, stroke: 5, textSize: 11 },
+    { label: 'OVERALL',   pct: displayOverall, color: '#0F172A', size: 72, stroke: 6, textSize: 13 },
+    { label: 'QUANT',     pct: quantPct,       color: '#10B981', size: 54, stroke: 4.5, textSize: 10 },
+    { label: 'REASONING', pct: reasoningPct,   color: '#10B981', size: 54, stroke: 4.5, textSize: 10 },
+    { label: 'ENGLISH',   pct: englishPct,     color: '#10B981', size: 54, stroke: 4.5, textSize: 10 },
+    { label: 'GEN. AWR.', pct: genAwrPct,      color: '#10B981', size: 54, stroke: 4.5, textSize: 10 },
   ];
 
   // ── Ads panel ──────────────────────────────────────────────────────────────
@@ -289,18 +297,18 @@ const TargetExamCard: React.FC<TargetExamCardProps> = ({
   };
 
   return (
-    <div className="flex flex-col lg:flex-row bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+    <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] bg-white rounded-2xl shadow-sm border border-slate-200/90 overflow-hidden">
 
       {/* ══ LEFT PANEL ══ */}
-      <div className="flex-1 p-4 sm:p-5 lg:p-6 flex flex-col gap-4 min-w-0">
+      <div className="p-4 sm:p-5 lg:p-6 flex flex-col gap-4 min-w-0">
 
-        {/* NEW: Priority Header */}
+        {/* Priority Header */}
         <div className="flex flex-wrap items-center justify-between gap-2 mb-1">
           <div className="flex items-center gap-2">
-            <h3 className="font-extrabold text-sm text-gray-800">
+            <h3 className="font-extrabold text-sm text-slate-800">
               {getPriorityLabel(validIndex)}
             </h3>
-            <span className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+            <span className="text-[10px] font-bold text-slate-700 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-full">
               {validIndex + 1} / {Math.max(3, safeExams.length)}
             </span>
           </div>
@@ -310,7 +318,7 @@ const TargetExamCard: React.FC<TargetExamCardProps> = ({
             {safeExams.length < 3 ? (
               <button
                 onClick={() => setPanelOpen('add')}
-                className="px-2.5 py-1.5 text-[10px] sm:text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors flex items-center gap-1 shadow-sm"
+                className="px-2.5 py-1.5 text-[10px] sm:text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 rounded-lg transition-colors flex items-center gap-1 shadow-sm"
               >
                 <span className="hidden sm:inline">+ Add Exam</span>
                 <span className="sm:hidden">+</span>
@@ -414,24 +422,23 @@ const TargetExamCard: React.FC<TargetExamCardProps> = ({
         >
 
         {/* Row 1: Identity + Progress Rings */}
-        <div className="flex flex-col sm:flex-row sm:items-start gap-4">
+        <div className="flex flex-col xl:flex-row xl:items-start justify-between gap-4">
 
-          <div className="flex-1">
-            <div className="flex items-center gap-3 mb-3 pt-1">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-3 mb-2 pt-1">
               <div className="w-12 h-12 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm overflow-hidden">
                 {displayLogo && (displayLogo.startsWith('http') || displayLogo.startsWith('data:') || displayLogo.startsWith('/'))
                   ? <img src={displayLogo} alt={targetExam} className="w-9 h-9 object-contain" />
                   : <span className="text-2xl">{displayLogo}</span>
                 }
               </div>
-              <div>
-                <h2 className="text-xl sm:text-2xl lg:text-3xl font-black text-gray-900 leading-none">{targetExam}</h2>
-          {/* Metadata badges — neutral slate, no competing blue+amber */}
+              <div className="min-w-0">
+                <h2 className="text-xl sm:text-2xl lg:text-3xl font-black text-slate-900 leading-none truncate">{targetExam}</h2>
                 <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                   <div className="inline-flex items-center gap-1 bg-slate-100 border border-slate-200 text-slate-600 text-[11px] font-semibold px-2.5 py-1 rounded-full">
-                    <Users className="w-3 h-3" /> 3.4K+ Students Enrolled
+                    <Users className="w-3 h-3" /> 3.4K+ Enrolled
                   </div>
-                  <div className="inline-flex items-center gap-1 bg-slate-100 border border-slate-200 text-slate-600 text-[11px] font-semibold px-2.5 py-1 rounded-full">
+                  <div className="inline-flex items-center gap-1 bg-emerald-50 border border-emerald-200 text-emerald-700 text-[11px] font-semibold px-2.5 py-1 rounded-full">
                     <Trophy className="w-3 h-3" /> {meta.vacancies} Vacancies
                   </div>
                 </div>
@@ -439,14 +446,14 @@ const TargetExamCard: React.FC<TargetExamCardProps> = ({
             </div>
           </div>
 
-          {/* Progress rings — scroll horizontally on mobile */}
-          <div className="flex items-end gap-3 sm:gap-4 overflow-x-auto pb-1 shrink-0 scrollbar-none">
+          {/* Progress rings — responsive row with strict bounds */}
+          <div className="flex items-center justify-start sm:justify-end gap-2.5 sm:gap-3 overflow-x-auto pb-1 shrink-0 scrollbar-none min-w-0">
             {rings.map((ring, idx) => (
               <div key={idx} className="shrink-0">
                 <Ring {...ring}
-                  size={idx === 0 ? (window.innerWidth < 640 ? 68 : 82) : (window.innerWidth < 640 ? 50 : 60)}
-                  stroke={idx === 0 ? (window.innerWidth < 640 ? 6 : 7) : (window.innerWidth < 640 ? 4 : 5)}
-                  textSize={idx === 0 ? (window.innerWidth < 640 ? 12 : 14) : (window.innerWidth < 640 ? 9 : 11)}
+                  size={idx === 0 ? 68 : 52}
+                  stroke={idx === 0 ? 6 : 4}
+                  textSize={idx === 0 ? 12 : 10}
                 />
               </div>
             ))}
@@ -457,7 +464,7 @@ const TargetExamCard: React.FC<TargetExamCardProps> = ({
         <div className="rounded-2xl bg-slate-50/80 p-3 sm:p-4 border border-slate-200/80">
           <div className="flex items-center justify-between mb-3">
             <span className="text-[10px] font-extrabold text-slate-500 uppercase tracking-widest">Preparation Progress</span>
-            <span className="text-[11px] font-bold text-blue-600">{grandCompleted} / {grandTotal} Total</span>
+            <span className="text-[11px] font-bold text-emerald-600">{grandCompleted} / {grandTotal} Total</span>
           </div>
           <div className="grid grid-cols-3 gap-3">
             {tabs.map(tab => {
@@ -465,7 +472,7 @@ const TargetExamCard: React.FC<TargetExamCardProps> = ({
               return (
                 <div
                   key={tab.label}
-                  className="bg-white rounded-xl px-3.5 py-3 border border-slate-200/90 shadow-sm hover:shadow-md hover:border-blue-200 transition-all"
+                  className="bg-white rounded-xl px-3.5 py-3 border border-slate-200/90 shadow-sm hover:shadow-md hover:border-slate-300 transition-all"
                 >
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
@@ -481,7 +488,7 @@ const TargetExamCard: React.FC<TargetExamCardProps> = ({
                     </div>
                   </div>
                   <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                    <div className="h-full rounded-full transition-all duration-700" style={{ width: `${pct}%`, backgroundColor: tab.accent }} />
+                    <div className="h-full rounded-full transition-all duration-700 bg-emerald-500" style={{ width: `${pct}%` }} />
                   </div>
                 </div>
               );
@@ -489,42 +496,44 @@ const TargetExamCard: React.FC<TargetExamCardProps> = ({
           </div>
         </div>
 
-        {/* Row 3: Action buttons — primary CTA + neutral secondaries */}
-        <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 sm:gap-3">
-          <button
-            onClick={() => navigate(mockRoute)}
-            className="col-span-2 sm:col-span-1 bg-primary hover:bg-primary/90 text-white flex items-center justify-center gap-2 font-bold px-4 py-2.5 rounded-xl shadow-md shadow-primary/20 transition-all active:scale-95 text-sm"
-          >
-            <PlayCircle className="w-4 h-4" /> Start Full Mock
-          </button>
-          <button
-            onClick={() => navigate('/student/syllabus')}
-            className="border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold px-3 py-2.5 rounded-xl transition-all active:scale-95 text-sm flex items-center justify-center gap-2"
-          >
-            <BookOpen className="w-4 h-4 text-slate-400" />
-            <span className="hidden sm:inline">View </span>Syllabus
-          </button>
-          {/* Weakness Predictor — neutral border, no separate violet accent */}
-          <button
-            onClick={() => setWeaknessOpen(true)}
-            className="border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold px-3 py-2.5 rounded-xl transition-all active:scale-95 text-sm flex items-center justify-center gap-2"
-          >
-            <Brain className="w-4 h-4 text-slate-400" />
-            <span className="hidden sm:inline">Weakness </span>Predictor
-            <span className="text-[9px] font-black bg-blue-600 text-white px-1.5 py-0.5 rounded">AI</span>
-          </button>
-          {/* How to Start — neutral border, no separate emerald accent */}
-          <button
-            onClick={() => setHowToStartOpen(true)}
-            className="border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold px-3 py-2.5 rounded-xl transition-all active:scale-95 text-sm flex items-center justify-center gap-2"
-          >
-            <HelpCircle className="w-4 h-4 text-slate-400" /> How to Start
-          </button>
+        {/* Row 3: Action Button Hierarchy */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-1">
+          {/* Primary CTA + Secondary CTA */}
+          <div className="flex items-center gap-2.5">
+            <button
+              onClick={() => navigate(mockRoute)}
+              className="flex-1 sm:flex-none bg-slate-900 hover:bg-slate-800 text-white font-bold px-5 py-2.5 rounded-xl shadow-sm hover:shadow transition-all active:scale-95 text-sm inline-flex items-center justify-center gap-2"
+            >
+              <PlayCircle className="w-4 h-4 text-emerald-400" /> Start Full Mock
+            </button>
+            <button
+              onClick={() => navigate('/student/syllabus')}
+              className="flex-1 sm:flex-none border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-700 font-semibold px-4 py-2.5 rounded-xl transition-all active:scale-95 text-sm inline-flex items-center justify-center gap-2"
+            >
+              <BookOpen className="w-4 h-4 text-slate-400" />
+              <span>View Syllabus</span>
+            </button>
+          </div>
+
+          {/* Tertiary Utility Buttons Group */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setWeaknessOpen(true)}
+              className="flex-1 sm:flex-none bg-slate-50 hover:bg-slate-100/80 border border-slate-200/80 text-slate-600 hover:text-slate-900 font-medium px-3 py-2 rounded-xl transition-all text-xs inline-flex items-center justify-center gap-1.5"
+            >
+              <Brain className="w-3.5 h-3.5 text-indigo-500" /> Weakness Predictor
+              <span className="text-[9px] font-bold bg-indigo-100 text-indigo-700 px-1.5 py-0.2 rounded-full">AI</span>
+            </button>
+            <button
+              onClick={() => setHowToStartOpen(true)}
+              className="flex-1 sm:flex-none bg-slate-50 hover:bg-slate-100/80 border border-slate-200/80 text-slate-600 hover:text-slate-900 font-medium px-3 py-2 rounded-xl transition-all text-xs inline-flex items-center justify-center gap-1.5"
+            >
+              <HelpCircle className="w-3.5 h-3.5 text-emerald-600" /> How to Start
+            </button>
+          </div>
         </div>
 
         </div>{/* end animated slide wrapper */}
-
-
 
         <WeaknessDetectionModal
           isOpen={weaknessOpen}
@@ -540,22 +549,26 @@ const TargetExamCard: React.FC<TargetExamCardProps> = ({
         />
       </div>
 
-      {/* ══ RIGHT PANEL: Countdown with SuperAdmin/Stage-configured background ══ */}
+      {/* ══ RIGHT PANEL: Refined Ergonomic Countdown Widget ══ */}
       {(() => {
         const currentPanelBg = slideIdx === 0
-          ? (countdownSlides[countdownSlide]?.color || STAGE_GRADIENTS[countdownSlide % STAGE_GRADIENTS.length].value)
+          ? (countdownSlides[countdownSlide]?.color || 'linear-gradient(135deg, #0f172a 0%, #1e293b 60%, #1e3a8a 100%)')
           : undefined;
         return (
       <div
-        className="lg:w-[250px] flex-shrink-0 relative overflow-hidden group select-none"
-        style={{ background: currentPanelBg || '#1e40af', minHeight: 120, transition: 'background 0.6s ease' }}
+        className="relative overflow-hidden group select-none flex flex-col justify-between p-5 text-white"
+        style={{
+          background: currentPanelBg || 'linear-gradient(135deg, #0f172a 0%, #1e293b 60%, #1e3a8a 100%)',
+          minHeight: 220,
+          transition: 'background 0.6s ease',
+        }}
       >
-        {/* Slide 0 — Countdown (auto-cycles stages with SuperAdmin chosen colors) */}
+        {/* Slide 0 — Countdown */}
         <div
           className="absolute inset-0 transition-opacity duration-500"
           style={{ opacity: slideIdx === 0 ? 1 : 0, pointerEvents: slideIdx === 0 ? 'auto' : 'none' }}
         >
-          {/* Per-slide background color layers for smooth transition */}
+          {/* Background layers */}
           {countdownSlides.map((cs, i) => (
             <div
               key={i}
@@ -563,8 +576,8 @@ const TargetExamCard: React.FC<TargetExamCardProps> = ({
               style={{ background: cs.color, opacity: countdownSlide === i ? 1 : 0 }}
             />
           ))}
-          <div className="absolute -top-6 -right-6 w-28 h-28 bg-white/10 rounded-full blur-2xl pointer-events-none" />
-          <div className="absolute bottom-8 -left-8 w-28 h-28 bg-white/10 rounded-full blur-2xl pointer-events-none" />
+          <div className="absolute -top-6 -right-6 w-32 h-32 bg-white/10 rounded-full blur-2xl pointer-events-none" />
+          <div className="absolute bottom-4 -left-4 w-32 h-32 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none" />
 
           {/* Each countdown sub-slide */}
           {countdownSlides.map((cs, i) => {
@@ -572,34 +585,40 @@ const TargetExamCard: React.FC<TargetExamCardProps> = ({
             return (
               <div
                 key={cs.label}
-                className="absolute inset-0 flex flex-row lg:flex-col items-center justify-center text-white px-4 py-4 sm:px-6 lg:p-6 gap-4 lg:gap-0 transition-all duration-500"
+                className="absolute inset-0 flex flex-col items-center justify-between text-white p-5 transition-all duration-500"
                 style={{
                   opacity: countdownSlide === i ? 1 : 0,
                   pointerEvents: countdownSlide === i ? 'auto' : 'none',
                   transform: countdownSlide === i ? 'translateX(0)' : (i < countdownSlide ? 'translateX(-12px)' : 'translateX(12px)'),
                 }}
               >
-                {/* Number */}
-                <div className="relative z-10 flex flex-col items-center text-center shrink-0">
-                  <div className="text-[9px] sm:text-[10px] font-extrabold uppercase tracking-widest opacity-80 mb-0.5 lg:mb-1">Your Countdown</div>
-                  <div className="font-black leading-none tabular-nums drop-shadow-md text-5xl sm:text-6xl lg:text-[68px] text-white">
-                    {Math.max(0, dLeft)}
-                  </div>
-                  <div className="text-[11px] sm:text-[13px] font-black uppercase tracking-[0.2em] opacity-90 mt-0.5 lg:mt-1 text-white">Days Left</div>
+                {/* Header sub-label */}
+                <div className="w-full flex items-center justify-between">
+                  <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-300 bg-white/10 backdrop-blur-sm px-2.5 py-1 rounded-full border border-white/10">
+                    Countdown
+                  </span>
+                  <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider">
+                    {cs.label}
+                  </span>
                 </div>
 
-                {/* Date badge */}
-                <div className="relative z-10 flex flex-col items-center gap-2 lg:mt-3 lg:w-full">
-                  <div className="hidden lg:block w-8 h-0.5 bg-white/30 rounded-full" />
-                  <div className="text-[9px] sm:text-[10px] opacity-75 tracking-wide font-medium uppercase text-center text-white">To {cs.label} Day</div>
-                  <div className="bg-white/15 backdrop-blur-sm border border-white/25 shadow-sm rounded-xl px-3 py-1.5 sm:py-2 flex items-center gap-2 w-full">
-                    <Calendar className="w-3.5 h-3.5 text-white flex-shrink-0" />
-                    <div className="flex-1">
-                      <div className="font-bold text-white text-[11px] sm:text-xs leading-tight text-center">
-                        {new Date(cs.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
-                      </div>
-                      <div className="text-[9px] text-white/70 font-semibold text-center">{cs.label} Exam Date</div>
-                    </div>
+                {/* Big Number */}
+                <div className="my-auto text-center">
+                  <div className="font-black leading-none tabular-nums drop-shadow-md text-5xl lg:text-6xl text-white">
+                    {Math.max(0, dLeft)}
+                  </div>
+                  <div className="text-[11px] font-black uppercase tracking-[0.2em] text-emerald-300 mt-1">
+                    Days Left
+                  </div>
+                </div>
+
+                {/* Target Date Pill */}
+                <div className="w-full">
+                  <div className="bg-white/10 backdrop-blur-md border border-white/15 rounded-xl px-3 py-2 flex items-center justify-center gap-2 w-full text-center">
+                    <Calendar className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                    <span className="font-bold text-white text-xs">
+                      {new Date(cs.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                    </span>
                   </div>
                 </div>
               </div>
