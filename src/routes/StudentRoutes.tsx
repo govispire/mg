@@ -34,6 +34,7 @@ import NotFound from '@/pages/NotFound';
 import ExamWindow from '@/pages/student/ExamWindow';
 import AllExams from '@/pages/student/AllExams';
 import StudentVocabulary from '@/pages/student/StudentVocabulary';
+import GrammarHub from '@/pages/student/GrammarHub';
 
 import SolutionViewer from '@/pages/student/SolutionViewer';
 import TestWindow from '@/pages/student/TestWindow';
@@ -102,6 +103,7 @@ const StudentRoutes = () => {
           <Route path="/doubt-forum" element={<DoubtForum />} />
           <Route path="/faq" element={<FAQ />} />
           <Route path="/vocabulary" element={<StudentVocabulary />} />
+          <Route path="/grammar" element={<GrammarHub />} />
 
           {/* ── Payment System Routes ── */}
           <Route path="/pricing" element={<StudentPricingPage />} />
