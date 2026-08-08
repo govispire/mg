@@ -551,18 +551,49 @@ export const DailyGoalsWidget: React.FC = () => {
 
           {/* ── Empty State ── */}
           {totalCount === 0 && !showAdd && (
-            <div className="flex flex-col items-center justify-center py-5 text-center">
-              <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-3">
-                <Target className="h-5 w-5 text-primary" />
+            <div className="flex flex-col items-center justify-center py-4 text-center">
+              <div className="w-11 h-11 bg-indigo-50 rounded-2xl flex items-center justify-center mb-3">
+                <Target className="h-5 w-5 text-indigo-500" />
               </div>
-              <p className="text-[13px] font-bold text-slate-700 mb-1">No goals set for today</p>
-              <p className="text-[11px] text-slate-400 mb-3">Set up to 5 goals to get started</p>
+              <p className="text-[13px] font-bold text-slate-700 mb-0.5">No goals set for today</p>
+              <p className="text-[11px] text-slate-400 mb-4">Pick a suggestion or add your own</p>
+
+              {/* One-click suggested goals */}
+              <div className="w-full space-y-2 mb-4">
+                {[
+                  { emoji: '🎯', label: 'Complete 1 mock test', mins: 45 },
+                  { emoji: '⏱️', label: 'Study for 1 hour', mins: 60 },
+                  { emoji: '📖', label: 'Learn 5 vocabulary words', mins: 15 },
+                ].map((suggestion) => (
+                  <button
+                    key={suggestion.label}
+                    onClick={() => {
+                      const g: Goal = {
+                        id: `manual-${Date.now()}-${Math.random()}`,
+                        type: 'manual',
+                        label: suggestion.label,
+                        status: 'pending',
+                        estimatedMins: suggestion.mins,
+                        createdAt: today,
+                      };
+                      updateGoals([...todayGoals, g]);
+                    }}
+                    className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl border border-slate-100 bg-slate-50 hover:bg-indigo-50 hover:border-indigo-200 transition-all text-left group"
+                  >
+                    <span className="text-base shrink-0">{suggestion.emoji}</span>
+                    <span className="flex-1 text-[12px] font-semibold text-slate-700 group-hover:text-indigo-700">{suggestion.label}</span>
+                    <span className="text-[10px] text-slate-400 shrink-0">{suggestion.mins}m</span>
+                    <span className="text-[10px] font-bold text-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">+ Add</span>
+                  </button>
+                ))}
+              </div>
+
               <button
                 onClick={() => setShowAdd(true)}
-              className="text-[12px] font-bold hover:opacity-80 border px-4 py-1.5 rounded-full transition-colors"
+                className="text-[12px] font-bold hover:opacity-80 border px-4 py-1.5 rounded-full transition-colors"
                 style={{ color: '#2563eb', background: '#eff6ff', borderColor: '#bfdbfe' }}
               >
-                + Set your goals for today
+                + Add custom goal
               </button>
             </div>
           )}

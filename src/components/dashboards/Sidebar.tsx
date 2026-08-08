@@ -216,15 +216,17 @@ const EnglishHubGroup: React.FC<{
   });
 
   const subItems = [
-    { icon: <BookOpen size={15} />, label: 'Vocabulary', to: `${basePath}/vocabulary`, emoji: '📚' },
-    { icon: <BookOpen size={15} />, label: 'Grammar Hub', to: `${basePath}/grammar`, emoji: '📘', badge: 'NEW' },
+    { key: 'vocab', icon: <BookOpen size={15} />, label: 'Vocabulary', to: `${basePath}/vocabulary?tab=vocabulary`, emoji: '📚' },
+    { key: 'grammar', icon: <BookOpen size={15} />, label: 'Grammar', to: `${basePath}/vocabulary?tab=grammar`, emoji: '📘', badge: 'NEW' },
   ];
 
   if (collapsed) {
     return (
       <>
         {subItems.map(item => {
-          const active = location.pathname === item.to || location.pathname.startsWith(item.to + '/');
+          const active = item.key === 'grammar'
+            ? location.pathname.includes('/grammar') || location.search.includes('tab=grammar')
+            : location.pathname.includes('/vocabulary') && !location.search.includes('tab=grammar');
           return (
             <li key={item.to} className="mb-1">
               <Tooltip>
@@ -284,7 +286,9 @@ const EnglishHubGroup: React.FC<{
       {open && (
         <ul className="mt-1 ml-3 space-y-0.5 border-l-2 border-slate-100 pl-3">
           {subItems.map(item => {
-            const active = location.pathname === item.to || location.pathname.startsWith(item.to + '/');
+            const active = item.key === 'grammar'
+              ? location.pathname.includes('/grammar') || location.search.includes('tab=grammar')
+              : location.pathname.includes('/vocabulary') && !location.search.includes('tab=grammar');
             return (
               <li key={item.to}>
                 <Link to={item.to}

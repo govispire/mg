@@ -4,8 +4,14 @@ import { api, QuizBankPayload, QuizBankDetailPayload } from '@/lib/api';
 export function useQuizzes(params?: { type?: string; subject?: string; difficulty?: string; search?: string }) {
   return useQuery({
     queryKey: ['quizBank', params],
-    queryFn: () => api.getQuizBank({ ...params, limit: 50 }),
-    select: (data) => data.quizzes,
+    queryFn: async () => {
+      try {
+        return await api.getQuizBank({ ...params, limit: 50 });
+      } catch {
+        return { quizzes: [], total: 0, page: 1, totalPages: 1 };
+      }
+    },
+    select: (data) => data?.quizzes || [],
   });
 }
 

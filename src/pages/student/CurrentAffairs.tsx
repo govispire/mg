@@ -702,4 +702,38 @@ const CurrentAffairs = () => {
   );
 };
 
-export default CurrentAffairs;
+class ErrorBoundary extends React.Component<{children: React.ReactNode}, {hasError: boolean, error: any}> {
+  constructor(props: {children: React.ReactNode}) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+  static getDerivedStateFromError(error: any) {
+    return { hasError: true, error };
+  }
+  componentDidCatch(error: any, errorInfo: any) {
+    console.error("CurrentAffairs caught error:", error, errorInfo);
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="p-8 text-center bg-white rounded-3xl border border-slate-200 shadow-md max-w-xl mx-auto my-12 space-y-4">
+          <div className="w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mx-auto text-xl font-bold">⚠️</div>
+          <h2 className="text-lg font-black text-slate-900">Current Affairs Module Error</h2>
+          <p className="text-xs text-slate-500 font-medium">An unexpected error occurred while loading this section.</p>
+          <Button onClick={() => window.location.reload()} className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl px-5 py-2">
+            Reload Page
+          </Button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+const CurrentAffairsWrapped = () => (
+  <ErrorBoundary>
+    <CurrentAffairs />
+  </ErrorBoundary>
+);
+
+export default CurrentAffairsWrapped;

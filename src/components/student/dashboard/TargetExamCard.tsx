@@ -14,6 +14,7 @@ import { useExamCatalog } from '@/hooks/useExamCatalog';
 import { AddTargetPanel, ChangeTargetPanel, ChangePriorityPanel, RemoveTargetPanel, SuccessPanel } from './TargetExamPanels';
 import { useExamStages, getNextStage, getVisibleStages, getDaysLeft } from '@/hooks/useExamStages';
 import { STAGE_GRADIENTS } from '@/components/superadmin/ExamStageManager';
+import { useExamProgress } from '@/hooks/useExamProgress';
 
 interface TargetExamCardProps {
   targetExam?: string;
@@ -21,6 +22,7 @@ interface TargetExamCardProps {
   userName?: string;
   preparationStartDate?: Date | null;
   liveOverallPct?: number;
+  mockTestsTaken?: number;
 }
 
 interface ExamMeta {
@@ -78,6 +80,7 @@ const TargetExamCard: React.FC<TargetExamCardProps> = ({
   targetExam: fallbackExam = 'SBI PO',
   examCategory: fallbackCategory = 'banking',
   liveOverallPct,
+  mockTestsTaken = 0,
 }) => {
   const navigate = useNavigate();
   const { targetExams, removeTargetExam, moveUp, moveDown, addTargetExam } = useTargetExams();
@@ -147,36 +150,76 @@ const TargetExamCard: React.FC<TargetExamCardProps> = ({
   const meta = getExamMeta(targetExam);
   const mockRoute = getTargetExamRoute(targetExam);
 
-  // ── Preparation Progress tabs: ALWAYS fixed Prelims/Mains/Live from catalog ──
-  // Stages are ONLY for the countdown slider — never for progress cards.
-  const tabs = (() => {
-    // Try to get real totals from catalog test slots
-    for (const cat of catalog) {
-      for (const sec of cat.sections) {
-        const ex = sec.exams.find(e => e.id === resolvedExamId);
-        if (ex && ex.testSlots?.length) {
-          const preliSlots = ex.testSlots.filter(s => s.tab?.toLowerCase().includes('preli'));
-          const mainsSlots = ex.testSlots.filter(s => s.tab?.toLowerCase().includes('main'));
-          const liveSlots  = ex.testSlots.filter(s => s.tab?.toLowerCase().includes('live'));
-          const preliTotal = preliSlots.reduce((a, s) => a + s.tests.length, 0) || meta.preliTotal;
-          const mainsTotal = mainsSlots.reduce((a, s) => a + s.tests.length, 0) || meta.mainsTotal;
-          const liveTotal  = liveSlots.reduce((a, s)  => a + s.tests.length, 0) || meta.liveTotal;
-          return [
-            // All three tabs share the same neutral icon bg — brand blue progress bar
-            { label: 'Prelims',   icon: <FileText className="w-4 h-4" />, total: preliTotal, completed: 0, accent: '#2563EB', iconBg: '#F1F5F9', iconColor: '#475569' },
-            { label: 'Mains',     icon: <BookOpen className="w-4 h-4" />, total: mainsTotal, completed: 0, accent: '#2563EB', iconBg: '#F1F5F9', iconColor: '#475569' },
-            { label: 'Live Test', icon: <Zap className="w-4 h-4" />,      total: liveTotal,  completed: 0, accent: '#2563EB', iconBg: '#F1F5F9', iconColor: '#475569' },
-          ];
+  // ── Read real progressData from useExamProgress for the active target exam ──
+  const { progressData } = useExamProgress(resolvedExamId);
+
+  // ── Calculate exact preparation progress matching the Exam Detail page ──
+  const tabGroupProgress = React.useMemo(() => {
+    const getSlotData = (slotKey: string) => {
+      // 1. Find tests in catalog slot
+      let catalogTests: any[] = [];
+      for (const cat of catalog) {
+        for (const sec of cat.sections) {
+          const found = sec.exams.find(e => e.id === resolvedExamId);
+          if (found) {
+            const slot = found.testSlots?.find((s: any) => s.key === slotKey);
+            if (slot) { catalogTests = (slot.tests || []).filter((t: any) => t.isVisible !== false); break; }
+          }
         }
+        if (catalogTests.length > 0) break;
       }
-    }
-    // Fallback to meta defaults
-    return [
-      { label: 'Prelims',   icon: <FileText className="w-4 h-4" />, total: meta.preliTotal, completed: 0, accent: '#2563EB', iconBg: '#F1F5F9', iconColor: '#475569' },
-      { label: 'Mains',     icon: <BookOpen className="w-4 h-4" />, total: meta.mainsTotal, completed: 0, accent: '#2563EB', iconBg: '#F1F5F9', iconColor: '#475569' },
-      { label: 'Live Test', icon: <Zap className="w-4 h-4" />,      total: meta.liveTotal,  completed: 0, accent: '#2563EB', iconBg: '#F1F5F9', iconColor: '#475569' },
-    ];
-  })();
+      // 2. Map slot key → progressData key for completed tracking
+      const progKeyMap: Record<string, keyof typeof progressData.testTypes> = {
+        'prelims_full': 'prelims',        'mains_full': 'mains',
+        'prelims_sectional': 'sectional', 'mains_sectional': 'sectional',
+        'prelims_speed': 'speed',         'mains_speed': 'speed',
+        'prelims_pyq': 'pyq',             'mains_pyq': 'pyq',
+        'live': 'live',
+      };
+      const progKey = progKeyMap[slotKey];
+      const progressTests = progKey ? (progressData.testTypes[progKey] || []) : [];
+
+      if (catalogTests.length > 0) {
+        return {
+          total: catalogTests.length,
+          completed: catalogTests.filter(ct =>
+            progressTests.find((p: any) => p.testId === ct.id)?.status === 'completed'
+          ).length,
+        };
+      }
+      // 3. Fallback to mock progressData for all slot types
+      return {
+        total: progressTests.length,
+        completed: progressTests.filter((t: any) => t.status === 'completed').length,
+      };
+    };
+
+    const p = {
+      full:      getSlotData('prelims_full'),
+      sectional: getSlotData('prelims_sectional'),
+      speed:     getSlotData('prelims_speed'),
+      pyq:       getSlotData('prelims_pyq'),
+    };
+    const m = {
+      full:      getSlotData('mains_full'),
+      sectional: getSlotData('mains_sectional'),
+      speed:     getSlotData('mains_speed'),
+      pyq:       getSlotData('mains_pyq'),
+    };
+    const live = getSlotData('live');
+    const sum = (obj: Record<string, { total: number; completed: number }>) =>
+      Object.values(obj).reduce((a, b) => ({ total: a.total + b.total, completed: a.completed + b.completed }), { total: 0, completed: 0 });
+    const pt = sum(p);
+    const mt = sum(m);
+    return { p, m, live, pt, mt, grand: { total: pt.total + mt.total + live.total, completed: pt.completed + mt.completed + live.completed } };
+  }, [catalog, resolvedExamId, progressData.testTypes]);
+
+  // ── Preparation Progress tabs: Prelims / Mains / Live ──
+  const tabs = [
+    { label: 'Prelims',   icon: <FileText className="w-4 h-4" />, total: tabGroupProgress.pt.total, completed: tabGroupProgress.pt.completed, accent: '#2563EB', iconBg: '#F1F5F9', iconColor: '#475569' },
+    { label: 'Mains',     icon: <BookOpen className="w-4 h-4" />, total: tabGroupProgress.mt.total, completed: tabGroupProgress.mt.completed, accent: '#2563EB', iconBg: '#F1F5F9', iconColor: '#475569' },
+    { label: 'Live Test', icon: <Zap className="w-4 h-4" />,      total: tabGroupProgress.live.total, completed: tabGroupProgress.live.completed, accent: '#2563EB', iconBg: '#F1F5F9', iconColor: '#475569' },
+  ];
 
   // ── Countdown slides: ONLY stages drive the countdown ────────────────────
   // Stages never affect prep-progress cards above.
@@ -189,8 +232,8 @@ const TargetExamCard: React.FC<TargetExamCardProps> = ({
         { label: 'Prelims', date: meta.examDate, color: STAGE_GRADIENTS[0].value },
         ...(meta.mainsDate ? [{ label: 'Mains', date: meta.mainsDate, color: STAGE_GRADIENTS[1].value }] : []),
       ];
-  const grandTotal     = tabs.reduce((s, t) => s + t.total, 0);
-  const grandCompleted = tabs.reduce((s, t) => s + t.completed, 0);
+  const grandTotal     = tabGroupProgress.grand.total;
+  const grandCompleted = tabGroupProgress.grand.completed;
 
   // ── Modal + panel state ───────────────────────────────────────────────────
   const [weaknessOpen, setWeaknessOpen] = useState(false);
@@ -214,15 +257,15 @@ const TargetExamCard: React.FC<TargetExamCardProps> = ({
     return () => document.removeEventListener('mousedown', handler);
   }, [dotMenuOpen]);
 
-  // ── Progress rings — Mathematical consistency + Slate & Emerald Palette ────────────
-  const overallPct = liveOverallPct && liveOverallPct > 0 ? Math.round(liveOverallPct) : 0;
-  const quantPct = overallPct > 0 ? Math.min(Math.round(overallPct * 0.95), 100) : 0;
-  const reasoningPct = overallPct > 0 ? Math.min(Math.round(overallPct * 1.05), 100) : 0;
-  const englishPct = overallPct > 0 ? Math.min(Math.round(overallPct * 0.90), 100) : 0;
-  const genAwrPct = overallPct > 0 ? Math.min(Math.round(overallPct * 0.85), 100) : 0;
+  // ── Progress rings — Matched 1-to-1 with Exam Detail Page ────────────
+  const overallPct = progressData.overallProgress || 0;
+  const quantPct = Math.min(Math.round(overallPct * 0.9 + 5), 100);
+  const reasoningPct = Math.min(Math.round(overallPct * 1.1), 100);
+  const englishPct = Math.min(Math.round(overallPct * 0.85 + 10), 100);
+  const genAwrPct = Math.min(Math.round(overallPct * 0.75 + 15), 100);
 
-  // Display overall is mathematically equal to average of the 4 subject values
-  const displayOverall = overallPct > 0 ? Math.round((quantPct + reasoningPct + englishPct + genAwrPct) / 4) : 0;
+  const displayOverall = overallPct;
+  const isUnlocked = overallPct > 0 || grandCompleted > 0 || mockTestsTaken > 0;
 
   const rings = [
     { label: 'OVERALL',   pct: displayOverall, color: '#0F172A', size: 72, stroke: 6, textSize: 13 },
@@ -448,15 +491,28 @@ const TargetExamCard: React.FC<TargetExamCardProps> = ({
 
           {/* Progress rings — responsive row with strict bounds */}
           <div className="flex items-center justify-start sm:justify-end gap-2.5 sm:gap-3 overflow-x-auto pb-1 shrink-0 scrollbar-none min-w-0">
-            {rings.map((ring, idx) => (
-              <div key={idx} className="shrink-0">
-                <Ring {...ring}
-                  size={idx === 0 ? 68 : 52}
-                  stroke={idx === 0 ? 6 : 4}
-                  textSize={idx === 0 ? 12 : 10}
-                />
+            {!isUnlocked ? (
+              // Zero state — encouraging prompt instead of 5 dead 0% rings
+              <div className="flex items-center gap-2.5 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5">
+                <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center shrink-0">
+                  <Trophy className="w-4 h-4 text-indigo-500" />
+                </div>
+                <div className="text-left">
+                  <p className="text-[11px] font-black text-slate-700 leading-snug">Subject Analytics Locked</p>
+                  <p className="text-[10px] text-slate-400 mt-0.5">Complete a mock test to unlock</p>
+                </div>
               </div>
-            ))}
+            ) : (
+              rings.map((ring, idx) => (
+                <div key={idx} className="shrink-0">
+                  <Ring {...ring}
+                    size={idx === 0 ? 68 : 52}
+                    stroke={idx === 0 ? 6 : 4}
+                    textSize={idx === 0 ? 12 : 10}
+                  />
+                </div>
+              ))
+            )}
           </div>
         </div>{/* end Row 1 */}
 
@@ -502,9 +558,9 @@ const TargetExamCard: React.FC<TargetExamCardProps> = ({
           <div className="flex items-center gap-2.5">
             <button
               onClick={() => navigate(mockRoute)}
-              className="flex-1 sm:flex-none bg-slate-900 hover:bg-slate-800 text-white font-bold px-5 py-2.5 rounded-xl shadow-sm hover:shadow transition-all active:scale-95 text-sm inline-flex items-center justify-center gap-2"
+              className="flex-1 sm:flex-none bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-5 py-2.5 rounded-xl shadow-md shadow-emerald-200 hover:shadow-emerald-300 hover:-translate-y-0.5 transition-all active:scale-95 text-sm inline-flex items-center justify-center gap-2"
             >
-              <PlayCircle className="w-4 h-4 text-emerald-400" /> Start Full Mock
+              <PlayCircle className="w-4 h-4 text-white" /> Start Full Mock
             </button>
             <button
               onClick={() => navigate('/student/syllabus')}
@@ -558,7 +614,9 @@ const TargetExamCard: React.FC<TargetExamCardProps> = ({
       <div
         className="relative overflow-hidden group select-none flex flex-col justify-between p-5 text-white"
         style={{
-          background: currentPanelBg || 'linear-gradient(135deg, #0f172a 0%, #1e293b 60%, #1e3a8a 100%)',
+          background: slideIdx === 0
+            ? 'linear-gradient(160deg, #0f172a 0%, #1e293b 60%, #1e3a5f 100%)'
+            : (currentPanelBg || 'linear-gradient(135deg, #0f172a 0%, #1e293b 60%, #1e3a8a 100%)'),
           minHeight: 220,
           transition: 'background 0.6s ease',
         }}
@@ -568,16 +626,16 @@ const TargetExamCard: React.FC<TargetExamCardProps> = ({
           className="absolute inset-0 transition-opacity duration-500"
           style={{ opacity: slideIdx === 0 ? 1 : 0, pointerEvents: slideIdx === 0 ? 'auto' : 'none' }}
         >
-          {/* Background layers */}
+          {/* Background layers — subtle tint over dark base (not full-color takeover) */}
           {countdownSlides.map((cs, i) => (
             <div
               key={i}
               className="absolute inset-0 transition-all duration-700 pointer-events-none"
-              style={{ background: cs.color, opacity: countdownSlide === i ? 1 : 0 }}
+              style={{ background: cs.color, opacity: countdownSlide === i ? 0.25 : 0 }}
             />
           ))}
-          <div className="absolute -top-6 -right-6 w-32 h-32 bg-white/10 rounded-full blur-2xl pointer-events-none" />
-          <div className="absolute bottom-4 -left-4 w-32 h-32 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none" />
+          <div className="absolute -top-6 -right-6 w-32 h-32 bg-white/5 rounded-full blur-2xl pointer-events-none" />
+          <div className="absolute bottom-4 -left-4 w-32 h-32 bg-emerald-500/8 rounded-full blur-2xl pointer-events-none" />
 
           {/* Each countdown sub-slide */}
           {countdownSlides.map((cs, i) => {

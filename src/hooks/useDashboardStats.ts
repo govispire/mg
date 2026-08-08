@@ -121,14 +121,24 @@ export function useDashboardStats(): DashboardStats {
   useEffect(() => {
     refresh();
 
-    // Re-compute whenever a session is saved to localStorage
+    // Re-compute on cross-tab storage changes
     const onStorage = (e: StorageEvent) => {
       if (e.key === 'studyTimerSessions' || e.key === 'quizCompletions') {
         refresh();
       }
     };
     window.addEventListener('storage', onStorage);
-    return () => window.removeEventListener('storage', onStorage);
+
+    // Also poll every 3s for same-tab quiz completions
+    // (storage event doesn't fire for same-tab writes)
+    const pollInterval = setInterval(() => {
+      refresh();
+    }, 3000);
+
+    return () => {
+      window.removeEventListener('storage', onStorage);
+      clearInterval(pollInterval);
+    };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

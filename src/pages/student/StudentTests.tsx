@@ -53,6 +53,33 @@ const EXAM_STATS: Record<string, { tests: number; students: number; subtitle: st
 
 const getExamStats = (id: string) => EXAM_STATS[id] ?? EXAM_STATS['default'];
 
+// Helper to robustly match category ID including aliases (e.g. 'banking' -> 'banking-insurance')
+const findCatalogCategory = (catId: string, catalogList: any[]) => {
+  if (!catId) return undefined;
+  const direct = catalogList.find(c => c.id === catId);
+  if (direct) return direct;
+
+  const aliasMap: Record<string, string> = {
+    'banking': 'banking-insurance',
+    'banking-insurance': 'banking',
+    'railways': 'railways-rrb',
+    'railways-rrb': 'railways',
+    'upsc': 'civil-services',
+    'civil-services': 'upsc',
+  };
+
+  const alias = aliasMap[catId];
+  if (alias) {
+    const aliasFound = catalogList.find(c => c.id === alias);
+    if (aliasFound) return aliasFound;
+  }
+
+  return catalogList.find(c =>
+    c.id.toLowerCase().includes(catId.toLowerCase()) ||
+    catId.toLowerCase().includes(c.id.toLowerCase())
+  );
+};
+
 // ─── Component ────────────────────────────────────────────────────────────────
 
 const StudentTests = () => {
@@ -118,7 +145,7 @@ const StudentTests = () => {
   useEffect(() => { setShowAll(false); }, [activeCategory]);
 
   const availableCategories = selectedCategories.map(selectedId => {
-    const catalogCat = catalog.find(c => c.id === selectedId);
+    const catalogCat = findCatalogCategory(selectedId, catalog);
     if (catalogCat) {
       if (!catalogCat.isVisible) return null;
       return {
@@ -159,40 +186,59 @@ const StudentTests = () => {
   // ── Category Content ────────────────────────────────────────────────────────
   const CategoryContent = ({ categoryId }: { categoryId: string }) => {
     const categoryData = availableCategories.find(cat => cat.id === categoryId);
-    const catalogCat = catalog.find(c => c.id === categoryId);
+    const catalogCat = findCatalogCategory(categoryId, catalog);
     if (!categoryData) return null;
 
     const headerLogo = catalogCat?.logo || categoryData.logo;
-
-    const catalogExamCount = catalogCat
-      ? catalogCat.sections.reduce((a, s) => a + s.exams.length, 0) : 0;
     const groupedExams: GroupedExams = getExamsByCategoryGrouped(categoryId);
-    const staticExamCount = groupedExams.sections.reduce((t, s) => t + s.exams.length, 0);
-    const totalExamCount = catalogCat ? catalogExamCount : staticExamCount;
 
-    // Flatten all exams across sections
-    const rawSections = catalogCat && catalogCat.sections.length > 0
-      ? catalogCat.sections.map(s => ({ categoryId: s.id, categoryName: s.name, logo: '', exams: s.exams }))
-      : groupedExams.sections;
+    // Collect all UNIQUE exams for this category (eliminates section duplication)
+    const allExams = React.useMemo(() => {
+      const map = new Map<string, any>();
+      if (catalogCat && catalogCat.sections.length > 0) {
+        for (const s of catalogCat.sections) {
+          for (const e of s.exams) {
+            if (!map.has(e.id)) map.set(e.id, e);
+          }
+        }
+      } else {
+        for (const s of groupedExams.sections) {
+          for (const e of s.exams) {
+            if (!map.has(e.id)) map.set(e.id, e);
+          }
+        }
+      }
+      return Array.from(map.values());
+    }, [catalogCat, groupedExams]);
 
-    const allExams = rawSections.flatMap(s => s.exams);
+    // Popular exams — synchronized 100% with SuperAdmin settings (isPopular + popularOrder)
+    const popularExams = React.useMemo(() => {
+      const popularSet = allExams.filter(e => e.isPopular);
+      if (popularSet.length === 0) return [];
+      const order = catalogCat?.popularOrder ?? [];
+      if (order.length === 0) return popularSet;
+      return [...popularSet].sort((a, b) => {
+        const ai = order.indexOf(a.id);
+        const bi = order.indexOf(b.id);
+        if (ai === -1 && bi === -1) return 0;
+        if (ai === -1) return 1;
+        if (bi === -1) return -1;
+        return ai - bi;
+      });
+    }, [allExams, catalogCat?.popularOrder]);
 
-    // Popular = first 5 that have isPopular true, or just first 5
-    const popularExams = allExams.filter(e => e.isPopular).slice(0, 5).length >= 2
-      ? allExams.filter(e => e.isPopular).slice(0, 5)
-      : allExams.slice(0, 5);
+    const totalExamCount = allExams.length;
 
-    // Sorted list
-    const sortedExams = [...allExams].sort((a, b) => {
-      if (sortOrder === 'az') return a.name.localeCompare(b.name);
-      if (sortOrder === 'za') return b.name.localeCompare(a.name);
-      // popular first
-      if (a.isPopular && !b.isPopular) return -1;
-      if (!a.isPopular && b.isPopular) return 1;
-      return 0;
-    });
-
-    const displayedExams = sortedExams; // always show all
+    // Sorted list for All Exams grid
+    const sortedExams = React.useMemo(() => {
+      return [...allExams].sort((a, b) => {
+        if (sortOrder === 'az') return a.name.localeCompare(b.name);
+        if (sortOrder === 'za') return b.name.localeCompare(a.name);
+        if (a.isPopular && !b.isPopular) return -1;
+        if (!a.isPopular && b.isPopular) return 1;
+        return 0;
+      });
+    }, [allExams, sortOrder]);
 
     return (
       <div className="space-y-6">
@@ -259,7 +305,7 @@ const StudentTests = () => {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
               {popularExams.map(exam => {
-                const stats = getExamStats(exam.id);
+                const stats = getDynamicExamStats(exam);
                 return (
                   <div
                     key={exam.id}
@@ -335,45 +381,11 @@ const StudentTests = () => {
               <p className="text-gray-500 text-sm">No tests found for this category.</p>
             </div>
           ) : (
-            <>
-              {/* Multi-section label (for combos) */}
-              {groupedExams.isGrouped && groupedExams.sections.length > 1 ? (
-                <div className="space-y-4">
-                  {rawSections.map(section => {
-                    const sectionSorted = [...section.exams].sort((a, b) => {
-                      if (sortOrder === 'az') return a.name.localeCompare(b.name);
-                      if (sortOrder === 'za') return b.name.localeCompare(a.name);
-                      if (a.isPopular && !b.isPopular) return -1;
-                      if (!a.isPopular && b.isPopular) return 1;
-                      return 0;
-                    });
-                    return (
-                      <div key={section.categoryId}>
-                        <div className="flex items-center gap-2 mb-2 border-b pb-2">
-                          {section.logo && (
-                            <img src={section.logo} alt={section.categoryName}
-                              className="w-5 h-5 object-contain" />
-                          )}
-                          <span className="text-sm font-semibold text-gray-700">{section.categoryName}</span>
-                          <Badge variant="secondary" className="text-xs ml-auto">{section.exams.length} exams</Badge>
-                        </div>
-                        <AllExamsList
-                          exams={sectionSorted}
-                          categoryId={categoryId}
-                          onNavigate={navigate}
-                        />
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <AllExamsList
-                  exams={displayedExams}
-                  categoryId={categoryId}
-                  onNavigate={navigate}
-                />
-              )}
-            </>
+            <AllExamsList
+              exams={sortedExams}
+              categoryId={categoryId}
+              onNavigate={navigate}
+            />
           )}
         </div>
       </div>
@@ -450,6 +462,18 @@ const StudentTests = () => {
   );
 };
 
+const getDynamicExamStats = (exam: any) => {
+  const staticStats = getExamStats(exam.id);
+  let testCount = staticStats.tests;
+  if (exam.testSlots && exam.testSlots.length > 0) {
+    const slotTests = exam.testSlots.reduce((a: number, s: any) => a + (s.tests?.length || 0), 0);
+    if (slotTests > 0) testCount = slotTests;
+  }
+  const studentCount = exam.registeredCount || exam.totalStudents || staticStats.students;
+  const subtitle = exam.subtitle || staticStats.subtitle;
+  return { tests: testCount, students: studentCount, subtitle };
+};
+
 // ─── Compact Exam Row List ─────────────────────────────────────────────────────
 
 interface AllExamsListProps {
@@ -462,7 +486,7 @@ const AllExamsList = ({ exams, categoryId, onNavigate }: AllExamsListProps) => {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
       {exams.map((exam) => {
-        const stats = getExamStats(exam.id);
+        const stats = getDynamicExamStats(exam);
         return (
           <div
             key={exam.id}

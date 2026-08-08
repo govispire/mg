@@ -287,36 +287,28 @@ export const CategorySelector: React.FC = () => {
     return map;
   }, [catalog]);
 
-  // Merge catalog categories (superadmin-managed) with hardcoded list.
-  // Static categories are included only if they are visible in the catalog.
-  // Newly created catalog categories that aren't in the static list are appended.
+  // Merge catalog categories (superadmin-managed) dynamically
   const allCategories = useMemo<ExamCategory[]>(() => {
-    const staticIds = new Set(staticAllCategories.map(c => c.id));
-
-    // Filter static categories: show only those visible in catalog (or not yet tracked)
-    const visibleStatics = staticAllCategories.filter(c => {
-      const catalogVisible = catalogVisibilityMap.get(c.id);
-      // If catalog has an entry, respect its isVisible; otherwise show by default
-      return catalogVisible === undefined ? true : catalogVisible;
-    });
-
-    // Add catalog-only categories (not in static list) that are visible
-    const catalogExtras: ExamCategory[] = catalog
-      .filter(c => c.isVisible && !staticIds.has(c.id))
-      .map(c => ({
-        id: c.id,
-        name: c.name,
-        description: c.description,
-        logo: c.logo,
-        studentsEnrolled: c.studentsEnrolled,
-        examsAvailable: c.examsAvailable,
-        mentorsAvailable: 0,
-        isCombo: false,
-        isPopular: c.isPopular,
-      } as RegularCategory));
-
-    return [...visibleStatics, ...catalogExtras];
-  }, [catalog, catalogVisibilityMap]);
+    return catalog
+      .filter(c => c.isVisible)
+      .map(c => {
+        const staticMatch = staticAllCategories.find(s => s.id === c.id);
+        const dynamicExamCount = c.sections.reduce((a, s) => a + s.exams.length, 0);
+        return {
+          id: c.id,
+          name: c.name,
+          description: c.description || staticMatch?.description || '',
+          logo: c.logo || staticMatch?.logo || '',
+          studentsEnrolled: c.studentsEnrolled || staticMatch?.studentsEnrolled || 0,
+          examsAvailable: dynamicExamCount || c.examsAvailable || staticMatch?.examsAvailable || 0,
+          mentorsAvailable: staticMatch?.mentorsAvailable || 0,
+          isCombo: staticMatch?.isCombo || false,
+          isPopular: c.isPopular,
+          price: (staticMatch as any)?.price,
+          originalPrice: (staticMatch as any)?.originalPrice,
+        } as ExamCategory;
+      });
+  }, [catalog]);
 
   // When categories become hidden, automatically remove them from selectedCategories
   // so the header button and "Selected Categories" badge stay in sync.

@@ -118,7 +118,14 @@ export const ExamCategoryProvider: React.FC<{ children: React.ReactNode }> = ({ 
 export const useExamCategoryContext = () => {
   const context = useContext(ExamCategoryContext);
   if (context === undefined) {
-    throw new Error('useExamCategoryContext must be used within an ExamCategoryProvider');
+    return {
+      selectedCategories: [] as string[],
+      setSelectedCategories: () => {},
+      toggleCategory: () => {},
+      clearCategories: () => {},
+      hasSelectedCategories: false,
+      isContentRelevant: () => true
+    };
   }
   return context;
 };

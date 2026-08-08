@@ -35,6 +35,7 @@ import QuizAttemptIBPS, { QuizResult } from '@/components/student/quiz/QuizAttem
 import launchExamWindow from '@/utils/launchExam';
 import { toast } from 'sonner';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
+import { useTargetExams } from '@/hooks/useTargetExams';
 import { differenceInDays } from 'date-fns';
 import { CompulsoryFormModal, WelcomeMessageModal } from '@/components/auth/UpdatedAuthModal';
 import { allArticles } from '@/components/current-affairs/articlesData';
@@ -49,7 +50,8 @@ import { Badge } from '@/components/ui/badge';
 import { ExamStatusSummary } from '@/components/student/dashboard/ExamStatusSummary';
 import { StatsOverview } from '@/components/student/dashboard/StatsOverview';
 import { PerformanceGraph } from '@/components/student/dashboard/PerformanceGraph';
-import WordOfTheDayCard from '@/components/student/VocabularyWidget';
+import DashboardPerformanceTab from '@/components/student/dashboard/DashboardPerformanceTab';
+import DashboardVocabularySection from '@/components/student/dashboard/DashboardVocabularySection';
 import TargetExamCard from '@/components/student/dashboard/TargetExamCard';
 import DashboardBannerStrip from '@/components/student/dashboard/DashboardBannerStrip';
 import RecentExamNotifications from '@/components/student/dashboard/RecentExamNotifications';
@@ -382,41 +384,22 @@ const StudentDashboard = () => {
     }
   };
 
-  // Dynamic values from profile
-  // ── Prefer exam selected via ExamDetail purchase over signup profile ──────
-  const [selectedExamOverride, setSelectedExamOverride] = React.useState<string | null>(() => {
-    try {
-      const raw = localStorage.getItem('student_selected_exam');
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        return parsed.examName || null;
-      }
-    } catch { /* ignore */ }
-    return null;
-  });
+  // ── Single source of truth: useTargetExams index-0 = primary exam ──────────
+  // This is IDENTICAL to what TargetExamCard reads internally so they always match.
+  const { primaryExam } = useTargetExams();
 
-  React.useEffect(() => {
-    const handler = (e: StorageEvent) => {
-      if (e.key === 'student_selected_exam') {
-        try {
-          const parsed = e.newValue ? JSON.parse(e.newValue) : null;
-          setSelectedExamOverride(parsed?.examName || null);
-        } catch { /* ignore */ }
-      }
-    };
-    window.addEventListener('storage', handler);
-    return () => window.removeEventListener('storage', handler);
-  }, []);
-
+  // Fallback chain: primaryExam (useTargetExams) → userProfile.targetExam → 'SBI PO'
   const profileExamName = userProfile?.targetExam === 'others'
     ? userProfile?.customTargetExam || 'General'
-    : userProfile?.targetExam?.toUpperCase().replace('-', ' ') || 'IBPS PO';
+    : userProfile?.targetExam?.toUpperCase().replace('-', ' ') || 'SBI PO';
 
-  const targetExamName = selectedExamOverride || profileExamName;
+  const targetExamName = primaryExam?.name || profileExamName;
 
-  const examCategoryName = userProfile?.examCategory === 'others'
-    ? userProfile?.customExamCategory || 'General'
-    : userProfile?.examCategory?.charAt(0).toUpperCase() + userProfile?.examCategory?.slice(1) || 'Banking';
+  const examCategoryName = primaryExam?.category
+    ? primaryExam.category.charAt(0).toUpperCase() + primaryExam.category.slice(1)
+    : (userProfile?.examCategory === 'others'
+        ? userProfile?.customExamCategory || 'General'
+        : userProfile?.examCategory?.charAt(0).toUpperCase() + userProfile?.examCategory?.slice(1) || 'Banking');
 
   // Calculate journey days
   const journeyDays = userProfile?.preparationStartDate
@@ -619,6 +602,7 @@ const StudentDashboard = () => {
           targetExam={targetExamName}
           examCategory={examCategoryName}
           liveOverallPct={dashStats.avgScore}
+          mockTestsTaken={dashStats.mockTestsTaken}
         />
       </div>
 
@@ -674,6 +658,24 @@ const StudentDashboard = () => {
               onCardClick={setStatDialogType}
             />
 
+            {/* Compact Word-of-the-Day teaser — links to Practice tab */}
+            <button
+              onClick={() => setActiveTab('practice')}
+              className="w-full flex items-center gap-3 bg-white border border-indigo-100 rounded-2xl px-4 py-3 text-left hover:border-indigo-300 hover:shadow-sm transition-all group"
+              style={{ boxShadow: '0 1px 3px rgba(99,102,241,0.06)' }}
+            >
+              <div className="w-8 h-8 rounded-xl bg-indigo-50 flex items-center justify-center shrink-0">
+                <span className="text-base">👑</span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <span className="text-[10px] font-black uppercase tracking-widest text-indigo-400">Word of the Day</span>
+                <p className="text-sm font-black text-slate-800 leading-none mt-0.5 truncate">Daily Vocabulary Practice →</p>
+              </div>
+              <span className="text-[11px] font-bold text-indigo-500 bg-indigo-50 border border-indigo-200 px-3 py-1 rounded-full shrink-0 group-hover:bg-indigo-600 group-hover:text-white group-hover:border-indigo-600 transition-all">
+                Practice Tab
+              </span>
+            </button>
+
             {/* Goals + Timer */}
             <div className="flex flex-col xl:flex-row gap-4 sm:gap-6 items-stretch">
               <div className="flex-1 xl:w-[70%]">
@@ -684,21 +686,11 @@ const StudentDashboard = () => {
               </div>
             </div>
 
-            {/* Exam Status — Current Exams */}
+            {/* Exam Status — Current Exams (stage tracker) */}
             <ExamStatusSummary />
 
-            {/* Upcoming Exams — immediately below current exams */}
-            <UpcomingExamsWidget />
-
-            {/* Word of the Day + Recent Exam Notifications — equal height grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-              <div className="h-full">
-                <WordOfTheDayCard />
-              </div>
-              <div className="h-full">
-                <RecentExamNotifications />
-              </div>
-            </div>
+            {/* Recent Exam Notifications — full-width */}
+            <RecentExamNotifications />
           </div>
         )}
 
@@ -707,6 +699,9 @@ const StudentDashboard = () => {
            ────────────────────────────────────────────────────── */}
         {activeTab === 'practice' && (
           <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-200">
+
+            {/* Daily Vocabulary — moved here from Overview, this is where active learning belongs */}
+            <DashboardVocabularySection />
 
             {/* Daily Free Tests - Full View */}
             <Card className="p-4 sm:p-6 bg-white border border-slate-200 rounded-xl">
@@ -798,75 +793,14 @@ const StudentDashboard = () => {
         )}
 
         {/* ──────────────────────────────────────────────────────
-            PERFORMANCE TAB — Analytics & progress
+            PERFORMANCE TAB — Full story-driven analytics
            ────────────────────────────────────────────────────── */}
         {activeTab === 'performance' && (
-          <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-200">
-
-            {/* ── Row 1: Graph (60%) + Percentile (40%) ── */}
-            <div className="flex flex-col xl:flex-row gap-4 sm:gap-6 items-stretch">
-
-              {/* Performance Graph — 60% */}
-              <div className="flex-[3] min-w-0">
-                <PerformanceGraph data={performanceData} />
-              </div>
-
-              {/* Exam Percentile — 40% */}
-              <div className="flex-[2] min-w-0 bg-white rounded-xl border border-slate-200 p-4 sm:p-5 flex flex-col">
-                <div className="flex items-center gap-2 mb-3 sm:mb-4">
-                  <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br from-amber-500 to-orange-400 flex items-center justify-center shadow-sm">
-                    <Target className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-white" />
-                  </div>
-                  <h3 className="font-bold text-sm sm:text-[15px] text-slate-800">Exam Percentile</h3>
-                </div>
-
-                {/* Gauge */}
-                <div className="relative w-full h-24 sm:h-28 mb-2 sm:mb-3">
-                  <svg className="w-full h-full" viewBox="0 0 200 100">
-                    <path d="M 20 90 A 80 80 0 0 1 180 90" fill="none" stroke="#f1f5f9" strokeWidth="14" strokeLinecap="round" />
-                    <path d="M 20 90 A 80 80 0 0 1 68 24"  fill="none" stroke="#fca5a5" strokeWidth="14" strokeLinecap="round" />
-                    <path d="M 68 24 A 80 80 0 0 1 132 24" fill="none" stroke="#fdba74" strokeWidth="14" strokeLinecap="round" />
-                    <path d="M 132 24 A 80 80 0 0 1 180 90" fill="none" stroke="#86efac" strokeWidth="14" strokeLinecap="round" />
-                    <path d="M 20 90 A 80 80 0 0 1 164 38" fill="none" stroke="hsl(var(--primary))" strokeWidth="10" strokeLinecap="round" />
-                    <g transform="translate(100, 90)">
-                      <line x1="0" y1="0" x2="0" y2="-62" stroke="#1e293b" strokeWidth="2.5" strokeLinecap="round" transform="rotate(-43)" />
-                      <circle cx="0" cy="0" r="5" fill="hsl(var(--primary))" />
-                    </g>
-                    <text x="12" y="96" fontSize="9" fill="#94a3b8">0</text>
-                    <text x="89" y="13" fontSize="9" fill="#94a3b8">50</text>
-                    <text x="185" y="96" fontSize="9" fill="#94a3b8" textAnchor="end">100</text>
-                  </svg>
-                  <div className="absolute bottom-0 left-1/2 -translate-x-1/2 text-center">
-                    <div className="text-2xl sm:text-3xl font-black text-primary leading-none">{dashStats.percentile > 0 ? dashStats.percentile.toFixed(1) : '—'}</div>
-                    <div className="text-[9px] sm:text-[10px] text-slate-400 mt-0.5">{dashStats.percentile > 0 ? 'Percentile' : 'No data yet'}</div>
-                  </div>
-                </div>
-
-                {/* Stats */}
-                <div className="space-y-1 mt-auto">
-                  <div className="flex justify-between items-center py-1.5 border-b border-slate-100">
-                    <span className="text-[11px] sm:text-[12px] text-slate-500">Student</span>
-                    <span className="text-[11px] sm:text-[12px] font-semibold text-slate-800 truncate ml-2">{userProfile?.username || user?.name || 'Student'}</span>
-                  </div>
-                  <div className="flex justify-between items-center py-1.5 border-b border-slate-100">
-                    <span className="text-[11px] sm:text-[12px] text-slate-500">Target Exam</span>
-                    <span className="text-[11px] sm:text-[12px] font-semibold text-primary">{targetExamName}</span>
-                  </div>
-                  <div className="flex justify-between items-center py-1.5 border-b border-slate-100">
-                    <span className="text-[11px] sm:text-[12px] text-slate-500">Percentile</span>
-                    <span className={`text-[11px] sm:text-[12px] font-bold ${dashStats.percentile > 0 ? 'text-emerald-600' : 'text-slate-400'}`}>{dashStats.percentile > 0 ? `${dashStats.percentile}` : 'N/A'}</span>
-                  </div>
-                  <div className="flex items-center gap-2 mt-2 bg-emerald-50 border border-emerald-200 rounded-lg px-2.5 sm:px-3 py-1.5 sm:py-2">
-                    <span className="text-base sm:text-lg">🏆</span>
-                    <div>
-                      <div className="text-[10px] sm:text-[11px] font-bold text-emerald-700">Excellent Performance</div>
-                      <div className="text-[9px] sm:text-[10px] text-emerald-600">Top 12.5% of all aspirants</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+          <DashboardPerformanceTab
+            targetExamName={targetExamName}
+            dashStats={dashStats}
+            userName={userProfile?.username || user?.name || 'Student'}
+          />
         )}
 
         {/* ──────────────────────────────────────────────────────

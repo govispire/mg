@@ -745,8 +745,43 @@ export function useVocabulary(userId = 'student_1') {
   }, [userId]);
 
   const markWordSelfAssessment = useCallback((wordId: string, _lessonId: string, assessment: SelfAssessment) => {
-    upsertProgress(wordId, { selfAssessment: assessment, timesShown: (getWordProgress(wordId)?.timesShown || 0) + 1 });
-  }, [upsertProgress, getWordProgress]);
+    if (assessment === 'i_know') {
+      upsertProgress(wordId, {
+        selfAssessment: 'i_know',
+        status: 'mastered',
+        masteredDate: todayStr(),
+        timesShown: (getWordProgress(wordId)?.timesShown || 0) + 1
+      });
+      // Remove from revision queue since student already knows it well
+      setRevisionEntries(prev => prev.filter(r => !(r.userId === userId && r.wordId === wordId)));
+    } else if (assessment === 'need_revision') {
+      upsertProgress(wordId, {
+        selfAssessment: 'need_revision',
+        status: 'learning',
+        isDifficult: true,
+        timesShown: (getWordProgress(wordId)?.timesShown || 0) + 1
+      });
+      // Add directly to revision queue scheduled for TOMORROW!
+      const tomorrowStr = addDays(1);
+      setRevisionEntries(prev => {
+        const idx = prev.findIndex(r => r.userId === userId && r.wordId === wordId);
+        if (idx >= 0) {
+          const updated = [...prev];
+          updated[idx] = { ...updated[idx], level: 1, nextRevisionDate: tomorrowStr };
+          return updated;
+        }
+        return [...prev, {
+          id: `rev_${userId}_${wordId}`,
+          userId,
+          wordId,
+          level: 1,
+          nextRevisionDate: tomorrowStr,
+          accuracy: 0,
+          attempts: 1
+        }];
+      });
+    }
+  }, [upsertProgress, getWordProgress, userId]);
 
   const markBookmark = useCallback((wordId: string) => {
     const cur = getWordProgress(wordId);

@@ -455,7 +455,7 @@ const TestWindow = () => {
         const totalQuestions = examConfig.sections.reduce((sum, s) => sum + s.questions.length, 0);
         const score = Math.round((correctCount / totalQuestions) * 100);
 
-        // Store result for parent window to retrieve
+        // Store result for parent window to retrieve (handshake key)
         storeTestResult({
             testId,
             completed: true,
@@ -467,6 +467,41 @@ const TestWindow = () => {
             timeTaken,
             timestamp: Date.now(),
         });
+
+        // Also write directly to quizCompletions & exam-progress so the dashboard stats,
+        // preparation progress bars (Prelims/Mains/Live), and analytics update immediately.
+        try {
+            const completions = JSON.parse(localStorage.getItem('quizCompletions') || '{}');
+            completions[testId] = {
+                completed: true,
+                score,
+                date: new Date().toISOString(),
+                duration: Math.round(timeTaken / 60),
+                examId: examId || undefined,
+            };
+            localStorage.setItem('quizCompletions', JSON.stringify(completions));
+        } catch { /* storage full — ignore */ }
+
+        if (examId) {
+            try {
+                const storageKey = `exam-progress-${examId}`;
+                const raw = localStorage.getItem(storageKey);
+                if (raw) {
+                    const data = JSON.parse(raw);
+                    const testType = testId.toLowerCase().includes('main') ? 'mains' :
+                                     testId.toLowerCase().includes('live') ? 'live' :
+                                     testId.toLowerCase().includes('sectional') ? 'sectional' :
+                                     testId.toLowerCase().includes('speed') ? 'speed' :
+                                     testId.toLowerCase().includes('pyq') ? 'pyq' : 'prelims';
+                    if (data.testTypes && data.testTypes[testType]) {
+                        data.testTypes[testType] = data.testTypes[testType].map((t: any) =>
+                            t.testId === testId ? { ...t, status: 'completed', score, lastAttempted: new Date().toISOString(), attempts: (t.attempts || 0) + 1 } : t
+                        );
+                        localStorage.setItem(storageKey, JSON.stringify(data));
+                    }
+                }
+            } catch { /* ignore */ }
+        }
 
         // Exit fullscreen
         if (document.fullscreenElement) {

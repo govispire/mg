@@ -13,7 +13,10 @@ import { getQuestionsForQuiz } from '@/data/quizQuestionsData';
 
 const TestWindow = () => {
     const [searchParams] = useSearchParams();
-    const [phase, setPhase] = useState<'instructions' | 'exam' | 'analysis' | 'solutions'>('instructions');
+    const initialPhaseParam = searchParams.get('phase') || searchParams.get('view') || 'instructions';
+    const [phase, setPhase] = useState<'instructions' | 'exam' | 'analysis' | 'solutions'>(
+        (initialPhaseParam as any) || 'instructions'
+    );
     const [startTime] = useState(Date.now());
     const [examResponses, setExamResponses] = useState<Record<string, string | string[] | null>>({});
     const [analysisData, setAnalysisData] = useState<any>(null);
@@ -65,6 +68,19 @@ const TestWindow = () => {
             }]
         };
     }
+
+    // Auto-generate analysis data if phase is analysis but analysisData is null
+    useEffect(() => {
+        if (phase === 'analysis' && !analysisData) {
+            let stored: Record<string, string | string[] | null> = {};
+            try {
+                const raw = localStorage.getItem(`exam-responses-${testId}`);
+                if (raw) stored = JSON.parse(raw);
+            } catch { /* ignore */ }
+            const computed = generateAnalysisFromExam(examConfig, stored);
+            setAnalysisData(computed);
+        }
+    }, [phase, testId, examConfig, analysisData]);
 
     // Enter fullscreen on mount
     useEffect(() => {
@@ -124,7 +140,7 @@ const TestWindow = () => {
         const totalQuestions = examConfig.sections.reduce((sum, s) => sum + s.questions.length, 0);
         const score = Math.round((correctCount / totalQuestions) * 100);
 
-        // Store result for parent window to retrieve
+        // Store result for parent window to retrieve (handshake key)
         storeTestResult({
             testId,
             completed: true,
@@ -136,6 +152,41 @@ const TestWindow = () => {
             timeTaken,
             timestamp: Date.now(),
         });
+
+        // Also write directly to quizCompletions & exam-progress so the dashboard stats,
+        // preparation progress bars (Prelims/Mains/Live), and analytics update immediately.
+        try {
+            const completions = JSON.parse(localStorage.getItem('quizCompletions') || '{}');
+            completions[testId] = {
+                completed: true,
+                score,
+                date: new Date().toISOString(),
+                duration: Math.round(timeTaken / 60),
+                examId: examId || undefined,
+            };
+            localStorage.setItem('quizCompletions', JSON.stringify(completions));
+        } catch { /* storage full — ignore */ }
+
+        if (examId) {
+            try {
+                const storageKey = `exam-progress-${examId}`;
+                const raw = localStorage.getItem(storageKey);
+                if (raw) {
+                    const data = JSON.parse(raw);
+                    const testType = testId.toLowerCase().includes('main') ? 'mains' :
+                                     testId.toLowerCase().includes('live') ? 'live' :
+                                     testId.toLowerCase().includes('sectional') ? 'sectional' :
+                                     testId.toLowerCase().includes('speed') ? 'speed' :
+                                     testId.toLowerCase().includes('pyq') ? 'pyq' : 'prelims';
+                    if (data.testTypes && data.testTypes[testType]) {
+                        data.testTypes[testType] = data.testTypes[testType].map((t: any) =>
+                            t.testId === testId ? { ...t, status: 'completed', score, lastAttempted: new Date().toISOString(), attempts: (t.attempts || 0) + 1 } : t
+                        );
+                        localStorage.setItem(storageKey, JSON.stringify(data));
+                    }
+                }
+            } catch { /* ignore */ }
+        }
 
         // Exit fullscreen
         if (document.fullscreenElement) {
@@ -178,7 +229,6 @@ const TestWindow = () => {
     };
 
     const handleCloseSolutions = () => {
-        // Return to analysis or close window
         setPhase('analysis');
     };
 
@@ -203,16 +253,15 @@ const TestWindow = () => {
         );
     }
 
-    if (phase === 'analysis' && analysisData) {
+    if (phase === 'analysis') {
+        const computed = analysisData || generateAnalysisFromExam(examConfig, examResponses);
         return (
-            <div className="fixed inset-0 overflow-auto bg-black/50 z-50 p-2 sm:p-4">
-                <TestAnalysisModal
-                    isOpen={true}
-                    onClose={handleCloseAnalysis}
-                    analysisData={analysisData}
-                    onViewSolutions={handleViewSolutions}
-                />
-            </div>
+            <TestAnalysisModal
+                isOpen={true}
+                onClose={handleCloseAnalysis}
+                analysisData={computed}
+                onViewSolutions={handleViewSolutions}
+            />
         );
     }
 
@@ -227,7 +276,13 @@ const TestWindow = () => {
         );
     }
 
-    return null;
+    // Default fallback to Instructions phase to prevent blank screen
+    return (
+        <ExamInstructions
+            examConfig={examConfig}
+            onComplete={() => setPhase('exam')}
+        />
+    );
 };
 
 export default TestWindow;

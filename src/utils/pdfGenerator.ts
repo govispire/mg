@@ -7,19 +7,21 @@ export const generateArticlesPDF = (articles: Article[], title: string) => {
   // Title
   doc.setFontSize(20);
   doc.setFont('helvetica', 'bold');
-  doc.text(title, 20, 20);
+  doc.text(title || 'Current Affairs Compilation', 20, 20);
   
   doc.setFontSize(10);
   doc.setFont('helvetica', 'normal');
   doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 20, 30);
-  doc.text(`Total Articles: ${articles.length}`, 20, 36);
+  doc.text(`Total Articles: ${articles ? articles.length : 0}`, 20, 36);
   
   let yPos = 50;
   const pageHeight = 280;
   const margin = 20;
   const lineHeight = 6;
   
-  articles.forEach((article, index) => {
+  (articles || []).forEach((article, index) => {
+    if (!article) return;
+
     // Check if we need a new page
     if (yPos > pageHeight - 40) {
       doc.addPage();
@@ -29,7 +31,7 @@ export const generateArticlesPDF = (articles: Article[], title: string) => {
     // Article number and title
     doc.setFontSize(12);
     doc.setFont('helvetica', 'bold');
-    const titleText = `${index + 1}. ${article.title}`;
+    const titleText = `${index + 1}. ${article.title || 'Untitled Article'}`;
     const titleLines = doc.splitTextToSize(titleText, 170);
     doc.text(titleLines, margin, yPos);
     yPos += titleLines.length * lineHeight + 2;
@@ -37,15 +39,21 @@ export const generateArticlesPDF = (articles: Article[], title: string) => {
     // Importance and date
     doc.setFontSize(9);
     doc.setFont('helvetica', 'italic');
-    doc.text(`Priority: ${article.importance.toUpperCase()} | Date: ${article.date} | Read Time: ${article.readTime}`, margin, yPos);
+    const imp = (article.importance || 'normal').toUpperCase();
+    const dt = article.date || '';
+    const rt = article.readTime || '5 min';
+    doc.text(`Priority: ${imp} | Date: ${dt} | Read Time: ${rt}`, margin, yPos);
     yPos += lineHeight + 2;
     
     // Excerpt
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(10);
-    const excerptLines = doc.splitTextToSize(article.excerpt, 170);
-    doc.text(excerptLines, margin, yPos);
-    yPos += excerptLines.length * lineHeight + 2;
+    const excerptText = article.excerpt || article.summary || '';
+    if (excerptText) {
+      const excerptLines = doc.splitTextToSize(excerptText, 170);
+      doc.text(excerptLines, margin, yPos);
+      yPos += excerptLines.length * lineHeight + 2;
+    }
     
     // Content (if available)
     if (article.content) {
@@ -61,7 +69,7 @@ export const generateArticlesPDF = (articles: Article[], title: string) => {
     }
     
     // Tags
-    if (article.tags.length > 0) {
+    if (article.tags && article.tags.length > 0) {
       yPos += 2;
       doc.setFont('helvetica', 'italic');
       doc.setFontSize(8);
@@ -69,24 +77,22 @@ export const generateArticlesPDF = (articles: Article[], title: string) => {
       yPos += lineHeight;
     }
     
-    // Separator
+    // Divider
+    yPos += 6;
+    doc.setDrawColor(220, 220, 220);
+    doc.line(margin, yPos, 190, yPos);
     yPos += 8;
-    if (yPos < pageHeight - 10) {
-      doc.setDrawColor(200, 200, 200);
-      doc.line(margin, yPos, 190, yPos);
-      yPos += 10;
-    }
   });
   
   // Save the PDF
-  const fileName = title.replace(/[^a-z0-9]/gi, '_').toLowerCase();
-  doc.save(`${fileName}_${new Date().toISOString().split('T')[0]}.pdf`);
-};
-
-export const generateTopicPDF = (articles: Article[], topic: string) => {
-  generateArticlesPDF(articles, `${topic} - Current Affairs`);
+  const filename = `${(title || 'Compilation').toLowerCase().replace(/[^a-z0-9]/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
+  doc.save(filename);
 };
 
 export const generateDailyNewsPDF = (articles: Article[], date: string) => {
-  generateArticlesPDF(articles, `Daily News - ${date}`);
+  return generateArticlesPDF(articles, `Daily News Digest - ${date}`);
+};
+
+export const generateTopicPDF = (articles: Article[], topic: string) => {
+  return generateArticlesPDF(articles, `${topic} Topic Compilation`);
 };

@@ -1,10 +1,12 @@
 import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { useVocabulary } from '@/hooks/useVocabulary';
 import { useAuth } from '@/app/providers';
+import GrammarSyllabusView from '@/components/student/grammar/GrammarSyllabusView';
 import {
   BookOpen, CheckCircle, RotateCcw, Brain, Star, Zap, Award,
   Target, ChevronRight, ChevronLeft, X, Volume2, Bookmark,
@@ -87,6 +89,7 @@ const UnifiedLearningView: React.FC<{
 }> = ({ words, initialIndex = 0, mode, lessonId, onExit, onComplete, selfAssessments, onSelfAssess, onBookmark, onDifficult }) => {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [popImgFailed, setPopImgFailed] = useState(false);
+  const [toast, setToast] = useState<{ text: string; isRevision: boolean } | null>(null);
 
   const stockPhotoFallback = 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1000&auto=format&fit=crop';
 
@@ -114,6 +117,18 @@ const UnifiedLearningView: React.FC<{
   const goNext = () => {
     if (isLast) { onComplete?.(); return; }
     setCurrentIndex(i => i + 1);
+  };
+
+  const handleAssessmentClick = (type: 'i_know' | 'need_revision') => {
+    if (!word) return;
+    onSelfAssess?.(lessonId || '', word.id, type);
+    if (type === 'need_revision') {
+      setToast({ text: `📌 "${word.word}" added to Tomorrow's Revision Queue!`, isRevision: true });
+    } else {
+      setToast({ text: `✨ "${word.word}" marked Mastered! Skipped from Revision`, isRevision: false });
+    }
+    setTimeout(() => setToast(null), 2200);
+    goNext();
   };
 
   const goPrev = () => {
@@ -344,8 +359,17 @@ const UnifiedLearningView: React.FC<{
         </div>
       </div>
 
-      {/* Bottom Action Bar (Learning Mode Only) */}
-      {mode === 'learning' && (
+      {/* Toast Feedback Notification */}
+      {toast && (
+        <div className={`fixed top-16 left-1/2 -translate-x-1/2 z-[600] px-4 py-2.5 rounded-full text-xs font-black shadow-xl animate-in fade-in slide-in-from-top-4 duration-200 flex items-center gap-2 ${
+          toast.isRevision ? 'bg-amber-500 text-white shadow-amber-500/20' : 'bg-emerald-600 text-white shadow-emerald-600/20'
+        }`}>
+          <span>{toast.text}</span>
+        </div>
+      )}
+
+      {/* Bottom Action Bar (Learning & Daily Vocabulary Modes) */}
+      {(mode === 'learning' || mode === 'browse') && (
         <div className="bg-white border-t border-slate-100 px-6 py-4 flex flex-col gap-3 shrink-0 relative z-30 shadow-[0_-4px_15px_-3px_rgba(0,0,0,0.05)]">
           <div className="flex items-center justify-between text-xs text-slate-400 px-2 max-w-[1000px] w-full mx-auto">
             <button onClick={() => onDifficult?.(word.id)} className="flex items-center gap-1.5 hover:text-slate-600 transition-colors"><Flag className="h-3.5 w-3.5"/> Mark Difficult</button>
@@ -359,14 +383,14 @@ const UnifiedLearningView: React.FC<{
             <div className="flex gap-2 flex-1">
               <Button 
                 variant="outline" 
-                onClick={() => { onSelfAssess?.(lessonId || '', word.id, 'need_revision'); goNext(); }} 
-                className={`flex-1 h-12 bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100 font-bold transition-all ${assessment === 'need_revision' ? 'border-amber-400 text-amber-700 bg-amber-50 shadow-sm' : ''}`}
+                onClick={() => handleAssessmentClick('need_revision')} 
+                className={`flex-1 h-12 bg-amber-50/80 border-amber-200 text-amber-800 hover:bg-amber-100 font-bold transition-all ${assessment === 'need_revision' ? 'border-amber-400 text-amber-900 bg-amber-100 shadow-xs' : ''}`}
               >
-                <RotateCcw className="h-4 w-4 mr-1.5"/> Need Revision
+                <RotateCcw className="h-4 w-4 mr-1.5 text-amber-600"/> Need Revision
               </Button>
               <Button 
-                onClick={() => { onSelfAssess?.(lessonId || '', word.id, 'i_know'); goNext(); }} 
-                className={`flex-1 h-12 bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm font-bold transition-all ${assessment === 'i_know' ? 'bg-emerald-800' : ''}`}
+                onClick={() => handleAssessmentClick('i_know')} 
+                className={`flex-1 h-12 bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs font-bold transition-all ${assessment === 'i_know' ? 'bg-emerald-800' : ''}`}
               >
                 <Check className="h-4 w-4 mr-1.5"/> {isLast ? 'Finish' : 'I Know This'}
               </Button>
@@ -1683,7 +1707,14 @@ const HeroWordOfDay: React.FC<{
         {/* Action buttons */}
         <div className="flex flex-wrap items-center gap-2.5" onClick={e => e.stopPropagation()}>
           <button
-            onClick={() => { onIKnowThis(wordOfDay.id); setAssessed('i_know'); }}
+            onClick={(e) => {
+              e.stopPropagation();
+              onIKnowThis(wordOfDay.id);
+              setAssessed('i_know');
+              setTimeout(() => {
+                setCurrentWoDIndex(i => Math.min(dailyWords.length - 1, i + 1));
+              }, 200);
+            }}
             className={`inline-flex items-center gap-2 font-bold text-sm px-5 py-2.5 rounded-full transition-all ${
               assessed === 'i_know'
                 ? 'bg-emerald-500 text-white scale-95'
@@ -1693,7 +1724,14 @@ const HeroWordOfDay: React.FC<{
             <Check className="h-4 w-4" /> I Know This
           </button>
           <button
-            onClick={() => { onNeedRevision(wordOfDay.id); setAssessed('need_revision'); }}
+            onClick={(e) => {
+              e.stopPropagation();
+              onNeedRevision(wordOfDay.id);
+              setAssessed('need_revision');
+              setTimeout(() => {
+                setCurrentWoDIndex(i => Math.min(dailyWords.length - 1, i + 1));
+              }, 200);
+            }}
             className={`inline-flex items-center gap-2 font-bold text-sm px-5 py-2.5 rounded-full transition-all border ${
               assessed === 'need_revision' ? 'scale-95' : 'hover:-translate-y-0.5 active:scale-95'
             }`}
@@ -2532,7 +2570,21 @@ const StudentVocabulary: React.FC = () => {
 
   const [screen, setScreen] = useState<Screen>({ type: 'home' });
   const [nav, setNav] = useState<'overview' | 'mywords' | 'quiz' | 'revision'>('overview');
-  const [mainTab, setMainTab] = useState<'vocabulary' | 'grammar'>('vocabulary');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialTab = searchParams.get('tab') === 'grammar' ? 'grammar' : 'vocabulary';
+  const [mainTab, setMainTab] = useState<'vocabulary' | 'grammar'>(initialTab);
+
+  useEffect(() => {
+    const tabParam = searchParams.get('tab');
+    if (tabParam === 'grammar' || tabParam === 'vocabulary') {
+      setMainTab(tabParam);
+    }
+  }, [searchParams]);
+
+  const handleTabChange = (tab: 'vocabulary' | 'grammar') => {
+    setMainTab(tab);
+    setSearchParams({ tab });
+  };
 
   // Per-lesson state
   const [selfAssessments, setSelfAssessments] = useState<Record<string, Record<string, any>>>({});
@@ -2551,13 +2603,40 @@ const StudentVocabulary: React.FC = () => {
   };
 
   const currentLessonId = (screen as any).lessonId;
-  const currentLesson = lessons?.find((l: any) => l.id === currentLessonId);
-  const currentLessonWords = currentLessonId ? (lessonWords ? lessonWords(currentLessonId) : []) : [];
-  const lessonQuestions = currentLessonId && getQuestionsForLesson ? getQuestionsForLesson(currentLessonId) : [];
+  const isWordOfDayFlow = currentLessonId === 'wordofday' || screen.type === 'wordofday';
+
+  const currentLesson = isWordOfDayFlow
+    ? { id: 'wordofday', name: 'Word of the Day', categoryId: 'home' }
+    : lessons?.find((l: any) => l.id === currentLessonId);
+
+  const currentLessonWords = isWordOfDayFlow
+    ? (activeWords ? activeWords.slice(0, 10) : [])
+    : (currentLessonId ? (lessonWords ? lessonWords(currentLessonId) : []) : []);
+
+  const lessonQuestions = isWordOfDayFlow
+    ? currentLessonWords.map((w: any, idx: number) => ({
+        id: `q_wod_${w.id}_${idx}`,
+        lessonId: 'wordofday',
+        type: 'mcq',
+        question: `What is the primary meaning of "${w.word}"?`,
+        options: [
+          w.meaning,
+          'To express doubt or hesitation in formal writing',
+          'Relating to ancient cultural traditions and beliefs',
+          'Causing sudden confusion or astonishment'
+        ].sort(() => Math.random() - 0.5),
+        correctAnswer: w.meaning,
+        explanation: `Meaning: ${w.meaning}`,
+        difficulty: w.difficulty || 'medium',
+        marks: 1
+      }))
+    : (currentLessonId && getQuestionsForLesson ? getQuestionsForLesson(currentLessonId) : []);
 
   const handleApplyDecision = (wordId: string, selfAssessment: any, correct: boolean) => {
     if (applyDecisionLogic) applyDecisionLogic(wordId, selfAssessment, correct);
   };
+
+  const getExitTarget = () => isWordOfDayFlow ? { type: 'home' as const } : { type: 'category' as const, categoryId: currentLesson?.categoryId };
 
   // Word of Day
   const wodIndex = (screen.type === 'wordofday' && (screen as any).index) || 0;
@@ -2569,6 +2648,17 @@ const StudentVocabulary: React.FC = () => {
         initialIndex={wodIndex}
         mode="browse"
         onExit={() => setScreen({ type: 'home' })}
+        onComplete={() => setScreen({
+          type: 'stage-complete',
+          lessonId: 'wordofday',
+          phase: 'learning',
+          score: dailyWords.length,
+          total: dailyWords.length
+        })}
+        selfAssessments={getSelfAssessments('wordofday')}
+        onSelfAssess={handleSelfAssess}
+        onBookmark={markBookmark}
+        onDifficult={markDifficult}
       />
     );
   }
@@ -2584,7 +2674,7 @@ const StudentVocabulary: React.FC = () => {
         onSelfAssess={handleSelfAssess}
         onBookmark={markBookmark || (() => { })}
         onDifficult={markDifficult || (() => { })}
-        onExit={() => setScreen({ type: 'category', categoryId: currentLesson?.categoryId })}
+        onExit={() => setScreen(getExitTarget())}
         onComplete={() => setScreen({
           type: 'stage-complete', lessonId: currentLessonId,
           phase: 'learning', score: currentLessonWords.length, total: currentLessonWords.length
@@ -2599,26 +2689,26 @@ const StudentVocabulary: React.FC = () => {
     return (
       <StageComplete
         phase={sc.phase}
-        lessonName={currentLesson?.name || 'Lesson'}
+        lessonName={currentLesson?.name || 'Word of the Day'}
         wordCount={currentLessonWords.length}
         score={sc.score}
         total={sc.total}
         onNext={() => {
           if (sc.phase === 'learning') {
-            if (currentLessonId && updateLessonPhase) updateLessonPhase(currentLessonId, 'flashcards');
-            setScreen({ type: 'flashcards', lessonId: currentLessonId });
+            if (currentLessonId && currentLessonId !== 'wordofday' && updateLessonPhase) updateLessonPhase(currentLessonId, 'flashcards');
+            setScreen({ type: 'flashcards', lessonId: currentLessonId || 'wordofday' });
           } else if (sc.phase === 'flashcards') {
-            if (currentLessonId && updateLessonPhase) updateLessonPhase(currentLessonId, 'spelling');
-            setScreen({ type: 'spelling', lessonId: currentLessonId });
+            if (currentLessonId && currentLessonId !== 'wordofday' && updateLessonPhase) updateLessonPhase(currentLessonId, 'spelling');
+            setScreen({ type: 'spelling', lessonId: currentLessonId || 'wordofday' });
           } else if (sc.phase === 'spelling') {
-            if (currentLessonId && updateLessonPhase) updateLessonPhase(currentLessonId, 'quiz');
-            setScreen({ type: 'quiz', lessonId: currentLessonId });
+            if (currentLessonId && currentLessonId !== 'wordofday' && updateLessonPhase) updateLessonPhase(currentLessonId, 'quiz');
+            setScreen({ type: 'quiz', lessonId: currentLessonId || 'wordofday' });
           } else if (sc.phase === 'quiz') {
-            if (currentLessonId && updateLessonPhase) updateLessonPhase(currentLessonId, 'completed');
-            setScreen({ type: 'result', lessonId: currentLessonId });
+            if (currentLessonId && currentLessonId !== 'wordofday' && updateLessonPhase) updateLessonPhase(currentLessonId, 'completed');
+            setScreen({ type: 'result', lessonId: currentLessonId || 'wordofday' });
           }
         }}
-        onExit={() => setScreen({ type: 'category', categoryId: currentLesson?.categoryId })}
+        onExit={() => setScreen(getExitTarget())}
       />
     );
   }
@@ -2630,9 +2720,9 @@ const StudentVocabulary: React.FC = () => {
         words={currentLessonWords}
         onComplete={(s) => { 
             setFlashcardScore(s); 
-            setScreen({ type: 'stage-complete', lessonId: currentLessonId, phase: 'flashcards', score: s, total: currentLessonWords.length }); 
+            setScreen({ type: 'stage-complete', lessonId: currentLessonId || 'wordofday', phase: 'flashcards', score: s, total: currentLessonWords.length }); 
         }}
-        onExit={() => setScreen({ type: 'category', categoryId: currentLesson?.categoryId })}
+        onExit={() => setScreen(getExitTarget())}
       />
     );
   }
@@ -2643,9 +2733,9 @@ const StudentVocabulary: React.FC = () => {
         words={currentLessonWords}
         onComplete={(s) => { 
             setSpellingScore(s); 
-            setScreen({ type: 'stage-complete', lessonId: currentLessonId, phase: 'spelling', score: s, total: currentLessonWords.length }); 
+            setScreen({ type: 'stage-complete', lessonId: currentLessonId || 'wordofday', phase: 'spelling', score: s, total: currentLessonWords.length }); 
         }}
-        onExit={() => setScreen({ type: 'category', categoryId: currentLesson?.categoryId })}
+        onExit={() => setScreen(getExitTarget())}
       />
     );
   }
@@ -2655,12 +2745,12 @@ const StudentVocabulary: React.FC = () => {
       <VocabularyQuiz
         questions={lessonQuestions}
         words={currentLessonWords}
-        selfAssessments={getSelfAssessments(currentLessonId)}
+        selfAssessments={getSelfAssessments(currentLessonId || 'wordofday')}
         onComplete={(results) => { 
             setQuizResults(results); 
-            setScreen({ type: 'stage-complete', lessonId: currentLessonId, phase: 'quiz', score: results.filter(r => r.correct).length, total: results.length }); 
+            setScreen({ type: 'stage-complete', lessonId: currentLessonId || 'wordofday', phase: 'quiz', score: results.filter(r => r.correct).length, total: results.length }); 
         }}
-        onExit={() => setScreen({ type: 'category', categoryId: currentLesson?.categoryId })}
+        onExit={() => setScreen(getExitTarget())}
       />
     );
   }
@@ -2668,12 +2758,12 @@ const StudentVocabulary: React.FC = () => {
   if (screen.type === 'result') {
     return (
       <LessonResult
-        lessonName={currentLesson?.name || 'Lesson'}
+        lessonName={currentLesson?.name || 'Word of the Day'}
         quizResults={quizResults}
         spellingScore={spellingScore}
         flashcardScore={flashcardScore}
         wordCount={currentLessonWords.length}
-        onBackToLesson={() => setScreen({ type: 'category', categoryId: currentLesson?.categoryId })}
+        onBackToLesson={() => setScreen(getExitTarget())}
         onApplyDecision={handleApplyDecision}
       />
     );
@@ -2686,7 +2776,7 @@ const StudentVocabulary: React.FC = () => {
       {/* ── Top-Level Vocabulary / Grammar Switcher ── */}
       <div className="flex gap-0 bg-white rounded-2xl border border-slate-200 p-1 shadow-sm overflow-hidden">
         <button
-          onClick={() => setMainTab('vocabulary')}
+          onClick={() => handleTabChange('vocabulary')}
           className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-black transition-all ${
             mainTab === 'vocabulary'
               ? 'bg-gradient-to-r from-indigo-600 to-indigo-500 text-white shadow-md shadow-indigo-200'
@@ -2697,7 +2787,7 @@ const StudentVocabulary: React.FC = () => {
           Vocabulary
         </button>
         <button
-          onClick={() => setMainTab('grammar')}
+          onClick={() => handleTabChange('grammar')}
           className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-black transition-all ${
             mainTab === 'grammar'
               ? 'bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-md shadow-violet-200'
@@ -2710,7 +2800,7 @@ const StudentVocabulary: React.FC = () => {
       </div>
 
       {/* Grammar Tab */}
-      {mainTab === 'grammar' && <GrammarHubPage />}
+      {mainTab === 'grammar' && <GrammarSyllabusView />}
 
       {/* Vocabulary Tab */}
       {mainTab === 'vocabulary' && (
